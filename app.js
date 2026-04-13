@@ -2179,10 +2179,27 @@ const CardReward = {
   _pool: [], // 3 cards offered
 
   show(goldEarned) {
-    // Build a reward pool from all card templates, weighted toward current type
-    const allCards = [];
-    Object.values(CARD_TEMPLATES).forEach(arr => arr.forEach(c => allCards.push({ ...c })));
-    this._pool = shuffle(allCards).slice(0, 3);
+    // Build reward pool: generic normal cards + cards matching the active pokemon's type only
+    const activePoke = GameState.party[GameState.activePokemonIndex];
+    const activeType = activePoke?.type || GameState.starterType || 'normal';
+
+    // Eligible card sources:
+    // 1. All STANDARD_CARDS (normal type generics — fine for everyone)
+    // 2. TYPE_SIGNATURE_CARDS for the active pokemon's type
+    // 3. CARD_TEMPLATES for the active pokemon's type (starter-quality cards)
+    const eligible = [
+      ...STANDARD_CARDS.map(c => ({ ...c })),
+      ...(TYPE_SIGNATURE_CARDS[activeType] || []).map(c => ({ ...c })),
+      ...(CARD_TEMPLATES[activeType] || []).map(c => ({ ...c })),
+    ];
+
+    // Deduplicate by card id, then shuffle and pick 3
+    const seen = new Set();
+    const unique = eligible.filter(c => {
+      if (seen.has(c.id)) return false;
+      seen.add(c.id); return true;
+    });
+    this._pool = shuffle(unique).slice(0, 3);
 
     const el = document.getElementById('card-reward-screen');
     document.getElementById('cr-gold-earned').textContent = `+${goldEarned}g earned`;
@@ -2305,12 +2322,15 @@ const PokedexEngine = {
     entries.forEach(e => {
       const div = document.createElement('div');
       div.className = 'dex-entry' + (e.caught ? ' dex-caught' : ' dex-seen');
+      div.title = e.caught ? `${e.name} — Caught!` : 'Seen — not yet caught';
       div.innerHTML = `
         <img src="${e.spriteUrl || ''}" alt="${e.name}"
              onerror="this.src='assets/sprites/${e.id}.png'"
-             class="dex-sprite ${e.caught ? '' : 'silhouette'}" />
-        <div class="dex-name">${e.caught ? e.name : '???'}</div>
-        <div class="dex-id">#${String(e.id).padStart(3,'0')}</div>
+             class="dex-sprite${e.caught ? '' : ' silhouette'}" />
+        <div class="dex-text">
+          <div class="dex-id">#${String(e.id).padStart(3, '0')}</div>
+          <div class="dex-name${e.caught ? '' : ' dex-unknown'}">${e.caught ? e.name : '???'}</div>
+        </div>
         ${e.caught ? '<div class="dex-ball">🔵</div>' : ''}
       `;
       grid.appendChild(div);

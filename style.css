@@ -2136,38 +2136,90 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .42rem; color: var(--col-text-dim);
   margin-left: auto;
 }
+
+/* 15-column grid of flat rectangular tiles */
 .pokedex-grid {
   position: relative; z-index: var(--z-content);
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: .5rem;
-  padding: .8rem;
+  grid-template-columns: repeat(15, 1fr);
+  gap: 3px;
+  padding: .5rem .6rem;
   overflow-y: auto;
   flex: 1; width: 100%;
+  align-content: start;
 }
+
+/* Each entry: wide rectangle, sprite left, text right */
 .dex-entry {
   background: var(--col-card);
-  border: 2px solid var(--col-border);
-  border-radius: var(--r-md);
-  padding: .4rem .3rem;
-  text-align: center;
-  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+  border: 1.5px solid var(--col-border);
+  border-radius: 4px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 4px;
   position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: border-color .12s, background .12s;
+  min-width: 0;
 }
-.dex-caught { border-color: var(--col-blue); box-shadow: 0 0 6px rgba(42,117,187,.25); }
-.dex-seen   { opacity: .7; }
+.dex-entry:hover {
+  border-color: var(--col-yellow);
+  background: rgba(255,215,0,.06);
+  z-index: 2;
+}
+.dex-caught {
+  border-color: var(--col-blue);
+  background: rgba(42,117,187,.1);
+}
+.dex-seen { opacity: .6; }
+
+/* Sprite — small, fixed size, left side */
 .dex-sprite {
-  width: 56px; height: 56px;
+  width: 32px; height: 32px;
   image-rendering: pixelated;
+  flex-shrink: 0;
+  display: block;
 }
-.dex-sprite.silhouette { filter: brightness(0) opacity(.6); }
+.dex-sprite.silhouette { filter: brightness(0) opacity(.45); }
+
+/* Text column — right of sprite */
+.dex-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.dex-id {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem;
+  color: var(--col-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .dex-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-text);
-  word-break: break-all;
+  font-size: .3rem;
+  color: var(--col-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
 }
-.dex-id { font-size: .45rem; color: var(--col-text-dim); }
-.dex-ball { position: absolute; top: 3px; right: 4px; font-size: .65rem; }
+.dex-name.dex-unknown { color: var(--col-text-dim); }
+
+/* Caught badge — top-right corner dot */
+.dex-ball {
+  position: absolute;
+  top: 2px; right: 3px;
+  font-size: .5rem;
+  line-height: 1;
+}
+
 .dex-empty {
   grid-column: 1 / -1;
   text-align: center;
@@ -2176,6 +2228,14 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   color: var(--col-text-dim);
   padding: 3rem 1rem;
   line-height: 2;
+}
+
+/* Responsive: smaller screens get fewer columns */
+@media (max-width: 900px) {
+  .pokedex-grid { grid-template-columns: repeat(10, 1fr); }
+}
+@media (max-width: 560px) {
+  .pokedex-grid { grid-template-columns: repeat(6, 1fr); }
 }
 
 /* ═══════════════════════════════════════════
