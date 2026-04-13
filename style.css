@@ -2317,3 +2317,22 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   bottom: 1rem; right: 1rem;
   z-index: var(--z-ui);
 }
+
+/* Map screen — back to menu button */
+.btn-map-menu {
+  font-size: .55rem;
+  padding: .35em .6em;
+  background: rgba(255,255,255,.06);
+  border: 1.5px solid var(--col-border);
+  border-radius: var(--r-sm);
+  color: var(--col-text-dim);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background .15s, border-color .15s, color .15s;
+  font-family: 'Press Start 2P', monospace;
+}
+.btn-map-menu:hover {
+  background: rgba(227,53,13,.15);
+  border-color: var(--col-red);
+  color: var(--col-text);
+}

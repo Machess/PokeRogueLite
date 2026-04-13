@@ -544,10 +544,10 @@ const SoundEngine = {
   // Starter-specific cry — called when a starter card is hovered/selected
   playStarterCry(starterId) {
     const cryMap = {
-      1:  'jigglypuff.mp3',      // Bulbasaur  — playful, fitting
-      4:  'charmander.mp3',      // Charmander — its own cry
-      7:  'jigglypuff_song.mp3', // Squirtle   — serene melody
-      25: 'pikachu.mp3',         // Pikachu    — its own cry
+      1:  'bulbasaur.mp3',  // Bulbasaur
+      4:  'charmander.mp3', // Charmander
+      7:  'squirtle.mp3',   // Squirtle
+      25: 'pikachu.mp3',    // Pikachu
     };
     const file = cryMap[starterId];
     if (file) this.playSFX(file, 0.8);
@@ -588,6 +588,7 @@ function showModal(title, body, cb) {
 
 function closeModal() {
   document.getElementById('overlay').classList.add('hidden');
+  document.getElementById('modal-ok').textContent = 'OK';
 }
 
 // ─── POKEAPI HELPERS ─────────────────────────────────────────────────────────
@@ -778,6 +779,13 @@ const Game = {
 
   returnToStart() {
     deleteSave();
+    GameState = null;
+    showScreen('start');
+  },
+
+  goToMenu() {
+    // Save progress and return to start — run is resumable via Continue
+    saveGame();
     GameState = null;
     showScreen('start');
   },
@@ -2806,6 +2814,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-party-drawer-close').addEventListener('click', () => PartyOverview.close());
   document.getElementById('party-drawer-backdrop').addEventListener('click', () => PartyOverview.close());
   document.getElementById('btn-poke-detail-close').addEventListener('click', () => PartyOverview.closeDetail());
+
+  // ── Map screen ──
+  document.getElementById('btn-map-menu').addEventListener('click', () => {
+    showModal(
+      'Return to Menu?',
+      'Your progress is saved. You can continue from the main menu.',
+      () => Game.goToMenu()
+    );
+    document.getElementById('modal-ok').textContent = 'Yes, leave';
+  });
 
   // ── Mute buttons ──
   const updateMuteBtns = (muted) => {
