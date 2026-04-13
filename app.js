@@ -337,8 +337,8 @@ function freshState(starterId) {
 
 function makePokemon(id, level, spriteUrl, name, type, isStarter = false) {
   const maxHp = 80 + level * 8 + (isStarter ? 20 : 0);
-  const deck = isStarter ? null : buildPokemonDeck(type); // starters get deck set separately
-  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, isStarter, statusEffects: [], deck };
+  const deck = isStarter ? null : buildPokemonDeck(type);
+  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck };
 }
 
 // ─── DECK BUILDER ────────────────────────────────────────────────────────────
@@ -1155,7 +1155,11 @@ const BattleEngine = {
 
     const active = GameState.party[GameState.activePokemonIndex];
     const playerData = await fetchPoke(active.id);
-    active.spriteUrl = getSpriteUrl(playerData, false) || active.spriteUrl;
+    // Keep spriteUrl as front-facing; store back sprite separately for battle only
+    const backSprite = playerData.sprites?.back_default
+                    || playerData.sprites?.front_default
+                    || active.spriteUrl;
+    active.backSpriteUrl = backSprite;
 
     hideLoading();
     this._initBattle(active, opp, false);
@@ -1252,12 +1256,11 @@ const BattleEngine = {
       });
     }
 
-    // Sprites
+    // Sprites — player shows back, opponent shows front
     const ps = document.getElementById('player-sprite');
     const os = document.getElementById('opp-sprite');
-    ps.src = st.player.spriteUrl;
+    ps.src = st.player.backSpriteUrl || st.player.spriteUrl;
     os.src = st.opp.spriteUrl;
-    // Asset slot note: image rendered here from PokeAPI — swap with local path if desired
 
     // Piles
     document.getElementById('draw-count').textContent    = st.drawPile.length;
@@ -1509,7 +1512,6 @@ const BattleEngine = {
         setTimeout(() => {
           GameState.activePokemonIndex = next;
           const p = GameState.party[next];
-          // Swap to replacement's deck
           const newDeck = p.deck || GameState.deck;
           GameState.deck = newDeck;
           st.drawPile = shuffle([...newDeck]);
@@ -1519,6 +1521,13 @@ const BattleEngine = {
           this._dealHand(3);
           this._log(`Go, ${p.name}!`);
           this._render();
+          // Fetch back sprite for the new pokemon (non-blocking)
+          fetchPoke(p.id).then(d => {
+            const back = d.sprites?.back_default || d.sprites?.front_default || p.spriteUrl;
+            st.player.backSpriteUrl = back;
+            GameState.party[next].backSpriteUrl = back;
+            this._render();
+          });
         }, 1000);
       } else {
         setTimeout(() => this._defeat(), 1200);
@@ -1582,7 +1591,10 @@ const BattleEngine = {
     st.actionsLeft -= 2;
 
     fetchPoke(newPoke.id).then(d => {
-      st.player.spriteUrl = getSpriteUrl(d, false);
+      const back = d.sprites?.back_default || d.sprites?.front_default || newPoke.spriteUrl;
+      st.player.backSpriteUrl = back;
+      // Also persist back sprite to the party member
+      GameState.party[idx].backSpriteUrl = back;
       this._render();
     });
     this._log(`Go, ${newPoke.name}! (2 actions used)`);
@@ -1653,7 +1665,7 @@ const BossEngine = {
   },
 
   _loadNextOpp() {
-    const opp = this.oppTeam[this.oppIdx];
+    const opp    = this.oppTeam[this.oppIdx];
     const player = GameState.party[GameState.activePokemonIndex];
     const activeDeck = player.deck || GameState.deck;
     this.bState = {
@@ -1669,6 +1681,15 @@ const BossEngine = {
     BattleEngine._dealHand.call({ state: this.bState }, 3);
     this._render();
     this._log(`${this.bossData.name} sent out ${opp.name}!`);
+    // Fetch back sprite for player (non-blocking)
+    if (!player.backSpriteUrl) {
+      fetchPoke(player.id).then(d => {
+        const back = d.sprites?.back_default || d.sprites?.front_default || player.spriteUrl;
+        this.bState.player.backSpriteUrl = back;
+        GameState.party[GameState.activePokemonIndex].backSpriteUrl = back;
+        this._render();
+      });
+    }
   },
 
   _render() {
@@ -1695,7 +1716,7 @@ const BossEngine = {
     }
 
     document.getElementById('boss-opp-sprite').src    = st.opp.spriteUrl;
-    document.getElementById('boss-player-sprite').src = st.player.spriteUrl;
+    document.getElementById('boss-player-sprite').src = st.player.backSpriteUrl || st.player.spriteUrl;
 
     document.getElementById('boss-draw-count').textContent    = st.drawPile.length;
     document.getElementById('boss-discard-count').textContent = st.discardPile.length;
@@ -1797,6 +1818,15 @@ const BossEngine = {
         BattleEngine._dealHand.call({ state: st }, 3);
         this._log(`Go, ${p.name}!`);
         this._render();
+        // Fetch back sprite non-blocking
+        if (!p.backSpriteUrl) {
+          fetchPoke(p.id).then(d => {
+            const back = d.sprites?.back_default || d.sprites?.front_default || p.spriteUrl;
+            st.player.backSpriteUrl = back;
+            GameState.party[next].backSpriteUrl = back;
+            this._render();
+          });
+        }
       } else {
         deleteSave();
         GameOver.show(this.bossData.name);
@@ -1815,19 +1845,25 @@ const BossEngine = {
     GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
     GameState.activePokemonIndex = idx;
     const newPoke = GameState.party[idx];
-
-    // Swap to new pokemon's deck
     const newDeck = newPoke.deck || GameState.deck;
     GameState.deck = newDeck;
     st.discardPile.push(...st.hand);
     st.hand = [];
     st.drawPile = shuffle([...newDeck]);
     st.discardPile = [];
-
     st.player = { ...newPoke };
     st.actionsLeft -= 2;
     this._log(`Go, ${newPoke.name}! (2 actions used)`);
     this._render();
+    // Fetch back sprite non-blocking
+    if (!newPoke.backSpriteUrl) {
+      fetchPoke(newPoke.id).then(d => {
+        const back = d.sprites?.back_default || d.sprites?.front_default || newPoke.spriteUrl;
+        st.player.backSpriteUrl = back;
+        GameState.party[idx].backSpriteUrl = back;
+        this._render();
+      });
+    }
   },
 
   _syncFromBattleState(st) { this.bState = st; },
