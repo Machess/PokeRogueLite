@@ -33,6 +33,7 @@
   <div class="start-menu">
     <button class="btn-pixel btn-primary" id="btn-new-game">▶ New Game</button>
     <button class="btn-pixel btn-secondary" id="btn-continue-game">◈ Continue</button>
+    <button class="btn-pixel btn-secondary" id="btn-open-pokedex">📖 Pokédex</button>
   </div>
   <div class="start-footer">Catch · Battle · Evolve</div>
 </div>
@@ -132,6 +133,7 @@
       </div>
       <div class="hud-bar-wrap"><div class="hud-bar" id="opp-hp-bar"></div></div>
       <div class="hud-hp-text" id="opp-hp-text">? / ?</div>
+      <div class="status-badges-row" id="opp-status-badges"></div>
     </div>
     <div class="battle-sprite-wrap opponent">
       <!-- Asset slot: opp-sprite src set by JS from PokeAPI -->
@@ -150,6 +152,7 @@
       <div class="hud-level" id="player-level">Lv.1</div>
       <div class="hud-bar-wrap"><div class="hud-bar" id="player-hp-bar"></div></div>
       <div class="hud-hp-text" id="player-hp-text">? / ?</div>
+      <div class="status-badges-row" id="player-status-badges"></div>
     </div>
   </div>
 
@@ -223,6 +226,7 @@
         </div>
         <div class="hud-bar-wrap"><div class="hud-bar" id="boss-opp-hp-bar"></div></div>
         <div class="hud-hp-text" id="boss-opp-hp-text">? / ?</div>
+        <div class="status-badges-row" id="boss-opp-status-badges"></div>
       </div>
       <div class="battle-sprite-wrap opponent">
         <img id="boss-opp-sprite" src="" alt="Boss Pokémon" class="battle-sprite opponent-sprite" />
@@ -346,13 +350,15 @@
 
   <!-- Controls -->
   <div class="catch-controls" id="catch-controls" style="display:none">
+    <div class="ball-selector" id="ball-selector"></div>
     <button class="btn-pixel btn-pokeball" id="btn-throw-ball">
       <span class="pokeball-icon">
         <span class="pbi-top"></span>
         <span class="pbi-mid"></span>
         <span class="pbi-bot"></span>
         <span class="pbi-btn"></span>
-      </span> Throw Poké Ball!
+      </span>
+      <span id="catch-throw-label">Throw Poké Ball!</span>
     </button>
     <button class="btn-pixel btn-secondary" id="btn-flee">Run Away</button>
   </div>
@@ -368,20 +374,17 @@
      SCREEN: TRAINING
 ═══════════════════════════════════════════ -->
 <div id="screen-training" class="screen">
-  <!-- Asset slot: replace with your card upgrade reference art -->
-  <div class="training-bg">
-    <div class="training-bg-pattern"></div>
-  </div>
+  <div class="training-bg"><div class="training-bg-pattern"></div></div>
   <h1 class="screen-title">⚡ Training Grounds</h1>
-  <p class="screen-sub">Select <strong>2 cards</strong> to power up!</p>
-  <div class="training-cards-grid" id="training-cards-grid">
-    <!-- Populated by JS -->
+  <div class="training-tabs">
+    <button class="training-tab active-tab" id="training-mode-upgrade">⬆ Upgrade</button>
+    <button class="training-tab" id="training-mode-remove">🗑 Remove</button>
   </div>
+  <p class="screen-sub" id="training-subtitle">Select 2 cards to power up (+25% damage)</p>
+  <div class="training-cards-grid" id="training-cards-grid"></div>
   <div class="training-footer">
     <div class="selected-count" id="selected-count">0 / 2 selected</div>
-    <button class="btn-pixel btn-primary" id="btn-improve" disabled>
-      ⚡ Improve Selected
-    </button>
+    <button class="btn-pixel btn-primary" id="btn-improve" disabled>⚡ Upgrade Selected</button>
     <button class="btn-pixel btn-secondary" id="btn-training-skip">Skip</button>
   </div>
 </div>
@@ -491,6 +494,49 @@
     </div>
     <div class="loading-text">Loading…</div>
   </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     CARD REWARD SCREEN (overlay)
+═══════════════════════════════════════════ -->
+<div id="card-reward-screen" class="card-reward-overlay hidden">
+  <div class="card-reward-panel">
+    <div class="cr-header">
+      <div class="cr-title">⚔️ Victory! Choose a Card</div>
+      <div class="cr-gold" id="cr-gold-earned">+0g earned</div>
+    </div>
+    <div class="cr-subtitle">Add one card to your deck, or skip</div>
+    <div class="cr-cards-grid" id="cr-cards-grid"></div>
+    <button class="btn-pixel btn-secondary cr-skip-btn" id="btn-cr-skip">Skip — no new card</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: SHOP
+═══════════════════════════════════════════ -->
+<div id="screen-shop" class="screen">
+  <div class="shop-bg"></div>
+  <div class="shop-header">
+    <h1 class="screen-title" style="margin:0">🛒 Item Shop</h1>
+    <div class="shop-gold-display" id="shop-gold">💰 0g</div>
+  </div>
+  <div class="shop-items-grid" id="shop-items-grid"></div>
+  <div class="shop-footer">
+    <button class="btn-pixel btn-secondary" id="btn-shop-leave">Leave Shop ▶</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: POKÉDEX
+═══════════════════════════════════════════ -->
+<div id="screen-pokedex" class="screen">
+  <div class="pokedex-bg"></div>
+  <div class="pokedex-header">
+    <button class="btn-pixel btn-secondary pokedex-back-btn" id="btn-pokedex-back">◀ Back</button>
+    <h1 class="screen-title" style="margin:0">📖 Pokédex</h1>
+    <div class="pokedex-count" id="pokedex-count">0 caught / 0 seen</div>
+  </div>
+  <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
 <script src="app.js"></script>

@@ -1955,3 +1955,279 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--col-surface); }
 ::-webkit-scrollbar-thumb { background: var(--col-border); border-radius: 3px; }
+
+/* ═══════════════════════════════════════════
+   MYSTERY NODE
+═══════════════════════════════════════════ */
+.node-mystery {
+  background: radial-gradient(circle at 35% 35%, #4a3a7a, #1a1040);
+  border-color: rgba(180,140,255,.4);
+  animation: mystery-pulse 2.5s ease-in-out infinite;
+}
+@keyframes mystery-pulse {
+  0%,100% { box-shadow: 0 0 8px rgba(140,80,255,.4); }
+  50%      { box-shadow: 0 0 22px rgba(140,80,255,.8); }
+}
+
+.node-shop {
+  background: radial-gradient(circle at 35% 35%, #2a6a2a, #143514);
+  border-color: rgba(80,200,80,.3);
+}
+
+/* ═══════════════════════════════════════════
+   STATUS BADGES
+═══════════════════════════════════════════ */
+.status-badges-row {
+  display: flex; gap: .25rem; flex-wrap: wrap; margin-top: .25rem;
+}
+.status-badge {
+  font-size: .42rem;
+  font-family: 'Press Start 2P', monospace;
+  padding: .15em .4em;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.status-burn   { background: rgba(220,80,20,.85);  color: #fff; }
+.status-poison { background: rgba(140,40,160,.85); color: #fff; }
+.status-para   { background: rgba(200,160,0,.85);  color: #111; }
+.status-leech  { background: rgba(30,140,60,.85);  color: #fff; }
+.status-rain   { background: rgba(40,100,200,.85); color: #fff; }
+
+/* ═══════════════════════════════════════════
+   CARD REWARD OVERLAY
+═══════════════════════════════════════════ */
+.card-reward-overlay {
+  position: fixed; inset: 0;
+  z-index: 80;
+  background: rgba(0,0,0,.8);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+}
+.card-reward-overlay.hidden { display: none; }
+
+.card-reward-panel {
+  background: var(--col-surface);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: 1.2rem;
+  width: 100%; max-width: 520px;
+  display: flex; flex-direction: column; gap: .8rem;
+  animation: pop-in .25s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 0 40px rgba(255,215,0,.2);
+}
+.cr-header { display: flex; justify-content: space-between; align-items: center; }
+.cr-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .65rem; color: var(--col-yellow);
+}
+.cr-gold { font-family: 'Press Start 2P', monospace; font-size: .55rem; color: #6FCF97; }
+.cr-subtitle { font-size: .7rem; color: var(--col-text-dim); }
+.cr-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: .6rem;
+}
+.cr-card {
+  cursor: pointer;
+  min-height: 120px;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+}
+.cr-card:hover {
+  transform: translateY(-6px) scale(1.04);
+  border-color: var(--col-yellow);
+  box-shadow: 0 8px 20px rgba(0,0,0,.6), 0 0 15px rgba(255,215,0,.3);
+}
+.cr-card-type {
+  display: inline-block;
+  font-size: .38rem; font-weight: 800;
+  padding: .1em .4em; border-radius: 3px;
+  text-transform: uppercase; margin-top: .2rem;
+}
+.cr-skip-btn { align-self: center; font-size: .45rem; }
+
+/* ═══════════════════════════════════════════
+   SHOP SCREEN
+═══════════════════════════════════════════ */
+#screen-shop {
+  background: linear-gradient(135deg, #0a1a0a, #1a2e10);
+  justify-content: flex-start;
+}
+.shop-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(50,150,50,.1) 0%, transparent 60%);
+}
+.shop-header {
+  position: relative; z-index: var(--z-content);
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: .8rem 1rem .4rem;
+  border-bottom: 2px solid var(--col-border);
+  flex-shrink: 0;
+}
+.shop-gold-display {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .6rem; color: var(--col-yellow);
+}
+.shop-items-grid {
+  position: relative; z-index: var(--z-content);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: .7rem;
+  padding: .8rem 1rem;
+  overflow-y: auto;
+  flex: 1;
+  width: 100%;
+}
+.shop-item {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-lg);
+  padding: .8rem;
+  display: flex; flex-direction: column; gap: .4rem;
+  transition: border-color .15s;
+}
+.shop-item:not(.shop-item-disabled):hover { border-color: var(--col-green); }
+.shop-item-disabled { opacity: .5; }
+.shop-item-icon { font-size: 1.8rem; text-align: center; }
+.shop-item-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: var(--col-text);
+}
+.shop-item-desc { font-size: .6rem; color: var(--col-text-dim); line-height: 1.5; flex: 1; }
+.shop-item-footer { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+.shop-item-price {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: var(--col-yellow);
+}
+.shop-item-owned {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .45rem; color: var(--col-green-lt);
+}
+.shop-buy-btn { margin-left: auto; font-size: .42rem !important; padding: .4em .7em !important; }
+.shop-footer {
+  position: relative; z-index: var(--z-content);
+  padding: .8rem; display: flex; justify-content: center;
+  border-top: 2px solid var(--col-border); flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════
+   POKÉDEX SCREEN
+═══════════════════════════════════════════ */
+#screen-pokedex {
+  background: linear-gradient(135deg, #0a0a1e, #0f1a2e);
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.pokedex-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 20%, rgba(42,117,187,.1) 0%, transparent 60%);
+}
+.pokedex-header {
+  position: relative; z-index: var(--z-content);
+  display: flex; align-items: center; gap: .8rem;
+  width: 100%; padding: .7rem 1rem;
+  border-bottom: 2px solid var(--col-border);
+  flex-shrink: 0;
+  background: rgba(0,0,0,.3);
+}
+.pokedex-back-btn { font-size: .45rem !important; padding: .5em .8em !important; flex-shrink: 0; }
+.pokedex-count {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem; color: var(--col-text-dim);
+  margin-left: auto;
+}
+.pokedex-grid {
+  position: relative; z-index: var(--z-content);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: .5rem;
+  padding: .8rem;
+  overflow-y: auto;
+  flex: 1; width: 100%;
+}
+.dex-entry {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .4rem .3rem;
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+  position: relative;
+}
+.dex-caught { border-color: var(--col-blue); box-shadow: 0 0 6px rgba(42,117,187,.25); }
+.dex-seen   { opacity: .7; }
+.dex-sprite {
+  width: 56px; height: 56px;
+  image-rendering: pixelated;
+}
+.dex-sprite.silhouette { filter: brightness(0) opacity(.6); }
+.dex-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: var(--col-text);
+  word-break: break-all;
+}
+.dex-id { font-size: .45rem; color: var(--col-text-dim); }
+.dex-ball { position: absolute; top: 3px; right: 4px; font-size: .65rem; }
+.dex-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem;
+  color: var(--col-text-dim);
+  padding: 3rem 1rem;
+  line-height: 2;
+}
+
+/* ═══════════════════════════════════════════
+   BALL SELECTOR (catch screen)
+═══════════════════════════════════════════ */
+.ball-selector {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: .4rem;
+}
+.ball-select-btn {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  color: var(--col-text);
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: .65rem;
+  padding: .35rem .7rem;
+  cursor: pointer;
+  display: flex; align-items: center; gap: .4rem;
+  transition: border-color .15s, background .15s;
+}
+.ball-select-btn:hover     { border-color: var(--col-yellow); }
+.ball-select-btn.ball-selected {
+  border-color: var(--col-yellow);
+  background: rgba(255,215,0,.12);
+  box-shadow: 0 0 8px rgba(255,215,0,.3);
+}
+
+/* ═══════════════════════════════════════════
+   TRAINING TABS
+═══════════════════════════════════════════ */
+.training-tabs {
+  display: flex; gap: .5rem;
+  z-index: var(--z-content);
+  margin-bottom: .3rem;
+}
+.training-tab {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-sm);
+  color: var(--col-text-dim);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .45rem;
+  padding: .5em 1em;
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.training-tab:hover { border-color: var(--col-yellow); color: var(--col-text); }
+.training-tab.active-tab {
+  border-color: var(--col-yellow);
+  color: var(--col-yellow);
+  background: rgba(255,215,0,.08);
+}

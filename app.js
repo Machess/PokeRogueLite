@@ -34,8 +34,16 @@ const BOSS_TRAINERS = [
   },
 ];
 
-const NODE_TYPES = ['battle', 'heal', 'catch', 'training'];
-const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', boss: '💀' };
+const NODE_TYPES = ['battle', 'heal', 'catch', 'training', 'shop'];
+const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓' };
+// All non-boss, non-start nodes appear as ❓ until visited
+const NODE_MYSTERY_ICON = '❓';
+
+const STATUS_LABELS = {
+  burn:   '🔥BRN',
+  poison: '☠️PSN',
+  para:   '⚡PAR',
+};
 
 // Card templates keyed by starter type
 const CARD_TEMPLATES = {
@@ -182,6 +190,101 @@ const WILD_POOL = {
   rare: [131,130,142,149,143,6,9,3,65,68,71,76,78,80,82,83,85,87,89,91,93,94,97,99,101,103,105,107,110,112],
 };
 
+// ─── SHOP ITEMS CATALOGUE ─────────────────────────────────────────────────────
+const SHOP_ITEMS = [
+  {
+    id: 'oran_berry',
+    name: 'Oran Berry',
+    icon: '🍊',
+    description: 'Heals 10 HP when a Pokémon drops below 50% health. Auto-triggers in battle.',
+    price: 8,
+    maxStack: 3,
+    trigger: 'passive',
+  },
+  {
+    id: 'revive_potion',
+    name: 'Revive Potion',
+    icon: '🧪',
+    description: 'Saves a Pokémon from fainting once, restoring it to 30% HP instead.',
+    price: 15,
+    maxStack: 2,
+    trigger: 'on_faint',
+  },
+  {
+    id: 'ultra_ball',
+    name: 'Ultra Ball',
+    icon: '🟡',
+    description: '+50% catch rate for Uncommon and Rare Pokémon.',
+    price: 12,
+    maxStack: 3,
+    trigger: 'catch',
+  },
+  {
+    id: 'master_ball',
+    name: 'Master Ball',
+    icon: '🟣',
+    description: '100% catch rate. Only one available per run!',
+    price: 50,
+    maxStack: 1,
+    trigger: 'catch',
+    unique: true,
+  },
+  {
+    id: 'repel',
+    name: 'Repel',
+    icon: '🚫',
+    description: 'Prevents Common Pokémon from appearing at the next Catch node.',
+    price: 10,
+    maxStack: 2,
+    trigger: 'catch_modifier',
+  },
+  {
+    id: 'lure',
+    name: 'Lure',
+    icon: '🎣',
+    description: 'Greatly increases Legendary encounter chance for the rest of this map.',
+    price: 20,
+    maxStack: 1,
+    trigger: 'lure_modifier',
+  },
+];
+
+// ─── GOLD TABLES (per round / boss) ───────────────────────────────────────────
+// bossesDefeated = 0 → round 1, 1 → round 2, 2 → round 3
+const GOLD_TABLE = [
+  { wildMin: 4,  wildMax: 10, bossBonus: 25 },   // round 1
+  { wildMin: 10, wildMax: 20, bossBonus: 45 },   // round 2
+  { wildMin: 18, wildMax: 30, bossBonus: 0  },   // round 3 — no boss gold (game ends)
+];
+
+function goldForWildBattle() {
+  const t = GOLD_TABLE[Math.min(GameState.bossesDefeated, 2)];
+  return t.wildMin + Math.floor(Math.random() * (t.wildMax - t.wildMin + 1));
+}
+function goldForBoss() {
+  return GOLD_TABLE[Math.min(GameState.bossesDefeated, 2)].bossBonus;
+}
+
+// ─── POKEDEX PERSISTENCE ──────────────────────────────────────────────────────
+const POKEDEX_KEY = 'pokerogue_pokedex_v1';
+
+function loadPokedex() {
+  try {
+    const d = localStorage.getItem(POKEDEX_KEY);
+    return d ? JSON.parse(d) : {};
+  } catch(e) { return {}; }
+}
+function savePokedex(dex) {
+  try { localStorage.setItem(POKEDEX_KEY, JSON.stringify(dex)); } catch(e) {}
+}
+function registerPokedex(id, name, spriteUrl, caught = false) {
+  const dex = loadPokedex();
+  if (!dex[id] || (caught && !dex[id].caught)) {
+    dex[id] = { id, name, spriteUrl, caught: caught || !!dex[id]?.caught, seen: true };
+    savePokedex(dex);
+  }
+}
+
 // ─── SAVE / LOAD ──────────────────────────────────────────────────────────────
 
 const SAVE_KEY        = 'pokerogue_save_v1';
@@ -257,77 +360,57 @@ function buildDeck(type, improvementMap = {}) {
 
 function generateMap() {
   /*
-    Layout inspired by the reference: two columns of nodes arranged in a
-    diamond/zigzag pattern. Each "row" alternates between wide (A+B side by side)
-    and narrow (centre merge) to create diagonal crossing paths.
-
-    Structure per segment (10 nodes per path + 1 boss):
-      Row 0: A(left)  B(right)          — both unlocked at start
-      Row 1:    C(centre)               — cross-over node between A&B
-      Row 2: D(left)  E(right)
-      Row 3:    F(centre)
-      Row 4: G(left)  H(right)
-      Row 5:    I(centre)
-      Row 6: J(left)  K(right)
-      Row 7:    L(centre)
-      Row 8: M(left)  N(right)
-      Row 9:    O(centre)
-      Row 10:   BOSS (centre)
-
-    Links: each side node links to the centre below AND to the opposite side below-centre.
-           Each centre node links to BOTH side nodes below it.
-    This creates the X-shaped diamond crossing seen in the reference.
+    20 nodes deep + boss. Layout:
+    - 10 "wide" rows, each with 2–3 nodes  (left, centre-optional, right)
+    - Nodes are hidden as ❓ until the player visits them
+    - Richer type pool: 8 battle, 3 heal, 3 catch, 3 training, 3 shop per 20 nodes
+    - Every node stores its real type but displays as '?' until visited
   */
 
   function makeTypes() {
-    // 10 nodes per full path-column; balance across the zigzag
-    const t = ['battle','battle','battle','battle','battle','heal','heal','catch','catch','training'];
+    const t = [
+      'battle','battle','battle','battle','battle','battle','battle','battle',
+      'heal','heal','heal',
+      'catch','catch','catch',
+      'training','training','training',
+      'shop','shop','shop',
+    ];
     return t.sort(() => Math.random() - .5);
   }
 
-  const allTypes = makeTypes(); // 10 types for the 10 non-boss non-start positions
+  const allTypes = makeTypes();
   let typeIdx = 0;
   const nextType = () => allTypes[typeIdx++ % allTypes.length];
 
-  const nodes = [];
-  let idx = 0;
-
-  // Layout: alternating wide rows (2 nodes) and narrow rows (1 node)
-  // 5 wide rows + 5 narrow rows = 10 non-boss nodes, then boss
-  const WIDE_ROWS  = 5;  // rows with 2 nodes side by side
-  const TOTAL_ROWS = 11; // 5 wide + 5 narrow + 1 boss
-
-  // x positions for left/right in wide rows — add jitter for organic feel
-  function jitter(base, amount = 0.06) {
+  function jitter(base, amount = 0.05) {
     return base + (Math.random() * 2 - 1) * amount;
   }
 
+  // 10 wide rows of 2–3 nodes each; centre column appears on ~40% of rows
+  const WIDE_ROWS  = 10;
+  const TOTAL_Y    = WIDE_ROWS + 2; // Y grid units
+
   const layoutRows = [];
-
   for (let r = 0; r < WIDE_ROWS; r++) {
-    const yWide   = (r * 2 + 1) / (TOTAL_ROWS);
-    const yNarrow = (r * 2 + 2) / (TOTAL_ROWS);
-
-    // Wide row: left + right
-    layoutRows.push([
-      { x: jitter(0.22, 0.05), y: yWide,   type: nextType() },
-      { x: jitter(0.78, 0.05), y: yWide,   type: nextType() },
-    ]);
-    // Narrow row: centre
-    if (r < WIDE_ROWS - 1) {  // last wide row links directly to boss
-      layoutRows.push([
-        { x: jitter(0.50, 0.04), y: yNarrow, type: nextType() },
-      ]);
+    const y       = (r + 1) / TOTAL_Y;
+    const hasMid  = Math.random() < 0.45; // ~45% of rows get a 3rd centre node
+    const row = [
+      { x: jitter(0.18, 0.05), y, type: nextType() },
+      { x: jitter(0.82, 0.05), y, type: nextType() },
+    ];
+    if (hasMid) {
+      row.splice(1, 0, { x: jitter(0.50, 0.04), y, type: nextType() });
     }
+    layoutRows.push(row);
   }
 
   // Boss row
-  layoutRows.push([
-    { x: 0.50, y: (TOTAL_ROWS - 1) / TOTAL_ROWS, type: 'boss' },
-  ]);
+  layoutRows.push([{ x: 0.50, y: (WIDE_ROWS + 1) / TOTAL_Y, type: 'boss' }]);
 
-  // Flatten into nodes array
+  const nodes = [];
+  let idx = 0;
   const rowStartIdx = [];
+
   layoutRows.forEach((row, ri) => {
     rowStartIdx.push(nodes.length);
     row.forEach((spec, ni) => {
@@ -335,10 +418,11 @@ function generateMap() {
         idx,
         row: ri,
         col: ni,
-        type: spec.type,
+        type:     spec.type,
+        revealed: ri === 0,   // first row is revealed immediately
         x: spec.x,
         y: spec.y,
-        unlocked: ri === 0,   // first row unlocked
+        unlocked: ri === 0,
         done: false,
         links: [],
       });
@@ -346,25 +430,25 @@ function generateMap() {
     });
   });
 
-  // Build links: each node links to ALL nodes in the next layout row
-  layoutRows.forEach((row, ri) => {
-    if (ri >= layoutRows.length - 1) return; // boss has no children
-    const nextRow = layoutRows[ri + 1];
+  // Links: every node in row R connects to ALL nodes in row R+1
+  layoutRows.forEach((_, ri) => {
+    if (ri >= layoutRows.length - 1) return;
     const curStart  = rowStartIdx[ri];
     const nextStart = rowStartIdx[ri + 1];
-
-    row.forEach((_, ni) => {
-      const fromNode = nodes[curStart + ni];
-      nextRow.forEach((_, nni) => {
-        const toIdx = nextStart + nni;
+    const curCount  = layoutRows[ri].length;
+    const nxtCount  = layoutRows[ri + 1].length;
+    for (let ci = 0; ci < curCount; ci++) {
+      for (let ni = 0; ni < nxtCount; ni++) {
+        const fromNode = nodes[curStart + ci];
+        const toIdx    = nextStart + ni;
         if (!fromNode.links.includes(toIdx)) fromNode.links.push(toIdx);
-      });
-    });
+      }
+    }
   });
 
-  // Boss node is always index of the last node
   const bossNode = nodes[nodes.length - 1];
   bossNode.bossIndex = Math.min(GameState?.bossesDefeated ?? 0, 2);
+  bossNode.revealed  = false; // boss stays hidden until adjacent
 
   return nodes;
 }
@@ -494,8 +578,11 @@ const Game = {
       currentNodeIndex: null,
       completedNodes: [],
       highWaterRow: -1,
-      unlockedPikachu: unlocks.pikachu,   // ← persists across runs
+      unlockedPikachu: unlocks.pikachu,
       stats: { battlesWon: 0, pokemonCaught: 0 },
+      gold: 0,
+      items: [],          // [{ id, name, icon, description, count }]
+      masterBallUsed: false,
     };
     await this.showStarterSelect();
   },
@@ -864,7 +951,7 @@ const MapEngine = {
     }
 
     document.getElementById('map-meta').textContent =
-      `Boss: ${GameState.bossesDefeated}/3 | Party: ${GameState.party.length}/6`;
+      `💰 ${GameState.gold || 0}g | Boss: ${GameState.bossesDefeated}/3 | Party: ${GameState.party.length}/6`;
   },
 
   drawMap() {
@@ -967,25 +1054,32 @@ const MapEngine = {
 
     // ── Draw node buttons ──
     nodes.forEach(n => {
-      const btn  = document.createElement('button');
-      const done      = GameState.completedNodes.includes(n.idx);
-      const bypassed  = !!n.bypassed;
+      const btn      = document.createElement('button');
+      const done     = GameState.completedNodes.includes(n.idx);
+      const bypassed = !!n.bypassed;
+      const revealed = !!n.revealed || n.type === 'boss';
 
       let typeClass;
-      if (done)      typeClass = 'node-done';
-      else if (bypassed) typeClass = 'node-bypassed';
+      if (done)           typeClass = 'node-done';
+      else if (bypassed)  typeClass = 'node-bypassed';
       else if (!n.unlocked) typeClass = 'node-locked';
-      else           typeClass = `node-${n.type}`;
+      else if (!revealed) typeClass = 'node-mystery';
+      else                typeClass = `node-${n.type}`;
 
-      btn.className   = `map-node-btn ${typeClass}`;
-      btn.style.left  = n.px + 'px';
-      btn.style.top   = n.py + 'px';
-      btn.textContent = done ? '✓' : bypassed ? '✗' : NODE_ICONS[n.type] || '?';
+      btn.className  = `map-node-btn ${typeClass}`;
+      btn.style.left = n.px + 'px';
+      btn.style.top  = n.py + 'px';
 
-      if (done)     btn.title = 'Completed';
-      else if (bypassed) btn.title = 'Path not taken';
+      if (done)           btn.textContent = '✓';
+      else if (bypassed)  btn.textContent = '✗';
+      else if (!revealed) btn.textContent = NODE_MYSTERY_ICON;
+      else                btn.textContent = NODE_ICONS[n.type] || '?';
+
+      if (done)           btn.title = 'Completed';
+      else if (bypassed)  btn.title = 'Path not taken';
       else if (!n.unlocked) btn.title = 'Locked';
-      else          btn.title = capitalize(n.type) + ' Node — click to enter';
+      else if (!revealed) btn.title = 'Mystery node — enter to find out!';
+      else                btn.title = capitalize(n.type) + ' Node';
 
       if (!n.unlocked || done || bypassed) btn.setAttribute('disabled', true);
       btn.onclick = () => this.visitNode(n);
@@ -994,27 +1088,23 @@ const MapEngine = {
   },
 
   visitNode(node) {
-    // Advance the high water mark
     if (node.row > (GameState.highWaterRow ?? -1)) {
       GameState.highWaterRow = node.row;
     }
-
-    // Lock out every node that is at or below the current row and hasn't been
-    // done — these are alternatives the player has now permanently passed by.
     GameState.map.forEach(n => {
       if (!n.done && n.row <= GameState.highWaterRow && n.idx !== node.idx) {
-        n.bypassed = true;   // permanent — can no longer be visited
-        n.unlocked = false;  // also remove the unlocked flag so drawMap disables it
+        n.bypassed = true;
+        n.unlocked = false;
       }
     });
-
     GameState.currentNodeIndex = node.idx;
     switch (node.type) {
-      case 'battle':   BattleEngine.start(node);   break;
-      case 'heal':     HealEngine.start(node);      break;
-      case 'catch':    CatchEngine.start(node);     break;
-      case 'training': TrainingEngine.start(node);  break;
-      case 'boss':     BossEngine.start(node);      break;
+      case 'battle':   BattleEngine.start(node);  break;
+      case 'heal':     HealEngine.start(node);     break;
+      case 'catch':    CatchEngine.start(node);    break;
+      case 'training': TrainingEngine.start(node); break;
+      case 'shop':     ShopEngine.start(node);     break;
+      case 'boss':     BossEngine.start(node);     break;
     }
   },
 
@@ -1022,13 +1112,12 @@ const MapEngine = {
     if (!GameState.completedNodes.includes(nodeIdx)) {
       GameState.completedNodes.push(nodeIdx);
     }
-    // Unlock children
     const node = GameState.map.find(n => n.idx === nodeIdx);
     if (node) {
       node.done = true;
       node.links.forEach(li => {
         const child = GameState.map[li];
-        if (child) child.unlocked = true;
+        if (child) { child.unlocked = true; child.revealed = true; }
       });
     }
     saveGame();
@@ -1121,8 +1210,46 @@ const BattleEngine = {
     // Opponent type badge
     const typeBadge = document.getElementById('opp-type-badge');
     if (typeBadge && st.opp.type) {
-      typeBadge.textContent  = st.opp.type;
-      typeBadge.className    = `hud-type-badge type-${st.opp.type}`;
+      typeBadge.textContent = st.opp.type;
+      typeBadge.className   = `hud-type-badge type-${st.opp.type}`;
+    }
+
+    // Status effect badges on opponent
+    const statusWrap = document.getElementById('opp-status-badges');
+    if (statusWrap) {
+      statusWrap.innerHTML = '';
+      (st.statusEffects?.opp || []).forEach(s => {
+        const b = document.createElement('span');
+        b.className = `status-badge status-${s}`;
+        b.textContent = STATUS_LABELS[s] || s;
+        statusWrap.appendChild(b);
+      });
+      // Leech indicator
+      if (st.leechTurns > 0) {
+        const b = document.createElement('span');
+        b.className = 'status-badge status-leech';
+        b.textContent = `🌿${st.leechTurns}`;
+        statusWrap.appendChild(b);
+      }
+      // Rain indicator
+      if (st.rainTurns > 0) {
+        const b = document.createElement('span');
+        b.className = 'status-badge status-rain';
+        b.textContent = `🌧${st.rainTurns}`;
+        statusWrap.appendChild(b);
+      }
+    }
+
+    // Player status badges
+    const playerStatusWrap = document.getElementById('player-status-badges');
+    if (playerStatusWrap) {
+      playerStatusWrap.innerHTML = '';
+      (st.statusEffects?.player || []).forEach(s => {
+        const b = document.createElement('span');
+        b.className = `status-badge status-${s}`;
+        b.textContent = STATUS_LABELS[s] || s;
+        playerStatusWrap.appendChild(b);
+      });
     }
 
     // Sprites
@@ -1402,20 +1529,27 @@ const BattleEngine = {
   },
 
   _victory() {
-    // Sync HP back
     GameState.party[GameState.activePokemonIndex].hp = this.state.player.hp;
-
-    // Track stats
     if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
     GameState.stats.battlesWon = (GameState.stats.battlesWon || 0) + 1;
-    // Track usage count per pokemon for "favourite" calculation
     const activePoke = GameState.party[GameState.activePokemonIndex];
     activePoke.battlesWon = (activePoke.battlesWon || 0) + 1;
 
+    // Register opponent in Pokédex (seen)
+    const opp = this.state.opp;
+    registerPokedex(opp.id, opp.name, opp.spriteUrl, false);
+
+    // Award gold
+    const earned = goldForWildBattle();
+    GameState.gold = (GameState.gold || 0) + earned;
+
+    // Check Oran Berry passive trigger for all party members after battle
+    ItemEngine.checkPassive();
+
     MapEngine.completeNode(GameState.currentNodeIndex);
-    showModal('Victory!', `${this.state.opp.name} fainted! You won!`, () => {
-      MapEngine.show();
-    });
+
+    // Show card reward screen
+    CardReward.show(earned);
   },
 
   _defeat() {
@@ -1542,11 +1676,22 @@ const BossEngine = {
     setHpBar('boss-opp',    st.opp.hp,    st.opp.maxHp,    st.opp.name,    st.opp.level);
     setHpBar('boss-player', st.player.hp, st.player.maxHp, st.player.name, st.player.level);
 
-    // Opponent type badge
     const bossTypeBadge = document.getElementById('boss-opp-type-badge');
     if (bossTypeBadge && st.opp.type) {
       bossTypeBadge.textContent = st.opp.type;
       bossTypeBadge.className   = `hud-type-badge type-${st.opp.type}`;
+    }
+
+    // Status badges — boss screen
+    const bossStatus = document.getElementById('boss-opp-status-badges');
+    if (bossStatus) {
+      bossStatus.innerHTML = '';
+      (st.statusEffects?.opp || []).forEach(s => {
+        const b = document.createElement('span');
+        b.className = `status-badge status-${s}`;
+        b.textContent = STATUS_LABELS[s] || s;
+        bossStatus.appendChild(b);
+      });
     }
 
     document.getElementById('boss-opp-sprite').src    = st.opp.spriteUrl;
@@ -1756,135 +1901,142 @@ const GameOver = {
 const CatchEngine = {
   current: null,
   _caught: false,
+  _selectedBall: 'pokeball',
 
   async start(node) {
     showLoading();
-    const roll = Math.random();
+    const hasRepel = ItemEngine.hasItem('repel');
+    const hasLure  = ItemEngine.hasItem('lure');
     let rarity, pool;
-    if (roll < .6)      { rarity = 'Common';   pool = WILD_POOL.common; }
-    else if (roll < .9) { rarity = 'Uncommon'; pool = WILD_POOL.uncommon; }
-    else                { rarity = 'Rare ✨';  pool = WILD_POOL.rare; }
-
+    const roll = Math.random();
+    if (hasLure && Math.random() < 0.3) {
+      rarity = 'Rare ✨'; pool = WILD_POOL.rare;
+    } else if (hasRepel) {
+      rarity = Math.random() < 0.7 ? 'Uncommon' : 'Rare ✨';
+      pool   = rarity === 'Uncommon' ? WILD_POOL.uncommon : WILD_POOL.rare;
+      ItemEngine.useItem('repel');
+    } else {
+      if (roll < .6)      { rarity = 'Common';   pool = WILD_POOL.common; }
+      else if (roll < .9) { rarity = 'Uncommon'; pool = WILD_POOL.uncommon; }
+      else                { rarity = 'Rare ✨';  pool = WILD_POOL.rare; }
+    }
     const id   = pool[Math.floor(Math.random() * pool.length)];
     const data = await fetchPoke(id);
-    this.current = { data, rarity, id };
-    this._caught = false;
-
+    this.current      = { data, rarity, id };
+    this._caught      = false;
+    this._selectedBall = 'pokeball';
+    registerPokedex(id, capitalize(data.name), getSpriteUrl(data, true), false);
     hideLoading();
     showScreen('catch');
-
-    // Reset all state
-    document.getElementById('catch-title').textContent    = 'Wild Pokémon Appeared!';
-    document.getElementById('catch-name').textContent     = '???';
-    document.getElementById('catch-rarity').textContent   = '';
-    document.getElementById('catch-controls').style.display  = 'none';
-    document.getElementById('catch-result').style.display    = 'none';
+    document.getElementById('catch-title').textContent      = 'Wild Pokémon Appeared!';
+    document.getElementById('catch-name').textContent       = '???';
+    document.getElementById('catch-rarity').textContent     = '';
+    document.getElementById('catch-controls').style.display = 'none';
+    document.getElementById('catch-result').style.display   = 'none';
     document.getElementById('catch-ball-wrap').style.display = 'none';
-    document.getElementById('catch-status').textContent   = '';
-
-    // Show silhouette — try multiple sprite sources in order
+    document.getElementById('catch-status').textContent     = '';
     const spriteEl = document.getElementById('catch-sprite');
-    spriteEl.style.display   = '';
-    spriteEl.style.transform = '';
-    spriteEl.style.opacity   = '1';
-    spriteEl.className       = 'catch-sprite silhouette';
-
+    spriteEl.style.display = ''; spriteEl.style.transform = ''; spriteEl.style.opacity = '1';
+    spriteEl.className = 'catch-sprite silhouette';
     const spriteUrls = [
       data.sprites?.other?.['official-artwork']?.front_default,
       data.sprites?.other?.home?.front_default,
       data.sprites?.front_default,
       `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${data.id}.png`,
     ];
-
     loadImageWithFallback(spriteEl, spriteUrls, () => {
-      // All URLs failed — show a generic mystery silhouette placeholder
-      const wrap = document.getElementById('catch-sprite-wrap');
-      wrap.innerHTML = `
-        <div class="catch-placeholder silhouette-placeholder">
-          <svg viewBox="0 0 100 100" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="50" cy="65" rx="30" ry="22" fill="#fff"/>
-            <circle  cx="50" cy="35" r="22"           fill="#fff"/>
-            <ellipse cx="28" cy="58" rx="10" ry="7"   fill="#fff" transform="rotate(-20 28 58)"/>
-            <ellipse cx="72" cy="58" rx="10" ry="7"   fill="#fff" transform="rotate(20 72 58)"/>
-          </svg>
-        </div>`;
+      document.getElementById('catch-sprite-wrap').innerHTML =
+        '<div class="catch-placeholder silhouette-placeholder"><svg viewBox="0 0 100 100" width="180" height="180" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="65" rx="30" ry="22" fill="#fff"/><circle cx="50" cy="35" r="22" fill="#fff"/><ellipse cx="28" cy="58" rx="10" ry="7" fill="#fff" transform="rotate(-20 28 58)"/><ellipse cx="72" cy="58" rx="10" ry="7" fill="#fff" transform="rotate(20 72 58)"/></svg></div>';
     });
-
-    // Reset ball
     const ball = document.getElementById('catch-ball');
-    ball.className = 'catch-ball';
-    ball.style.transform = '';
-
-    // Reveal after 2s
+    ball.className = 'catch-ball'; ball.style.transform = '';
     setTimeout(() => {
       spriteEl.className = 'catch-sprite revealed';
       document.getElementById('catch-name').textContent   = capitalize(data.name);
       document.getElementById('catch-rarity').textContent = `Rarity: ${rarity}`;
       document.getElementById('catch-controls').style.display = 'flex';
+      this._renderBallSelector();
     }, 2000);
+  },
+
+  _renderBallSelector() {
+    const sel = document.getElementById('ball-selector');
+    if (!sel) return;
+    sel.innerHTML = '';
+    const balls = [
+      { id: 'pokeball',   label: 'Poké Ball', pbi: true },
+      { id: 'ultraball',  label: 'Ultra Ball',  icon: '🟡', itemId: 'ultra_ball' },
+      { id: 'masterball', label: 'Master Ball', icon: '🟣', itemId: 'master_ball' },
+    ];
+    balls.forEach(b => {
+      if (!b.pbi && !ItemEngine.hasItem(b.itemId)) return;
+      const btn = document.createElement('button');
+      btn.className = 'ball-select-btn' + (this._selectedBall === b.id ? ' ball-selected' : '');
+      btn.innerHTML = b.pbi
+        ? `<span class="pokeball-icon" style="width:20px;height:20px"><span class="pbi-top"></span><span class="pbi-mid"></span><span class="pbi-bot"></span><span class="pbi-btn"></span></span> ${b.label}`
+        : `${b.icon} ${b.label}`;
+      btn.onclick = () => {
+        this._selectedBall = b.id;
+        this._renderBallSelector();
+        const lbl = document.getElementById('catch-throw-label');
+        if (lbl) lbl.textContent = `Throw ${b.label}!`;
+      };
+      sel.appendChild(btn);
+    });
   },
 
   throwBall() {
     if (!this.current) return;
-    document.getElementById('catch-controls').style.display  = 'none';
-
+    document.getElementById('catch-controls').style.display = 'none';
     const { rarity, data } = this.current;
-    const catchRate = rarity.startsWith('Rare') ? .25 : rarity === 'Uncommon' ? .5 : .75;
-    const caught    = Math.random() < catchRate;
-    this._caught    = caught;
-
-    const wiggles = caught ? 3 : Math.floor(Math.random() * 3) + 1;
-
-    // spriteEl may be the <img> or a placeholder div — handle both
-    const spriteEl  = document.getElementById('catch-sprite');
-    const ballWrap  = document.getElementById('catch-ball-wrap');
-    const ball      = document.getElementById('catch-ball');
-    const statusEl  = document.getElementById('catch-status');
-
-    // 1 — Throw arc
+    let catchRate;
+    if (this._selectedBall === 'masterball') {
+      catchRate = 1.0; ItemEngine.useItem('master_ball');
+    } else {
+      const base       = rarity.startsWith('Rare') ? .25 : rarity === 'Uncommon' ? .5 : .75;
+      const ultraBoost = (this._selectedBall === 'ultraball' && !rarity.startsWith('Common')) ? .5 : 0;
+      catchRate = Math.min(0.95, base + ultraBoost);
+      if (this._selectedBall === 'ultraball') ItemEngine.useItem('ultra_ball');
+    }
+    const caught   = Math.random() < catchRate;
+    this._caught   = caught;
+    const wiggles  = caught ? 3 : Math.floor(Math.random() * 3) + 1;
+    const ball     = document.getElementById('catch-ball');
+    const ballWrap = document.getElementById('catch-ball-wrap');
+    const spriteEl = document.getElementById('catch-sprite');
+    const statusEl = document.getElementById('catch-status');
+    if (this._selectedBall === 'ultraball') {
+      ball.querySelector('.ball-top').style.background = '#f0c000';
+    } else if (this._selectedBall === 'masterball') {
+      ball.querySelector('.ball-top').style.background = '#8020d0';
+      ball.querySelector('.ball-bot').style.background = '#e0b0ff';
+    }
     ballWrap.style.display = 'flex';
     ball.className = 'catch-ball ball-throw';
-
-    // Pokemon absorbed at arc peak
     setTimeout(() => {
       if (spriteEl) spriteEl.className = 'catch-sprite catch-absorbed';
-      // Also hide placeholder if present
-      const placeholder = document.querySelector('.catch-placeholder');
-      if (placeholder) placeholder.style.animation = 'absorb .5s ease-in forwards';
+      const ph = document.querySelector('.catch-placeholder');
+      if (ph) ph.style.animation = 'absorb .5s ease-in forwards';
     }, 550);
-
-    // 2 — Ball lands
     setTimeout(() => {
       ball.className = 'catch-ball ball-landed';
       if (spriteEl) spriteEl.style.display = 'none';
-      const placeholder = document.querySelector('.catch-placeholder');
-      if (placeholder) placeholder.style.display = 'none';
+      const ph = document.querySelector('.catch-placeholder');
+      if (ph) ph.style.display = 'none';
       this._runWiggles(ball, statusEl, wiggles, caught, data);
     }, 900);
   },
 
-  _runWiggles(ball, statusEl, totalWiggles, caught, data) {
-    let wigglesDone = 0;
-    const pokeName  = capitalize(data.name);
-
-    const doNextWiggle = () => {
-      wigglesDone++;
-      ball.className = 'catch-ball';
-      // Force reflow so animation restarts
-      void ball.offsetWidth;
+  _runWiggles(ball, statusEl, total, caught, data) {
+    let done = 0;
+    const next = () => {
+      done++; ball.className = 'catch-ball'; void ball.offsetWidth;
       ball.className = 'catch-ball ball-wiggle';
-      statusEl.textContent = wigglesDone === 1 ? '...' : wigglesDone === 2 ? '... ...' : '... ... ...';
-
-      if (wigglesDone < totalWiggles) {
-        setTimeout(doNextWiggle, 900);
-      } else {
-        // Final result after last wiggle
-        setTimeout(() => this._showResult(ball, statusEl, caught, data), 700);
-      }
+      statusEl.textContent = done === 1 ? '...' : done === 2 ? '... ...' : '... ... ...';
+      if (done < total) setTimeout(next, 900);
+      else setTimeout(() => this._showResult(ball, statusEl, caught, data), 700);
     };
-
-    // Small delay before first wiggle
-    setTimeout(doNextWiggle, 400);
+    setTimeout(next, 400);
   },
 
   _showResult(ball, statusEl, caught, data) {
@@ -1892,70 +2044,248 @@ const CatchEngine = {
     const spriteEl   = document.getElementById('catch-sprite');
     const resultEl   = document.getElementById('catch-result');
     const resultText = document.getElementById('catch-result-text');
-
     if (caught && GameState.party.length < 6) {
-      ball.className = 'catch-ball ball-caught';
-      statusEl.textContent = '';
+      ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
       if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
       GameState.stats.pokemonCaught++;
       const level = 5 + GameState.bossesDefeated * 5 + Math.floor(Math.random() * 5);
-      const poke  = makePokemon(data.id, level, getSpriteUrl(data),
-                      pokeName, data.types[0]?.type?.name || 'normal');
+      const poke  = makePokemon(data.id, level, getSpriteUrl(data), pokeName, data.types[0]?.type?.name || 'normal');
       GameState.party.push(poke);
+      registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
       saveGame();
-      setTimeout(() => {
-        resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} was caught!`;
-        resultEl.style.display = 'block';
-      }, 600);
-
+      setTimeout(() => { resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} was caught!`; resultEl.style.display = 'block'; }, 600);
     } else if (caught && GameState.party.length >= 6) {
-      ball.className = 'catch-ball ball-caught';
-      statusEl.textContent = '';
-      setTimeout(() => {
-        resultText.innerHTML = `Party full! ${pokeName} was released.`;
-        resultEl.style.display = 'block';
-      }, 600);
-
+      ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
+      registerPokedex(data.id, pokeName, getSpriteUrl(data), true); saveGame();
+      setTimeout(() => { resultText.innerHTML = `Party full! ${pokeName} was released.`; resultEl.style.display = 'block'; }, 600);
     } else {
-      // Escaped — burst ball open and restore sprite
-      ball.className = 'catch-ball ball-burst';
-      statusEl.textContent = '';
-
+      ball.className = 'catch-ball ball-burst'; statusEl.textContent = '';
       setTimeout(() => {
-        // Restore sprite with fallback chain before showing escape animation
         if (spriteEl) {
           spriteEl.style.display = '';
-          const spriteUrls = [
+          loadImageWithFallback(spriteEl, [
             data.sprites?.other?.['official-artwork']?.front_default,
-            data.sprites?.other?.home?.front_default,
             data.sprites?.front_default,
             `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${data.id}.png`,
-          ];
-          loadImageWithFallback(spriteEl, spriteUrls, () => {
-            // If still no image, show placeholder again
-            spriteEl.style.display = 'none';
-          });
+          ], () => { spriteEl.style.display = 'none'; });
           spriteEl.className = 'catch-sprite revealed catch-escape';
         }
         statusEl.textContent = `${pokeName} broke free!`;
       }, 300);
-
       setTimeout(() => {
-        resultText.innerHTML   = `Oh no! ${pokeName} broke free and ran away!`;
+        resultText.innerHTML = `Oh no! ${pokeName} broke free!`;
         resultEl.style.display = 'block';
         if (spriteEl) spriteEl.className = 'catch-sprite catch-runaway';
       }, 1400);
     }
   },
 
+  finish() { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); },
+  flee()   { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); },
+};
+
+// ─── ITEM ENGINE ─────────────────────────────────────────────────────────────
+
+const ItemEngine = {
+  // Apply Oran Berry passive at end of each battle
+  checkPassive() {
+    if (!GameState.items) return;
+    const berries = GameState.items.filter(i => i.id === 'oran_berry' && i.count > 0);
+    if (!berries.length) return;
+    GameState.party.forEach(p => {
+      if (p.hp > 0 && p.hp < p.maxHp * 0.5 && berries[0].count > 0) {
+        p.hp = Math.min(p.maxHp, p.hp + 10);
+        berries[0].count--;
+        if (berries[0].count <= 0) {
+          GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
+        }
+      }
+    });
+  },
+
+  // Check on-faint Revive Potion
+  checkRevive(partyIdx) {
+    if (!GameState.items) return false;
+    const revive = GameState.items.find(i => i.id === 'revive_potion' && i.count > 0);
+    if (!revive) return false;
+    const p = GameState.party[partyIdx];
+    p.hp = Math.floor(p.maxHp * 0.3);
+    revive.count--;
+    if (revive.count <= 0) GameState.items = GameState.items.filter(i => i !== revive);
+    return true;
+  },
+
+  hasItem(id) {
+    return (GameState.items || []).some(i => i.id === id && i.count > 0);
+  },
+
+  useItem(id) {
+    const item = (GameState.items || []).find(i => i.id === id && i.count > 0);
+    if (!item) return false;
+    item.count--;
+    if (item.count <= 0) GameState.items = GameState.items.filter(i => i !== item);
+    return true;
+  },
+
+  addItem(id) {
+    if (!GameState.items) GameState.items = [];
+    const item = GameState.items.find(i => i.id === id);
+    const def  = SHOP_ITEMS.find(s => s.id === id);
+    if (!def) return;
+    if (item) { item.count++; }
+    else { GameState.items.push({ ...def, count: 1 }); }
+  },
+};
+
+// ─── CARD REWARD ENGINE ───────────────────────────────────────────────────────
+
+const CardReward = {
+  _pool: [], // 3 cards offered
+
+  show(goldEarned) {
+    // Build a reward pool from all card templates, weighted toward current type
+    const allCards = [];
+    Object.values(CARD_TEMPLATES).forEach(arr => arr.forEach(c => allCards.push({ ...c })));
+    this._pool = shuffle(allCards).slice(0, 3);
+
+    const el = document.getElementById('card-reward-screen');
+    document.getElementById('cr-gold-earned').textContent = `+${goldEarned}g earned`;
+    const grid = document.getElementById('cr-cards-grid');
+    grid.innerHTML = '';
+
+    this._pool.forEach((card, i) => {
+      const div = document.createElement('div');
+      div.className = 'card cr-card';
+      div.dataset.type = card.type;
+      div.innerHTML = `
+        <div class="card-icon">${card.icon}</div>
+        <div class="card-name">${card.name}</div>
+        <div class="card-power">${card.power > 0 ? '⚔ ' + card.power : '✦'}</div>
+        <div class="card-effect">${card.effect || '—'}</div>
+        <div class="cr-card-type type-${card.type}">${card.type}</div>
+      `;
+      div.onclick = () => this.pickCard(i);
+      grid.appendChild(div);
+    });
+
+    el.classList.remove('hidden');
+  },
+
+  pickCard(idx) {
+    const card = this._pool[idx];
+    GameState.deck.push({ ...card, improved: 0 });
+    // Also add to active pokemon's deck
+    const active = GameState.party[GameState.activePokemonIndex];
+    if (active && active.deck) active.deck.push({ ...card, improved: 0 });
+    this.close();
+  },
+
+  skip() {
+    this.close();
+  },
+
+  close() {
+    document.getElementById('card-reward-screen').classList.add('hidden');
+    MapEngine.show();
+  },
+};
+
+// ─── SHOP ENGINE ─────────────────────────────────────────────────────────────
+
+const ShopEngine = {
+  start(node) {
+    this._render();
+    showScreen('shop');
+  },
+
+  _render() {
+    document.getElementById('shop-gold').textContent = `💰 ${GameState.gold || 0}g`;
+    const grid = document.getElementById('shop-items-grid');
+    grid.innerHTML = '';
+
+    SHOP_ITEMS.forEach(item => {
+      const owned   = (GameState.items || []).find(i => i.id === item.id);
+      const count   = owned ? owned.count : 0;
+      const maxed   = count >= item.maxStack;
+      const isUnique = item.unique && (count > 0 || (item.id === 'master_ball' && GameState.masterBallUsed));
+      const cantAfford = (GameState.gold || 0) < item.price;
+      const disabled = maxed || isUnique || cantAfford;
+
+      const div = document.createElement('div');
+      div.className = 'shop-item' + (disabled ? ' shop-item-disabled' : '');
+      div.innerHTML = `
+        <div class="shop-item-icon">${item.icon}</div>
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-desc">${item.description}</div>
+        <div class="shop-item-footer">
+          <span class="shop-item-price">💰${item.price}g</span>
+          ${count > 0 ? `<span class="shop-item-owned">×${count}</span>` : ''}
+          <button class="btn-pixel btn-small btn-primary shop-buy-btn"
+                  ${disabled ? 'disabled' : ''}
+                  data-id="${item.id}">
+            ${isUnique ? 'Sold Out' : maxed ? 'Full' : cantAfford ? 'No gold' : 'Buy'}
+          </button>
+        </div>
+      `;
+      if (!disabled) {
+        div.querySelector('.shop-buy-btn').onclick = () => this.buy(item.id);
+      }
+      grid.appendChild(div);
+    });
+  },
+
+  buy(id) {
+    const item = SHOP_ITEMS.find(i => i.id === id);
+    if (!item) return;
+    if ((GameState.gold || 0) < item.price) return;
+    GameState.gold -= item.price;
+    ItemEngine.addItem(id);
+    if (id === 'master_ball') GameState.masterBallUsed = true;
+    saveGame();
+    this._render(); // refresh prices and stock
+  },
+
   finish() {
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },
+};
 
-  flee() {
-    MapEngine.completeNode(GameState.currentNodeIndex);
-    MapEngine.show();
+// ─── POKÉDEX ENGINE ───────────────────────────────────────────────────────────
+
+const PokedexEngine = {
+  async show() {
+    showLoading();
+    const dex = loadPokedex();
+    const entries = Object.values(dex).sort((a, b) => a.id - b.id);
+
+    // Fetch any missing sprites
+    const grid = document.getElementById('pokedex-grid');
+    grid.innerHTML = '';
+
+    document.getElementById('pokedex-count').textContent =
+      `${entries.filter(e => e.caught).length} caught / ${entries.length} seen`;
+
+    entries.forEach(e => {
+      const div = document.createElement('div');
+      div.className = 'dex-entry' + (e.caught ? ' dex-caught' : ' dex-seen');
+      div.innerHTML = `
+        <img src="${e.spriteUrl || ''}" alt="${e.name}"
+             onerror="this.src='assets/sprites/${e.id}.png'"
+             class="dex-sprite ${e.caught ? '' : 'silhouette'}" />
+        <div class="dex-name">${e.caught ? e.name : '???'}</div>
+        <div class="dex-id">#${String(e.id).padStart(3,'0')}</div>
+        ${e.caught ? '<div class="dex-ball">🔵</div>' : ''}
+      `;
+      grid.appendChild(div);
+    });
+
+    if (entries.length === 0) {
+      grid.innerHTML = '<div class="dex-empty">No Pokémon discovered yet.<br>Battle and catch to fill your Pokédex!</div>';
+    }
+
+    hideLoading();
+    showScreen('pokedex');
   },
 };
 
@@ -1963,21 +2293,40 @@ const CatchEngine = {
 
 const TrainingEngine = {
   selected: [],
+  mode: 'upgrade', // 'upgrade' | 'remove'
 
   start(node) {
     this.selected = [];
+    this.mode = 'upgrade';
     showScreen('training');
+    this._render();
+  },
+
+  setMode(m) {
+    this.mode = m;
+    this.selected = [];
     this._render();
   },
 
   _render() {
     const grid = document.getElementById('training-cards-grid');
     grid.innerHTML = '';
+
+    // Tab header
+    document.getElementById('training-mode-upgrade').classList.toggle('active-tab', this.mode === 'upgrade');
+    document.getElementById('training-mode-remove').classList.toggle('active-tab',  this.mode === 'remove');
+
+    const subtitle = document.getElementById('training-subtitle');
+    if (this.mode === 'upgrade') {
+      subtitle.textContent = 'Select 2 cards to power up (+25% damage)';
+    } else {
+      subtitle.textContent = 'Select 1 card to permanently remove from your deck';
+    }
+
     GameState.deck.forEach((card, i) => {
       const div = document.createElement('div');
       div.className = 'training-card' + (this.selected.includes(i) ? ' selected' : '');
       div.dataset.type = card.type;
-      div.style.setProperty('--type-color', `var(--col-type-${card.type}, var(--col-type-normal))`);
       div.style.borderTopColor = `var(--col-type-${card.type}, var(--col-type-normal))`;
       div.innerHTML = `
         <div class="card-icon" style="font-size:1.6rem">${card.icon}</div>
@@ -1989,32 +2338,54 @@ const TrainingEngine = {
       div.onclick = () => this.toggleSelect(i);
       grid.appendChild(div);
     });
-    document.getElementById('selected-count').textContent = `${this.selected.length} / 2 selected`;
-    document.getElementById('btn-improve').disabled = this.selected.length !== 2;
+
+    const maxSel = this.mode === 'upgrade' ? 2 : 1;
+    document.getElementById('selected-count').textContent = `${this.selected.length} / ${maxSel} selected`;
+    document.getElementById('btn-improve').textContent = this.mode === 'upgrade' ? '⚡ Upgrade Selected' : '🗑 Remove Card';
+    document.getElementById('btn-improve').disabled = this.selected.length !== maxSel;
   },
 
   toggleSelect(idx) {
+    const maxSel = this.mode === 'upgrade' ? 2 : 1;
     const i = this.selected.indexOf(idx);
     if (i >= 0) {
-      this.selected.splice(i,1);
-    } else if (this.selected.length < 2) {
+      this.selected.splice(i, 1);
+    } else if (this.selected.length < maxSel) {
       this.selected.push(idx);
     }
     this._render();
   },
 
   improve() {
-    if (this.selected.length !== 2) return;
-    this.selected.forEach(idx => {
-      const card = GameState.deck[idx];
-      card.improved = (card.improved || 0) + 1;
-      if (card.power > 0) card.power = Math.round(card.power * 1.25);
-    });
-    GameState.improvementMap = {};
-    GameState.deck.forEach((c, i) => { if (c.improved) GameState.improvementMap[i] = c.improved; });
-    saveGame();
-    MapEngine.completeNode(GameState.currentNodeIndex);
-    showModal('Cards Improved!', 'Your selected cards have been powered up!', () => MapEngine.show());
+    if (this.mode === 'upgrade') {
+      if (this.selected.length !== 2) return;
+      this.selected.forEach(idx => {
+        const card = GameState.deck[idx];
+        card.improved = (card.improved || 0) + 1;
+        if (card.power > 0) card.power = Math.round(card.power * 1.25);
+      });
+      GameState.improvementMap = {};
+      GameState.deck.forEach((c, i) => { if (c.improved) GameState.improvementMap[i] = c.improved; });
+      saveGame();
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      showModal('Cards Upgraded!', 'Your selected cards have been powered up!', () => MapEngine.show());
+    } else {
+      if (this.selected.length !== 1) return;
+      if (GameState.deck.length <= 3) {
+        showModal('Cannot Remove', 'Your deck must have at least 3 cards!', () => {});
+        return;
+      }
+      const removed = GameState.deck.splice(this.selected[0], 1)[0];
+      // Also remove from active pokemon's deck
+      const active = GameState.party[GameState.activePokemonIndex];
+      if (active && active.deck) {
+        const ri = active.deck.findIndex(c => c.name === removed.name);
+        if (ri >= 0) active.deck.splice(ri, 1);
+      }
+      saveGame();
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      showModal('Card Removed!', `${removed.name} has been removed from your deck.`, () => MapEngine.show());
+    }
   },
 
   skip() {
@@ -2234,6 +2605,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Start screen ──
   document.getElementById('btn-new-game').addEventListener('click', () => Game.startNew());
   document.getElementById('btn-continue-game').addEventListener('click', () => Game.continueGame());
+  document.getElementById('btn-open-pokedex').addEventListener('click', () => PokedexEngine.show());
 
   // ── Battle screen ──
   document.getElementById('btn-end-turn').addEventListener('click', () => BattleEngine.endTurn());
@@ -2247,12 +2619,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-flee').addEventListener('click', () => CatchEngine.flee());
   document.getElementById('btn-catch-continue').addEventListener('click', () => CatchEngine.finish());
 
-  // ── Game Over screen ──
-  document.getElementById('btn-gameover-restart').addEventListener('click', () => GameOver.restart());
+  // ── Card reward screen ──
+  document.getElementById('btn-cr-skip').addEventListener('click', () => CardReward.skip());
+
+  // ── Shop screen ──
+  document.getElementById('btn-shop-leave').addEventListener('click', () => ShopEngine.finish());
+
+  // ── Pokédex screen ──
+  document.getElementById('btn-pokedex-back').addEventListener('click', () => showScreen('start'));
 
   // ── Training screen ──
   document.getElementById('btn-improve').addEventListener('click', () => TrainingEngine.improve());
   document.getElementById('btn-training-skip').addEventListener('click', () => TrainingEngine.skip());
+  document.getElementById('training-mode-upgrade').addEventListener('click', () => TrainingEngine.setMode('upgrade'));
+  document.getElementById('training-mode-remove').addEventListener('click', () => TrainingEngine.setMode('remove'));
+
+  // ── Game Over screen ──
+  document.getElementById('btn-gameover-restart').addEventListener('click', () => GameOver.restart());
 
   // ── Heal screen ──
   document.getElementById('btn-heal-finish').addEventListener('click', () => HealEngine.finish());
@@ -2266,6 +2649,5 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Modal ──
   document.getElementById('modal-ok').addEventListener('click', () => closeModal());
 
-  // Show start screen
   showScreen('start');
 });
