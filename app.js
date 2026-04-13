@@ -458,7 +458,120 @@ function generateMap() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
+  SoundEngine.onScreenChange(id);
 }
+
+// ─── SOUND ENGINE ─────────────────────────────────────────────────────────────
+
+const SoundEngine = {
+  _current: null,   // currently looping BGM Audio object
+  _currentSrc: '',  // src of current BGM so we don't restart same track
+  _muted: false,
+  _bgmVolume: 0.45,
+  _sfxVolume: 0.7,
+
+  // Map of sound file names → full path
+  _path(file) { return `assets/sounds/${file}`; },
+
+  // Screen → BGM track mapping
+  _bgmMap: {
+    'start':   'opening.mp3',
+    'starter': 'pallet_town_theme.mp3',
+    'map':     'opening.mp3',
+    'battle':  'teamrocket_battle.mp3',
+    'boss':    'pokemon_gym.mp3',
+    'heal':    'pokemon_center.mp3',
+    'catch':   'pallet_town_theme.mp3',
+    'training':'pallet_town_theme.mp3',
+    'shop':    'pallet_town_theme.mp3',
+    'evolve':  'opening.mp3',
+    'victory': 'opening.mp3',
+    'gameover':null,   // no BGM — one-shot SFX handled in GameOver.show
+  },
+
+  // Play a looping background music track. Same track won't restart.
+  playBGM(file) {
+    if (this._muted) return;
+    if (!file) { this.stopBGM(); return; }
+    const src = this._path(file);
+    if (this._currentSrc === src && this._current && !this._current.paused) return;
+    this.stopBGM();
+    const audio = new Audio(src);
+    audio.loop   = true;
+    audio.volume = this._bgmVolume;
+    audio.play().catch(() => {}); // swallow autoplay policy errors gracefully
+    this._current    = audio;
+    this._currentSrc = src;
+  },
+
+  // Stop current BGM with a quick fade out
+  stopBGM(fadeDuration = 400) {
+    if (!this._current) return;
+    const audio = this._current;
+    this._current    = null;
+    this._currentSrc = '';
+    const step = audio.volume / (fadeDuration / 50);
+    const fade = setInterval(() => {
+      if (audio.volume > step) {
+        audio.volume = Math.max(0, audio.volume - step);
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+        clearInterval(fade);
+      }
+    }, 50);
+  },
+
+  // Play a one-shot SFX (fire and forget)
+  playSFX(file, volume) {
+    if (this._muted) return;
+    const audio = new Audio(this._path(file));
+    audio.volume = volume ?? this._sfxVolume;
+    audio.play().catch(() => {});
+  },
+
+  // Called automatically by showScreen()
+  onScreenChange(screenId) {
+    const track = this._bgmMap[screenId];
+    if (track !== undefined) this.playBGM(track);
+    // Game over: stop BGM then play team rocket show sting
+    if (screenId === 'gameover') {
+      this.stopBGM(200);
+      setTimeout(() => this.playSFX('teamrocket_show.mp3', 0.6), 300);
+    }
+  },
+
+  // Starter-specific cry — called when a starter card is hovered/selected
+  playStarterCry(starterId) {
+    const cryMap = {
+      1:  'jigglypuff.mp3',      // Bulbasaur  — playful, fitting
+      4:  'charmander.mp3',      // Charmander — its own cry
+      7:  'jigglypuff_song.mp3', // Squirtle   — serene melody
+      25: 'pikachu.mp3',         // Pikachu    — its own cry
+    };
+    const file = cryMap[starterId];
+    if (file) this.playSFX(file, 0.8);
+  },
+
+  // Fanfare — item get, card reward, successful catch
+  playFanfare() { this.playSFX('fanfare_item_get.mp3', 0.65); },
+
+  // Recovery jingle — heal complete
+  playRecovery() { this.playSFX('pokemon_recovery.mp3', 0.7); },
+
+  // Pikachu select confirm
+  playPikachu2() { this.playSFX('pikachu2.mp3', 0.8); },
+
+  toggleMute() {
+    this._muted = !this._muted;
+    if (this._muted) {
+      if (this._current) this._current.volume = 0;
+    } else {
+      if (this._current) this._current.volume = this._bgmVolume;
+    }
+    return this._muted;
+  },
+};
 
 function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
 function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
@@ -623,6 +736,7 @@ const Game = {
         </div>` : ''}
       `;
       if (!locked) {
+        card.addEventListener('mouseenter', () => SoundEngine.playStarterCry(s.id));
         card.onclick = () => this.selectStarter(card, s);
       }
       grid.appendChild(card);
@@ -640,6 +754,8 @@ const Game = {
 
   async confirmStarter(s) {
     showLoading();
+    // Special confirm cry for Pikachu
+    if (s.id === 25) SoundEngine.playPikachu2();
     const data = await fetchPoke(s.id);
     const sprite = getSpriteUrl(data);
     const pokemon = makePokemon(s.id, 5, sprite, s.name, s.type, true);
@@ -2111,11 +2227,19 @@ const CatchEngine = {
       GameState.party.push(poke);
       registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
       saveGame();
-      setTimeout(() => { resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} was caught!`; resultEl.style.display = 'block'; }, 600);
+      setTimeout(() => {
+        SoundEngine.playFanfare();
+        resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} was caught!`;
+        resultEl.style.display = 'block';
+      }, 600);
     } else if (caught && GameState.party.length >= 6) {
       ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
       registerPokedex(data.id, pokeName, getSpriteUrl(data), true); saveGame();
-      setTimeout(() => { resultText.innerHTML = `Party full! ${pokeName} was released.`; resultEl.style.display = 'block'; }, 600);
+      setTimeout(() => {
+        SoundEngine.playFanfare();
+        resultText.innerHTML = `Party full! ${pokeName} was released.`;
+        resultEl.style.display = 'block';
+      }, 600);
     } else {
       ball.className = 'catch-ball ball-burst'; statusEl.textContent = '';
       setTimeout(() => {
@@ -2249,9 +2373,9 @@ const CardReward = {
   pickCard(idx) {
     const card = this._pool[idx];
     GameState.deck.push({ ...card, improved: 0 });
-    // Also add to active pokemon's deck
     const active = GameState.party[GameState.activePokemonIndex];
     if (active && active.deck) active.deck.push({ ...card, improved: 0 });
+    SoundEngine.playFanfare();
     this.close();
   },
 
@@ -2316,8 +2440,9 @@ const ShopEngine = {
     GameState.gold -= item.price;
     ItemEngine.addItem(id);
     if (id === 'master_ball') GameState.masterBallUsed = true;
+    SoundEngine.playFanfare();
     saveGame();
-    this._render(); // refresh prices and stock
+    this._render();
   },
 
   finish() {
@@ -2477,6 +2602,8 @@ const TrainingEngine = {
 const HealEngine = {
   start(node) {
     showScreen('heal');
+    // Play recovery jingle after a brief moment (BGM has just started)
+    setTimeout(() => SoundEngine.playRecovery(), 400);
     // Create sparkles
     const field = document.getElementById('heal-sparkles');
     field.innerHTML = '';
@@ -2679,6 +2806,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-party-drawer-close').addEventListener('click', () => PartyOverview.close());
   document.getElementById('party-drawer-backdrop').addEventListener('click', () => PartyOverview.close());
   document.getElementById('btn-poke-detail-close').addEventListener('click', () => PartyOverview.closeDetail());
+
+  // ── Mute buttons ──
+  const updateMuteBtns = (muted) => {
+    document.querySelectorAll('.mute-btn').forEach(b => { b.textContent = muted ? '🔇' : '🔊'; });
+  };
+  document.querySelectorAll('.mute-btn').forEach(btn => {
+    btn.addEventListener('click', () => updateMuteBtns(SoundEngine.toggleMute()));
+  });
 
   // ── Start screen ──
   document.getElementById('btn-new-game').addEventListener('click', () => Game.startNew());
