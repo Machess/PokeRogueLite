@@ -679,7 +679,29 @@ const Game = {
     }
 
     // ── Bosses 1 & 2: evolve the starter then show the next map ──
-    const starter  = STARTERS.find(s => s.id === GameState.starterId);
+    const starter = STARTERS.find(s => s.id === GameState.starterId);
+
+    // Pikachu doesn't evolve — skip the cutscene and go straight to next map
+    if (starter.id === 25) {
+      // Still give the HP bonus a normal evolution would grant
+      const idx = GameState.party.findIndex(p => p.isStarter);
+      if (idx >= 0) {
+        GameState.party[idx].maxHp += 20;
+        GameState.party[idx].hp    += 20;
+      }
+      GameState.map = generateMap();
+      GameState.map.forEach(n => {
+        if (n.type === 'boss') n.bossIndex = Math.min(GameState.bossesDefeated, 2);
+      });
+      GameState.completedNodes = [];
+      GameState.highWaterRow   = -1;
+      saveGame();
+      showModal('Boss Defeated!', `⚡ Pikachu powered up! On to the next challenge!`, () => {
+        MapEngine.show();
+      });
+      return;
+    }
+
     const newStage = GameState.evolutionStage + 1;
     GameState.evolutionStage = newStage;
 
