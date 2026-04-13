@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéRogue — A Roguelite Card Adventure</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: START
+═══════════════════════════════════════════ -->
+<div id="screen-start" class="screen active">
+  <div class="start-bg">
+    <div class="start-clouds">
+      <div class="cloud c1"></div>
+      <div class="cloud c2"></div>
+      <div class="cloud c3"></div>
+    </div>
+    <div class="start-ground"></div>
+  </div>
+  <!-- Asset slot: replace src with your trainer artwork -->
+  <img class="start-trainer" src="assets/trainer_stand.png" alt="Trainer"
+       onerror="this.style.display='none'" />
+  <div class="start-logo">
+    <div class="logo-sub">A Roguelite Card Adventure</div>
+    <div class="logo-main">PokéRogue</div>
+  </div>
+  <div class="start-menu">
+    <button class="btn-pixel btn-primary" id="btn-new-game">▶ New Game</button>
+    <button class="btn-pixel btn-secondary" id="btn-continue-game">◈ Continue</button>
+  </div>
+  <div class="start-footer">Catch · Battle · Evolve</div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: STARTER SELECTION
+═══════════════════════════════════════════ -->
+<div id="screen-starter" class="screen">
+  <div class="starter-bg"></div>
+  <h1 class="screen-title">Choose Your Partner!</h1>
+  <p class="screen-sub">Professor Oak has three Pokémon for you…</p>
+  <div class="starter-grid" id="starter-grid">
+    <!-- Populated by JS -->
+  </div>
+  <div class="starter-confirm" id="starter-confirm" style="display:none">
+    <button class="btn-pixel btn-primary" id="btn-confirm-starter">I choose you! ▶</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: MAP
+═══════════════════════════════════════════ -->
+<div id="screen-map" class="screen">
+  <div class="map-header">
+    <div class="map-party" id="map-party" title="Click to manage party"></div>
+    <div class="map-title">🗺 Trail of Trials</div>
+    <div class="map-meta" id="map-meta"></div>
+  </div>
+  <div class="map-canvas-wrap">
+    <canvas id="map-canvas"></canvas>
+    <div id="map-nodes-layer"></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     PARTY OVERVIEW DRAWER (slides up over map)
+═══════════════════════════════════════════ -->
+<div id="party-drawer" class="party-drawer hidden">
+  <div class="party-drawer-backdrop" id="party-drawer-backdrop"></div>
+  <div class="party-drawer-panel">
+    <div class="party-drawer-header">
+      <div class="party-drawer-title">Your Party</div>
+      <div class="party-drawer-hint">Drag to reorder · Tap to see moves</div>
+      <button class="party-drawer-close" id="btn-party-drawer-close">✕</button>
+    </div>
+    <div class="party-drawer-list" id="party-drawer-list">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     POKEMON CARD DETAIL MODAL
+═══════════════════════════════════════════ -->
+<div id="poke-detail-modal" class="poke-detail-overlay hidden">
+  <div class="poke-detail-panel">
+    <button class="poke-detail-close" id="btn-poke-detail-close">✕</button>
+    <div class="poke-detail-header">
+      <img id="poke-detail-sprite" src="" alt="" class="poke-detail-sprite" />
+      <div class="poke-detail-info">
+        <div class="poke-detail-name" id="poke-detail-name"></div>
+        <div class="poke-detail-type" id="poke-detail-type"></div>
+        <div class="poke-detail-level" id="poke-detail-level"></div>
+        <div class="poke-detail-hp-wrap">
+          <div class="poke-detail-hp-bar-bg">
+            <div class="poke-detail-hp-bar" id="poke-detail-hp-bar"></div>
+          </div>
+          <div class="poke-detail-hp-text" id="poke-detail-hp-text"></div>
+        </div>
+      </div>
+    </div>
+    <div class="poke-detail-cards-title">Battle Cards</div>
+    <div class="poke-detail-cards" id="poke-detail-cards">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: BATTLE
+═══════════════════════════════════════════ -->
+<div id="screen-battle" class="screen">
+  <!-- Background — swap src for your battle artwork -->
+  <div class="battle-bg">
+    <img src="assets/battleRefrence.jpg" alt="" class="battle-bg-img"
+         onerror="this.style.opacity='0'" />
+    <div class="battle-bg-overlay"></div>
+  </div>
+
+  <!-- Opponent side -->
+  <div class="battle-opponent-area">
+    <div class="battle-hud hud-opponent" id="opp-hud">
+      <div class="hud-name" id="opp-name">???</div>
+      <div class="hud-level-row">
+        <span class="hud-level" id="opp-level">Lv.1</span>
+        <span class="hud-type-badge" id="opp-type-badge"></span>
+      </div>
+      <div class="hud-bar-wrap"><div class="hud-bar" id="opp-hp-bar"></div></div>
+      <div class="hud-hp-text" id="opp-hp-text">? / ?</div>
+    </div>
+    <div class="battle-sprite-wrap opponent">
+      <!-- Asset slot: opp-sprite src set by JS from PokeAPI -->
+      <img id="opp-sprite" src="" alt="Opponent" class="battle-sprite opponent-sprite" />
+    </div>
+  </div>
+
+  <!-- Player side -->
+  <div class="battle-player-area">
+    <div class="battle-sprite-wrap player">
+      <!-- Asset slot: player-sprite src set by JS from PokeAPI -->
+      <img id="player-sprite" src="" alt="Player Pokémon" class="battle-sprite player-sprite" />
+    </div>
+    <div class="battle-hud hud-player" id="player-hud">
+      <div class="hud-name" id="player-name">???</div>
+      <div class="hud-level" id="player-level">Lv.1</div>
+      <div class="hud-bar-wrap"><div class="hud-bar" id="player-hp-bar"></div></div>
+      <div class="hud-hp-text" id="player-hp-text">? / ?</div>
+    </div>
+  </div>
+
+  <!-- Battle log -->
+  <div class="battle-log" id="battle-log">
+    <div class="log-inner" id="log-inner">Battle starts!</div>
+  </div>
+
+  <!-- Hand & controls -->
+  <div class="battle-controls">
+    <div class="pile-area">
+      <div class="pile draw-pile" id="draw-pile-display">
+        <!-- Asset slot: card back icon -->
+        <div class="pile-icon">🃏</div>
+        <div class="pile-count" id="draw-count">0</div>
+        <div class="pile-label">Draw</div>
+      </div>
+      <div class="pile discard-pile" id="discard-pile-display">
+        <div class="pile-icon ghost">🃏</div>
+        <div class="pile-count" id="discard-count">0</div>
+        <div class="pile-label">Discard</div>
+      </div>
+    </div>
+    <div class="hand-area" id="hand-area">
+      <!-- Cards injected by JS -->
+    </div>
+    <div class="action-info">
+      <div class="actions-left" id="actions-left">Actions: 3</div>
+      <div class="turn-btn-wrap">
+        <button class="btn-pixel btn-end-turn" id="btn-end-turn">End Turn ▶</button>
+      </div>
+      <div class="party-swap" id="party-swap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: BOSS BATTLE
+═══════════════════════════════════════════ -->
+<div id="screen-boss" class="screen">
+  <div class="battle-bg boss-bg">
+    <img src="assets/battleRefrence.jpg" alt="" class="battle-bg-img"
+         onerror="this.style.opacity='0'" />
+    <div class="battle-bg-overlay boss-overlay"></div>
+  </div>
+
+  <!-- Trainer intro -->
+  <div class="trainer-intro" id="trainer-intro">
+    <div class="trainer-sprite-wrap">
+      <!-- Asset slot: trainer sprite -->
+      <img id="boss-trainer-sprite" src="assets/trainer_boss.png" alt="Boss Trainer"
+           onerror="this.src='';this.style.fontSize='6rem';this.alt='🧢'" class="trainer-sprite" />
+    </div>
+    <div class="trainer-dialogue-box" id="trainer-dialogue">
+      <div class="dialogue-name" id="dialogue-name">Trainer</div>
+      <div class="dialogue-text" id="dialogue-text">...</div>
+      <button class="btn-pixel btn-small" id="btn-start-boss-battle">Battle! ▶</button>
+    </div>
+  </div>
+
+  <!-- Battle area (same layout as normal battle, reused) -->
+  <div class="boss-battle-area" id="boss-battle-area" style="display:none">
+    <div class="boss-party-bar" id="boss-party-bar"></div>
+
+    <div class="battle-opponent-area">
+      <div class="battle-hud hud-opponent" id="boss-opp-hud">
+        <div class="hud-name" id="boss-opp-name">???</div>
+        <div class="hud-level-row">
+          <span class="hud-level" id="boss-opp-level">Lv.1</span>
+          <span class="hud-type-badge" id="boss-opp-type-badge"></span>
+        </div>
+        <div class="hud-bar-wrap"><div class="hud-bar" id="boss-opp-hp-bar"></div></div>
+        <div class="hud-hp-text" id="boss-opp-hp-text">? / ?</div>
+      </div>
+      <div class="battle-sprite-wrap opponent">
+        <img id="boss-opp-sprite" src="" alt="Boss Pokémon" class="battle-sprite opponent-sprite" />
+      </div>
+    </div>
+
+    <div class="battle-player-area">
+      <div class="battle-sprite-wrap player">
+        <img id="boss-player-sprite" src="" alt="Player Pokémon" class="battle-sprite player-sprite" />
+      </div>
+      <div class="battle-hud hud-player">
+        <div class="hud-name" id="boss-player-name">???</div>
+        <div class="hud-level" id="boss-player-level">Lv.1</div>
+        <div class="hud-bar-wrap"><div class="hud-bar" id="boss-player-hp-bar"></div></div>
+        <div class="hud-hp-text" id="boss-player-hp-text">? / ?</div>
+      </div>
+    </div>
+
+    <div class="battle-log" id="boss-battle-log">
+      <div class="log-inner" id="boss-log-inner">Boss battle!</div>
+    </div>
+
+    <div class="battle-controls">
+      <div class="pile-area">
+        <div class="pile draw-pile">
+          <div class="pile-icon">🃏</div>
+          <div class="pile-count" id="boss-draw-count">0</div>
+          <div class="pile-label">Draw</div>
+        </div>
+        <div class="pile discard-pile">
+          <div class="pile-icon ghost">🃏</div>
+          <div class="pile-count" id="boss-discard-count">0</div>
+          <div class="pile-label">Discard</div>
+        </div>
+      </div>
+      <div class="hand-area" id="boss-hand-area"></div>
+      <div class="action-info">
+        <div class="actions-left" id="boss-actions-left">Actions: 3</div>
+        <div class="turn-btn-wrap">
+          <button class="btn-pixel btn-end-turn" id="btn-boss-end-turn">End Turn ▶</button>
+        </div>
+        <div class="party-swap" id="boss-party-swap"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: GAME OVER
+═══════════════════════════════════════════ -->
+<div id="screen-gameover" class="screen">
+  <div class="gameover-bg">
+    <div class="gameover-rain" id="gameover-rain"></div>
+  </div>
+  <div class="gameover-center">
+    <div class="gameover-title">Game Over</div>
+    <div class="gameover-defeated-by" id="gameover-defeated-by">Defeated by ???</div>
+
+    <div class="gameover-stats-card">
+      <div class="gameover-stat">
+        <span class="stat-icon">⚔️</span>
+        <span class="stat-label">Battles Won</span>
+        <span class="stat-value" id="go-battles-won">0</span>
+      </div>
+      <div class="gameover-stat">
+        <span class="stat-icon">🔵</span>
+        <span class="stat-label">Pokémon Caught</span>
+        <span class="stat-value" id="go-caught">0</span>
+      </div>
+      <div class="gameover-stat">
+        <span class="stat-icon">🗺️</span>
+        <span class="stat-label">Nodes Cleared</span>
+        <span class="stat-value" id="go-nodes">0</span>
+      </div>
+      <div class="gameover-stat">
+        <span class="stat-icon">💀</span>
+        <span class="stat-label">Bosses Beaten</span>
+        <span class="stat-value" id="go-bosses">0</span>
+      </div>
+    </div>
+
+    <div class="gameover-fav" id="gameover-fav">
+      <!-- Favourite Pokémon card, injected by JS -->
+    </div>
+
+    <button class="btn-pixel btn-primary gameover-btn" id="btn-gameover-restart">
+      ▶ Try Again
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: CATCH
+═══════════════════════════════════════════ -->
+<div id="screen-catch" class="screen">
+  <div class="catch-bg"></div>
+  <h1 class="screen-title" id="catch-title">Wild Pokémon Appeared!</h1>
+
+  <!-- Arena: pokemon sprite -->
+  <div class="catch-arena">
+    <div class="catch-sprite-wrap" id="catch-sprite-wrap">
+      <img id="catch-sprite" src="" alt="Wild Pokémon" class="catch-sprite silhouette" />
+    </div>
+    <div class="catch-name" id="catch-name">???</div>
+    <div class="catch-rarity" id="catch-rarity"></div>
+  </div>
+
+  <!-- Animated pokeball (hidden until thrown) -->
+  <div class="catch-ball-wrap" id="catch-ball-wrap" style="display:none">
+    <div class="catch-ball" id="catch-ball">
+      <!-- Asset slot: replace inner with <img src="assets/ui/pokeball.png"> -->
+      <div class="ball-top"></div>
+      <div class="ball-mid"></div>
+      <div class="ball-bot"></div>
+      <div class="ball-button"></div>
+    </div>
+  </div>
+
+  <!-- Wiggle status text -->
+  <div class="catch-status" id="catch-status"></div>
+
+  <!-- Controls -->
+  <div class="catch-controls" id="catch-controls" style="display:none">
+    <button class="btn-pixel btn-pokeball" id="btn-throw-ball">
+      <span class="pokeball-icon">
+        <span class="pbi-top"></span>
+        <span class="pbi-mid"></span>
+        <span class="pbi-bot"></span>
+        <span class="pbi-btn"></span>
+      </span> Throw Poké Ball!
+    </button>
+    <button class="btn-pixel btn-secondary" id="btn-flee">Run Away</button>
+  </div>
+
+  <!-- Result message + continue button -->
+  <div class="catch-result" id="catch-result" style="display:none">
+    <div class="catch-result-text" id="catch-result-text"></div>
+    <button class="btn-pixel btn-primary" id="btn-catch-continue">Continue ▶</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: TRAINING
+═══════════════════════════════════════════ -->
+<div id="screen-training" class="screen">
+  <!-- Asset slot: replace with your card upgrade reference art -->
+  <div class="training-bg">
+    <div class="training-bg-pattern"></div>
+  </div>
+  <h1 class="screen-title">⚡ Training Grounds</h1>
+  <p class="screen-sub">Select <strong>2 cards</strong> to power up!</p>
+  <div class="training-cards-grid" id="training-cards-grid">
+    <!-- Populated by JS -->
+  </div>
+  <div class="training-footer">
+    <div class="selected-count" id="selected-count">0 / 2 selected</div>
+    <button class="btn-pixel btn-primary" id="btn-improve" disabled>
+      ⚡ Improve Selected
+    </button>
+    <button class="btn-pixel btn-secondary" id="btn-training-skip">Skip</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: HEAL
+═══════════════════════════════════════════ -->
+<div id="screen-heal" class="screen">
+  <div class="heal-bg">
+    <div class="heal-sparkle-field" id="heal-sparkles"></div>
+  </div>
+  <div class="heal-center">
+    <div class="heal-icon">✨</div>
+    <h1 class="screen-title">Pokémon Center</h1>
+    <div class="heal-dialogue" id="heal-dialogue">
+      Welcome! We restore your tired Pokémon to full health. Have a good trip!
+    </div>
+    <div class="heal-party" id="heal-party"></div>
+    <button class="btn-pixel btn-primary heal-btn" id="btn-heal-finish">Thank you! ▶</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: EVOLVE
+═══════════════════════════════════════════ -->
+<div id="screen-evolve" class="screen">
+  <div class="evolve-bg">
+    <div class="evolve-particles" id="evolve-particles"></div>
+  </div>
+  <div class="evolve-center">
+    <div class="evolve-sprites">
+      <img id="evolve-before" src="" alt="" class="evolve-sprite before" />
+      <div class="evolve-arrow">→</div>
+      <img id="evolve-after" src="" alt="" class="evolve-sprite after" />
+    </div>
+    <div class="evolve-text" id="evolve-text">Evolving...</div>
+    <button class="btn-pixel btn-primary evolve-btn" id="btn-evolve-continue"
+            style="display:none">Continue ▶</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: VICTORY
+═══════════════════════════════════════════ -->
+<div id="screen-victory" class="screen">
+  <div class="victory-bg">
+    <div class="victory-stars" id="victory-stars"></div>
+  </div>
+  <div class="victory-center">
+    <div class="victory-trophy">🏆</div>
+    <div class="victory-title">Champion!</div>
+    <div class="victory-sub" id="victory-sub">You are the PokéRogue Champion!</div>
+
+    <div class="victory-stats-card">
+      <div class="gameover-stat">
+        <span class="stat-icon">⚔️</span>
+        <span class="stat-label">Battles Won</span>
+        <span class="stat-value" id="vic-battles-won">0</span>
+      </div>
+      <div class="gameover-stat">
+        <span class="stat-icon">🔵</span>
+        <span class="stat-label">Pokémon Caught</span>
+        <span class="stat-value" id="vic-caught">0</span>
+      </div>
+      <div class="gameover-stat">
+        <span class="stat-icon">🗺️</span>
+        <span class="stat-label">Nodes Cleared</span>
+        <span class="stat-value" id="vic-nodes">0</span>
+      </div>
+      <div class="gameover-stat">
+        <span class="stat-icon">💀</span>
+        <span class="stat-label">Bosses Beaten</span>
+        <span class="stat-value" id="vic-bosses">3</span>
+      </div>
+    </div>
+
+    <div class="victory-fav" id="victory-fav"></div>
+
+    <div class="victory-party-label">Your Champions</div>
+    <div class="victory-party" id="victory-party"></div>
+
+    <button class="btn-pixel btn-primary gameover-btn" id="btn-play-again">▶ Play Again</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     GLOBAL OVERLAY / MODAL
+═══════════════════════════════════════════ -->
+<div id="overlay" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <button class="btn-pixel btn-primary" id="modal-ok">OK</button>
+  </div>
+</div>
+
+<!-- Loading spinner -->
+<div id="loading-overlay" class="overlay hidden">
+  <div class="loading-spinner">
+    <div class="pokeball-spin">
+      <span class="pokeball-icon">
+        <span class="pbi-top"></span>
+        <span class="pbi-mid"></span>
+        <span class="pbi-bot"></span>
+        <span class="pbi-btn"></span>
+      </span>
+    </div>
+    <div class="loading-text">Loading…</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
