@@ -783,14 +783,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: 1rem;
   cursor: pointer;
   transform: translate(-50%, -50%);
-  transition: transform .15s, filter .15s, box-shadow .15s;
+  transition: filter .15s, box-shadow .15s, border-color .15s;
   pointer-events: all;
   box-shadow: 0 3px 8px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25);
 }
 .map-node-btn:hover:not([disabled]) {
-  transform: translate(-50%, -50%) scale(1.2);
-  filter: brightness(1.3);
-  box-shadow: 0 6px 18px rgba(0,0,0,.55), 0 0 12px rgba(255,200,80,.5);
+  filter: brightness(1.25);
+  box-shadow: 0 4px 16px rgba(0,0,0,.55), 0 0 14px rgba(255,200,80,.6);
 }
 .map-node-btn[disabled] { cursor: not-allowed; opacity: .55; }
 
@@ -2696,8 +2695,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed):hover {
   border-color: var(--theme-accent, var(--col-yellow));
-  box-shadow: 0 0 16px var(--theme-accent, var(--col-yellow));
-  transform: translateY(-3px) scale(1.12);
+  box-shadow: 0 0 18px var(--theme-accent, var(--col-yellow));
 }
 
 /* Left lane — very subtle warm tint on border */
