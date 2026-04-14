@@ -517,6 +517,14 @@ const SoundEngine = {
 
   stopBGM() { this._hardStop(); },
 
+  stopSFX() {
+    if (this._sfxNode) {
+      try { this._sfxNode.pause(); this._sfxNode.currentTime = 0; } catch(e) {}
+      this._sfxNode = null;
+    }
+    if (this._sfxDebounce) { clearTimeout(this._sfxDebounce); this._sfxDebounce = null; }
+  },
+
   // Play a one-shot SFX. Kills any in-progress SFX first so sounds never stack.
   playSFX(file, volume) {
     if (this._muted) return;
@@ -1258,7 +1266,7 @@ const Game = {
   },
 
   goToMenu() {
-    // Save progress and return to start — run is resumable via Continue
+    SoundEngine.stopSFX();
     saveGame();
     GameState = null;
     showScreen('start');
@@ -2543,6 +2551,7 @@ const GameOver = {
   },
 
   restart() {
+    SoundEngine.stopSFX();
     deleteSave();
     GameState = null;
     showScreen('start');
@@ -3235,7 +3244,7 @@ const VictoryEngine = {
     }
 
     document.getElementById('victory-sub').textContent =
-      'You are the PokéRogue Champion! Pikachu is now unlocked!';
+      'You are the PokéTrials Champion! Pikachu is now unlocked!';
 
     showScreen('victory');
   },
