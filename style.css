@@ -2846,3 +2846,74 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-family: 'Press Start 2P', monospace;
   font-size: .3rem; color: var(--col-red);
 }
+
+/* ═══════════════════════════════════════════
+   BATTLE SPRITE ANIMATIONS
+═══════════════════════════════════════════ */
+
+/* Attacker lunges toward the opponent */
+@keyframes sprite-lunge-player {
+  0%   { transform: translateX(0); }
+  40%  { transform: translateX(28px); }
+  100% { transform: translateX(0); }
+}
+@keyframes sprite-lunge-opp {
+  0%   { transform: translateX(0); }
+  40%  { transform: translateX(-28px); }
+  100% { transform: translateX(0); }
+}
+/* Player sprite lunges right, opp sprite lunges left */
+#player-sprite.sprite-lunge,
+#boss-player-sprite.sprite-lunge     { animation: sprite-lunge-player .32s ease-in-out; }
+#opp-sprite.sprite-lunge,
+#boss-opp-sprite.sprite-lunge        { animation: sprite-lunge-opp    .32s ease-in-out; }
+
+/* Defender shake (existing shake keyframes reused) */
+.hit-shake { animation: shake .4s; }
+
+/* ── Type-coloured hit flash — overlaid on top of shake ── */
+/* Each type pulses a semi-transparent colour over the sprite  */
+@keyframes flash-fade {
+  0%,100% { filter: brightness(1); }
+  30%     { filter: brightness(2.2) saturate(3); }
+  60%     { filter: brightness(1.4); }
+}
+
+/* Applied together with hit-shake for coloured feedback */
+.hit-flash-fire     { animation: shake .4s, flash-fire     .45s; }
+.hit-flash-water    { animation: shake .4s, flash-water    .45s; }
+.hit-flash-grass    { animation: shake .4s, flash-grass    .45s; }
+.hit-flash-electric { animation: shake .4s, flash-electric .45s; }
+.hit-flash-psychic  { animation: shake .4s, flash-psychic  .45s; }
+.hit-flash-ice      { animation: shake .4s, flash-ice      .45s; }
+.hit-flash-rock     { animation: shake .4s, flash-rock     .45s; }
+.hit-flash-ground   { animation: shake .4s, flash-ground   .45s; }
+.hit-flash-poison   { animation: shake .4s, flash-poison   .45s; }
+.hit-flash-ghost    { animation: shake .4s, flash-ghost    .45s; }
+.hit-flash-dragon   { animation: shake .4s, flash-dragon   .45s; }
+.hit-flash-dark     { animation: shake .4s, flash-dark     .45s; }
+.hit-flash-fighting { animation: shake .4s, flash-fighting .45s; }
+.hit-flash-flying   { animation: shake .4s, flash-flying   .45s; }
+.hit-flash-steel    { animation: shake .4s, flash-steel    .45s; }
+.hit-flash-normal   { animation: shake .4s, flash-normal   .45s; }
+.hit-flash-fairy    { animation: shake .4s, flash-fairy    .45s; }
+.hit-flash-bug      { animation: shake .4s, flash-bug      .45s; }
+
+@keyframes flash-fire     { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(-10deg) brightness(2)} }
+@keyframes flash-water    { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(180deg)  brightness(2)} }
+@keyframes flash-grass    { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(80deg)   brightness(1.8)} }
+@keyframes flash-electric { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(40deg)  brightness(3)} }
+@keyframes flash-psychic  { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(280deg) brightness(2)} }
+@keyframes flash-ice      { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(5) hue-rotate(170deg) brightness(2.5)} }
+@keyframes flash-rock     { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(4) hue-rotate(20deg)  brightness(1.6)} }
+@keyframes flash-ground   { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(4) hue-rotate(25deg)  brightness(1.5)} }
+@keyframes flash-poison   { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(260deg) brightness(1.8)} }
+@keyframes flash-ghost    { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(6) hue-rotate(250deg) brightness(1.4) invert(.15)} }
+@keyframes flash-dragon   { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(200deg) brightness(2)} }
+@keyframes flash-dark     { 0%,100%{filter:none} 40%{filter:brightness(.3) contrast(2)} }
+@keyframes flash-fighting { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(6) hue-rotate(-20deg) brightness(2)} }
+@keyframes flash-flying   { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(4) hue-rotate(170deg) brightness(2.2)} }
+@keyframes flash-steel    { 0%,100%{filter:none} 40%{filter:brightness(3) saturate(0)} }
+@keyframes flash-normal   { 0%,100%{filter:none} 40%{filter:brightness(2.5) saturate(0)} }
+@keyframes flash-fairy    { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(290deg) brightness(2.2)} }
+@keyframes flash-bug      { 0%,100%{filter:none} 40%{filter:sepia(1) saturate(8) hue-rotate(60deg)  brightness(1.8)} }

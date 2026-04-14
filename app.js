@@ -271,6 +271,121 @@ const STATUS_LABELS = {
   para:   '⚡PAR',
 };
 
+// ─── OPPONENT MOVE TABLE ──────────────────────────────────────────────────────
+// Each type has 4-5 moves. power is base before level scaling.
+// effect: 'burn_chance' | 'para_chance' | 'poison_chance' | 'debuff_atk' | null
+const OPPONENT_MOVES = {
+  normal:   [
+    { name: 'Tackle',    power: 35, effect: null },
+    { name: 'Scratch',   power: 30, effect: null },
+    { name: 'Pound',     power: 28, effect: null },
+    { name: 'Bite',      power: 40, effect: null },
+    { name: 'Headbutt',  power: 45, effect: null },
+  ],
+  fire:     [
+    { name: 'Ember',        power: 38, effect: 'burn_chance' },
+    { name: 'Flame Charge', power: 42, effect: null },
+    { name: 'Fire Fang',    power: 48, effect: 'burn_chance' },
+    { name: 'Flamethrower', power: 60, effect: null },
+  ],
+  water:    [
+    { name: 'Water Gun',  power: 38, effect: null },
+    { name: 'Bubble',     power: 30, effect: null },
+    { name: 'Aqua Jet',   power: 40, effect: null },
+    { name: 'Surf',       power: 55, effect: null },
+  ],
+  grass:    [
+    { name: 'Vine Whip',   power: 40, effect: null },
+    { name: 'Razor Leaf',  power: 48, effect: null },
+    { name: 'Absorb',      power: 30, effect: null },
+    { name: 'Mega Drain',  power: 42, effect: null },
+  ],
+  electric: [
+    { name: 'ThunderShock', power: 38, effect: 'para_chance' },
+    { name: 'Spark',        power: 45, effect: null },
+    { name: 'Thunder Wave', power: 0,  effect: 'para_chance' },
+    { name: 'Thunderbolt',  power: 55, effect: 'para_chance' },
+  ],
+  psychic:  [
+    { name: 'Confusion',   power: 38, effect: 'debuff_atk' },
+    { name: 'Psybeam',     power: 48, effect: null },
+    { name: 'Psyshock',    power: 50, effect: null },
+    { name: 'Psychic',     power: 60, effect: 'debuff_atk' },
+  ],
+  rock:     [
+    { name: 'Rock Throw',   power: 42, effect: null },
+    { name: 'Rock Slide',   power: 52, effect: null },
+    { name: 'Stone Edge',   power: 60, effect: null },
+    { name: 'Rollout',      power: 35, effect: null },
+  ],
+  ground:   [
+    { name: 'Mud Slap',   power: 28, effect: 'debuff_atk' },
+    { name: 'Dig',        power: 55, effect: null },
+    { name: 'Earthquake', power: 65, effect: null },
+    { name: 'Sand Tomb',  power: 35, effect: null },
+  ],
+  poison:   [
+    { name: 'Poison Sting', power: 30, effect: 'poison_chance' },
+    { name: 'Acid',         power: 38, effect: 'debuff_atk' },
+    { name: 'Sludge',       power: 48, effect: 'poison_chance' },
+    { name: 'Venoshock',    power: 55, effect: null },
+  ],
+  ice:      [
+    { name: 'Ice Shard',  power: 38, effect: null },
+    { name: 'Icy Wind',   power: 42, effect: 'debuff_atk' },
+    { name: 'Blizzard',   power: 60, effect: null },
+    { name: 'Frost Breath', power: 48, effect: null },
+  ],
+  flying:   [
+    { name: 'Gust',        power: 38, effect: null },
+    { name: 'Wing Attack', power: 48, effect: null },
+    { name: 'Aerial Ace',  power: 45, effect: null },
+    { name: 'Air Slash',   power: 55, effect: null },
+  ],
+  fighting: [
+    { name: 'Karate Chop', power: 42, effect: null },
+    { name: 'Low Kick',    power: 38, effect: null },
+    { name: 'Cross Chop',  power: 55, effect: null },
+    { name: 'Force Palm',  power: 48, effect: 'para_chance' },
+  ],
+  ghost:    [
+    { name: 'Lick',          power: 28, effect: 'para_chance' },
+    { name: 'Shadow Sneak',  power: 38, effect: null },
+    { name: 'Shadow Ball',   power: 52, effect: 'debuff_atk' },
+    { name: 'Night Shade',   power: 45, effect: null },
+  ],
+  dragon:   [
+    { name: 'Dragon Rage',   power: 48, effect: null },
+    { name: 'Dragon Breath', power: 55, effect: 'para_chance' },
+    { name: 'Twister',       power: 38, effect: null },
+    { name: 'Dragon Claw',   power: 58, effect: null },
+  ],
+  steel:    [
+    { name: 'Metal Claw',   power: 40, effect: null },
+    { name: 'Iron Head',    power: 55, effect: null },
+    { name: 'Flash Cannon', power: 48, effect: 'debuff_atk' },
+    { name: 'Steel Wing',   power: 45, effect: null },
+  ],
+  dark:     [
+    { name: 'Bite',       power: 40, effect: null },
+    { name: 'Crunch',     power: 52, effect: 'debuff_atk' },
+    { name: 'Dark Pulse',  power: 55, effect: null },
+    { name: 'Sucker Punch', power: 42, effect: null },
+  ],
+  fairy:    [
+    { name: 'Fairy Wind',  power: 38, effect: null },
+    { name: 'Dazzling Gleam', power: 50, effect: null },
+    { name: 'Moonblast',   power: 58, effect: 'debuff_atk' },
+    { name: 'Sweet Kiss',  power: 0,  effect: 'debuff_atk' },
+  ],
+  bug:      [
+    { name: 'Bug Bite',    power: 38, effect: null },
+    { name: 'Signal Beam', power: 48, effect: null },
+    { name: 'X-Scissor',   power: 55, effect: null },
+    { name: 'Leech Life',  power: 35, effect: null },
+  ],
+};
+
 // Card templates keyed by starter type
 const CARD_TEMPLATES = {
   grass: [
@@ -568,8 +683,11 @@ function freshState(starterId) {
 
 function makePokemon(id, level, spriteUrl, name, type, isStarter = false) {
   const maxHp = 80 + level * 8 + (isStarter ? 20 : 0);
-  const deck = isStarter ? null : buildPokemonDeck(type);
-  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck };
+  const deck  = isStarter ? null : buildPokemonDeck(type);
+  // Assign 3 moves from the opponent move table for this type
+  const movePool = OPPONENT_MOVES[type] || OPPONENT_MOVES.normal;
+  const moves    = shuffle([...movePool]).slice(0, 3);
+  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves };
 }
 
 // ─── DECK BUILDER ────────────────────────────────────────────────────────────
@@ -2430,9 +2548,11 @@ const BattleEngine = {
 
     if (dmg > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - dmg);
-      shakeSprite('opp-sprite');
+      // Attacker = player sprite, defender = opp sprite, colour = card type
+      const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
+      const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
+      applyHitAnimation(playerSpriteId, oppSpriteId, card.type);
 
-      // Build log message with type hint
       const effLabel = typeEffectivenessLabel(mult);
       let logMsg = crit
         ? `${card.name}! Critical hit! ${dmg} dmg!`
@@ -2440,7 +2560,6 @@ const BattleEngine = {
       if (effLabel) logMsg += ` ${effLabel.text}`;
       this._log(logMsg);
     } else if (dmg === 0 && card.power > 0) {
-      // Immune
       this._log(`${card.name} had no effect on ${st.opp.name}!`);
     }
 
@@ -2537,17 +2656,49 @@ const BattleEngine = {
       return;
     }
 
-    // Simple opponent AI: picks a random power between 20-55 based on level
-    const base = 20 + Math.floor(st.opp.level * 1.5) + Math.floor(Math.random() * 15);
-    const debuffed = Math.max(0, base - st.oppAtkDebuff);
+    // Pick a move from the opponent's moveset (assigned at creation)
+    const movePool = st.opp.moves || OPPONENT_MOVES[st.opp.type] || OPPONENT_MOVES.normal;
+    const move     = movePool[Math.floor(Math.random() * movePool.length)];
+
+    // Level-scaled base power
+    const levelBonus = Math.floor(st.opp.level * 1.2);
+    let power = move.power > 0 ? move.power + levelBonus : 0;
+
+    // Type effectiveness of opponent move vs player's type
+    const mult    = power > 0 ? getTypeMultiplier(st.opp.type || 'normal', st.player.type || 'normal') : 1;
+    power         = Math.round(power * mult);
+
+    // Apply debuff and shield
+    const debuffed = Math.max(0, power - st.oppAtkDebuff);
     const blocked  = Math.max(0, debuffed - st.shield);
+
+    // Apply effect (10% chance)
+    if (move.effect && Math.random() < 0.15) {
+      if (move.effect === 'burn_chance')    addStatus(st, 'player', 'burn');
+      if (move.effect === 'para_chance')    addStatus(st, 'player', 'para');
+      if (move.effect === 'poison_chance')  addStatus(st, 'player', 'poison');
+      if (move.effect === 'debuff_atk')     st.oppAtkDebuff = Math.max(st.oppAtkDebuff - 5, 0); // debuff opp instead
+    }
+
+    const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
+    const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
 
     if (blocked > 0) {
       st.player.hp = Math.max(0, st.player.hp - blocked);
-      const moveNames = ['Tackle','Scratch','Bite','Pound','Headbutt'];
-      const move = moveNames[Math.floor(Math.random() * moveNames.length)];
-      this._log(`${st.opp.name} used ${move}! ${blocked} dmg${st.shield > 0 ? ' (shield blocked some)' : ''}!`);
-      shakeSprite('player-sprite');
+      applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
+
+      const effLabel = typeEffectivenessLabel(mult);
+      let logMsg = `${st.opp.name} used ${move.name}! ${blocked} dmg!`;
+      if (st.shield > 0)    logMsg += ' (shield blocked some)';
+      if (effLabel)         logMsg += ` ${effLabel.text}`;
+      this._log(logMsg);
+    } else if (move.power > 0) {
+      // Fully blocked by shield
+      applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
+      this._log(`${st.opp.name} used ${move.name}! Blocked by shield!`);
+    } else {
+      // Status-only move with no damage
+      this._log(`${st.opp.name} used ${move.name}!`);
     }
   },
 
@@ -3868,6 +4019,53 @@ function setHpBar(barId, hp, maxHp, name, level) {
   if (levelEl) levelEl.textContent = `Lv.${level}`;
 }
 
+// ── Battle sprite animations ──────────────────────────────────────────────────
+
+// Type → CSS class for coloured hit flash on the defender
+const TYPE_HIT_CLASS = {
+  fire:     'hit-flash-fire',
+  water:    'hit-flash-water',
+  grass:    'hit-flash-grass',
+  electric: 'hit-flash-electric',
+  psychic:  'hit-flash-psychic',
+  ice:      'hit-flash-ice',
+  rock:     'hit-flash-rock',
+  ground:   'hit-flash-ground',
+  poison:   'hit-flash-poison',
+  ghost:    'hit-flash-ghost',
+  dragon:   'hit-flash-dragon',
+  dark:     'hit-flash-dark',
+  fighting: 'hit-flash-fighting',
+  flying:   'hit-flash-flying',
+  steel:    'hit-flash-steel',
+  normal:   'hit-flash-normal',
+};
+
+function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType) {
+  const atk = document.getElementById(attackerSpriteId);
+  const def = document.getElementById(defenderSpriteId);
+
+  // Attacker: lunge forward
+  if (atk) {
+    atk.classList.remove('sprite-lunge');
+    void atk.offsetWidth;
+    atk.classList.add('sprite-lunge');
+    setTimeout(() => atk.classList.remove('sprite-lunge'), 350);
+  }
+
+  // Defender: shake + type-coloured flash, with slight delay after lunge
+  if (def) {
+    const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
+    setTimeout(() => {
+      def.classList.remove('hit-shake', flashClass);
+      void def.offsetWidth;
+      def.classList.add('hit-shake', flashClass);
+      setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
+    }, 150);
+  }
+}
+
+// Keep shakeSprite for status-tick damage (no attacker, no type colour needed)
 function shakeSprite(id) {
   const el = document.getElementById(id);
   if (!el) return;
