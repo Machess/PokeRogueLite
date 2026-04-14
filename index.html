@@ -40,6 +40,98 @@
 </div>
 
 <!-- ═══════════════════════════════════════════
+     SCREEN: REGISTER — two-step conversational
+═══════════════════════════════════════════ -->
+<div id="screen-register" class="screen">
+  <div class="register-bg"></div>
+  <div class="register-center">
+    <div class="register-logo">PokéRogue</div>
+
+    <!-- STEP 1: Name -->
+    <div id="reg-step-name" class="reg-step">
+      <div class="reg-oak-bubble">
+        <img src="assets/prof_oak.png" alt="Prof. Oak" class="reg-oak-portrait"
+             onerror="this.style.display='none'" />
+        <div class="reg-bubble">
+          <div class="reg-bubble-name">Prof. Oak</div>
+          <div class="reg-bubble-text">Hello there! Welcome to the world of Pokémon! What is your name, Trainer?</div>
+        </div>
+      </div>
+      <input id="trainer-name-input" class="trainer-name-input"
+             type="text" maxlength="12" placeholder="Enter your name…"
+             autocomplete="off" spellcheck="false" />
+      <button class="btn-pixel btn-primary register-go-btn" id="btn-name-confirm">
+        That's my name! ▶
+      </button>
+    </div>
+
+    <!-- STEP 2: Age (hidden until step 1 complete) -->
+    <div id="reg-step-age" class="reg-step" style="display:none">
+      <div class="reg-oak-bubble">
+        <img src="assets/prof_oak.png" alt="Prof. Oak" class="reg-oak-portrait"
+             onerror="this.style.display='none'" />
+        <div class="reg-bubble">
+          <div class="reg-bubble-name">Prof. Oak</div>
+          <div class="reg-greeting" id="reg-greeting">Nice to meet you!</div>
+          <div class="reg-bubble-text" id="reg-age-question">How old are you?</div>
+        </div>
+      </div>
+      <div class="age-buttons" id="age-buttons"></div>
+      <button class="btn-pixel btn-primary register-go-btn" id="btn-age-confirm" style="display:none">
+        Let's Go! ▶
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: INTRO CINEMATIC
+═══════════════════════════════════════════ -->
+<div id="screen-intro" class="screen">
+  <div class="intro-bg"></div>
+  <div class="intro-panel">
+    <img id="intro-portrait" src="" alt="" class="intro-portrait" style="display:none" />
+    <div class="intro-text" id="intro-text"></div>
+    <div class="intro-progress" id="intro-progress">1 / 7</div>
+    <div class="intro-btns">
+      <button class="btn-pixel btn-secondary intro-skip-btn" id="btn-intro-skip">Skip</button>
+      <button class="btn-pixel btn-primary intro-next-btn" id="btn-intro-next">Next ▶</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: MEOWTH CHALLENGE
+═══════════════════════════════════════════ -->
+<div id="screen-challenge" class="screen">
+  <div class="challenge-bg"></div>
+  <div class="challenge-panel">
+    <div class="challenge-header">
+      <img src="assets/meowth.png" alt="Meowth" class="challenge-character"
+           onerror="this.style.display='none'" />
+      <div class="challenge-header-text">
+        <div class="challenge-badge">⚔️ Team Rocket Challenge!</div>
+        <div class="challenge-intro" id="challenge-intro">Meowth needs your help!</div>
+      </div>
+    </div>
+
+    <div class="challenge-coin-visual" id="challenge-coin-visual" style="display:none"></div>
+
+    <div class="challenge-question" id="challenge-question"></div>
+
+    <div class="challenge-answer-btns" id="challenge-answer-btns"></div>
+
+    <div class="challenge-result" id="challenge-result" style="display:none"></div>
+
+    <button class="btn-pixel btn-primary challenge-continue-btn"
+            id="challenge-continue-btn" style="display:none">
+      Continue ▶
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      SCREEN: STARTER SELECTION
 ═══════════════════════════════════════════ -->
 <div id="screen-starter" class="screen">

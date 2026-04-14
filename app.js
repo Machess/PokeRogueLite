@@ -475,18 +475,21 @@ const SoundEngine = {
   _path(file) { return `assets/sounds/${file}`; },
 
   _bgmMap: {
-    'start':    'opening.mp3',
-    'starter':  'pallet_town_theme.mp3',
-    'map':      'opening.mp3',
-    'battle':   'teamrocket_battle.mp3',
-    'boss':     'pokemon_gym.mp3',
-    'heal':     'pokemon_center.mp3',
-    'catch':    'pallet_town_theme.mp3',
-    'training': 'pallet_town_theme.mp3',
-    'shop':     'pallet_town_theme.mp3',
-    'evolve':   'opening.mp3',
-    'victory':  'opening.mp3',
-    'gameover': null,
+    'register':  'pallet_town_theme.mp3',
+    'intro':     'pallet_town_theme.mp3',
+    'challenge': 'teamrocket_battle.mp3',
+    'start':     'opening.mp3',
+    'starter':   'pallet_town_theme.mp3',
+    'map':       'pallet_town_theme.mp3',
+    'battle':    'opening.mp3',
+    'boss':      'pokemon_gym.mp3',
+    'heal':      'pokemon_center.mp3',
+    'catch':     'pallet_town_theme.mp3',
+    'training':  'pallet_town_theme.mp3',
+    'shop':      'pallet_town_theme.mp3',
+    'evolve':    'pallet_town_theme.mp3',
+    'victory':   'opening.mp3',
+    'gameover':  null,
   },
 
   // Immediately silence the current BGM — no async fade that causes overlap
@@ -663,6 +666,318 @@ function typeEffectivenessLabel(mult) {
   return null; // normal — show nothing extra
 }
 
+// ─── MATH CHALLENGE DATA ─────────────────────────────────────────────────────
+
+function generateMathChallenge(tier) {
+  let question, correct, coins = null;
+
+  if (tier === 1) {
+    // Tier 1 (age 6-7): addition/subtraction under 20, visual coins
+    const ops = ['+', '-'];
+    const op  = ops[Math.floor(Math.random() * ops.length)];
+    let a = 2 + Math.floor(Math.random() * 9);   // 2–10
+    let b = 1 + Math.floor(Math.random() * 9);   // 1–9
+    if (op === '-' && b > a) [a, b] = [b, a];    // no negatives
+    correct = op === '+' ? a + b : a - b;
+    coins   = { a, b, op };
+    question = op === '+'
+      ? `Meowth has ${a} 🪙 and finds ${b} more.\nHow many coins does he have?`
+      : `Meowth had ${a} 🪙 but dropped ${b}.\nHow many are left?`;
+  } else if (tier === 2) {
+    // Tier 2 (age 8-9): multiplication up to 50, word problems
+    const type = Math.random() < 0.5 ? 'mult' : 'add';
+    if (type === 'mult') {
+      const a = 2 + Math.floor(Math.random() * 7);  // 2–8
+      const b = 2 + Math.floor(Math.random() * 7);
+      correct  = a * b;
+      question = `Giovanni wants ${a} bags with ${b} coins each.\nHow many coins total?`;
+    } else {
+      const a = 10 + Math.floor(Math.random() * 30);
+      const b = 5  + Math.floor(Math.random() * 20);
+      correct  = a + b;
+      question = `Meowth stole ${a} coins in the morning\nand ${b} more at night.\nTotal coins?`;
+    }
+  } else {
+    // Tier 3 (age 10-12): division + percentages
+    const type = Math.random() < 0.5 ? 'div' : 'pct';
+    if (type === 'div') {
+      const b   = 2 + Math.floor(Math.random() * 8);  // divisor 2–9
+      correct   = 4 + Math.floor(Math.random() * 8);  // quotient 4–11
+      const a   = b * correct;
+      question  = `Giovanni split ${a} coins equally between ${b} Rockets.\nHow many each?`;
+    } else {
+      // 25% or 50% of a round number
+      const pct  = Math.random() < 0.5 ? 25 : 50;
+      const base = (4 + Math.floor(Math.random() * 9)) * (pct === 25 ? 4 : 2); // divisible
+      correct    = Math.round(base * pct / 100);
+      question   = `Meowth kept ${pct}% of ${base} coins for himself.\nHow many did he keep?`;
+    }
+  }
+
+  // Generate 3 wrong answers (close but distinct)
+  const wrongs = new Set();
+  while (wrongs.size < 3) {
+    const delta = 1 + Math.floor(Math.random() * 4);
+    const w = Math.random() < 0.5 ? correct + delta : Math.max(0, correct - delta);
+    if (w !== correct) wrongs.add(w);
+  }
+
+  const choices = shuffle([correct, ...wrongs]);
+  return { question, correct, choices, coins };
+}
+
+// ─── REGISTRATION ENGINE ──────────────────────────────────────────────────────
+
+// ─── REGISTRATION ENGINE ──────────────────────────────────────────────────────
+
+const RegistrationEngine = {
+  _step: 1, // 1 = name, 2 = age
+  _tempName: '',
+
+  init() {
+    this._step = 1;
+    this._showStep1();
+  },
+
+  _showStep1() {
+    this._step = 1;
+    document.getElementById('reg-step-name').style.display = 'flex';
+    document.getElementById('reg-step-age').style.display  = 'none';
+    document.getElementById('trainer-name-input').value = '';
+    document.getElementById('trainer-name-input').focus();
+  },
+
+  _showStep2(name) {
+    this._step = 2;
+    this._tempName = name;
+    document.getElementById('reg-step-name').style.display = 'none';
+    document.getElementById('reg-step-age').style.display  = 'flex';
+
+    // Personalised greeting
+    const greetings = [
+      `Nice to meet you, ${name}! 🌟`,
+      `${name}! What a great Trainer name! ✨`,
+      `Wow, ${name} — that's an awesome name! 🎉`,
+      `${name}! Professor Oak will be so impressed! 🌿`,
+    ];
+    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+    document.getElementById('reg-greeting').textContent = greeting;
+    document.getElementById('reg-age-question').textContent = `So ${name}, how old are you?`;
+
+    // Build age buttons fresh
+    const ageRow = document.getElementById('age-buttons');
+    ageRow.innerHTML = '';
+    for (let age = 6; age <= 12; age++) {
+      const btn = document.createElement('button');
+      btn.className = 'age-btn';
+      btn.textContent = age;
+      btn.dataset.age = age;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.age-btn').forEach(b => b.classList.remove('age-selected'));
+        btn.classList.add('age-selected');
+        // Show "Let's Go" button once age is chosen
+        document.getElementById('btn-age-confirm').style.display = 'inline-block';
+      });
+      ageRow.appendChild(btn);
+    }
+    document.getElementById('btn-age-confirm').style.display = 'none';
+  },
+
+  confirmName() {
+    const nameInput = document.getElementById('trainer-name-input');
+    const name = (nameInput?.value || '').trim().slice(0, 12);
+    if (!name) {
+      nameInput?.classList.add('input-shake');
+      setTimeout(() => nameInput?.classList.remove('input-shake'), 500);
+      return;
+    }
+    this._showStep2(name);
+  },
+
+  confirmAge() {
+    const selectedAge = document.querySelector('.age-btn.age-selected');
+    if (!selectedAge) return;
+    const age  = parseInt(selectedAge.dataset.age);
+    const tier = age <= 7 ? 1 : age <= 9 ? 2 : 3;
+
+    GameState.trainerName    = this._tempName;
+    GameState.trainerAge     = age;
+    GameState.difficultyTier = tier;
+
+    IntroEngine.start(this._tempName, age);
+  },
+};
+
+// ─── INTRO ENGINE ─────────────────────────────────────────────────────────────
+
+const IntroEngine = {
+  _panels: [],
+  _idx: 0,
+
+  start(name, age) {
+    const tierLabel = age <= 7 ? 'Rookie Trainer' : age <= 9 ? 'Rising Trainer' : 'Expert Trainer';
+    this._panels = [
+      { text: `Deep in the Pokémon world...\nsomething is very wrong. 🌑`, speaker: null },
+      { text: `Team Rocket has been stealing Pokémon\nand hoarding mountains of gold! 💰`, speaker: 'rocket' },
+      { text: `Their boss, Giovanni, hid three legendary\nPokémon behind the Trail of Trials —\na gauntlet only the bravest can finish.`, speaker: 'rocket' },
+      { text: `Professor Oak searched the whole world\nfor a trainer with courage, smarts,\nand heart. ❤️`, speaker: 'oak' },
+      { text: `He found you.\n\n${name}, ${tierLabel}. 🌟`, speaker: 'oak' },
+      { text: `Three bosses. Twenty challenges.\nOne chance to be Champion.\n\nAre you ready, ${name}?`, speaker: 'oak' },
+      { text: `Your journey begins with\none very important choice... ⬇️`, speaker: null },
+    ];
+    this._idx = 0;
+    showScreen('intro');
+    this._render();
+  },
+
+  _render() {
+    const panel = this._panels[this._idx];
+    const isLast = this._idx === this._panels.length - 1;
+
+    document.getElementById('intro-text').textContent = panel.text;
+    document.getElementById('intro-progress').textContent =
+      `${this._idx + 1} / ${this._panels.length}`;
+
+    // Speaker portrait
+    const portrait = document.getElementById('intro-portrait');
+    if (panel.speaker === 'oak') {
+      portrait.src = 'assets/prof_oak.png';
+      portrait.style.display = '';
+      portrait.onerror = () => { portrait.style.display = 'none'; };
+    } else if (panel.speaker === 'rocket') {
+      portrait.src = 'assets/team_rocket.png';
+      portrait.style.display = '';
+      portrait.onerror = () => { portrait.style.display = 'none'; };
+    } else {
+      portrait.style.display = 'none';
+    }
+
+    const btn = document.getElementById('btn-intro-next');
+    btn.textContent = isLast ? `Let's Go, ${GameState.trainerName}! ▶` : 'Next ▶';
+  },
+
+  next() {
+    if (this._idx < this._panels.length - 1) {
+      this._idx++;
+      this._render();
+    } else {
+      Game.showStarterSelect();
+    }
+  },
+
+  skip() {
+    Game.showStarterSelect();
+  },
+};
+
+// ─── MEOWTH CHALLENGE ENGINE ──────────────────────────────────────────────────
+
+const MeowthChallenge = {
+  _challenge: null,
+  _onComplete: null,
+
+  // Check whether a challenge should fire after a battle
+  shouldTrigger() {
+    if (!GameState.battlesSinceChallenge && GameState.battlesSinceChallenge !== 0) return false;
+    GameState.battlesSinceChallenge = (GameState.battlesSinceChallenge || 0) + 1;
+    // Must have fought at least 2 battles; 35% chance, guaranteed by battle 5
+    if (GameState.battlesSinceChallenge < 2) return false;
+    if (GameState.battlesSinceChallenge >= 5) return true;
+    return Math.random() < 0.35;
+  },
+
+  show(onComplete) {
+    this._onComplete = onComplete;
+    const tier = GameState.difficultyTier || 2;
+    this._challenge = generateMathChallenge(tier);
+
+    const name = GameState.trainerName || 'Trainer';
+
+    // Build coin visual for Tier 1
+    const coinVisual = document.getElementById('challenge-coin-visual');
+    if (coinVisual) {
+      if (this._challenge.coins && tier === 1) {
+        const { a, b, op } = this._challenge.coins;
+        coinVisual.innerHTML =
+          `<div class="coin-group">${'🪙'.repeat(a)}</div>` +
+          `<div class="coin-op">${op === '+' ? '➕' : '➖'}</div>` +
+          `<div class="coin-group">${'🪙'.repeat(b)}</div>`;
+        coinVisual.style.display = 'flex';
+      } else {
+        coinVisual.style.display = 'none';
+      }
+    }
+
+    document.getElementById('challenge-intro').textContent =
+      `Hey ${name}! Meowth needs your help! 😾`;
+    document.getElementById('challenge-question').textContent =
+      this._challenge.question;
+
+    // Render answer buttons
+    const btns = document.getElementById('challenge-answer-btns');
+    btns.innerHTML = '';
+    this._challenge.choices.forEach(val => {
+      const b = document.createElement('button');
+      b.className = 'challenge-answer-btn';
+      b.textContent = val;
+      b.addEventListener('click', () => this.answer(val));
+      btns.appendChild(b);
+    });
+
+    document.getElementById('challenge-result').style.display = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+
+    showScreen('challenge');
+  },
+
+  answer(val) {
+    const correct = this._challenge.correct;
+    const isRight = val === correct;
+    const name    = GameState.trainerName || 'Trainer';
+
+    // Disable all buttons and highlight
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (parseInt(b.textContent) === correct) b.classList.add('answer-correct');
+      else if (parseInt(b.textContent) === val && !isRight) b.classList.add('answer-wrong');
+    });
+
+    const resultEl = document.getElementById('challenge-result');
+    resultEl.style.display = 'block';
+
+    if (isRight) {
+      const bonus = GameState.difficultyTier === 1 ? 5 : GameState.difficultyTier === 2 ? 8 : 12;
+      GameState.gold = (GameState.gold || 0) + bonus;
+      GameState.battlesSinceChallenge = 0;
+      resultEl.className = 'challenge-result result-correct';
+      resultEl.innerHTML =
+        `✅ <strong>NYAH! Correct, ${name}!</strong><br>` +
+        `${correct} is right! You earned <strong>+${bonus}🪙</strong> bonus gold!<br>` +
+        `<em>"The Boss will be so impressed! Maybe he'll give ME a raise!" — Meowth</em>`;
+      SoundEngine.playFanfare();
+    } else {
+      const smallBonus = 2;
+      GameState.gold = (GameState.gold || 0) + smallBonus;
+      GameState.battlesSinceChallenge = 0;
+      resultEl.className = 'challenge-result result-wrong';
+      resultEl.innerHTML =
+        `❌ <strong>Oops! The answer is ${correct}.</strong><br>` +
+        `${this._challenge.question.replace(/\n/g, ' ')}<br>` +
+        `You still get <strong>+${smallBonus}🪙</strong> for trying! Keep going, ${name}!<br>` +
+        `<em>"Even Meowth gets confused sometimes!" — Meowth</em>`;
+    }
+
+    document.getElementById('challenge-continue-btn').style.display = 'block';
+  },
+
+  finish() {
+    showScreen('map');
+    MapEngine.renderParty();
+    saveGame();
+    if (this._onComplete) { this._onComplete(); this._onComplete = null; }
+  },
+};
+
 // ─── GAME CONTROLLER ─────────────────────────────────────────────────────────
 
 const Game = {
@@ -686,10 +1001,15 @@ const Game = {
       unlockedPikachu: unlocks.pikachu,
       stats: { battlesWon: 0, pokemonCaught: 0 },
       gold: 0,
-      items: [],          // [{ id, name, icon, description, count }]
+      items: [],
       masterBallUsed: false,
+      trainerName: '',
+      trainerAge: 10,
+      difficultyTier: 2,       // 1=Rookie(6-7), 2=Rising(8-9), 3=Expert(10-12)
+      battlesSinceChallenge: 0, // trigger challenge every ~3-5 battles
+      lastChallengeWasBattle: false,
     };
-    await this.showStarterSelect();
+    showScreen('register');
   },
 
   continueGame() {
@@ -704,6 +1024,9 @@ const Game = {
 
   async showStarterSelect() {
     showScreen('starter');
+    const name = GameState.trainerName ? `, ${GameState.trainerName}` : '';
+    const titleEl = document.querySelector('#screen-starter .screen-title');
+    if (titleEl) titleEl.textContent = `Choose Your Partner${name}!`;
     const grid = document.getElementById('starter-grid');
     grid.innerHTML = '';
 
@@ -1766,21 +2089,18 @@ const BossEngine = {
     showScreen('boss');
 
     // Set up trainer sprite with safe fallback
+    const bossImages = ['brock.png', 'misty.png', 'giovanni.png'];
     const trainerSpriteWrap = document.querySelector('.trainer-sprite-wrap');
     const trainerImg = document.getElementById('boss-trainer-sprite');
     if (trainerImg && trainerSpriteWrap) {
-      trainerImg.onerror = null; // clear any previous handler
       trainerImg.onerror = function() {
-        trainerSpriteWrap.innerHTML = `<div style="font-size:5rem;line-height:1">🧢</div>`;
-      };
-      trainerImg.src = `assets/trainer_boss_${bossIdx}.png`;
-      // Fallback chain: try generic trainer, then emoji
-      trainerImg.onerror = function() {
-        this.onerror = function() {
+        // Fallback to generic then emoji
+        this.onerror = () => {
           trainerSpriteWrap.innerHTML = `<div style="font-size:5rem;line-height:1">🧢</div>`;
         };
         this.src = 'assets/trainer_boss.png';
       };
+      trainerImg.src = `assets/${bossImages[bossIdx]}`;
     }
 
     document.getElementById('dialogue-name').textContent = boss.name;
@@ -2384,7 +2704,12 @@ const CardReward = {
 
   close() {
     document.getElementById('card-reward-screen').classList.add('hidden');
-    MapEngine.show();
+    // Check for Meowth challenge after card reward
+    if (MeowthChallenge.shouldTrigger()) {
+      MeowthChallenge.show(() => MapEngine.show());
+    } else {
+      MapEngine.show();
+    }
   },
 };
 
@@ -2805,6 +3130,21 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-party-drawer-close').addEventListener('click', () => PartyOverview.close());
   document.getElementById('party-drawer-backdrop').addEventListener('click', () => PartyOverview.close());
   document.getElementById('btn-poke-detail-close').addEventListener('click', () => PartyOverview.closeDetail());
+
+  // ── Register screen ──
+  RegistrationEngine.init();
+  document.getElementById('btn-name-confirm').addEventListener('click', () => RegistrationEngine.confirmName());
+  document.getElementById('btn-age-confirm').addEventListener('click',  () => RegistrationEngine.confirmAge());
+  document.getElementById('trainer-name-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') RegistrationEngine.confirmName();
+  });
+
+  // ── Intro cinematic ──
+  document.getElementById('btn-intro-next').addEventListener('click', () => IntroEngine.next());
+  document.getElementById('btn-intro-skip').addEventListener('click', () => IntroEngine.skip());
+
+  // ── Meowth challenge ──
+  document.getElementById('challenge-continue-btn').addEventListener('click', () => MeowthChallenge.finish());
 
   // ── Map screen ──
   document.getElementById('btn-map-menu').addEventListener('click', () => {

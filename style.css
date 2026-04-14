@@ -2336,3 +2336,315 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-color: var(--col-red);
   color: var(--col-text);
 }
+
+/* ═══════════════════════════════════════════
+   REGISTER SCREEN
+═══════════════════════════════════════════ */
+#screen-register {
+  background: linear-gradient(135deg, #0a1428, #1a2a4a);
+  justify-content: center;
+}
+.register-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, rgba(42,117,187,.18) 0%, transparent 65%);
+}
+.register-center {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.2rem;
+  padding: 1.5rem 1rem;
+  width: 100%; max-width: 400px;
+}
+.register-logo {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.4rem;
+  color: var(--col-yellow);
+  text-shadow: 3px 3px 0 var(--col-yellow-dk);
+  animation: float 3s ease-in-out infinite;
+}
+.register-field {
+  width: 100%;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+.register-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem;
+  color: var(--col-text-dim);
+}
+.trainer-name-input {
+  width: 100%;
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  color: var(--col-text);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .65rem;
+  padding: .7rem .9rem;
+  outline: none;
+  transition: border-color .15s;
+  text-align: center;
+}
+.trainer-name-input:focus { border-color: var(--col-yellow); }
+.trainer-name-input::placeholder { color: var(--col-text-dim); opacity: .5; }
+@keyframes input-shake {
+  0%,100% { transform: translateX(0); }
+  25%      { transform: translateX(-6px); }
+  75%      { transform: translateX(6px); }
+}
+.input-shake { animation: input-shake .3s ease; border-color: var(--col-red) !important; }
+
+.age-buttons {
+  display: flex; gap: .5rem; flex-wrap: wrap;
+  justify-content: center;
+}
+.age-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 2px solid var(--col-border);
+  background: var(--col-card);
+  color: var(--col-text);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem;
+  cursor: pointer;
+  transition: border-color .12s, background .12s;
+  display: flex; align-items: center; justify-content: center;
+}
+.age-btn:hover { border-color: var(--col-yellow); }
+.age-btn.age-selected {
+  border-color: var(--col-yellow);
+  background: rgba(255,215,0,.15);
+  color: var(--col-yellow);
+  box-shadow: 0 0 10px rgba(255,215,0,.3);
+}
+.register-go-btn { font-size: .6rem; padding: .85em 2em; margin-top: .4rem; }
+
+/* ═══════════════════════════════════════════
+   INTRO CINEMATIC SCREEN
+═══════════════════════════════════════════ */
+#screen-intro {
+  background: #000;
+  justify-content: center;
+}
+.intro-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, #0a1428 0%, #000 80%);
+}
+.intro-panel {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1.2rem;
+  padding: 2rem 1.5rem;
+  width: 100%; max-width: 480px;
+  text-align: center;
+}
+.intro-portrait {
+  width: 90px; height: 90px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 12px rgba(255,215,0,.3));
+  animation: float 2.5s ease-in-out infinite;
+}
+.intro-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .6rem;
+  color: var(--col-text);
+  line-height: 2;
+  white-space: pre-line;
+  min-height: 5rem;
+  background: rgba(255,255,255,.04);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-lg);
+  padding: 1.2rem 1rem;
+  width: 100%;
+}
+.intro-progress {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: var(--col-text-dim);
+}
+.intro-btns {
+  display: flex; gap: .8rem; align-items: center;
+}
+.intro-skip-btn { font-size: .42rem !important; padding: .5em .9em !important; }
+.intro-next-btn { font-size: .55rem !important; }
+
+/* ═══════════════════════════════════════════
+   MEOWTH CHALLENGE SCREEN
+═══════════════════════════════════════════ */
+#screen-challenge {
+  background: linear-gradient(135deg, #1a0808, #2a1010);
+  justify-content: center;
+  overflow-y: auto;
+}
+.challenge-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(200,60,20,.12) 0%, transparent 65%);
+}
+.challenge-panel {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-direction: column;
+  gap: .9rem;
+  padding: 1.2rem 1rem 2rem;
+  width: 100%; max-width: 480px;
+}
+.challenge-header {
+  display: flex; align-items: center; gap: .8rem;
+  background: rgba(0,0,0,.4);
+  border: 2px solid rgba(200,60,20,.4);
+  border-radius: var(--r-lg);
+  padding: .8rem 1rem;
+}
+.challenge-character {
+  width: 72px; height: 72px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,.5));
+}
+.challenge-header-text { flex: 1; }
+.challenge-badge {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: var(--col-red);
+  margin-bottom: .4rem;
+}
+.challenge-intro {
+  font-size: .8rem;
+  color: var(--col-text);
+  line-height: 1.5;
+}
+
+.challenge-coin-visual {
+  display: flex; align-items: center; justify-content: center;
+  gap: .6rem; flex-wrap: wrap;
+  font-size: 1.3rem;
+  background: rgba(255,215,0,.08);
+  border: 2px solid rgba(255,215,0,.2);
+  border-radius: var(--r-md);
+  padding: .7rem;
+}
+.coin-group { display: flex; flex-wrap: wrap; gap: 2px; max-width: 160px; }
+.coin-op { font-size: 1.5rem; }
+
+.challenge-question {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .6rem;
+  color: var(--col-yellow);
+  line-height: 2;
+  white-space: pre-line;
+  text-align: center;
+  background: rgba(0,0,0,.35);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .9rem 1rem;
+}
+
+.challenge-answer-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .6rem;
+}
+.challenge-answer-btn {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  color: var(--col-text);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .75rem;
+  padding: .8em;
+  cursor: pointer;
+  transition: border-color .12s, background .12s, transform .1s;
+}
+.challenge-answer-btn:hover:not(:disabled) {
+  border-color: var(--col-yellow);
+  background: rgba(255,215,0,.1);
+  transform: scale(1.03);
+}
+.challenge-answer-btn:disabled { cursor: not-allowed; }
+.answer-correct {
+  border-color: var(--col-green) !important;
+  background: rgba(61,170,92,.2) !important;
+  color: var(--col-green-lt) !important;
+}
+.answer-wrong {
+  border-color: var(--col-red) !important;
+  background: rgba(227,53,13,.15) !important;
+  color: #ff8888 !important;
+}
+
+.challenge-result {
+  font-size: .72rem;
+  line-height: 1.8;
+  border-radius: var(--r-md);
+  padding: .8rem 1rem;
+  border: 2px solid;
+}
+.result-correct {
+  border-color: var(--col-green);
+  background: rgba(61,170,92,.12);
+  color: var(--col-green-lt);
+}
+.result-wrong {
+  border-color: var(--col-red);
+  background: rgba(227,53,13,.1);
+  color: #ffaaaa;
+}
+.challenge-continue-btn { align-self: center; font-size: .6rem; margin-top: .3rem; }
+
+/* ═══════════════════════════════════════════
+   REGISTER SCREEN — two-step conversational
+═══════════════════════════════════════════ */
+.reg-step {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 1rem;
+  width: 100%; animation: pop-in .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* Oak speech bubble row */
+.reg-oak-bubble {
+  display: flex; align-items: flex-start; gap: .8rem;
+  width: 100%;
+}
+.reg-oak-portrait {
+  width: 64px; height: 64px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  flex-shrink: 0;
+  filter: drop-shadow(2px 4px 6px rgba(0,0,0,.4));
+}
+.reg-bubble {
+  flex: 1;
+  background: var(--col-surface);
+  border: 2px solid var(--col-border);
+  border-radius: 0 var(--r-lg) var(--r-lg) var(--r-lg);
+  padding: .7rem .9rem;
+  position: relative;
+}
+/* Speech bubble tail */
+.reg-bubble::before {
+  content: '';
+  position: absolute;
+  top: 10px; left: -10px;
+  border: 5px solid transparent;
+  border-right-color: var(--col-border);
+}
+.reg-bubble::after {
+  content: '';
+  position: absolute;
+  top: 11px; left: -7px;
+  border: 4px solid transparent;
+  border-right-color: var(--col-surface);
+}
+.reg-bubble-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem; color: var(--col-yellow);
+  margin-bottom: .35rem;
+}
+.reg-greeting {
+  font-size: .8rem; color: var(--col-green-lt);
+  font-weight: 800; margin-bottom: .25rem;
+}
+.reg-bubble-text {
+  font-size: .75rem; color: var(--col-text);
+  line-height: 1.6;
+}
