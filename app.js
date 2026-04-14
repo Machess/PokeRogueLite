@@ -1558,32 +1558,39 @@ function levelUpParty(source) {
   const levelled   = [];
 
   GameState.party.forEach((p, i) => {
-    if (p.hp <= 0) return; // fainted — no XP
+    if (p.hp <= 0) return;
     p.level++;
     p.maxHp += 8;
-    p.hp     = Math.min(p.hp + 8, p.maxHp); // partial heal on level up
+    p.hp     = Math.min(p.hp + 8, p.maxHp);
     levelled.push(i);
 
-    // Check evolution only for the starter
+    // Only the starter can evolve, and only one stage per call
     if (!p.isStarter) return;
-    const starter  = STARTERS.find(s => s.id === GameState.starterId);
-    if (!starter)   return;
+    if (GameState._evolutionPending) return; // already queued one this session
+
+    const starter    = STARTERS.find(s => s.id === GameState.starterId);
+    if (!starter)    return;
     const thresholds = EVOLUTION_LEVELS[starter.id];
     if (!thresholds) return;
     const curStage   = GameState.evolutionStage;
 
+    let triggered = false;
     if (curStage === 0 && thresholds.stage2 && p.level >= thresholds.stage2) {
       evolutions.push({ partyIdx: i, stage: 2,
         beforeId: starter.evolutions[0], afterId: starter.evolutions[1] });
-      GameState.evolutionStage = 1;
-    } else if (curStage === 1 && thresholds.stage3 && p.level >= thresholds.stage3) {
+      GameState.evolutionStage    = 1;
+      GameState._evolutionPending = true;
+      triggered = true;
+    }
+    // Only check stage3 if we did NOT just trigger stage2
+    if (!triggered && curStage === 1 && thresholds.stage3 && p.level >= thresholds.stage3) {
       evolutions.push({ partyIdx: i, stage: 3,
         beforeId: starter.evolutions[1], afterId: starter.evolutions[2] });
-      GameState.evolutionStage = 2;
+      GameState.evolutionStage    = 2;
+      GameState._evolutionPending = true;
     }
   });
 
-  // Flash level-up badges on the map party bar
   if (levelled.length > 0) flashLevelUp(levelled);
   return evolutions;
 }
@@ -1603,6 +1610,9 @@ function flashLevelUp(indices) {
 
 // Run evolution sequence for all queued evolutions, then call onDone
 async function runEvolutions(evolutions, onDone) {
+  // Clear the pending guard now that we are actually running the cutscene
+  GameState._evolutionPending = false;
+
   if (evolutions.length === 0) { onDone(); return; }
   const evo     = evolutions[0];
   const rest    = evolutions.slice(1);
@@ -1673,6 +1683,7 @@ const Game = {
       difficultyTier: 2,       // 1=Rookie(6-7), 2=Rising(8-9), 3=Expert(10-12)
       battlesSinceChallenge: 0, // trigger challenge every ~3-5 battles
       lastChallengeWasBattle: false,
+      _evolutionPending: false,
     };
     showScreen('register');
   },
@@ -1790,8 +1801,13 @@ const Game = {
     GameState.highWaterRow   = -1;
 
     // ── Level up party after boss win (+3 bonus levels) ───────────────────
-    for (let bonus = 0; bonus < 3; bonus++) levelUpParty('boss');
-    const evolutions = levelUpParty('boss'); // one final check after bonus
+    // Collect all evolutions across the 4 calls; the _evolutionPending guard
+    // ensures at most one evolution fires per complete boss-win session.
+    const evolutions = [];
+    for (let bonus = 0; bonus < 4; bonus++) {
+      const evo = levelUpParty('boss');
+      if (evo.length > 0) evolutions.push(...evo);
+    }
 
     const nextBoss  = BOSS_TRAINERS[nextBossIdx];
     const badgeMsg  = `${boss?.title ?? 'Badge'} earned!\n${nextBoss?.name ?? 'Next challenger'} awaits!`;
@@ -3080,11 +3096,11 @@ const BossEngine = {
         GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
         MapEngine.completeNode(GameState.currentNodeIndex);
         setTimeout(() => {
-          const isFinalBoss = GameState.bossesDefeated >= 7; // about to become 8
+          const isFinalBoss = GameState.bossesDefeated >= 7;
           const modalMsg = isFinalBoss
             ? `You defeated ${this.bossData.name}! You are the Champion!`
-            : `You defeated ${this.bossData.name}! Your Pokémon is evolving…`;
-          showModal('Boss Defeated!', modalMsg, () => {
+            : `You defeated ${this.bossData.name}! Your team is getting stronger!`;
+          showModal('Boss Defeated! 🏅', modalMsg, () => {
             Game.afterBoss(GameState.bossesDefeated);
           });
         }, 800);
