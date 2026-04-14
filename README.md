@@ -1,126 +1,135 @@
-# PokéRogue 🎴⚡
+# PokéTrials 🎴⚡
 
-### *A Roguelite Card Adventure — catch 'em, deck-build 'em, regret your life choices*
+### *A Roguelite Card Adventure for Young Trainers*
 
 ---
 
 ## What Is This?
 
-PokéRogue is a browser-based roguelite card game built on HTML, CSS, and vanilla JavaScript. You pick a starter Pokémon, trudge through a procedurally generated map full of mystery nodes, battle wild Pokémon with a growing card deck, catch companions, spend gold at shady roadside shops, and eventually face three increasingly annoyed boss trainers. Win three times and your starter will have fully evolved. Lose once and you get a Game Over screen that gently reminds you how many battles you won (probably not many).
+PokéTrials is a browser-based card game where you become a Pokémon Trainer on an exciting adventure! Pick your starter Pokémon, explore a mystery map full of surprises, battle wild Pokémon with a growing card deck, catch new friends, and take on three powerful boss trainers to become Champion.
 
-No install. No build step. Open `index.html` in a browser and go.
+The game is designed for players aged 6 to 12. Younger trainers get easier challenges, while older trainers get trickier ones — so everyone plays at just the right level.
+
+No downloads needed. No install. Just open `index.html` in a browser and your adventure begins!
 
 ---
 
 ## How To Play
 
-**Start Screen** → New Game → pick your starter → survive.
+**Start Screen** → New Game → enter your name and age → watch the intro → pick your starter → explore the map!
 
 ### The Map
-- Nodes start as **❓** — you don't know what you're walking into until you've already walked into it.
-- After completing a node, your next choices are revealed.
-- **Pick a path and commit.** Once you advance past a row, every unchosen node at that level is permanently locked. No backtracking to top up at a heal node you skipped three rows ago.
-- The map is ~20 nodes deep per run plus a boss at the end. Three runs (three bosses) to win the game.
 
-### Node Types (once revealed)
+- Nodes start as **❓** — you won't know what each stop holds until you arrive. That's part of the adventure!
+- After completing a node, the next choices are revealed ahead of you.
+- **Choose carefully!** Once you move forward, earlier nodes are locked. Every path is different.
+- The map is about 20 nodes deep, ending with a boss battle. Defeat three bosses to become Champion!
+
+### Node Types
+
 | Icon | Type | What Happens |
 |------|------|--------------|
-| ⚔️ | Battle | Fight a wild Pokémon, earn gold, pick a new card |
-| 💚 | Heal | Full party heal. Breathe. |
-| 🔵 | Catch | Throw a ball at a mystery silhouette |
-| ⚡ | Training | Upgrade 2 cards OR remove 1 dead-weight card |
-| 🛒 | Shop | Spend your hard-earned gold on items |
-| 💀 | Boss | A trainer with a full team and something to prove |
+| ⚔️ | Battle | Fight a wild Pokémon, earn gold, and choose a new card |
+| 💚 | Heal | Your whole team gets fully healed |
+| 🔵 | Catch | Try to catch a wild Pokémon to join your team |
+| ⚡ | Training | Upgrade cards to make them stronger, or remove ones you don't need |
+| 🛒 | Shop | Spend your gold on helpful items |
+| 💀 | Boss | Face a Trainer with a full team of Pokémon |
 
 ### Battle System
-- **2 actions per turn**, **3 cards drawn** — you can only play 2, so every hand is a decision.
-- **Actions:** play a card, draw a card, or discard a card.
-- **Type effectiveness** is fully implemented. Fire beats Grass. Water beats Fire. Ground is immune to Electric. Plan accordingly — cards show their effective damage against the current opponent before you play them.
-- Status effects (Burn 🔥, Poison ☠️, Paralysis ⚡) are visible as persistent badges on the HUD.
-- **Switching Pokémon costs 2 actions** and resets your hand to that Pokémon's deck. Each Pokémon has their own cards.
 
-### Gold & Items
-Gold scales with run progress — early fights pay peanuts, late fights pay rent. Boss fights pay double (except the final boss, which pays zero because you're already the champion).
+- Each turn you get **3 cards** but only **2 actions** — so you always have to think about which cards to play!
+- **Type matchups matter.** Fire beats Grass, Water beats Fire, and so on. Cards show their power against the opponent so you can plan ahead.
+- Status effects like Burn 🔥, Poison ☠️, and Paralysis ⚡ are shown as badges on the screen so you always know what's happening.
+- Switching Pokémon costs 2 actions and swaps your whole deck to that Pokémon's moves.
 
-| Item | Effect |
-|------|--------|
-| 🍊 Oran Berry | Auto-heals 10 HP when a Pokémon drops below 50% |
-| 🧪 Revive Potion | Saves a Pokémon from fainting once (restores 30% HP) |
-| 🟡 Ultra Ball | +50% catch rate on Uncommon and Rare Pokémon |
-| 🟣 Master Ball | 100% catch rate. One per run. Use it wisely. |
-| 🚫 Repel | Forces next Catch node to be Uncommon or Rare only |
-| 🎣 Lure | 30% chance of a Rare encounter at any Catch node, for the entire map |
+### Gold and Items
 
-### Starters & Evolution
-- **Bulbasaur** → Ivysaur → Venusaur (Grass/Poison — draining, strategic)
-- **Charmander** → Charmeleon → Charizard (Fire — aggressive, crits)
-- **Squirtle** → Wartortle → Blastoise (Water — defensive, shield combos)
-- **Pikachu** → Raichu (Electric — fast, draw combos) *Unlocked after winning once*
+You earn gold from battles. The further into the game you get, the more gold battles reward!
 
-Beat a boss → your starter evolves. Beat all three → victory screen, stats, and Pikachu unlocks permanently across future runs.
+| Item | What It Does |
+|------|--------------|
+| 🍊 Oran Berry | Heals 10 HP automatically when a Pokémon drops below half health |
+| 🧪 Revive Potion | Saves a Pokémon from fainting once, restoring some HP |
+| 🟡 Ultra Ball | Better chance to catch Uncommon and Rare Pokémon |
+| 🟣 Master Ball | 100% catch chance — one per adventure! |
+| 🚫 Repel | Your next Catch node will only show Uncommon or Rare Pokémon |
+| 🎣 Lure | Makes Rare encounters much more likely for the whole map |
+
+### Starters and Evolution
+
+- **Bulbasaur** → Ivysaur → Venusaur (Grass — draining and strategic)
+- **Charmander** → Charmeleon → Charizard (Fire — powerful attacks)
+- **Squirtle** → Wartortle → Blastoise (Water — defensive and steady)
+- **Pikachu** (Electric — speedy and fun) — unlocked after completing the game once!
+
+Defeat a boss and your starter evolves. Defeat all three bosses and you win!
 
 ### Pokédex
-Every Pokémon you battle (seen as silhouette) or catch (full entry) is registered in your permanent Pokédex, which persists across all runs and game-overs. Accessible from the main menu. Fill it out. It's the closest thing to a postgame this has.
+
+Every Pokémon you battle or catch gets added to your Pokédex, which saves across all your adventures. Battled Pokémon show as silhouettes. Caught Pokémon show their full colour. Try to fill it up!
+
+---
+
+## Team Rocket Challenges
+
+After battles, Team Rocket might pop up with a learning challenge!
+
+- 😾 **Meowth** asks **maths questions** — counting coins, addition, multiplication, and more depending on your age.
+- 💄 **Jessie** asks **vocabulary questions** — can you match a word to its meaning?
+- 🌹 **James** asks **spelling questions** — pick the correctly spelled word!
+
+Answer correctly to earn bonus gold. Every challenge is age-appropriate based on the age you entered at the start. If you get one wrong, the correct answer is always explained so you can learn from it.
 
 ---
 
 ## Deck Building
 
-Your starter begins with a 10-card deck themed around their type. Caught Pokémon get 8 generic cards + 2 type-specific cards.
+Your starter begins with a 10-card deck themed around their type. After every battle victory, choose one of three new cards to add to your deck.
 
-**After every battle victory**, you're offered 3 random cards to add to your deck — pick one or skip. This is how your deck grows from "three Tackles and a prayer" into something you're actually proud of.
-
-**At Training nodes** you can either:
-- **Upgrade** — select 2 cards, both get +25% power permanently
-- **Remove** — delete 1 card from your deck entirely. Yes, you can finally get rid of that Growl you've been carrying since turn one.
+At **Training nodes** you can:
+- **Upgrade** two cards to make them +25% more powerful
+- **Remove** one card you no longer want
 
 ---
 
-## Swapping Assets
+## Adding Your Own Art
 
-Every sprite-heavy element has a clear asset slot comment in the code. The short version:
+The game has clearly marked asset slots throughout the code. Drop your images into the `assets/` folder and they load automatically.
 
 ```
 assets/
-  battleRefrence.jpg        ← battle screen background
-  trainer_stand.png         ← start screen trainer
-  trainer_boss.png          ← generic boss trainer fallback
-  trainer_boss_0/1/2.png    ← per-boss trainer sprites
-  sprites/{id}.png          ← local Pokémon sprite overrides (e.g. 1.png = Bulbasaur)
-  ui/pokeball.png           ← swap the CSS pokeball with a real image
+  battleRefrence.jpg       ← battle screen background
+  trainer_stand.png        ← start screen trainer
+  brock.png                ← Boss 1 trainer
+  misty.png                ← Boss 2 trainer
+  giovanni.png             ← Boss 3 trainer
+  meowth.png               ← Meowth challenge screen
+  jessi.png                ← Jessie challenge screen
+  james.png                ← James challenge screen
+  prof_oak.png             ← Professor Oak (registration + intro)
+  sounds/                  ← all audio files go here
 ```
-
-Pokémon sprites are fetched live from [PokéAPI](https://pokeapi.co). To go offline or use custom art, drop sprites into `assets/sprites/{id}.png` — the `onerror` fallback chains will pick them up automatically.
 
 ---
 
-## Tech Stack
+## Tech Details
 
 | | |
 |---|---|
-| **Frontend** | Vanilla HTML5, CSS3, JavaScript (ES2020) |
-| **Data** | [PokéAPI](https://pokeapi.co) (sprites, names, types) |
-| **Persistence** | `localStorage` — three separate keys: run save, unlocks, Pokédex |
-| **Rendering** | Canvas (map), DOM (everything else) |
-| **Fonts** | Press Start 2P (headers), Nunito (body) via Google Fonts |
-| **Build** | None. Open the file. That's it. |
+| **Frontend** | Vanilla HTML5, CSS3, JavaScript |
+| **Pokémon Data** | PokéAPI (sprites, names, types) |
+| **Save Data** | Browser localStorage — three separate saves: run progress, unlocks, Pokédex |
+| **Map** | HTML5 Canvas |
+| **Fonts** | Press Start 2P + Nunito via Google Fonts |
+| **Build Tools** | None — open the file and play |
 
 ---
 
-## Known Limitations / Future Work
+## A Note for Parents and Teachers
 
-- The back sprite for some very old Pokémon doesn't exist in PokéAPI — it falls back gracefully to the front sprite.
-- The AI opponent is not exactly Deep Blue. It hits you and you hit it back. Depth: shallow.
-- Run history, achievements, difficulty modes, and synergy card highlighting are all on the list.
-- Sound design is entirely imaginary (yours to implement via Web Audio API).
-- The Master Ball UI turns the CSS pokeball purple. It is deeply satisfying.
+PokéTrials is designed to be educational as well as fun. The difficulty of maths problems, vocabulary words, and spelling challenges automatically adjusts based on the age entered at the start of each adventure. All educational content is child-friendly and age-appropriate. No accounts, no ads, no in-app purchases — just a game kids can enjoy.
 
 ---
 
-## Credits
-
-Built with caffeine and the PokéAPI. Pokémon and all related names are property of Nintendo / Game Freak. This is a fan project for educational purposes only. Please don't sue us — we're using your API respectfully and our catch rates are arguably fairer than the original games.
-
----
-
-*"It's not about the Pokémon you caught. It's about the Tackles you played along the way."*
+*Pokémon and all related names are the property of Nintendo and Game Freak. PokéTrials is a fan-made educational project and is not affiliated with or endorsed by Nintendo.*
