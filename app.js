@@ -1630,10 +1630,9 @@ const PartyOverview = {
       row.draggable = true;
       row.dataset.idx = i;
 
-      const hpPct    = Math.round(p.hp / p.maxHp * 100);
-      const hpCol    = hpColor(p.hp, p.maxHp);
-      const cardCount = (p.deck || []).length;
-      const position  = i === 0 ? '1st — leads battle' : i === GameState.activePokemonIndex ? 'Active' : `#${i + 1}`;
+      const isActive  = i === GameState.activePokemonIndex;
+      const canActive = !isActive && p.hp > 0;
+      const position  = isActive ? '★ Active' : i === 0 ? '1st' : `#${i + 1}`;
 
       row.innerHTML = `
         <div class="party-row-drag-handle" title="Drag to reorder">⠿</div>
@@ -1655,9 +1654,12 @@ const PartyOverview = {
           </div>
           <div class="party-row-hp-text">${Math.max(0, p.hp)} / ${p.maxHp} HP</div>
         </div>
-        <button class="party-row-cards-btn" data-idx="${i}" title="View battle cards">
-          🃏 ${cardCount}
-        </button>
+        <div class="party-row-actions">
+          ${canActive ? `<button class="party-row-set-active-btn" data-idx="${i}" title="Set as active Pokémon">⚡ Set Active</button>` : ''}
+          <button class="party-row-cards-btn" data-idx="${i}" title="View battle cards">
+            🃏 ${cardCount}
+          </button>
+        </div>
       `;
 
       // Drag-and-drop events
@@ -1667,6 +1669,15 @@ const PartyOverview = {
       row.addEventListener('drop',      e => this._onDrop(e, i));
       row.addEventListener('dragend',   () => this._onDragEnd());
 
+      // Set Active button
+      const setActiveBtn = row.querySelector('.party-row-set-active-btn');
+      if (setActiveBtn) {
+        setActiveBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.setActive(i);
+        });
+      }
+
       // Cards button
       row.querySelector('.party-row-cards-btn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1675,6 +1686,16 @@ const PartyOverview = {
 
       list.appendChild(row);
     });
+  },
+
+  setActive(idx) {
+    const p = GameState.party[idx];
+    if (!p || p.hp <= 0) return;
+    GameState.activePokemonIndex = idx;
+    // Sync GameState.deck to the newly active pokemon's deck
+    if (p.deck) GameState.deck = p.deck;
+    saveGame();
+    this._render(); // re-render to update active highlight and button states
   },
 
   // ── Drag-and-drop ────────────────────────────────────────────────────────
@@ -3223,13 +3244,18 @@ const CardReward = {
     this._pool = shuffle(unique).slice(0, 3);
 
     const el = document.getElementById('card-reward-screen');
-    document.getElementById('cr-gold-earned').textContent = `+${goldEarned}g earned`;
+    const deckSize = GameState.deck.length;
+    const MAX_DECK = 21;
+    const atCap    = deckSize >= MAX_DECK;
+    document.getElementById('cr-gold-earned').textContent =
+      `+${goldEarned}g earned  ·  Deck: ${deckSize}/${MAX_DECK}${atCap ? ' — FULL' : ''}`;
+
     const grid = document.getElementById('cr-cards-grid');
     grid.innerHTML = '';
 
     this._pool.forEach((card, i) => {
       const div = document.createElement('div');
-      div.className = 'card cr-card';
+      div.className = 'card cr-card' + (atCap ? ' cr-card-disabled' : '');
       div.dataset.type = card.type;
       div.innerHTML = `
         <div class="card-icon">${card.icon}</div>
@@ -3238,18 +3264,32 @@ const CardReward = {
         <div class="card-effect">${card.effect || '—'}</div>
         <div class="cr-card-type type-${card.type}">${card.type}</div>
       `;
-      div.onclick = () => this.pickCard(i);
+      if (!atCap) div.onclick = () => this.pickCard(i);
       grid.appendChild(div);
     });
+
+    if (atCap) {
+      const notice = document.createElement('div');
+      notice.className = 'cr-cap-notice';
+      notice.textContent = '⚠ Deck is full (21 cards max). Remove a card at Training to make room.';
+      grid.after(notice);
+    }
 
     el.classList.remove('hidden');
   },
 
   pickCard(idx) {
-    const card = this._pool[idx];
-    GameState.deck.push({ ...card, improved: 0 });
+    const card   = this._pool[idx];
     const active = GameState.party[GameState.activePokemonIndex];
-    if (active && active.deck) active.deck.push({ ...card, improved: 0 });
+    const MAX_DECK = 21;
+
+    // Only add if under the cap
+    if (GameState.deck.length < MAX_DECK) {
+      GameState.deck.push({ ...card, improved: 0 });
+    }
+    if (active && active.deck && active.deck.length < MAX_DECK) {
+      active.deck.push({ ...card, improved: 0 });
+    }
     SoundEngine.playFanfare();
     this.close();
   },

@@ -2687,3 +2687,48 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .node-lane-right:not([disabled]) {
   border-right-width: 3px;
 }
+
+/* ═══════════════════════════════════════════
+   PARTY ROW — Set Active button + actions col
+═══════════════════════════════════════════ */
+.party-row-actions {
+  display: flex; flex-direction: column;
+  gap: .35rem; align-items: flex-end;
+  flex-shrink: 0;
+}
+.party-row-set-active-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem;
+  padding: .4em .6em;
+  background: rgba(255,215,0,.12);
+  border: 1.5px solid var(--col-yellow);
+  border-radius: var(--r-sm);
+  color: var(--col-yellow);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .12s, transform .1s;
+}
+.party-row-set-active-btn:hover {
+  background: rgba(255,215,0,.25);
+  transform: scale(1.05);
+}
+
+/* ═══════════════════════════════════════════
+   CARD REWARD — cap state
+═══════════════════════════════════════════ */
+.cr-card-disabled {
+  opacity: .4;
+  pointer-events: none;
+  filter: grayscale(60%);
+}
+.cr-cap-notice {
+  grid-column: 1 / -1;
+  text-align: center;
+  font-size: .58rem;
+  color: var(--col-red);
+  font-weight: 800;
+  padding: .5rem;
+  border: 1.5px solid var(--col-red);
+  border-radius: var(--r-md);
+  background: rgba(227,53,13,.1);
+}
