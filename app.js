@@ -17,20 +17,246 @@ const STARTERS = [
 ];
 
 const BOSS_TRAINERS = [
+  // ── Kanto Gym Leaders ──────────────────────────────────────────────────────
   {
     name: 'Brock',
+    title: 'Boulder Badge',
     dialogue: "I've been the best gym leader since before you were hatched! Let's rock!",
-    team: [74, 95], // Geodude, Onix
+    team: [74, 95],
+    image: 'brock.png',
   },
   {
     name: 'Misty',
+    title: 'Cascade Badge',
     dialogue: "Don't go easy on me just 'cause I'm cute! My Pokémon are FIERCE!",
-    team: [120, 121, 54], // Staryu, Starmie, Psyduck
+    team: [120, 121, 54],
+    image: 'misty.png',
+  },
+  {
+    name: 'Lt. Surge',
+    title: 'Thunder Badge',
+    dialogue: "I was a war hero before I was a gym leader. You don't stand a chance, kid!",
+    team: [100, 26, 125],
+    image: 'ltsurge.png',
+  },
+  {
+    name: 'Erika',
+    title: 'Rainbow Badge',
+    dialogue: "Oh my… I almost fell asleep. Let me show you the power of Grass types.",
+    team: [71, 114, 45],
+    image: 'erika.png',
+  },
+  {
+    name: 'Koga',
+    title: 'Soul Badge',
+    dialogue: "Fwa ha ha! My Pokémon use the art of ninja — you will never see it coming!",
+    team: [109, 110, 89],
+    image: 'koga.png',
+  },
+  {
+    name: 'Sabrina',
+    title: 'Marsh Badge',
+    dialogue: "I see your every move before you make it. Psychic power is absolute.",
+    team: [64, 122, 65],
+    image: 'sabrina.png',
+  },
+  {
+    name: 'Blaine',
+    title: 'Volcano Badge',
+    dialogue: "Hah! You need more than water to put out my burning passion for Pokémon!",
+    team: [58, 77, 78],
+    image: 'blaine.png',
   },
   {
     name: 'Giovanni',
+    title: 'Earth Badge',
     dialogue: "Hmph. A child? No matter — my Pokémon shall crush yours like pebbles!",
-    team: [111, 112, 68, 103], // Rhyhorn, Rhydon, Machamp, Exeggutor
+    team: [111, 112, 68, 103],
+    image: 'giovanni.png',
+  },
+  // ── Elite Four ────────────────────────────────────────────────────────────
+  {
+    name: 'Lorelei',
+    title: 'Elite Four',
+    dialogue: "No one can best me when it comes to icy Pokémon! Freeze in your tracks!",
+    team: [87, 91, 124, 131],
+    image: 'giovanni.png', // placeholder until asset added
+  },
+  {
+    name: 'Bruno',
+    title: 'Elite Four',
+    dialogue: "We will grind you down with the superior power of Fighting-type Pokémon!",
+    team: [95, 107, 106, 68],
+    image: 'brock.png', // placeholder
+  },
+  {
+    name: 'Agatha',
+    title: 'Elite Four',
+    dialogue: "Hehehe… Old-fashioned, am I? My Ghost Pokémon will give you nightmares!",
+    team: [94, 93, 110, 93],
+    image: 'sabrina.png', // placeholder
+  },
+  {
+    name: 'Lance',
+    title: 'Elite Four',
+    dialogue: "Dragonite is an extremely rare Pokémon. And I have three of them! Tremble!",
+    team: [130, 148, 148, 149],
+    image: 'giovanni.png', // placeholder
+  },
+  {
+    name: 'Blue',
+    title: '★ Champion ★',
+    dialogue: "Smell ya later? No — you won't be going anywhere after I beat you!",
+    team: [18, 59, 65, 112, 149, 6],
+    image: 'giovanni.png', // placeholder
+  },
+];
+
+// ─── MAP THEMES ──────────────────────────────────────────────────────────────
+// One theme per boss index — defines purely visual map styling
+const MAP_THEMES = [
+  // 0: Brock — rocky cave, browns and greys
+  {
+    name: 'Boulder Cave Trail',
+    bgTop: '#8a7060', bgMid: '#6e5a4a', bgBot: '#5a4838',
+    pathActive: 'rgba(220,180,100,0.85)', pathDone: 'rgba(255,210,80,0.9)',
+    pathBypassed: 'rgba(60,45,35,0.4)',   pathLocked: 'rgba(70,55,45,0.3)',
+    glowActive: 'rgba(200,140,60,0.6)',   glowDone: 'rgba(255,190,50,0.8)',
+    texture: 'rock',
+    accent: '#c8a060',
+    bandColor: 'rgba(60,45,35,0.25)',
+  },
+  // 1: Misty — ocean blues and teals
+  {
+    name: 'Cerulean Sea Path',
+    bgTop: '#2a5a8a', bgMid: '#1e4a7a', bgBot: '#123060',
+    pathActive: 'rgba(80,200,240,0.85)', pathDone: 'rgba(120,230,255,0.9)',
+    pathBypassed: 'rgba(20,40,80,0.4)',  pathLocked: 'rgba(20,50,90,0.3)',
+    glowActive: 'rgba(40,160,220,0.7)',  glowDone: 'rgba(80,220,255,0.9)',
+    texture: 'water',
+    accent: '#40c0e0',
+    bandColor: 'rgba(10,30,70,0.3)',
+  },
+  // 2: Lt. Surge — electric yellow, military steel
+  {
+    name: 'Vermilion Thunder Road',
+    bgTop: '#4a4a20', bgMid: '#3a3a18', bgBot: '#2a2a10',
+    pathActive: 'rgba(255,240,60,0.9)',  pathDone: 'rgba(255,255,100,0.95)',
+    pathBypassed: 'rgba(40,40,20,0.45)', pathLocked: 'rgba(50,50,25,0.3)',
+    glowActive: 'rgba(220,210,0,0.8)',   glowDone: 'rgba(255,255,80,0.95)',
+    texture: 'electric',
+    accent: '#f0e020',
+    bandColor: 'rgba(30,30,10,0.35)',
+  },
+  // 3: Erika — lush greens, flower garden
+  {
+    name: 'Celadon Garden Walk',
+    bgTop: '#2a5a2a', bgMid: '#1e4a1e', bgBot: '#143414',
+    pathActive: 'rgba(100,220,80,0.85)', pathDone: 'rgba(140,255,100,0.9)',
+    pathBypassed: 'rgba(20,50,20,0.4)',  pathLocked: 'rgba(20,55,20,0.3)',
+    glowActive: 'rgba(60,180,40,0.7)',   glowDone: 'rgba(100,240,60,0.9)',
+    texture: 'grass',
+    accent: '#60d040',
+    bandColor: 'rgba(10,40,10,0.3)',
+  },
+  // 4: Koga — purple poison, ninja mist
+  {
+    name: 'Fuschia Shadow Maze',
+    bgTop: '#2e1a4a', bgMid: '#221438', bgBot: '#180e28',
+    pathActive: 'rgba(180,80,240,0.85)', pathDone: 'rgba(210,120,255,0.9)',
+    pathBypassed: 'rgba(30,15,50,0.45)', pathLocked: 'rgba(35,18,55,0.3)',
+    glowActive: 'rgba(150,40,220,0.7)',  glowDone: 'rgba(200,100,255,0.9)',
+    texture: 'poison',
+    accent: '#a040d0',
+    bandColor: 'rgba(20,10,40,0.35)',
+  },
+  // 5: Sabrina — psychic pink and deep space
+  {
+    name: 'Saffron Psychic Plane',
+    bgTop: '#3a1a3a', bgMid: '#2e1030', bgBot: '#200a22',
+    pathActive: 'rgba(255,100,200,0.85)', pathDone: 'rgba(255,160,240,0.9)',
+    pathBypassed: 'rgba(40,15,40,0.45)', pathLocked: 'rgba(45,18,45,0.3)',
+    glowActive: 'rgba(220,60,180,0.7)',  glowDone: 'rgba(255,140,230,0.9)',
+    texture: 'psychic',
+    accent: '#e060c0',
+    bandColor: 'rgba(30,10,30,0.35)',
+  },
+  // 6: Blaine — volcanic fire, molten orange
+  {
+    name: 'Cinnabar Volcano Climb',
+    bgTop: '#5a2000', bgMid: '#481800', bgBot: '#361000',
+    pathActive: 'rgba(255,120,20,0.9)',  pathDone: 'rgba(255,180,60,0.95)',
+    pathBypassed: 'rgba(50,20,5,0.45)',  pathLocked: 'rgba(55,22,8,0.3)',
+    glowActive: 'rgba(220,80,0,0.8)',    glowDone: 'rgba(255,160,40,0.95)',
+    texture: 'fire',
+    accent: '#ff6010',
+    bandColor: 'rgba(40,15,5,0.4)',
+  },
+  // 7: Giovanni — dark urban, Team Rocket red
+  {
+    name: 'Viridian Dark City',
+    bgTop: '#1a1a1a', bgMid: '#141414', bgBot: '#0e0e0e',
+    pathActive: 'rgba(220,40,40,0.85)', pathDone: 'rgba(255,80,80,0.9)',
+    pathBypassed: 'rgba(40,10,10,0.5)',  pathLocked: 'rgba(40,15,15,0.3)',
+    glowActive: 'rgba(200,20,20,0.7)',   glowDone: 'rgba(255,60,60,0.9)',
+    texture: 'dark',
+    accent: '#cc2020',
+    bandColor: 'rgba(30,8,8,0.4)',
+  },
+  // 8: Lorelei — icy arctic blue-white
+  {
+    name: 'Ice Path — Elite Four',
+    bgTop: '#c0d8f0', bgMid: '#90b8e0', bgBot: '#5090c0',
+    pathActive: 'rgba(180,230,255,0.9)', pathDone: 'rgba(220,250,255,0.95)',
+    pathBypassed: 'rgba(80,120,160,0.4)', pathLocked: 'rgba(80,130,170,0.3)',
+    glowActive: 'rgba(140,200,240,0.8)',  glowDone: 'rgba(200,240,255,0.95)',
+    texture: 'ice',
+    accent: '#b0e0ff',
+    bandColor: 'rgba(60,100,150,0.25)',
+  },
+  // 9: Bruno — fighting dojo, earthy red clay
+  {
+    name: 'Fighting Dojo — Elite Four',
+    bgTop: '#5a2010', bgMid: '#481808', bgBot: '#361008',
+    pathActive: 'rgba(220,120,60,0.85)', pathDone: 'rgba(255,160,80,0.9)',
+    pathBypassed: 'rgba(50,20,10,0.45)', pathLocked: 'rgba(55,22,10,0.3)',
+    glowActive: 'rgba(190,80,30,0.7)',   glowDone: 'rgba(250,140,60,0.9)',
+    texture: 'rock',
+    accent: '#d06030',
+    bandColor: 'rgba(40,15,5,0.35)',
+  },
+  // 10: Agatha — ghost, deep dark purple-black
+  {
+    name: 'Ghost Tower — Elite Four',
+    bgTop: '#0e0e18', bgMid: '#0a0a14', bgBot: '#060610',
+    pathActive: 'rgba(140,100,220,0.85)', pathDone: 'rgba(180,140,255,0.9)',
+    pathBypassed: 'rgba(15,12,30,0.5)',   pathLocked: 'rgba(18,14,35,0.3)',
+    glowActive: 'rgba(110,70,200,0.7)',   glowDone: 'rgba(160,120,255,0.9)',
+    texture: 'ghost',
+    accent: '#8050d0',
+    bandColor: 'rgba(12,10,25,0.4)',
+  },
+  // 11: Lance — dragon, deep indigo and gold
+  {
+    name: 'Dragon\'s Den — Elite Four',
+    bgTop: '#0a1a3a', bgMid: '#081430', bgBot: '#060e22',
+    pathActive: 'rgba(100,160,255,0.85)', pathDone: 'rgba(140,200,255,0.9)',
+    pathBypassed: 'rgba(10,20,50,0.45)',  pathLocked: 'rgba(12,22,55,0.3)',
+    glowActive: 'rgba(60,120,240,0.7)',   glowDone: 'rgba(120,180,255,0.9)',
+    texture: 'dragon',
+    accent: '#4080e0',
+    bandColor: 'rgba(8,15,40,0.4)',
+  },
+  // 12: Blue (Champion) — rich crimson and gold
+  {
+    name: '★ Champion\'s Hall',
+    bgTop: '#2a0808', bgMid: '#1e0606', bgBot: '#140404',
+    pathActive: 'rgba(255,200,40,0.9)',  pathDone: 'rgba(255,230,100,0.95)',
+    pathBypassed: 'rgba(40,10,10,0.5)',  pathLocked: 'rgba(45,12,12,0.3)',
+    glowActive: 'rgba(220,160,0,0.8)',   glowDone: 'rgba(255,220,80,0.95)',
+    texture: 'champion',
+    accent: '#ffc820',
+    bandColor: 'rgba(30,8,8,0.4)',
   },
 ];
 
@@ -358,14 +584,8 @@ function buildDeck(type, improvementMap = {}) {
 
 // ─── MAP GENERATION ──────────────────────────────────────────────────────────
 
-function generateMap() {
-  /*
-    20 nodes deep + boss. Layout:
-    - 10 "wide" rows, each with 2–3 nodes  (left, centre-optional, right)
-    - Nodes are hidden as ❓ until the player visits them
-    - Richer type pool: 8 battle, 3 heal, 3 catch, 3 training, 3 shop per 20 nodes
-    - Every node stores its real type but displays as '?' until visited
-  */
+function generateMap(bossIndex) {
+  const bi = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, MAP_THEMES.length - 1);
 
   function makeTypes() {
     const t = [
@@ -386,27 +606,28 @@ function generateMap() {
     return base + (Math.random() * 2 - 1) * amount;
   }
 
-  // 10 wide rows of 2–3 nodes each; centre column appears on ~40% of rows
-  const WIDE_ROWS  = 10;
-  const TOTAL_Y    = WIDE_ROWS + 2; // Y grid units
+  const WIDE_ROWS = 10;
+  const TOTAL_Y   = WIDE_ROWS + 2;
 
+  // ── Build layout rows ───────────────────────────────────────────────────
+  // Each row has 2–3 nodes. Each node carries a 'lane': 'left' | 'mid' | 'right'
+  // This drives diverging link logic below.
   const layoutRows = [];
   for (let r = 0; r < WIDE_ROWS; r++) {
-    const y       = (r + 1) / TOTAL_Y;
-    const hasMid  = Math.random() < 0.45; // ~45% of rows get a 3rd centre node
+    const y      = (r + 1) / TOTAL_Y;
+    const hasMid = Math.random() < 0.40;
     const row = [
-      { x: jitter(0.18, 0.05), y, type: nextType() },
-      { x: jitter(0.82, 0.05), y, type: nextType() },
+      { x: jitter(0.18, 0.05), y, type: nextType(), lane: 'left'  },
+      { x: jitter(0.82, 0.05), y, type: nextType(), lane: 'right' },
     ];
     if (hasMid) {
-      row.splice(1, 0, { x: jitter(0.50, 0.04), y, type: nextType() });
+      row.splice(1, 0, { x: jitter(0.50, 0.04), y, type: nextType(), lane: 'mid' });
     }
     layoutRows.push(row);
   }
+  layoutRows.push([{ x: 0.50, y: (WIDE_ROWS + 1) / TOTAL_Y, type: 'boss', lane: 'mid' }]);
 
-  // Boss row
-  layoutRows.push([{ x: 0.50, y: (WIDE_ROWS + 1) / TOTAL_Y, type: 'boss' }]);
-
+  // ── Build nodes array ───────────────────────────────────────────────────
   const nodes = [];
   let idx = 0;
   const rowStartIdx = [];
@@ -416,39 +637,70 @@ function generateMap() {
     row.forEach((spec, ni) => {
       nodes.push({
         idx,
-        row: ri,
-        col: ni,
+        row:      ri,
+        col:      ni,
+        lane:     spec.lane,
         type:     spec.type,
-        revealed: ri === 0,   // first row is revealed immediately
-        x: spec.x,
-        y: spec.y,
+        revealed: ri === 0,
+        x:        spec.x,
+        y:        spec.y,
         unlocked: ri === 0,
-        done: false,
-        links: [],
+        done:     false,
+        links:    [],
       });
       idx++;
     });
   });
 
-  // Links: every node in row R connects to ALL nodes in row R+1
+  // ── Diverging links ─────────────────────────────────────────────────────
+  // Rule: a left-lane node links to left/mid nodes next row.
+  //       a right-lane node links to right/mid nodes next row.
+  //       a mid-lane node links to all nodes next row.
+  // "Merge rows" at rows 3 and 7 — every lane links to all next-row nodes,
+  // allowing paths to rejoin after diverging.
+  const MERGE_ROWS = new Set([3, 7]);
+
   layoutRows.forEach((_, ri) => {
     if (ri >= layoutRows.length - 1) return;
     const curStart  = rowStartIdx[ri];
     const nextStart = rowStartIdx[ri + 1];
-    const curCount  = layoutRows[ri].length;
-    const nxtCount  = layoutRows[ri + 1].length;
-    for (let ci = 0; ci < curCount; ci++) {
-      for (let ni = 0; ni < nxtCount; ni++) {
-        const fromNode = nodes[curStart + ci];
-        const toIdx    = nextStart + ni;
-        if (!fromNode.links.includes(toIdx)) fromNode.links.push(toIdx);
+    const curNodes  = layoutRows[ri];
+    const nxtNodes  = layoutRows[ri + 1];
+    const isMerge   = MERGE_ROWS.has(ri);
+
+    curNodes.forEach((spec, ci) => {
+      const fromNode = nodes[curStart + ci];
+      nxtNodes.forEach((nspec, ni) => {
+        const toIdx = nextStart + ni;
+        let shouldLink = false;
+        if (isMerge) {
+          // Merge row: everyone connects to everyone — paths rejoin
+          shouldLink = true;
+        } else if (spec.lane === 'mid') {
+          shouldLink = true;
+        } else if (spec.lane === 'left') {
+          shouldLink = nspec.lane === 'left' || nspec.lane === 'mid';
+        } else { // right
+          shouldLink = nspec.lane === 'right' || nspec.lane === 'mid';
+        }
+        if (shouldLink && !fromNode.links.includes(toIdx)) {
+          fromNode.links.push(toIdx);
+        }
+      });
+      // Safety: every node must link to at least one next-row node
+      if (fromNode.links.length === 0) {
+        const fallback = nextStart + Math.floor(Math.random() * nxtNodes.length);
+        fromNode.links.push(fallback);
       }
-    }
+    });
   });
 
   const bossNode = nodes[nodes.length - 1];
-  bossNode.bossIndex = Math.min(GameState?.bossesDefeated ?? 0, 2);
-  bossNode.revealed  = false; // boss stays hidden until adjacent
+  bossNode.bossIndex = bi;
+  bossNode.revealed  = false;
+
+  // Store theme index on the map so drawMap can read it
+  nodes._bossIndex = bi;
 
   return nodes;
 }
@@ -1578,8 +1830,10 @@ const MapEngine = {
       el.appendChild(hint);
     }
 
+    const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const boss = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     document.getElementById('map-meta').textContent =
-      `💰 ${GameState.gold || 0}g | Boss: ${GameState.bossesDefeated}/3 | Party: ${GameState.party.length}/6`;
+      `💰 ${GameState.gold || 0}g  |  ⚔ ${boss?.name ?? 'Boss'}  |  Party: ${GameState.party.length}/6`;
   },
 
   drawMap() {
@@ -1596,34 +1850,30 @@ const MapEngine = {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, W, H);
 
-    // ── Earthy sandy background like the reference ──
+    // ── Pick theme ──
+    const bi    = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const theme = MAP_THEMES[Math.min(bi, MAP_THEMES.length - 1)];
+
+    // ── Background gradient ──
     const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0,   '#c8b89a');
-    bgGrad.addColorStop(0.4, '#b8a882');
-    bgGrad.addColorStop(1,   '#a89870');
+    bgGrad.addColorStop(0,   theme.bgTop);
+    bgGrad.addColorStop(0.5, theme.bgMid);
+    bgGrad.addColorStop(1,   theme.bgBot);
     ctx.fillStyle = bgGrad;
     ctx.fillRect(0, 0, W, H);
 
-    // Subtle texture noise
-    for (let i = 0; i < 400; i++) {
-      const tx = Math.random() * W;
-      const ty = Math.random() * H;
-      const tr = Math.random() * 18 + 4;
-      ctx.beginPath();
-      ctx.arc(tx, ty, tr, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(${Math.random()>0.5?'80,60,30':'180,160,120'},${Math.random()*0.08})`;
-      ctx.fill();
-    }
+    // ── Themed texture overlay ──
+    this._drawTexture(ctx, W, H, theme);
 
-    // Horizontal band dividers (like the reference segments)
+    // ── Horizontal band dividers ──
     for (let i = 1; i < 5; i++) {
       const bandY = (i / 5) * H;
       ctx.beginPath();
       ctx.moveTo(0, bandY);
       ctx.lineTo(W, bandY);
-      ctx.strokeStyle = 'rgba(100,80,50,0.2)';
+      ctx.strokeStyle = theme.bandColor;
       ctx.lineWidth = 1;
-      ctx.setLineDash([4, 8]);
+      ctx.setLineDash([4, 10]);
       ctx.stroke();
       ctx.setLineDash([]);
     }
@@ -1646,31 +1896,36 @@ const MapEngine = {
         const bypassed = !!n.bypassed;
         const locked   = !n.unlocked && !done && !bypassed;
 
+        // Lane tint — left paths slightly warmer, right paths slightly cooler
+        const isRight = n.lane === 'right';
+
         ctx.beginPath();
         ctx.moveTo(n.px, n.py);
-        ctx.lineTo(target.px, target.py);
+        // Slight curve for visual interest
+        const mx = (n.px + target.px) / 2 + (isRight ? 12 : -12);
+        const my = (n.py + target.py) / 2;
+        ctx.quadraticCurveTo(mx, my, target.px, target.py);
 
         if (done) {
-          ctx.strokeStyle = 'rgba(255,200,60,0.85)';
-          ctx.lineWidth   = 4;
-          ctx.shadowColor = 'rgba(255,180,0,0.7)';
-          ctx.shadowBlur  = 10;
+          ctx.strokeStyle = theme.pathDone;
+          ctx.lineWidth   = 5;
+          ctx.shadowColor = theme.glowDone;
+          ctx.shadowBlur  = 12;
           ctx.setLineDash([]);
         } else if (bypassed) {
-          // Greyed out, dashed — road not taken
-          ctx.strokeStyle = 'rgba(80,65,50,0.35)';
-          ctx.lineWidth   = 2;
+          ctx.strokeStyle = theme.pathBypassed;
+          ctx.lineWidth   = 1.5;
           ctx.shadowBlur  = 0;
-          ctx.setLineDash([3, 6]);
+          ctx.setLineDash([2, 7]);
         } else if (locked) {
-          ctx.strokeStyle = 'rgba(80,70,60,0.3)';
-          ctx.lineWidth   = 2;
+          ctx.strokeStyle = theme.pathLocked;
+          ctx.lineWidth   = 1.5;
           ctx.shadowBlur  = 0;
           ctx.setLineDash([]);
         } else {
-          ctx.strokeStyle = 'rgba(240,160,60,0.75)';
+          ctx.strokeStyle = theme.pathActive;
           ctx.lineWidth   = 3;
-          ctx.shadowColor = 'rgba(255,140,0,0.5)';
+          ctx.shadowColor = theme.glowActive;
           ctx.shadowBlur  = 8;
           ctx.setLineDash([]);
         }
@@ -1688,31 +1943,164 @@ const MapEngine = {
       const revealed = !!n.revealed || n.type === 'boss';
 
       let typeClass;
-      if (done)           typeClass = 'node-done';
-      else if (bypassed)  typeClass = 'node-bypassed';
+      if (done)             typeClass = 'node-done';
+      else if (bypassed)    typeClass = 'node-bypassed';
       else if (!n.unlocked) typeClass = 'node-locked';
-      else if (!revealed) typeClass = 'node-mystery';
-      else                typeClass = `node-${n.type}`;
+      else if (!revealed)   typeClass = 'node-mystery';
+      else                  typeClass = `node-${n.type}`;
 
-      btn.className  = `map-node-btn ${typeClass}`;
+      // Apply lane class for themed border tint
+      const laneClass = n.lane ? ` node-lane-${n.lane}` : '';
+
+      btn.className  = `map-node-btn ${typeClass}${laneClass}`;
       btn.style.left = n.px + 'px';
       btn.style.top  = n.py + 'px';
+      // Pass theme accent to node via CSS custom property
+      btn.style.setProperty('--theme-accent', theme.accent);
 
-      if (done)           btn.textContent = '✓';
-      else if (bypassed)  btn.textContent = '✗';
-      else if (!revealed) btn.textContent = NODE_MYSTERY_ICON;
-      else                btn.textContent = NODE_ICONS[n.type] || '?';
+      if (done)             btn.textContent = '✓';
+      else if (bypassed)    btn.textContent = '✗';
+      else if (!revealed)   btn.textContent = NODE_MYSTERY_ICON;
+      else                  btn.textContent = NODE_ICONS[n.type] || '?';
 
-      if (done)           btn.title = 'Completed';
-      else if (bypassed)  btn.title = 'Path not taken';
+      if (done)             btn.title = 'Completed';
+      else if (bypassed)    btn.title = 'Path not taken';
       else if (!n.unlocked) btn.title = 'Locked';
-      else if (!revealed) btn.title = 'Mystery node — enter to find out!';
-      else                btn.title = capitalize(n.type) + ' Node';
+      else if (!revealed)   btn.title = 'Mystery node — enter to find out!';
+      else                  btn.title = capitalize(n.type) + ' Node';
 
       if (!n.unlocked || done || bypassed) btn.setAttribute('disabled', true);
       btn.onclick = () => this.visitNode(n);
       layer.appendChild(btn);
     });
+  },
+
+  // ── Texture painter ─────────────────────────────────────────────────────
+  _drawTexture(ctx, W, H, theme) {
+    const t = theme.texture;
+    if (t === 'rock') {
+      // Scattered pebble ovals
+      for (let i = 0; i < 120; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        const rx = 4 + Math.random() * 10, ry = 3 + Math.random() * 6;
+        ctx.beginPath();
+        ctx.ellipse(x, y, rx, ry, Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(40,30,20,${0.06 + Math.random() * 0.08})`;
+        ctx.fill();
+      }
+    } else if (t === 'water') {
+      // Horizontal wave lines
+      for (let i = 0; i < 30; i++) {
+        const y = Math.random() * H;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        for (let x = 0; x <= W; x += 20) {
+          ctx.lineTo(x, y + Math.sin(x * 0.05 + i) * 3);
+        }
+        ctx.strokeStyle = `rgba(255,255,255,${0.03 + Math.random() * 0.04})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    } else if (t === 'electric') {
+      // Jagged lightning streaks
+      for (let i = 0; i < 8; i++) {
+        const sx = Math.random() * W;
+        ctx.beginPath();
+        ctx.moveTo(sx, 0);
+        let cx = sx, cy = 0;
+        while (cy < H) {
+          cx += (Math.random() - 0.5) * 30;
+          cy += 30 + Math.random() * 40;
+          ctx.lineTo(cx, cy);
+        }
+        ctx.strokeStyle = `rgba(255,255,100,${0.04 + Math.random() * 0.06})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+      }
+    } else if (t === 'grass') {
+      // Tiny leaf dots scattered
+      for (let i = 0; i < 200; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        ctx.beginPath();
+        ctx.ellipse(x, y, 2, 5, Math.random() * Math.PI, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(60,160,40,${0.06 + Math.random() * 0.08})`;
+        ctx.fill();
+      }
+    } else if (t === 'poison' || t === 'ghost') {
+      // Soft floating blobs (mist / spores)
+      for (let i = 0; i < 60; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        const r = 8 + Math.random() * 20;
+        const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+        const alpha = 0.04 + Math.random() * 0.06;
+        grad.addColorStop(0, t === 'poison' ? `rgba(160,50,220,${alpha * 2})` : `rgba(100,60,200,${alpha * 2})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
+    } else if (t === 'psychic') {
+      // Concentric ripple circles
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        for (let r = 5; r < 40; r += 12) {
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.strokeStyle = `rgba(220,80,180,${0.04 + Math.random() * 0.04})`;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    } else if (t === 'fire') {
+      // Upward ember dots
+      for (let i = 0; i < 150; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        const r = 1 + Math.random() * 3;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,${100 + Math.floor(Math.random()*100)},20,${0.06 + Math.random() * 0.1})`;
+        ctx.fill();
+      }
+    } else if (t === 'dark' || t === 'champion') {
+      // Subtle vignette only — keep it clean and dramatic
+      const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.85);
+      vig.addColorStop(0, 'rgba(0,0,0,0)');
+      vig.addColorStop(1, 'rgba(0,0,0,0.45)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
+    } else if (t === 'ice') {
+      // Snowflake-like cross marks
+      for (let i = 0; i < 60; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        const s = 4 + Math.random() * 8;
+        ctx.strokeStyle = `rgba(200,240,255,${0.08 + Math.random() * 0.1})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(x-s,y); ctx.lineTo(x+s,y); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x,y-s); ctx.lineTo(x,y+s); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x-s*.7,y-s*.7); ctx.lineTo(x+s*.7,y+s*.7); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x+s*.7,y-s*.7); ctx.lineTo(x-s*.7,y+s*.7); ctx.stroke();
+      }
+    } else if (t === 'dragon') {
+      // Large sweeping arc strokes
+      for (let i = 0; i < 12; i++) {
+        const x = Math.random() * W, y = Math.random() * H;
+        ctx.beginPath();
+        ctx.arc(x, y, 30 + Math.random() * 60, 0, Math.PI * (0.5 + Math.random()));
+        ctx.strokeStyle = `rgba(80,140,255,${0.04 + Math.random() * 0.05})`;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    } else {
+      // Generic subtle noise dots
+      for (let i = 0; i < 300; i++) {
+        const tx = Math.random() * W, ty = Math.random() * H;
+        ctx.beginPath();
+        ctx.arc(tx, ty, Math.random() * 6 + 2, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`;
+        ctx.fill();
+      }
+    }
   },
 
   visitNode(node) {
@@ -2240,7 +2628,10 @@ const BossEngine = {
 
   async start(node) {
     showLoading();
-    const bossIdx = Math.min(GameState.bossesDefeated, 2);
+    const bossIdx = Math.min(
+      node?.bossIndex ?? GameState.bossesDefeated,
+      BOSS_TRAINERS.length - 1
+    );
     const boss = BOSS_TRAINERS[bossIdx];
     this.bossData = boss;
     this.oppIdx   = 0;
@@ -2248,34 +2639,30 @@ const BossEngine = {
 
     for (const id of boss.team) {
       const d = await fetchPoke(id);
-      const level = 12 + bossIdx * 8;
+      const level = 12 + bossIdx * 6;
       this.oppTeam.push(makePokemon(id, level, getSpriteUrl(d, true), capitalize(d.name), d.types[0]?.type?.name || 'normal'));
     }
     hideLoading();
 
-    // Show boss screen first so all elements are active in the DOM
     showScreen('boss');
 
-    // Set up trainer sprite with safe fallback
-    const bossImages = ['brock.png', 'misty.png', 'giovanni.png'];
     const trainerSpriteWrap = document.querySelector('.trainer-sprite-wrap');
     const trainerImg = document.getElementById('boss-trainer-sprite');
     if (trainerImg && trainerSpriteWrap) {
       trainerImg.onerror = function() {
-        // Fallback to generic then emoji
         this.onerror = () => {
           trainerSpriteWrap.innerHTML = `<div style="font-size:5rem;line-height:1">🧢</div>`;
         };
         this.src = 'assets/trainer_boss.png';
       };
-      trainerImg.src = `assets/${bossImages[bossIdx]}`;
+      trainerImg.src = `assets/${boss.image}`;
     }
 
-    document.getElementById('dialogue-name').textContent = boss.name;
+    document.getElementById('dialogue-name').textContent = `${boss.name} — ${boss.title}`;
     document.getElementById('dialogue-text').textContent  = boss.dialogue;
 
-    const introEl = document.getElementById('trainer-intro');
-    const battleEl= document.getElementById('boss-battle-area');
+    const introEl  = document.getElementById('trainer-intro');
+    const battleEl = document.getElementById('boss-battle-area');
     if (introEl)  introEl.style.display  = 'flex';
     if (battleEl) battleEl.style.display = 'none';
 

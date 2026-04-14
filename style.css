@@ -2663,3 +2663,27 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-color: var(--col-blue-lt) !important;
   background: rgba(86,160,224,.15) !important;
 }
+
+/* ═══════════════════════════════════════════
+   THEMED NODE BUTTONS — lane + accent tint
+═══════════════════════════════════════════ */
+
+/* Active unlocked nodes pick up the theme accent from the CSS variable */
+.map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed) {
+  border-color: color-mix(in srgb, var(--theme-accent, var(--col-yellow)) 60%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--theme-accent, var(--col-yellow)) 40%, transparent);
+}
+.map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed):hover {
+  border-color: var(--theme-accent, var(--col-yellow));
+  box-shadow: 0 0 16px var(--theme-accent, var(--col-yellow));
+  transform: translateY(-3px) scale(1.12);
+}
+
+/* Left lane — very subtle warm tint on border */
+.node-lane-left:not([disabled]) {
+  border-left-width: 3px;
+}
+/* Right lane — very subtle cool tint on border */
+.node-lane-right:not([disabled]) {
+  border-right-width: 3px;
+}
