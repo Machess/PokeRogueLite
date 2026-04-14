@@ -282,7 +282,7 @@ const CARD_TEMPLATES = {
     { id:'sleep_powder',name:'Sleep Powder', icon:'💤', type:'grass',   power:0,   effect:'Skip opp next turn',        special: 'skip_opp' },
     { id:'leech_seed',  name:'Leech Seed',   icon:'🌾', type:'grass',   power:20,  effect:'Drain 15/turn for 3 turns', special: 'leech' },
     { id:'synthesis',   name:'Synthesis',    icon:'☀️', type:'grass',   power:0,   effect:'Heal 25 HP + draw 1',       special: 'heal_25_draw' },
-    { id:'solar_beam',  name:'Solar Beam',   icon:'🌟', type:'grass',   power:80,  effect:'Powerhouse!',               special: null },
+    { id:'solar_beam',  name:'Solar Beam',   icon:'🌟', type:'grass',   power:80,  effect:'Powerhouse! One use only.',    special: null, exhaust: true },
     { id:'poison_powder',name:'Pois. Powder',icon:'☠️', type:'poison',  power:0,   effect:'Poison: 15 dmg/turn',      special: 'poison' },
   ],
   fire: [
@@ -294,7 +294,7 @@ const CARD_TEMPLATES = {
     { id:'smokescreen', name:'Smokescreen',  icon:'💨', type:'normal',  power:0,   effect:'Opp accuracy -25% next',    special: 'debuff_acc' },
     { id:'dragon_rage', name:'Dragon Rage',  icon:'🐉', type:'fire',    power:50,  effect:'',                          special: null },
     { id:'inferno',     name:'Inferno',      icon:'🌠', type:'fire',    power:35,  effect:'Burn guaranteed',           special: 'burn' },
-    { id:'fire_blast',  name:'Fire Blast',   icon:'💫', type:'fire',    power:90,  effect:'Rare powerhouse!',          special: null },
+    { id:'fire_blast',  name:'Fire Blast',   icon:'💫', type:'fire',    power:90,  effect:'Rare powerhouse! One use only.', special: null, exhaust: true },
     { id:'slash',       name:'Slash',        icon:'⚡', type:'normal',  power:45,  effect:'Always crits',              special: 'always_crit' },
   ],
   water: [
@@ -306,7 +306,7 @@ const CARD_TEMPLATES = {
     { id:'withdraw',    name:'Withdraw',     icon:'🛡️', type:'water',   power:0,   effect:'Block 35 dmg next hit',     special: 'shield_35' },
     { id:'bite',        name:'Bite',         icon:'🦷', type:'normal',  power:50,  effect:'May flinch',                special: 'flinch' },
     { id:'rain_dance',  name:'Rain Dance',   icon:'🌧️', type:'water',   power:0,   effect:'Water moves +20% for 3t',  special: 'rain' },
-    { id:'hydro_pump',  name:'Hydro Pump',   icon:'🌊', type:'water',   power:85,  effect:'Rare powerhouse!',          special: null },
+    { id:'hydro_pump',  name:'Hydro Pump',   icon:'🌊', type:'water',   power:85,  effect:'Rare powerhouse! One use only.', special: null, exhaust: true },
     { id:'aqua_tail',   name:'Aqua Tail',    icon:'🐟', type:'water',   power:55,  effect:'',                          special: null },
   ],
   electric: [
@@ -317,8 +317,8 @@ const CARD_TEMPLATES = {
     { id:'thunder_wave', name:'Thunder Wave', icon:'🌩️', type:'electric', power:0,  effect:'Paralyse opp',             special: 'paralyse' },
     { id:'spark',        name:'Spark',        icon:'🔆', type:'electric', power:45, effect:'',                          special: null },
     { id:'agility',      name:'Agility',      icon:'🏃', type:'normal',   power:0,  effect:'+1 action this turn',       special: 'bonus_action' },
-    { id:'volt_tackle',  name:'Volt Tackle',  icon:'⚡', type:'electric', power:70, effect:'Recoil 15 HP',              special: 'recoil_15' },
-    { id:'thunder',      name:'Thunder',      icon:'🌪️', type:'electric', power:90, effect:'30% paralyse',             special: null },
+    { id:'volt_tackle',  name:'Volt Tackle',  icon:'⚡', type:'electric', power:70, effect:'Recoil 15 HP. One use only.',   special: 'recoil_15', exhaust: true },
+    { id:'thunder',      name:'Thunder',      icon:'🌪️', type:'electric', power:90, effect:'30% paralyse. One use only.',   special: null, exhaust: true },
     { id:'iron_tail',    name:'Iron Tail',    icon:'🔩', type:'normal',   power:55, effect:'May lower opp DEF',         special: 'debuff_def' },
   ],
 };
@@ -2347,6 +2347,7 @@ const BattleEngine = {
       <div class="card-power">⚔ ${powerDisplay}</div>
       <div class="card-effect">${card.effect}</div>
       ${effBadge}
+      ${card.exhaust ? `<div class="card-exhaust-badge">🔥 Once</div>` : ''}
       ${card.improved ? `<div class="card-improved-badge">+${card.improved}</div>` : ''}
     `;
     if (!disabled) {
@@ -2382,11 +2383,15 @@ const BattleEngine = {
     if (st.actionsLeft <= 0) return;
     const card = st.hand[handIndex];
     st.hand.splice(handIndex, 1);
-    st.discardPile.push(card);
+    // Exhaust cards go to a separate pile — never reshuffled back
+    if (card.exhaust) {
+      if (!st.exhaustedPile) st.exhaustedPile = [];
+      st.exhaustedPile.push(card);
+    } else {
+      st.discardPile.push(card);
+    }
     st.actionsLeft--;
-
     this._applyCardEffect(card);
-
     if (this.isBoss) BossEngine._syncFromBattleState(st);
     this._checkDefeated();
   },
@@ -3437,6 +3442,7 @@ const TrainingEngine = {
   start(node) {
     this.selected = [];
     this.mode = 'upgrade';
+    this._upgradeJustDone = false;
     showScreen('training');
     this._render();
   },
@@ -3464,7 +3470,11 @@ const TrainingEngine = {
 
     GameState.deck.forEach((card, i) => {
       const div = document.createElement('div');
-      div.className = 'training-card' + (this.selected.includes(i) ? ' selected' : '');
+      const isSelected       = this.selected.includes(i);
+      const justUpgraded     = this._upgradeJustDone && isSelected;
+      div.className = 'training-card'
+        + (isSelected    ? ' selected'       : '')
+        + (justUpgraded  ? ' just-upgraded'  : '');
       div.dataset.type = card.type;
       div.style.borderTopColor = `var(--col-type-${card.type}, var(--col-type-normal))`;
       div.innerHTML = `
@@ -3472,9 +3482,10 @@ const TrainingEngine = {
         <div class="card-name" style="font-family:'Press Start 2P',monospace;font-size:.38rem;color:var(--col-text);margin:.2rem 0">${card.name}</div>
         <div class="card-power" style="font-size:.65rem;color:var(--col-yellow)">${card.power > 0 ? '⚔ '+card.power : '✦'}</div>
         <div class="card-effect" style="font-size:.45rem;color:var(--col-text-dim);margin-top:.1rem">${card.effect}</div>
-        ${card.improved ? `<div class="card-improved">+${card.improved}</div>` : ''}
+        ${card.improved ? `<div class="card-improved">+${card.improved}${justUpgraded ? ' ✨ NEW' : ''}</div>` : ''}
+        ${card.exhaust  ? `<div class="card-exhaust-tag">🔥 Once</div>` : ''}
       `;
-      div.onclick = () => this.toggleSelect(i);
+      if (!this._upgradeJustDone) div.onclick = () => this.toggleSelect(i);
       grid.appendChild(div);
     });
 
@@ -3498,6 +3509,7 @@ const TrainingEngine = {
   improve() {
     if (this.mode === 'upgrade') {
       if (this.selected.length !== 2) return;
+
       this.selected.forEach(idx => {
         const card = GameState.deck[idx];
         card.improved = (card.improved || 0) + 1;
@@ -3506,8 +3518,23 @@ const TrainingEngine = {
       GameState.improvementMap = {};
       GameState.deck.forEach((c, i) => { if (c.improved) GameState.improvementMap[i] = c.improved; });
       saveGame();
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      showModal('Cards Upgraded!', 'Your selected cards have been powered up!', () => MapEngine.show());
+
+      // Stay on screen — re-render so the player sees the improved badges
+      // then show a "Done" button instead of immediately navigating
+      this._upgradeJustDone = true;
+      this._render();
+      // Change the upgrade button to "Done ✓"
+      const btn = document.getElementById('btn-improve');
+      btn.textContent = 'Done ✓';
+      btn.disabled    = false;
+      btn.classList.add('btn-upgrade-done');
+      btn.onclick = () => {
+        btn.onclick = null;
+        btn.classList.remove('btn-upgrade-done');
+        this._upgradeJustDone = false;
+        MapEngine.completeNode(GameState.currentNodeIndex);
+        MapEngine.show();
+      };
     } else {
       if (this.selected.length !== 1) return;
       if (GameState.deck.length <= 3) {
@@ -3515,9 +3542,8 @@ const TrainingEngine = {
         return;
       }
       const removed = GameState.deck.splice(this.selected[0], 1)[0];
-      // Also remove from active pokemon's deck
       const active = GameState.party[GameState.activePokemonIndex];
-      if (active && active.deck) {
+      if (active && active.deck && active.deck !== GameState.deck) {
         const ri = active.deck.findIndex(c => c.name === removed.name);
         if (ri >= 0) active.deck.splice(ri, 1);
       }

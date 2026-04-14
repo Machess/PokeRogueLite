@@ -2753,3 +2753,50 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-radius: var(--r-md);
   background: rgba(227,53,13,.1);
 }
+
+/* ═══════════════════════════════════════════
+   TRAINING — post-upgrade highlight
+═══════════════════════════════════════════ */
+@keyframes upgrade-flash {
+  0%   { box-shadow: 0 0 0px rgba(255,215,0,0); border-color: var(--col-border); }
+  30%  { box-shadow: 0 0 28px rgba(255,215,0,.9); border-color: var(--col-yellow); }
+  100% { box-shadow: 0 0 12px rgba(255,215,0,.4); border-color: var(--col-yellow); }
+}
+.training-card.just-upgraded {
+  animation: upgrade-flash .6s ease forwards;
+  border-color: var(--col-yellow) !important;
+  background: rgba(255,215,0,.08);
+}
+.training-card.just-upgraded .card-improved {
+  color: var(--col-yellow);
+  font-weight: 900;
+  font-size: .55rem !important;
+}
+.btn-upgrade-done {
+  background: rgba(61,170,92,.2) !important;
+  border-color: var(--col-green) !important;
+  color: var(--col-green-lt) !important;
+}
+
+/* Exhaust tag on training cards */
+.card-exhaust-tag {
+  font-size: .38rem;
+  color: #ff8c42;
+  font-family: 'Press Start 2P', monospace;
+  margin-top: .1rem;
+}
+
+/* ═══════════════════════════════════════════
+   BATTLE CARDS — exhaust badge
+═══════════════════════════════════════════ */
+.card-exhaust-badge {
+  position: absolute;
+  bottom: 3px; right: 3px;
+  font-size: .32rem;
+  font-family: 'Press Start 2P', monospace;
+  background: rgba(255,80,20,.85);
+  color: #fff;
+  padding: .15em .35em;
+  border-radius: 3px;
+  pointer-events: none;
+}
