@@ -2798,3 +2798,51 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-radius: 3px;
   pointer-events: none;
 }
+
+/* ═══════════════════════════════════════════
+   RELEASE PARTY PICKER (catch screen)
+═══════════════════════════════════════════ */
+.release-picker {
+  margin: .6rem 0 .4rem;
+  display: flex; flex-direction: column; gap: .5rem;
+}
+.release-picker-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .45rem;
+  color: var(--col-text-dim);
+  text-align: center;
+}
+.release-party-grid {
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  justify-content: center;
+}
+.release-party-card {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .4rem .5rem;
+  cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+  width: 70px;
+  transition: border-color .12s, background .12s;
+}
+.release-party-card:hover {
+  border-color: var(--col-red);
+  background: rgba(227,53,13,.12);
+}
+.release-party-sprite {
+  width: 48px; height: 48px;
+  image-rendering: pixelated;
+}
+.release-party-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: var(--col-text);
+  word-break: break-all; text-align: center;
+}
+.release-party-hp {
+  font-size: .38rem; color: var(--col-text-dim);
+}
+.release-party-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: var(--col-red);
+}

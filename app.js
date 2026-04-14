@@ -1645,6 +1645,9 @@ const PartyOverview = {
       const isActive  = i === GameState.activePokemonIndex;
       const canActive = !isActive && p.hp > 0;
       const position  = isActive ? '★ Active' : i === 0 ? '1st' : `#${i + 1}`;
+      const hpPct     = Math.round(p.hp / p.maxHp * 100);
+      const hpCol     = hpColor(p.hp, p.maxHp);
+      const cardCount = (p.deck || []).length;
 
       row.innerHTML = `
         <div class="party-row-drag-handle" title="Drag to reorder">⠿</div>
@@ -3051,10 +3054,16 @@ const CatchEngine = {
     if (!sel) return;
     sel.innerHTML = '';
     const balls = [
-      { id: 'pokeball',   label: 'Poké Ball', pbi: true },
+      { id: 'pokeball',   label: 'Poké Ball',   pbi: true },
       { id: 'ultraball',  label: 'Ultra Ball',  icon: '🟡', itemId: 'ultra_ball' },
       { id: 'masterball', label: 'Master Ball', icon: '🟣', itemId: 'master_ball' },
     ];
+    // Always default to pokeball if current selection is no longer available
+    if (this._selectedBall !== 'pokeball' && !ItemEngine.hasItem(
+      balls.find(b => b.id === this._selectedBall)?.itemId
+    )) {
+      this._selectedBall = 'pokeball';
+    }
     balls.forEach(b => {
       if (!b.pbi && !ItemEngine.hasItem(b.itemId)) return;
       const btn = document.createElement('button');
@@ -3070,6 +3079,20 @@ const CatchEngine = {
       };
       sel.appendChild(btn);
     });
+    // Sync throw button label to current selection
+    const currentBall = balls.find(b => b.id === this._selectedBall);
+    const lbl = document.getElementById('catch-throw-label');
+    if (lbl && currentBall) lbl.textContent = `Throw ${currentBall.label}!`;
+  },
+
+  _resetBallVisuals() {
+    // Reset CSS ball colours back to default red pokeball
+    const ball = document.getElementById('catch-ball');
+    if (!ball) return;
+    const top = ball.querySelector('.ball-top');
+    const bot = ball.querySelector('.ball-bot');
+    if (top) top.style.background = '';
+    if (bot) bot.style.background = '';
   },
 
   throwBall() {
@@ -3092,12 +3115,16 @@ const CatchEngine = {
     const ballWrap = document.getElementById('catch-ball-wrap');
     const spriteEl = document.getElementById('catch-sprite');
     const statusEl = document.getElementById('catch-status');
+    // Colour the ball based on type used
     if (this._selectedBall === 'ultraball') {
       ball.querySelector('.ball-top').style.background = '#f0c000';
     } else if (this._selectedBall === 'masterball') {
       ball.querySelector('.ball-top').style.background = '#8020d0';
       ball.querySelector('.ball-bot').style.background = '#e0b0ff';
     }
+    // Reset selection back to pokeball immediately after throwing
+    this._selectedBall = 'pokeball';
+
     ballWrap.style.display = 'flex';
     ball.className = 'catch-ball ball-throw';
     setTimeout(() => {
@@ -3131,7 +3158,14 @@ const CatchEngine = {
     const spriteEl   = document.getElementById('catch-sprite');
     const resultEl   = document.getElementById('catch-result');
     const resultText = document.getElementById('catch-result-text');
+    const releaseEl  = document.getElementById('release-picker');
+    const continueBtn= document.getElementById('btn-catch-continue');
+
+    // Always reset ball visuals for the next encounter
+    this._resetBallVisuals();
+
     if (caught && GameState.party.length < 6) {
+      // ── Normal catch ─────────────────────────────────────────────────────
       ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
       if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
       GameState.stats.pokemonCaught++;
@@ -3140,21 +3174,59 @@ const CatchEngine = {
       GameState.party.push(poke);
       registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
       saveGame();
+      releaseEl.style.display = 'none';
+      continueBtn.style.display = '';
       setTimeout(() => {
         SoundEngine.playFanfare();
         resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} was caught!`;
         resultEl.style.display = 'block';
       }, 600);
+
     } else if (caught && GameState.party.length >= 6) {
+      // ── Party full — show release picker ────────────────────────────────
       ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
-      registerPokedex(data.id, pokeName, getSpriteUrl(data), true); saveGame();
+      registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
+
+      // Build the new Pokémon object but don't add to party yet
+      const level   = 5 + GameState.bossesDefeated * 5 + Math.floor(Math.random() * 5);
+      const newPoke = makePokemon(data.id, level, getSpriteUrl(data), pokeName, data.types[0]?.type?.name || 'normal');
+      this._pendingCatch = newPoke;
+
       setTimeout(() => {
         SoundEngine.playFanfare();
-        resultText.innerHTML = `Party full! ${pokeName} was released.`;
+        resultText.innerHTML =
+          `<span style="color:#FFD700">★</span> Gotcha! <strong>${pokeName}</strong> was caught!<br>` +
+          `<span style="font-size:.65rem;color:var(--col-text-dim)">Your party is full — release a Pokémon to make room, or Continue to let ${pokeName} go.</span>`;
         resultEl.style.display = 'block';
+
+        // Build release grid
+        const grid = document.getElementById('release-party-grid');
+        grid.innerHTML = '';
+        GameState.party.forEach((p, i) => {
+          const card = document.createElement('button');
+          card.className = 'release-party-card';
+          card.innerHTML = `
+            <img src="${p.spriteUrl}" alt="${p.name}"
+                 onerror="this.src='assets/sprites/${p.id}.png'"
+                 class="release-party-sprite" />
+            <div class="release-party-name">${p.name}</div>
+            <div class="release-party-hp">${Math.max(0,p.hp)}/${p.maxHp} HP</div>
+            <div class="release-party-label">Release</div>
+          `;
+          card.onclick = () => this._releasePokemon(i, newPoke);
+          grid.appendChild(card);
+        });
+        releaseEl.style.display = 'block';
+        // Continue button still available — lets them skip and release newPoke instead
+        continueBtn.textContent = `Let ${pokeName} go`;
+        continueBtn.style.display = '';
       }, 600);
+
     } else {
+      // ── Escaped ──────────────────────────────────────────────────────────
       ball.className = 'catch-ball ball-burst'; statusEl.textContent = '';
+      releaseEl.style.display = 'none';
+      continueBtn.style.display = '';
       setTimeout(() => {
         if (spriteEl) {
           spriteEl.style.display = '';
@@ -3175,8 +3247,48 @@ const CatchEngine = {
     }
   },
 
-  finish() { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); },
-  flee()   { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); },
+  _releasePokemon(releaseIdx, newPoke) {
+    const released = GameState.party[releaseIdx];
+    GameState.party.splice(releaseIdx, 1, newPoke);
+    // If the released Pokémon was active, reset active index
+    if (GameState.activePokemonIndex === releaseIdx) {
+      GameState.activePokemonIndex = 0;
+    } else if (GameState.activePokemonIndex > releaseIdx) {
+      GameState.activePokemonIndex--;
+    }
+    if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
+    GameState.stats.pokemonCaught++;
+    saveGame();
+    // Update UI
+    const grid = document.getElementById('release-party-grid');
+    if (grid) grid.innerHTML = '';
+    const releaseEl = document.getElementById('release-picker');
+    if (releaseEl) releaseEl.style.display = 'none';
+    const resultText = document.getElementById('catch-result-text');
+    if (resultText) {
+      resultText.innerHTML =
+        `<span style="color:#FFD700">★</span> ${newPoke.name} joined your party!<br>` +
+        `<span style="font-size:.65rem;color:var(--col-text-dim)">${released.name} was released. Goodbye!</span>`;
+    }
+    const continueBtn = document.getElementById('btn-catch-continue');
+    if (continueBtn) continueBtn.textContent = 'Continue ▶';
+    this._pendingCatch = null;
+  },
+
+  finish() {
+    this._pendingCatch = null;
+    const continueBtn = document.getElementById('btn-catch-continue');
+    if (continueBtn) continueBtn.textContent = 'Continue ▶';
+    const releaseEl = document.getElementById('release-picker');
+    if (releaseEl) releaseEl.style.display = 'none';
+    MapEngine.completeNode(GameState.currentNodeIndex);
+    MapEngine.show();
+  },
+  flee() {
+    this._pendingCatch = null;
+    MapEngine.completeNode(GameState.currentNodeIndex);
+    MapEngine.show();
+  },
 };
 
 // ─── ITEM ENGINE ─────────────────────────────────────────────────────────────
