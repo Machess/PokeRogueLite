@@ -476,19 +476,24 @@ const SHOP_ITEMS = [
 ];
 
 // ─── GOLD TABLES (per round / boss) ───────────────────────────────────────────
-// bossesDefeated = 0 → round 1, 1 → round 2, 2 → round 3
+// Gold scales across all 8 gym segments
 const GOLD_TABLE = [
-  { wildMin: 4,  wildMax: 10, bossBonus: 25 },   // round 1
-  { wildMin: 10, wildMax: 20, bossBonus: 45 },   // round 2
-  { wildMin: 18, wildMax: 30, bossBonus: 0  },   // round 3 — no boss gold (game ends)
+  { wildMin: 4,  wildMax: 10, bossBonus: 20 },  // Brock
+  { wildMin: 8,  wildMax: 16, bossBonus: 25 },  // Misty
+  { wildMin: 12, wildMax: 20, bossBonus: 30 },  // Lt. Surge
+  { wildMin: 15, wildMax: 24, bossBonus: 35 },  // Erika
+  { wildMin: 18, wildMax: 28, bossBonus: 40 },  // Koga
+  { wildMin: 22, wildMax: 32, bossBonus: 45 },  // Sabrina
+  { wildMin: 26, wildMax: 38, bossBonus: 50 },  // Blaine
+  { wildMin: 30, wildMax: 45, bossBonus: 60 },  // Giovanni
 ];
 
 function goldForWildBattle() {
-  const t = GOLD_TABLE[Math.min(GameState.bossesDefeated, 2)];
+  const t = GOLD_TABLE[Math.min(GameState.bossesDefeated, GOLD_TABLE.length - 1)];
   return t.wildMin + Math.floor(Math.random() * (t.wildMax - t.wildMin + 1));
 }
 function goldForBoss() {
-  return GOLD_TABLE[Math.min(GameState.bossesDefeated, 2)].bossBonus;
+  return GOLD_TABLE[Math.min(GameState.bossesDefeated, GOLD_TABLE.length - 1)].bossBonus;
 }
 
 // ─── POKEDEX PERSISTENCE ──────────────────────────────────────────────────────
@@ -1526,69 +1531,76 @@ const Game = {
 
   async afterBoss(bossIndex) {
     GameState.bossesDefeated++;
+    const defeated = GameState.bossesDefeated;
+    const boss     = BOSS_TRAINERS[Math.min(defeated - 1, BOSS_TRAINERS.length - 1)];
 
-    // ── Game won after 3rd boss — no more evolutions, go straight to victory ──
-    if (GameState.bossesDefeated >= 3) {
+    // ── Won all 8 gyms → Victory ───────────────────────────────────────────
+    if (defeated >= 8) {
       GameState.unlockedPikachu = true;
-      saveUnlocks({ pikachu: true });   // ← persists across new game runs
+      saveUnlocks({ pikachu: true });
       saveGame();
       VictoryEngine.show();
       return;
     }
 
-    // ── Bosses 1 & 2: evolve the starter then show the next map ──
-    const starter = STARTERS.find(s => s.id === GameState.starterId);
+    // ── Helper: generate next map with correct bossIndex ──────────────────
+    const nextMap = () => {
+      const nextBossIdx = Math.min(defeated, BOSS_TRAINERS.length - 1);
+      GameState.map = generateMap(nextBossIdx);
+      GameState.completedNodes = [];
+      GameState.highWaterRow   = -1;
+    };
 
-    // Pikachu doesn't evolve — skip the cutscene and go straight to next map
-    if (starter.id === 25) {
-      // Still give the HP bonus a normal evolution would grant
+    // ── Badge earned modal ────────────────────────────────────────────────
+    const badgeMsg = `${boss?.title ?? 'Badge'} earned! ${BOSS_TRAINERS[Math.min(defeated, 7)]?.name ?? 'Next challenger'} awaits!`;
+
+    // ── Evolution only happens at bosses 1 and 2 ─────────────────────────
+    const starter = STARTERS.find(s => s.id === GameState.starterId);
+    const shouldEvolve = defeated <= 2 && starter.id !== 25
+                      && GameState.evolutionStage < (starter.evolutions.length - 1);
+    const pikachuBoost = defeated <= 2 && starter.id === 25;
+
+    if (pikachuBoost) {
       const idx = GameState.party.findIndex(p => p.isStarter);
       if (idx >= 0) {
         GameState.party[idx].maxHp += 20;
         GameState.party[idx].hp    += 20;
       }
-      GameState.map = generateMap();
-      GameState.map.forEach(n => {
-        if (n.type === 'boss') n.bossIndex = Math.min(GameState.bossesDefeated, 2);
-      });
-      GameState.completedNodes = [];
-      GameState.highWaterRow   = -1;
+      nextMap();
       saveGame();
-      showModal('Boss Defeated!', `⚡ Pikachu powered up! On to the next challenge!`, () => {
+      showModal('Badge Earned! ⚡', `Pikachu powered up!\n${badgeMsg}`, () => MapEngine.show());
+      return;
+    }
+
+    if (shouldEvolve) {
+      const newStage = GameState.evolutionStage + 1;
+      GameState.evolutionStage = newStage;
+      const beforeId = starter.evolutions[newStage - 1];
+      const afterId  = starter.evolutions[newStage];
+
+      showScreen('evolve');
+      await EvolveEngine.run(beforeId, afterId, () => {
+        const idx = GameState.party.findIndex(p => p.isStarter);
+        if (idx >= 0) {
+          GameState.party[idx].id = afterId;
+          fetchPoke(afterId).then(d => {
+            GameState.party[idx].name      = capitalize(d.name);
+            GameState.party[idx].spriteUrl = getSpriteUrl(d);
+            GameState.party[idx].maxHp    += 20;
+            GameState.party[idx].hp        = GameState.party[idx].maxHp;
+          });
+        }
+        nextMap();
+        saveGame();
         MapEngine.show();
       });
       return;
     }
 
-    const newStage = GameState.evolutionStage + 1;
-    GameState.evolutionStage = newStage;
-
-    const beforeId = starter.evolutions[newStage - 1];
-    const afterId  = starter.evolutions[newStage];
-
-    showScreen('evolve');
-    await EvolveEngine.run(beforeId, afterId, () => {
-      // Update starter in party
-      const idx = GameState.party.findIndex(p => p.isStarter);
-      if (idx >= 0) {
-        GameState.party[idx].id = afterId;
-        fetchPoke(afterId).then(d => {
-          GameState.party[idx].name      = capitalize(d.name);
-          GameState.party[idx].spriteUrl = getSpriteUrl(d);
-          GameState.party[idx].maxHp    += 20;
-          GameState.party[idx].hp        = GameState.party[idx].maxHp;
-        });
-      }
-      // Generate next map segment
-      GameState.map = generateMap();
-      GameState.map.forEach(n => {
-        if (n.type === 'boss') n.bossIndex = Math.min(GameState.bossesDefeated, 2);
-      });
-      GameState.completedNodes = [];
-      GameState.highWaterRow   = -1;
-      saveGame();
-      MapEngine.show();
-    });
+    // ── All other bosses: badge modal then next map ───────────────────────
+    nextMap();
+    saveGame();
+    showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
   },
 
   afterEvolve() {
@@ -1854,7 +1866,7 @@ const MapEngine = {
     const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
     const boss = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     document.getElementById('map-meta').textContent =
-      `💰 ${GameState.gold || 0}g  |  ⚔ ${boss?.name ?? 'Boss'}  |  Party: ${GameState.party.length}/6`;
+      `💰 ${GameState.gold || 0}g  |  ⚔ ${boss?.name ?? 'Boss'} (${GameState.bossesDefeated}/8)  |  Party: ${GameState.party.length}/6`;
   },
 
   drawMap() {
@@ -2826,7 +2838,7 @@ const BossEngine = {
         GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
         MapEngine.completeNode(GameState.currentNodeIndex);
         setTimeout(() => {
-          const isFinalBoss = GameState.bossesDefeated >= 2; // about to become 3
+          const isFinalBoss = GameState.bossesDefeated >= 7; // about to become 8
           const modalMsg = isFinalBoss
             ? `You defeated ${this.bossData.name}! You are the Champion!`
             : `You defeated ${this.bossData.name}! Your Pokémon is evolving…`;
