@@ -464,111 +464,102 @@ function showScreen(id) {
 // ─── SOUND ENGINE ─────────────────────────────────────────────────────────────
 
 const SoundEngine = {
-  _current: null,   // currently looping BGM Audio object
-  _currentSrc: '',  // src of current BGM so we don't restart same track
+  _bgm: null,         // single BGM Audio node — only one ever exists
+  _bgmSrc: '',        // src currently playing
+  _sfxNode: null,     // single SFX node — replaced on each play, no stacking
+  _sfxDebounce: null, // debounce timer for rapid hover events on mobile
   _muted: false,
   _bgmVolume: 0.45,
   _sfxVolume: 0.7,
 
-  // Map of sound file names → full path
   _path(file) { return `assets/sounds/${file}`; },
 
-  // Screen → BGM track mapping
   _bgmMap: {
-    'start':   'opening.mp3',
-    'starter': 'pallet_town_theme.mp3',
-    'map':     'opening.mp3',
-    'battle':  'teamrocket_battle.mp3',
-    'boss':    'pokemon_gym.mp3',
-    'heal':    'pokemon_center.mp3',
-    'catch':   'pallet_town_theme.mp3',
-    'training':'pallet_town_theme.mp3',
-    'shop':    'pallet_town_theme.mp3',
-    'evolve':  'opening.mp3',
-    'victory': 'opening.mp3',
-    'gameover':null,   // no BGM — one-shot SFX handled in GameOver.show
+    'start':    'opening.mp3',
+    'starter':  'pallet_town_theme.mp3',
+    'map':      'opening.mp3',
+    'battle':   'teamrocket_battle.mp3',
+    'boss':     'pokemon_gym.mp3',
+    'heal':     'pokemon_center.mp3',
+    'catch':    'pallet_town_theme.mp3',
+    'training': 'pallet_town_theme.mp3',
+    'shop':     'pallet_town_theme.mp3',
+    'evolve':   'opening.mp3',
+    'victory':  'opening.mp3',
+    'gameover': null,
   },
 
-  // Play a looping background music track. Same track won't restart.
+  // Immediately silence the current BGM — no async fade that causes overlap
+  _hardStop() {
+    if (!this._bgm) return;
+    try { this._bgm.pause(); this._bgm.currentTime = 0; } catch(e) {}
+    this._bgm    = null;
+    this._bgmSrc = '';
+  },
+
+  // Play a looping BGM. Same track already playing → no-op. New track → hard-stop then start.
   playBGM(file) {
-    if (this._muted) return;
-    if (!file) { this.stopBGM(); return; }
+    if (!file) { this._hardStop(); return; }
     const src = this._path(file);
-    if (this._currentSrc === src && this._current && !this._current.paused) return;
-    this.stopBGM();
+    if (this._bgmSrc === src && this._bgm && !this._bgm.paused) return;
+    this._hardStop();                           // kill old track before starting new one
+    if (this._muted) { this._bgmSrc = src; return; }
     const audio = new Audio(src);
     audio.loop   = true;
     audio.volume = this._bgmVolume;
-    audio.play().catch(() => {}); // swallow autoplay policy errors gracefully
-    this._current    = audio;
-    this._currentSrc = src;
+    audio.play().catch(() => {});
+    this._bgm    = audio;
+    this._bgmSrc = src;
   },
 
-  // Stop current BGM with a quick fade out
-  stopBGM(fadeDuration = 400) {
-    if (!this._current) return;
-    const audio = this._current;
-    this._current    = null;
-    this._currentSrc = '';
-    const step = audio.volume / (fadeDuration / 50);
-    const fade = setInterval(() => {
-      if (audio.volume > step) {
-        audio.volume = Math.max(0, audio.volume - step);
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
-        clearInterval(fade);
-      }
-    }, 50);
-  },
+  stopBGM() { this._hardStop(); },
 
-  // Play a one-shot SFX (fire and forget)
+  // Play a one-shot SFX. Kills any in-progress SFX first so sounds never stack.
   playSFX(file, volume) {
     if (this._muted) return;
+    if (this._sfxNode) {
+      try { this._sfxNode.pause(); this._sfxNode.currentTime = 0; } catch(e) {}
+      this._sfxNode = null;
+    }
     const audio = new Audio(this._path(file));
     audio.volume = volume ?? this._sfxVolume;
     audio.play().catch(() => {});
+    this._sfxNode = audio;
+    audio.addEventListener('ended', () => { if (this._sfxNode === audio) this._sfxNode = null; });
   },
 
-  // Called automatically by showScreen()
+  // Debounced SFX — ignores rapid repeated calls within delay ms (mobile hover spam)
+  playSFXDebounced(file, volume, delay = 100) {
+    if (this._sfxDebounce) clearTimeout(this._sfxDebounce);
+    this._sfxDebounce = setTimeout(() => {
+      this.playSFX(file, volume);
+      this._sfxDebounce = null;
+    }, delay);
+  },
+
   onScreenChange(screenId) {
+    if (screenId === 'gameover') {
+      this._hardStop();
+      setTimeout(() => this.playSFX('teamrocket_show.mp3', 0.6), 150);
+      return;
+    }
     const track = this._bgmMap[screenId];
     if (track !== undefined) this.playBGM(track);
-    // Game over: stop BGM then play team rocket show sting
-    if (screenId === 'gameover') {
-      this.stopBGM(200);
-      setTimeout(() => this.playSFX('teamrocket_show.mp3', 0.6), 300);
-    }
   },
 
-  // Starter-specific cry — called when a starter card is hovered/selected
   playStarterCry(starterId) {
-    const cryMap = {
-      1:  'bulbasaur.mp3',  // Bulbasaur
-      4:  'charmander.mp3', // Charmander
-      7:  'squirtle.mp3',   // Squirtle
-      25: 'pikachu.mp3',    // Pikachu
-    };
+    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3' };
     const file = cryMap[starterId];
-    if (file) this.playSFX(file, 0.8);
+    if (file) this.playSFXDebounced(file, 0.8);
   },
 
-  // Fanfare — item get, card reward, successful catch
-  playFanfare() { this.playSFX('fanfare_item_get.mp3', 0.65); },
-
-  // Recovery jingle — heal complete
+  playFanfare()  { this.playSFX('fanfare_item_get.mp3', 0.65); },
   playRecovery() { this.playSFX('pokemon_recovery.mp3', 0.7); },
-
-  // Pikachu select confirm
   playPikachu2() { this.playSFX('pikachu2.mp3', 0.8); },
 
   toggleMute() {
     this._muted = !this._muted;
-    if (this._muted) {
-      if (this._current) this._current.volume = 0;
-    } else {
-      if (this._current) this._current.volume = this._bgmVolume;
-    }
+    if (this._bgm) this._bgm.volume = this._muted ? 0 : this._bgmVolume;
     return this._muted;
   },
 };
