@@ -3255,16 +3255,24 @@ const CardReward = {
 
     this._pool.forEach((card, i) => {
       const div = document.createElement('div');
-      div.className = 'card cr-card' + (atCap ? ' cr-card-disabled' : '');
+      // Use ONLY cr-card — not 'card' — so battle hover CSS never fires on this overlay
+      div.className = 'cr-card' + (atCap ? ' cr-card-disabled' : '');
       div.dataset.type = card.type;
+
+      // Count how many of this card id already exist in the deck
+      const existingCount = (GameState.deck || []).filter(c => c.id === card.id).length;
+      const atDupeLimit   = existingCount >= 2;
+      if (atDupeLimit) div.classList.add('cr-card-disabled');
+
       div.innerHTML = `
-        <div class="card-icon">${card.icon}</div>
-        <div class="card-name">${card.name}</div>
-        <div class="card-power">${card.power > 0 ? '⚔ ' + card.power : '✦'}</div>
-        <div class="card-effect">${card.effect || '—'}</div>
-        <div class="cr-card-type type-${card.type}">${card.type}</div>
+        <div class="cr-card-icon">${card.icon}</div>
+        <div class="cr-card-name">${card.name}</div>
+        <div class="cr-card-power">${card.power > 0 ? '⚔ ' + card.power : '✦'}</div>
+        <div class="cr-card-effect">${card.effect || '—'}</div>
+        <div class="cr-card-type-badge type-${card.type}">${card.type}</div>
+        ${atDupeLimit ? '<div class="cr-dupe-notice">Max 2 copies</div>' : ''}
       `;
-      if (!atCap) div.onclick = () => this.pickCard(i);
+      if (!atCap && !atDupeLimit) div.onclick = () => this.pickCard(i);
       grid.appendChild(div);
     });
 
@@ -3283,13 +3291,21 @@ const CardReward = {
     const active = GameState.party[GameState.activePokemonIndex];
     const MAX_DECK = 21;
 
-    // Only add if under the cap
-    if (GameState.deck.length < MAX_DECK) {
-      GameState.deck.push({ ...card, improved: 0 });
+    // Guard: don't exceed 2 copies of the same card
+    const existingCount = (GameState.deck || []).filter(c => c.id === card.id).length;
+    if (existingCount >= 2) { this.close(); return; }
+
+    const newCard = { ...card, improved: 0 };
+
+    if (active && active.deck && active.deck !== GameState.deck) {
+      // Different array references — push to both independently
+      if (GameState.deck.length < MAX_DECK)  GameState.deck.push(newCard);
+      if (active.deck.length < MAX_DECK)     active.deck.push({ ...newCard });
+    } else {
+      // Same reference (starter) — push once only
+      if (GameState.deck.length < MAX_DECK)  GameState.deck.push(newCard);
     }
-    if (active && active.deck && active.deck.length < MAX_DECK) {
-      active.deck.push({ ...card, improved: 0 });
-    }
+
     SoundEngine.playFanfare();
     this.close();
   },

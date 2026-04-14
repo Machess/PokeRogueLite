@@ -2029,20 +2029,41 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   gap: .6rem;
 }
 .cr-card {
+  /* Fully self-contained — intentionally does NOT use .card so battle hover CSS never fires */
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .5rem .4rem;
   cursor: pointer;
-  min-height: 120px;
-  transition: transform .15s, border-color .15s, box-shadow .15s;
+  min-height: 130px;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .25rem; text-align: center;
+  position: relative; overflow: hidden;
+  /* Transition only on explicit state changes — NOT on hover layout props */
+  transition: border-color .15s, box-shadow .15s;
+  /* Top colour strip via border-top */
+  border-top: 4px solid var(--col-border);
 }
-.cr-card:hover {
-  transform: translateY(-6px) scale(1.04);
+.cr-card:hover:not(.cr-card-disabled) {
   border-color: var(--col-yellow);
-  box-shadow: 0 8px 20px rgba(0,0,0,.6), 0 0 15px rgba(255,215,0,.3);
+  box-shadow: 0 6px 18px rgba(0,0,0,.5), 0 0 12px rgba(255,215,0,.25);
 }
-.cr-card-type {
+.cr-card-icon  { font-size: 1.6rem; line-height: 1; }
+.cr-card-name  {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: var(--col-text);
+}
+.cr-card-power { font-size: .62rem; color: var(--col-yellow); font-weight: 800; }
+.cr-card-effect{ font-size: .44rem; color: var(--col-text-dim); line-height: 1.4; }
+.cr-card-type-badge {
   display: inline-block;
-  font-size: .38rem; font-weight: 800;
-  padding: .1em .4em; border-radius: 3px;
-  text-transform: uppercase; margin-top: .2rem;
+  font-size: .36rem; font-weight: 800;
+  padding: .12em .45em; border-radius: 3px;
+  text-transform: uppercase; margin-top: .15rem;
+}
+.cr-dupe-notice {
+  font-size: .36rem; color: var(--col-red);
+  font-weight: 800; margin-top: .1rem;
 }
 .cr-skip-btn { align-self: center; font-size: .45rem; }
 
