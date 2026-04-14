@@ -870,113 +870,273 @@ const IntroEngine = {
   },
 };
 
-// ─── MEOWTH CHALLENGE ENGINE ──────────────────────────────────────────────────
+// ─── JESSIE WORD BANK ─────────────────────────────────────────────────────────
+// Each entry: { word, partOfSpeech, correct definition, 3 wrong choices, exampleSentence, jessieQuote }
+const JESSIE_WORDS = {
+  1: [ // Tier 1 — age 6-7
+    { word:'brave',      pos:'adjective', correct:'Not scared, even when things are hard', wrong:['Very tired','Very small','Very loud'],       example:'The brave trainer walked into the dark cave.', jessie:'Brave? I, Jessie, am the bravest villain alive!' },
+    { word:'curious',   pos:'adjective', correct:'Wanting to find out about things',       wrong:['Feeling sleepy','Being very hungry','Very angry'], example:'The curious Pikachu sniffed every flower.',    jessie:'Curious? James is always too curious for his own good.' },
+    { word:'enormous',  pos:'adjective', correct:'Very, very big',                          wrong:['Very fast','Very quiet','Very cold'],           example:'An enormous Snorlax blocked the whole road!',   jessie:'My talent is enormous — unlike my partner!' },
+    { word:'gloomy',    pos:'adjective', correct:'Dark and a little sad',                   wrong:['Very bright','Very funny','Very tasty'],        example:'It was a gloomy day when Team Rocket lost again.', jessie:'Gloomy describes every day I spend with James.' },
+    { word:'sneaky',    pos:'adjective', correct:'Doing things in a secret, sly way',       wrong:['Very kind','Very loud','Very clumsy'],          example:'The sneaky Meowth stole the golden coins.',     jessie:'Sneaky? That is practically my job description!' },
+    { word:'grumpy',    pos:'adjective', correct:'In a bad mood, easily annoyed',           wrong:['Very happy','Very brave','Very fast'],          example:'Giovanni was grumpy when his plan failed.',     jessie:'I am NOT grumpy. I am simply... misunderstood.' },
+    { word:'gentle',    pos:'adjective', correct:'Soft, kind and careful',                  wrong:['Very loud','Very strong','Very messy'],         example:'The gentle trainer petted the scared Eevee.',   jessie:'Gentle? I prefer the word magnificent.' },
+  ],
+  2: [ // Tier 2 — age 8-9
+    { word:'determined', pos:'adjective', correct:'Decided to do something, no matter what', wrong:['Feeling confused','Easy to scare away','Wanting to sleep'], example:'Ash was determined to become Pokémon Champion.',  jessie:'I am the most determined villain in the world!' },
+    { word:'mischievous',pos:'adjective', correct:'Enjoying small pranks and tricks',        wrong:['Always very serious','Extremely kind','Very sleepy'],       example:'The mischievous Gengar hid inside the shadows.', jessie:'Mischievous — yes, that describes Team Rocket perfectly.' },
+    { word:'reluctant',  pos:'adjective', correct:'Not wanting to do something',             wrong:['Very excited','Completely ready','Very hungry'],            example:'James was reluctant to face the angry Gyarados.', jessie:'James is reluctant about EVERYTHING. It is exhausting.' },
+    { word:'peculiar',   pos:'adjective', correct:'Strange or unusual in an odd way',        wrong:['Very normal','Extremely fast','Very large'],                example:'There was a peculiar sound coming from the cave.',jessie:'Peculiar? James is the most peculiar person I know.' },
+    { word:'triumphant', pos:'adjective', correct:'Feeling great joy after winning',         wrong:['Very embarrassed','Quite bored','A little sad'],            example:'Ash felt triumphant after defeating the Gym Leader.', jessie:'One day I will feel triumphant! One day.' },
+    { word:'generous',   pos:'adjective', correct:'Happy to give and share with others',     wrong:['Keeping everything','Very clumsy','Easily scared'],         example:'The generous trainer shared Poké Balls with everyone.', jessie:'I would be generous... if I had anything worth sharing.' },
+    { word:'anxious',    pos:'adjective', correct:'Worried and nervous about something',     wrong:['Very excited','Completely calm','Very angry'],              example:'Misty was anxious before her first water battle.',jessie:'Anxious? Me? Never! ...Do I look anxious to you?' },
+  ],
+  3: [ // Tier 3 — age 10-12
+    { word:'perseverance', pos:'noun',      correct:'Keeping going even when it is very hard',   wrong:['Giving up quickly','Sleeping too much','Being very loud'],  example:'Ash showed perseverance by training every single day.', jessie:'Perseverance is my greatest quality — I never give up!' },
+    { word:'formidable',   pos:'adjective', correct:'Impressive and a little frightening',       wrong:['Very tiny and weak','Quite ordinary','Extremely funny'],    example:'The formidable Dragonite circled the mountaintop.',    jessie:'I, Jessie, am the most formidable villain of all time.' },
+    { word:'resilient',    pos:'adjective', correct:'Able to bounce back after hard times',      wrong:['Easily defeated','Very heavy','Quite forgetful'],           example:'A resilient trainer learns from every defeat.',         jessie:'Team Rocket is incredibly resilient! We keep coming back!' },
+    { word:'notorious',    pos:'adjective', correct:'Famous for doing something bad',            wrong:['Completely unknown','Very generous','Extremely polite'],    example:'Team Rocket is notorious for trying to steal Pikachu.', jessie:'Notorious! Yes — that is exactly what we are. Infamous! Legendary!' },
+    { word:'cunning',      pos:'adjective', correct:'Clever in a sneaky way',                   wrong:['Very honest','Quite clumsy','Extremely slow'],              example:'The cunning Meowth had a plan for every situation.',    jessie:'Cunning is my middle name. Well — not literally.' },
+    { word:'agile',        pos:'adjective', correct:'Able to move quickly and easily',           wrong:['Very heavy and slow','Unable to move','Very loud'],         example:'The agile Scyther dodged every attack effortlessly.',   jessie:'I am the most agile member of Team Rocket — obviously.' },
+    { word:'bewildered',   pos:'adjective', correct:'Very confused and surprised',              wrong:['Very certain','Completely calm','Extremely happy'],          example:'James looked bewildered when his Pokémon disobeyed.',   jessie:'James is permanently bewildered. It is exhausting.' },
+  ],
+};
 
-const MeowthChallenge = {
-  _challenge: null,
+// ─── JAMES SPELLING BANK ─────────────────────────────────────────────────────
+// Each entry: { clue (definition), correct spelling, 3 wrong spellings, jamesQuote }
+const JAMES_WORDS = {
+  1: [ // Tier 1 — option B: pick correct spelling from definition
+    { clue:'A very good friend',             correct:'friend',    wrong:['frend','freind','frind'],          james:'I keep writing "frend" — is that wrong? Oh dear.' },
+    { clue:'The place where you learn',      correct:'school',    wrong:['skool','sckool','schol'],          james:'I spelled it "skool" on the evil plan. Jessie was not pleased.' },
+    { clue:'Not the same',                   correct:'different', wrong:['diffrent','diferent','difrent'],   james:'"Diffrent"... that looked right to me. Wobuffet agreed!' },
+    { clue:'More than one person',           correct:'people',    wrong:['pepole','peopel','peepel'],        james:'I wrote "pepole" on the sign. The Boss crossed it out.' },
+    { clue:'Very pretty to look at',         correct:'beautiful', wrong:['beautifull','butiful','beutiful'], james:'I tried to write Jessie a compliment. I spelled it "beutiful".' },
+    { clue:'When something starts',          correct:'begin',     wrong:['bigin','beggin','beginn'],         james:'"Beggin"? No wait... that is dog treats.' },
+    { clue:'Moving through the air',         correct:'flying',    wrong:['flyin','flyng','fliyng'],          james:'Our balloon is "flyin" high! Wait — is there a G?' },
+  ],
+  2: [
+    { clue:'When something happens by surprise', correct:'surprise',    wrong:['suprise','surprize','surpise'],       james:'I wrote "suprise party" for Jessie. She was not surprised at my spelling.' },
+    { clue:'The second month of the year',        correct:'February',    wrong:['Febuary','Feburary','Februery'],      james:'I always forget the first R in "Febuary". Wobuffet does too.' },
+    { clue:'Absolutely, for sure, without doubt', correct:'definitely',  wrong:['definately','definitly','defenitely'],james:'"Definately" looked right! Jessie says I am definitely wrong.' },
+    { clue:'To make something seem bigger',       correct:'exaggerate', wrong:['exagerate','exaggerrate','exaggarate'],james:'I never exagerate! ...Wait, is that how you spell it?' },
+    { clue:'Not together, apart from each other', correct:'separate',   wrong:['seperate','separrate','seperrate'],   james:'There is "a rat" hiding in "sep-a-rat-e"! That helps me remember!' },
+    { clue:'The place around us, nature',         correct:'environment', wrong:['enviroment','enviornment','enviorment'],james:'I care deeply about the "enviroment". ...Hmm.' },
+    { clue:'When something happens over and over', correct:'repetition', wrong:['repitition','repetision','repitision'],james:'All this "repitition" is... wait. Wobuffet, how do you spell that?' },
+  ],
+  3: [
+    { clue:'Feeling ashamed and awkward',            correct:'embarrassed',    wrong:['embarassed','embarrased','embarrassd'],      james:'I am always "embarassed" by Jessie. Wait — two Rs and two Ss!' },
+    { clue:'Something that is exaggerated or false', correct:'exaggeration',   wrong:['exageration','exaggerration','exagguration'], james:'Calling me clumsy is an "exageration". ...Right?' },
+    { clue:'A place to stay, like a hotel',          correct:'accommodation',  wrong:['accomodation','acomodation','acommodation'],  james:'Our Team Rocket "acomodation" was a tent. One M or two?' },
+    { clue:'When something happens at the same time',correct:'occurrence',     wrong:['occurence','occurrance','ocurrence'],        james:'A rare "occurence" — Jessie admitting she was wrong!' },
+    { clue:'When you are aware of right and wrong',  correct:'conscience',     wrong:['consience','consciense','conciense'],        james:'Even Team Rocket has a "consience". ...I think.' },
+    { clue:'Something that is absolutely required',  correct:'necessary',      wrong:['neccessary','necesary','neccesary'],         james:'Is a villain costume "necesary"? Jessie says yes. Always yes.' },
+    { clue:'Able to use both hands equally well',    correct:'ambidextrous',   wrong:['ambidexterous','ambidextrus','ambidextous'],  james:'I am "ambidexterous" with a rose! ...One too many Es, apparently.' },
+  ],
+};
+
+// ─── TEAM ROCKET CHALLENGE DISPATCHER ────────────────────────────────────────
+
+const TeamRocketChallenge = {
   _onComplete: null,
+  _type: null,     // 'meowth' | 'jessie' | 'james'
+  _challenge: null,
 
-  // Check whether a challenge should fire after a battle
+  // Shared trigger check — called from CardReward.close
   shouldTrigger() {
-    if (!GameState.battlesSinceChallenge && GameState.battlesSinceChallenge !== 0) return false;
-    GameState.battlesSinceChallenge = (GameState.battlesSinceChallenge || 0) + 1;
-    // Must have fought at least 2 battles; 35% chance, guaranteed by battle 5
+    if (GameState.battlesSinceChallenge === undefined) GameState.battlesSinceChallenge = 0;
+    GameState.battlesSinceChallenge++;
     if (GameState.battlesSinceChallenge < 2) return false;
     if (GameState.battlesSinceChallenge >= 5) return true;
     return Math.random() < 0.35;
   },
 
+  // Pick a random character and show their challenge
   show(onComplete) {
     this._onComplete = onComplete;
-    const tier = GameState.difficultyTier || 2;
-    this._challenge = generateMathChallenge(tier);
+    // Rotate through characters — weight them evenly, avoid same char twice in a row
+    const chars = ['meowth', 'jessie', 'james'];
+    const pool  = chars.filter(c => c !== this._type); // avoid repeat
+    this._type  = pool[Math.floor(Math.random() * pool.length)];
+    GameState.battlesSinceChallenge = 0;
 
-    const name = GameState.trainerName || 'Trainer';
+    if (this._type === 'meowth') this._showMeowth();
+    else if (this._type === 'jessie') this._showJessie();
+    else this._showJames();
+  },
 
-    // Build coin visual for Tier 1
-    const coinVisual = document.getElementById('challenge-coin-visual');
-    if (coinVisual) {
-      if (this._challenge.coins && tier === 1) {
-        const { a, b, op } = this._challenge.coins;
-        coinVisual.innerHTML =
-          `<div class="coin-group">${'🪙'.repeat(a)}</div>` +
-          `<div class="coin-op">${op === '+' ? '➕' : '➖'}</div>` +
-          `<div class="coin-group">${'🪙'.repeat(b)}</div>`;
-        coinVisual.style.display = 'flex';
-      } else {
-        coinVisual.style.display = 'none';
-      }
-    }
+  // ── Shared render helpers ─────────────────────────────────────────────────
 
-    document.getElementById('challenge-intro').textContent =
-      `Hey ${name}! Meowth needs your help! 😾`;
-    document.getElementById('challenge-question').textContent =
-      this._challenge.question;
+  _setHeader(imgSrc, badgeText, introText) {
+    const img = document.getElementById('challenge-character-img');
+    img.src = imgSrc; img.alt = this._type;
+    img.style.display = '';
+    document.getElementById('challenge-badge').textContent   = badgeText;
+    document.getElementById('challenge-intro').textContent   = introText;
+    document.getElementById('challenge-coin-visual').style.display  = 'none';
+    document.getElementById('jessie-word-display').style.display    = 'none';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+  },
 
-    // Render answer buttons
+  _renderAnswerBtns(choices, answerFn) {
     const btns = document.getElementById('challenge-answer-btns');
     btns.innerHTML = '';
-    this._challenge.choices.forEach(val => {
+    choices.forEach(val => {
       const b = document.createElement('button');
       b.className = 'challenge-answer-btn';
       b.textContent = val;
-      b.addEventListener('click', () => this.answer(val));
+      b.addEventListener('click', () => answerFn(val));
       btns.appendChild(b);
     });
+  },
 
-    document.getElementById('challenge-result').style.display = 'none';
-    document.getElementById('challenge-continue-btn').style.display = 'none';
+  _showResult(isRight, correctLabel, explanation, characterQuote) {
+    const name = GameState.trainerName || 'Trainer';
+    const resultEl = document.getElementById('challenge-result');
+    resultEl.style.display = 'block';
+
+    // Highlight answer buttons
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (b.textContent === correctLabel) b.classList.add('answer-correct');
+      else if (!isRight && b.classList.contains('answer-selected')) b.classList.add('answer-wrong');
+    });
+
+    if (isRight) {
+      const bonus = { 1: 5, 2: 8, 3: 12 }[GameState.difficultyTier || 2];
+      GameState.gold = (GameState.gold || 0) + bonus;
+      resultEl.className = 'challenge-result result-correct';
+      resultEl.innerHTML =
+        `✅ <strong>Correct, ${name}!</strong><br>${explanation}<br>` +
+        `You earned <strong>+${bonus}🪙</strong>!<br><em>"${characterQuote}"</em>`;
+      SoundEngine.playFanfare();
+    } else {
+      GameState.gold = (GameState.gold || 0) + 2;
+      resultEl.className = 'challenge-result result-wrong';
+      resultEl.innerHTML =
+        `❌ <strong>The answer is: ${correctLabel}</strong><br>${explanation}<br>` +
+        `You still get <strong>+2🪙</strong> for trying, ${name}!<br><em>"${characterQuote}"</em>`;
+    }
+    document.getElementById('challenge-continue-btn').style.display = 'block';
+    saveGame();
+  },
+
+  // ── MEOWTH ────────────────────────────────────────────────────────────────
+
+  _showMeowth() {
+    const name  = GameState.trainerName || 'Trainer';
+    const tier  = GameState.difficultyTier || 2;
+    this._challenge = generateMathChallenge(tier);
+
+    this._setHeader('assets/meowth.png', '💰 Meowth\'s Coin Challenge!',
+      `Hey ${name}! Meowth keeps losing count of Giovanni's coins! Help out! 😾`);
+
+    // Coin visual for tier 1
+    const cv = document.getElementById('challenge-coin-visual');
+    if (this._challenge.coins && tier === 1) {
+      const { a, b, op } = this._challenge.coins;
+      cv.innerHTML =
+        `<div class="coin-group">${'🪙'.repeat(a)}</div>` +
+        `<div class="coin-op">${op === '+' ? '➕' : '➖'}</div>` +
+        `<div class="coin-group">${'🪙'.repeat(b)}</div>`;
+      cv.style.display = 'flex';
+    }
+
+    document.getElementById('challenge-question').textContent = this._challenge.question;
+
+    this._renderAnswerBtns(this._challenge.choices, (val) => {
+      const correct  = this._challenge.correct;
+      const isRight  = val === correct;
+      // Mark selected before showResult so highlight works
+      document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+        if (parseInt(b.textContent) === val) b.classList.add('answer-selected');
+      });
+      const explanation = isRight
+        ? `${correct} is exactly right! NYAH!`
+        : `Let me count again: the answer is ${correct}.`;
+      const quote = isRight
+        ? `The Boss will be so impressed! Maybe I'll get a raise! — Meowth`
+        : `Even Meowth gets confused sometimes! Don't worry! — Meowth`;
+      this._showResult(isRight, String(correct), explanation, quote);
+    });
 
     showScreen('challenge');
   },
 
-  answer(val) {
-    const correct = this._challenge.correct;
-    const isRight = val === correct;
-    const name    = GameState.trainerName || 'Trainer';
+  // ── JESSIE ────────────────────────────────────────────────────────────────
 
-    // Disable all buttons and highlight
-    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
-      b.disabled = true;
-      if (parseInt(b.textContent) === correct) b.classList.add('answer-correct');
-      else if (parseInt(b.textContent) === val && !isRight) b.classList.add('answer-wrong');
+  _showJessie() {
+    const name  = GameState.trainerName || 'Trainer';
+    const tier  = GameState.difficultyTier || 2;
+    const pool  = JESSIE_WORDS[tier] || JESSIE_WORDS[2];
+    const entry = pool[Math.floor(Math.random() * pool.length)];
+    this._challenge = entry;
+
+    this._setHeader('assets/jessi.png', '✨ Jessie\'s Word Challenge!',
+      `${name}! Jessie found a word she doesn't know. Help her impress the Boss! 💄`);
+
+    // Show the word big and proud
+    document.getElementById('jessie-word-display').style.display = 'flex';
+    document.getElementById('jessie-word').textContent      = entry.word.toUpperCase();
+    document.getElementById('jessie-word-type').textContent = `(${entry.pos})`;
+
+    document.getElementById('challenge-question').textContent =
+      `What does "${entry.word}" mean?`;
+
+    const choices = shuffle([entry.correct, ...entry.wrong]);
+    this._renderAnswerBtns(choices, (val) => {
+      document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+        if (b.textContent === val) b.classList.add('answer-selected');
+      });
+      const isRight = val === entry.correct;
+      const explanation = isRight
+        ? `"${entry.word}" means: ${entry.correct}. Example: ${entry.example}`
+        : `"${entry.word}" means: ${entry.correct}. Example: ${entry.example}`;
+      this._showResult(isRight, entry.correct, explanation, entry.jessie);
     });
 
-    const resultEl = document.getElementById('challenge-result');
-    resultEl.style.display = 'block';
+    showScreen('challenge');
+  },
 
-    if (isRight) {
-      const bonus = GameState.difficultyTier === 1 ? 5 : GameState.difficultyTier === 2 ? 8 : 12;
-      GameState.gold = (GameState.gold || 0) + bonus;
-      GameState.battlesSinceChallenge = 0;
-      resultEl.className = 'challenge-result result-correct';
-      resultEl.innerHTML =
-        `✅ <strong>NYAH! Correct, ${name}!</strong><br>` +
-        `${correct} is right! You earned <strong>+${bonus}🪙</strong> bonus gold!<br>` +
-        `<em>"The Boss will be so impressed! Maybe he'll give ME a raise!" — Meowth</em>`;
-      SoundEngine.playFanfare();
-    } else {
-      const smallBonus = 2;
-      GameState.gold = (GameState.gold || 0) + smallBonus;
-      GameState.battlesSinceChallenge = 0;
-      resultEl.className = 'challenge-result result-wrong';
-      resultEl.innerHTML =
-        `❌ <strong>Oops! The answer is ${correct}.</strong><br>` +
-        `${this._challenge.question.replace(/\n/g, ' ')}<br>` +
-        `You still get <strong>+${smallBonus}🪙</strong> for trying! Keep going, ${name}!<br>` +
-        `<em>"Even Meowth gets confused sometimes!" — Meowth</em>`;
-    }
+  // ── JAMES ─────────────────────────────────────────────────────────────────
 
-    document.getElementById('challenge-continue-btn').style.display = 'block';
+  _showJames() {
+    const name  = GameState.trainerName || 'Trainer';
+    const tier  = GameState.difficultyTier || 2;
+    const pool  = JAMES_WORDS[tier] || JAMES_WORDS[2];
+    const entry = pool[Math.floor(Math.random() * pool.length)];
+    this._challenge = entry;
+
+    this._setHeader('assets/james.png', '📝 James\'s Spelling Challenge!',
+      `${name}! James is writing Team Rocket's motto but he can't spell! Help him! 🌹`);
+
+    document.getElementById('challenge-question').textContent =
+      `Which is the correct spelling?\n"${entry.clue}"`;
+
+    const choices = shuffle([entry.correct, ...entry.wrong]);
+    this._renderAnswerBtns(choices, (val) => {
+      document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+        if (b.textContent === val) b.classList.add('answer-selected');
+      });
+      const isRight = val === entry.correct;
+      const explanation = isRight
+        ? `"${entry.correct}" is spelled perfectly! Well done!`
+        : `The correct spelling is "${entry.correct}". Remember: ${entry.correct}!`;
+      this._showResult(isRight, entry.correct, explanation, entry.james);
+    });
+
+    showScreen('challenge');
   },
 
   finish() {
     showScreen('map');
     MapEngine.renderParty();
-    saveGame();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
   },
 };
+
+// Keep MeowthChallenge as an alias so existing CardReward.close still works
+const MeowthChallenge = TeamRocketChallenge;
 
 // ─── GAME CONTROLLER ─────────────────────────────────────────────────────────
 

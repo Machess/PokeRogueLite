@@ -2648,3 +2648,30 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .75rem; color: var(--col-text);
   line-height: 1.6;
 }
+
+/* Jessie word display */
+.jessie-word-display {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  background: rgba(255,215,0,.07);
+  border: 2px solid rgba(255,215,0,.25);
+  border-radius: var(--r-md);
+  padding: .8rem 1rem;
+}
+.jessie-word {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.3rem;
+  color: var(--col-yellow);
+  letter-spacing: .08em;
+  text-shadow: 2px 2px 0 var(--col-yellow-dk);
+}
+.jessie-word-type {
+  font-size: .6rem;
+  color: var(--col-text-dim);
+  font-style: italic;
+}
+
+/* Selected answer state (before result is revealed) */
+.answer-selected {
+  border-color: var(--col-blue-lt) !important;
+  background: rgba(86,160,224,.15) !important;
+}
