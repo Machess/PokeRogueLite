@@ -730,7 +730,7 @@ const SoundEngine = {
     'register':  'pallet_town_theme.mp3',
     'intro':     'pallet_town_theme.mp3',
     'challenge': 'teamrocket_battle.mp3',
-    'start':     'opening.mp3',
+    'start':     'poke_intro.mp3',
     'starter':   'pallet_town_theme.mp3',
     'map':       'pallet_town_theme.mp3',
     'battle':    'opening.mp3',
@@ -740,7 +740,7 @@ const SoundEngine = {
     'training':  'pallet_town_theme.mp3',
     'shop':      'pallet_town_theme.mp3',
     'evolve':    'pallet_town_theme.mp3',
-    'victory':   'opening.mp3',
+    'victory':   'poke_intro.mp3',
     'gameover':  null,
   },
 
