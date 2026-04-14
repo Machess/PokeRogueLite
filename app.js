@@ -560,60 +560,92 @@ const WILD_POOL = {
 
 // ─── SHOP ITEMS CATALOGUE ─────────────────────────────────────────────────────
 const SHOP_ITEMS = [
+  // ── Consumables ──────────────────────────────────────────────────────────
   {
-    id: 'oran_berry',
-    name: 'Oran Berry',
-    icon: '🍊',
-    description: 'Heals 10 HP when a Pokémon drops below 50% health. Auto-triggers in battle.',
-    price: 8,
-    maxStack: 3,
-    trigger: 'passive',
+    id: 'oran_berry',     name: 'Oran Berry',      icon: '🍊', category: 'consumable',
+    description: 'Auto-heals 10 HP when a Pokémon drops below 50% health.',
+    price: 8, maxStack: 3, trigger: 'passive',
   },
   {
-    id: 'revive_potion',
-    name: 'Revive Potion',
-    icon: '🧪',
-    description: 'Saves a Pokémon from fainting once, restoring it to 30% HP instead.',
-    price: 15,
-    maxStack: 2,
-    trigger: 'on_faint',
+    id: 'revive_potion',  name: 'Revive Potion',   icon: '🧪', category: 'consumable',
+    description: 'Saves a Pokémon from fainting, restoring 30% HP instead.',
+    price: 15, maxStack: 2, trigger: 'on_faint',
   },
   {
-    id: 'ultra_ball',
-    name: 'Ultra Ball',
-    icon: '🟡',
+    id: 'potion',         name: 'Potion',           icon: '💊', category: 'consumable',
+    description: 'Heals 30 HP to one Pokémon right now.',
+    price: 10, maxStack: 3, trigger: 'use',
+  },
+  {
+    id: 'super_potion',   name: 'Super Potion',     icon: '💉', category: 'consumable',
+    description: 'Heals 60 HP to one Pokémon right now.',
+    price: 20, maxStack: 2, trigger: 'use',
+  },
+  {
+    id: 'ultra_ball',     name: 'Ultra Ball',       icon: '🟡', category: 'ball',
     description: '+50% catch rate for Uncommon and Rare Pokémon.',
-    price: 12,
-    maxStack: 3,
-    trigger: 'catch',
+    price: 12, maxStack: 3, trigger: 'catch',
   },
   {
-    id: 'master_ball',
-    name: 'Master Ball',
-    icon: '🟣',
-    description: '100% catch rate. Only one available per run!',
-    price: 50,
-    maxStack: 1,
-    trigger: 'catch',
-    unique: true,
+    id: 'master_ball',    name: 'Master Ball',      icon: '🟣', category: 'ball',
+    description: '100% catch rate. Only one per run!',
+    price: 50, maxStack: 1, trigger: 'catch', unique: true,
   },
   {
-    id: 'repel',
-    name: 'Repel',
-    icon: '🚫',
-    description: 'Prevents Common Pokémon from appearing at the next Catch node.',
-    price: 10,
-    maxStack: 2,
-    trigger: 'catch_modifier',
+    id: 'repel',          name: 'Repel',             icon: '🚫', category: 'consumable',
+    description: 'Next Catch node: only Uncommon or Rare Pokémon appear.',
+    price: 10, maxStack: 2, trigger: 'catch_modifier',
   },
   {
-    id: 'lure',
-    name: 'Lure',
-    icon: '🎣',
-    description: 'Greatly increases Legendary encounter chance for the rest of this map.',
-    price: 20,
-    maxStack: 1,
-    trigger: 'lure_modifier',
+    id: 'lure',           name: 'Lure',              icon: '🎣', category: 'consumable',
+    description: 'Increases Rare encounter chance for the rest of this map.',
+    price: 20, maxStack: 1, trigger: 'lure_modifier',
+  },
+  // ── Held Items (equipped to a Pokémon) ───────────────────────────────────
+  {
+    id: 'shell_bell',     name: 'Shell Bell',        icon: '🔔', category: 'held',
+    description: 'Holder heals 5 HP whenever they deal damage.',
+    price: 25, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'lucky_egg',      name: 'Lucky Egg',         icon: '🥚', category: 'held',
+    description: 'Holder gains +2 levels per battle instead of +1.',
+    price: 30, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'amulet_coin',    name: 'Amulet Coin',       icon: '🪙', category: 'held',
+    description: 'Holder doubles gold earned from battles.',
+    price: 35, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'focus_sash',     name: 'Focus Sash',        icon: '🎗', category: 'held',
+    description: 'Holder survives one KO hit with 1 HP. One use per battle.',
+    price: 40, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'charcoal',       name: 'Charcoal',          icon: '🪵', category: 'held',
+    description: 'Boosts Fire-type moves by 20%.',
+    price: 20, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'mystic_water',   name: 'Mystic Water',      icon: '💦', category: 'held',
+    description: 'Boosts Water-type moves by 20%.',
+    price: 20, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'miracle_seed',   name: 'Miracle Seed',      icon: '🌱', category: 'held',
+    description: 'Boosts Grass-type moves by 20%.',
+    price: 20, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'magnet',         name: 'Magnet',             icon: '🧲', category: 'held',
+    description: 'Boosts Electric-type moves by 20%.',
+    price: 20, maxStack: 1, trigger: 'held',
+  },
+  {
+    id: 'leftovers',      name: 'Leftovers',          icon: '🍖', category: 'held',
+    description: 'Holder heals 5 HP at the start of every turn.',
+    price: 30, maxStack: 1, trigger: 'held',
   },
 ];
 
@@ -631,8 +663,12 @@ const GOLD_TABLE = [
 ];
 
 function goldForWildBattle() {
-  const t = GOLD_TABLE[Math.min(GameState.bossesDefeated, GOLD_TABLE.length - 1)];
-  return t.wildMin + Math.floor(Math.random() * (t.wildMax - t.wildMin + 1));
+  const t      = GOLD_TABLE[Math.min(GameState.bossesDefeated, GOLD_TABLE.length - 1)];
+  let earned   = t.wildMin + Math.floor(Math.random() * (t.wildMax - t.wildMin + 1));
+  // Amulet Coin — double gold if active Pokémon holds it
+  const active = GameState.party?.[GameState.activePokemonIndex];
+  if (active?.heldItem?.id === 'amulet_coin') earned *= 2;
+  return earned;
 }
 function goldForBoss() {
   return GOLD_TABLE[Math.min(GameState.bossesDefeated, GOLD_TABLE.length - 1)].bossBonus;
@@ -714,7 +750,7 @@ function makePokemon(id, level, spriteUrl, name, type, isStarter = false) {
   // Assign 3 moves from the opponent move table for this type
   const movePool = OPPONENT_MOVES[type] || OPPONENT_MOVES.normal;
   const moves    = shuffle([...movePool]).slice(0, 3);
-  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves };
+  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves, heldItem: null };
 }
 
 // ─── DECK BUILDER ────────────────────────────────────────────────────────────
@@ -1560,6 +1596,8 @@ function levelUpParty(source) {
   GameState.party.forEach((p, i) => {
     if (p.hp <= 0) return;
     p.level++;
+    // Lucky Egg — gain an extra level
+    if (p.heldItem?.id === 'lucky_egg') p.level++;
     p.maxHp += 8;
     p.hp     = Math.min(p.hp + 8, p.maxHp);
     levelled.push(i);
@@ -1870,6 +1908,11 @@ const PartyOverview = {
       const hpCol     = hpColor(p.hp, p.maxHp);
       const cardCount = (p.deck || []).length;
 
+      const heldItem  = p.heldItem;
+      const heldBadge = heldItem
+        ? `<div class="party-held-badge" title="${heldItem.name}">${heldItem.icon}</div>`
+        : '';
+
       row.innerHTML = `
         <div class="party-row-drag-handle" title="Drag to reorder">⠿</div>
         <div class="party-row-sprite-wrap">
@@ -1877,6 +1920,7 @@ const PartyOverview = {
                onerror="this.src='assets/sprites/${p.id}.png'"
                class="party-row-sprite" />
           ${p.hp <= 0 ? '<div class="party-row-fainted-x">✕</div>' : ''}
+          ${heldBadge}
         </div>
         <div class="party-row-info">
           <div class="party-row-name">${p.name}</div>
@@ -1889,6 +1933,14 @@ const PartyOverview = {
             <div class="party-row-hp-bar" style="width:${hpPct}%;background:${hpCol}"></div>
           </div>
           <div class="party-row-hp-text">${Math.max(0, p.hp)} / ${p.maxHp} HP</div>
+          <div class="party-held-row">
+            ${heldItem
+              ? `<span class="party-held-label">${heldItem.icon} ${heldItem.name}</span>
+                 <button class="party-held-btn party-held-move-btn" data-idx="${i}">Move</button>
+                 <button class="party-held-btn party-held-remove-btn" data-idx="${i}">Remove</button>`
+              : `<button class="party-held-btn party-held-equip-btn" data-idx="${i}">+ Give Item</button>`
+            }
+          </div>
         </div>
         <div class="party-row-actions">
           ${canActive ? `<button class="party-row-set-active-btn" data-idx="${i}" title="Set as active Pokémon">⚡ Set Active</button>` : ''}
@@ -1914,6 +1966,32 @@ const PartyOverview = {
         });
       }
 
+      // Held item — equip
+      const equipBtn = row.querySelector('.party-held-equip-btn');
+      if (equipBtn) {
+        equipBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._showEquipPicker(i);
+        });
+      }
+      // Held item — move to another pokemon
+      const moveBtn = row.querySelector('.party-held-move-btn');
+      if (moveBtn) {
+        moveBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._showMovePicker(i);
+        });
+      }
+      // Held item — remove back to bag
+      const removeBtn = row.querySelector('.party-held-remove-btn');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          ItemEngine.unequipItem(GameState.party[i]);
+          this._render();
+        });
+      }
+
       // Cards button
       row.querySelector('.party-row-cards-btn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1928,10 +2006,89 @@ const PartyOverview = {
     const p = GameState.party[idx];
     if (!p || p.hp <= 0) return;
     GameState.activePokemonIndex = idx;
-    // Sync GameState.deck to the newly active pokemon's deck
     if (p.deck) GameState.deck = p.deck;
     saveGame();
-    this._render(); // re-render to update active highlight and button states
+    this._render();
+  },
+
+  // Show a modal to pick a held item from the bag and equip it
+  _showEquipPicker(partyIdx) {
+    const heldInBag = (GameState.items || []).filter(i => {
+      const def = SHOP_ITEMS.find(s => s.id === i.id);
+      return def?.category === 'held' && i.count > 0;
+    });
+    if (!heldInBag.length) {
+      showModal('No Held Items', 'You have no held items in your bag. Buy some at a Shop!', () => {});
+      return;
+    }
+    const poke = GameState.party[partyIdx];
+    const body = heldInBag.map(i => `${i.icon} ${i.name}`).join(' | ');
+    // Build a simple selection modal
+    const overlay = document.createElement('div');
+    overlay.className = 'held-picker-overlay';
+    overlay.innerHTML = `
+      <div class="held-picker-panel">
+        <div class="held-picker-title">Give item to ${poke.name}</div>
+        <div class="held-picker-list" id="held-picker-list"></div>
+        <button class="btn-pixel btn-secondary" id="held-picker-cancel">Cancel</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const list = overlay.querySelector('#held-picker-list');
+    heldInBag.forEach(item => {
+      const def = SHOP_ITEMS.find(s => s.id === item.id);
+      const btn = document.createElement('button');
+      btn.className = 'held-picker-item-btn';
+      btn.innerHTML = `<span class="held-picker-icon">${item.icon}</span>
+        <span class="held-picker-name">${item.name}</span>
+        <span class="held-picker-desc">${def?.description || ''}</span>`;
+      btn.addEventListener('click', () => {
+        ItemEngine.equipItem(poke, item.id);
+        document.body.removeChild(overlay);
+        this._render();
+      });
+      list.appendChild(btn);
+    });
+    overlay.querySelector('#held-picker-cancel').addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+  },
+
+  // Show a modal to move the held item to another party member
+  _showMovePicker(fromIdx) {
+    const fromPoke = GameState.party[fromIdx];
+    if (!fromPoke.heldItem) return;
+    const others = GameState.party.filter((_, i) => i !== fromIdx);
+    if (!others.length) {
+      showModal('No Other Pokémon', 'You have no other party members to give this to.', () => {});
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.className = 'held-picker-overlay';
+    overlay.innerHTML = `
+      <div class="held-picker-panel">
+        <div class="held-picker-title">Move ${fromPoke.heldItem.icon} ${fromPoke.heldItem.name} to...</div>
+        <div class="held-picker-list" id="held-move-list"></div>
+        <button class="btn-pixel btn-secondary" id="held-move-cancel">Cancel</button>
+      </div>`;
+    document.body.appendChild(overlay);
+    const list = overlay.querySelector('#held-move-list');
+    GameState.party.forEach((p, i) => {
+      if (i === fromIdx) return;
+      const btn = document.createElement('button');
+      btn.className = 'held-picker-item-btn';
+      btn.innerHTML = `<img src="${p.spriteUrl}" class="held-move-sprite" alt="${p.name}" />
+        <span class="held-picker-name">${p.name}</span>
+        <span class="held-picker-desc">${p.heldItem ? `Currently: ${p.heldItem.icon} ${p.heldItem.name}` : 'No item'}</span>`;
+      btn.addEventListener('click', () => {
+        ItemEngine.moveHeldItem(fromPoke, p);
+        document.body.removeChild(overlay);
+        this._render();
+      });
+      list.appendChild(btn);
+    });
+    overlay.querySelector('#held-move-cancel').addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
   },
 
   // ── Drag-and-drop ────────────────────────────────────────────────────────
@@ -2054,6 +2211,7 @@ const MapEngine = {
     showScreen('map');
     this.renderParty();
     this.drawMap();
+    ItemEngine.renderBagBar();
     saveGame();
   },
 
@@ -2070,7 +2228,8 @@ const MapEngine = {
                          onerror="this.src='assets/sprites/${p.id}.png'" />
                      <div class="thumb-hp" style="width:${Math.round(p.hp/p.maxHp*100)}%;
                        background:${hpColor(p.hp, p.maxHp)}"></div>
-                     ${p.hp <= 0 ? '<div class="thumb-fainted">✕</div>' : ''}`;
+                     ${p.hp <= 0 ? '<div class="thumb-fainted">✕</div>' : ''}
+                     ${p.heldItem ? `<div class="thumb-held-badge" title="${p.heldItem.name}">${p.heldItem.icon}</div>` : ''}`;
       d.title = `${p.name} — Click to manage party`;
       d.style.cursor = 'pointer';
       d.addEventListener('click', () => PartyOverview.open());
@@ -2633,14 +2792,21 @@ const BattleEngine = {
   },
 
   _applyCardEffect(card) {
-    const st = this.state;
+    const st         = this.state;
+    const activePoke = GameState.party[GameState.activePokemonIndex];
     let dmg = card.power;
 
     // ── Type effectiveness ──
     const mult = dmg > 0 ? getTypeMultiplier(card.type, st.opp.type || 'normal') : 1;
     dmg = Math.round(dmg * mult);
 
-    // Rain boost (water moves in rain)
+    // ── Held item type booster (Charcoal, Mystic Water, etc.) ──
+    if (dmg > 0) {
+      const boost = ItemEngine.getTypeboost(activePoke, card.type);
+      if (boost > 1) dmg = Math.round(dmg * boost);
+    }
+
+    // Rain boost
     if (st.rainTurns > 0 && card.type === 'water') dmg = Math.round(dmg * 1.2);
 
     // Crit
@@ -2651,10 +2817,13 @@ const BattleEngine = {
 
     if (dmg > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - dmg);
-      // Attacker = player sprite, defender = opp sprite, colour = card type
       const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
       const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
       applyHitAnimation(playerSpriteId, oppSpriteId, card.type);
+
+      // Shell Bell — heal on dealing damage
+      const bellMsg = ItemEngine.checkShellBell(st, this);
+      if (bellMsg) setTimeout(() => this._log(bellMsg), 300);
 
       const effLabel = typeEffectivenessLabel(mult);
       let logMsg = crit
@@ -2695,6 +2864,10 @@ const BattleEngine = {
       case 'debuff_def':    if(Math.random()<.3){ st.oppAtkDebuff += 5; this._log(`${st.opp.name}'s DEF fell!`); } break;
     }
 
+    // Oran Berry mid-battle check after taking/dealing damage
+    const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player');
+    if (berryMsg) setTimeout(() => this._log(berryMsg), 500);
+
     this._render();
   },
 
@@ -2725,6 +2898,10 @@ const BattleEngine = {
       st.player.hp = Math.max(0, st.player.hp - 10);
       this._log(`Your ${st.player.name} is burned! (-10)`);
     }
+    if (hasStatus(st, 'player', 'poison')) {
+      st.player.hp = Math.max(0, st.player.hp - 15);
+      this._log(`Your ${st.player.name} is hurt by poison! (-15)`);
+    }
 
     // Leech
     if (st.leechTurns > 0) {
@@ -2741,12 +2918,17 @@ const BattleEngine = {
     // Opp debuff decay
     if (st.oppAtkDebuff > 0) st.oppAtkDebuff = Math.max(0, st.oppAtkDebuff - 5);
 
-    // Check defeats
+    // Check defeats after all damage ticks
     if (this._checkDefeated()) return;
 
-    // New turn
+    // New turn start
     st.actionsLeft = 2;
     st.shield = 0;
+
+    // Leftovers — heal at start of new turn
+    const leftoversMsg = ItemEngine.checkLeftovers(st);
+    if (leftoversMsg) this._log(leftoversMsg);
+
     this._dealHand(3);
     this._render();
     this._log(`Your turn! You have ${st.actionsLeft} actions.`);
@@ -2795,12 +2977,14 @@ const BattleEngine = {
       if (st.shield > 0)    logMsg += ' (shield blocked some)';
       if (effLabel)         logMsg += ` ${effLabel.text}`;
       this._log(logMsg);
+
+      // Oran Berry — check after taking damage
+      const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player');
+      if (berryMsg) setTimeout(() => this._log(berryMsg), 400);
     } else if (move.power > 0) {
-      // Fully blocked by shield
       applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
       this._log(`${st.opp.name} used ${move.name}! Blocked by shield!`);
     } else {
-      // Status-only move with no damage
       this._log(`${st.opp.name} used ${move.name}!`);
     }
   },
@@ -2814,11 +2998,26 @@ const BattleEngine = {
       return true;
     }
     if (st.player.hp <= 0) {
-      // Update real party member
-      GameState.party[GameState.activePokemonIndex].hp = 0;
+      const activeIdx = GameState.activePokemonIndex;
+
+      // Focus Sash — survive with 1 HP
+      if (ItemEngine.checkFocusSash(st, 'player', this)) {
+        this._log(`🎗 Focus Sash! ${st.player.name} held on with 1 HP!`);
+        this._render();
+        return false;
+      }
+
+      // Revive Potion — prevent faint
+      if (ItemEngine.checkRevive(activeIdx)) {
+        st.player.hp = GameState.party[activeIdx].hp; // sync restored HP
+        this._log(`🧪 Revive Potion! ${st.player.name} was revived!`);
+        this._render();
+        return false;
+      }
+
+      GameState.party[activeIdx].hp = 0;
       this._log(`${st.player.name} fainted!`);
-      // Find next alive
-      const next = GameState.party.findIndex((p, i) => i !== GameState.activePokemonIndex && p.hp > 0);
+      const next = GameState.party.findIndex((p, i) => i !== activeIdx && p.hp > 0);
       if (next >= 0) {
         setTimeout(() => {
           GameState.activePokemonIndex = next;
@@ -2832,7 +3031,6 @@ const BattleEngine = {
           this._dealHand(3);
           this._log(`Go, ${p.name}!`);
           this._render();
-          // Fetch back sprite for the new pokemon (non-blocking)
           fetchPoke(p.id).then(d => {
             const back = d.sprites?.back_default || d.sprites?.front_default || p.spriteUrl;
             st.player.backSpriteUrl = back;
@@ -3549,23 +3747,86 @@ const CatchEngine = {
 // ─── ITEM ENGINE ─────────────────────────────────────────────────────────────
 
 const ItemEngine = {
-  // Apply Oran Berry passive at end of each battle
-  checkPassive() {
-    if (!GameState.items) return;
-    const berries = GameState.items.filter(i => i.id === 'oran_berry' && i.count > 0);
-    if (!berries.length) return;
-    GameState.party.forEach(p => {
-      if (p.hp > 0 && p.hp < p.maxHp * 0.5 && berries[0].count > 0) {
-        p.hp = Math.min(p.maxHp, p.hp + 10);
-        berries[0].count--;
-        if (berries[0].count <= 0) {
-          GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
-        }
-      }
+
+  // ── Bag bar (map header) ────────────────────────────────────────────────
+  renderBagBar() {
+    const bar = document.getElementById('bag-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    const consumables = (GameState.items || []).filter(i => {
+      const def = SHOP_ITEMS.find(s => s.id === i.id);
+      return def && def.category !== 'held' && def.category !== 'ball' && i.count > 0;
+    });
+    // Lure active indicator (persistent flag)
+    if (GameState.lureActive) {
+      const pill = document.createElement('div');
+      pill.className = 'bag-pill bag-pill-lure';
+      pill.innerHTML = `<span class="bag-pill-icon">🎣</span><span class="bag-pill-label">Lure</span>`;
+      pill.title = 'Lure active — increased Rare encounters this map';
+      bar.appendChild(pill);
+    }
+    consumables.forEach(item => {
+      if (item.id === 'lure') return; // shown as active flag above
+      const pill = document.createElement('div');
+      pill.className = 'bag-pill';
+      pill.innerHTML = `<span class="bag-pill-icon">${item.icon}</span><span class="bag-pill-count">${item.count > 1 ? '×' + item.count : ''}</span>`;
+      pill.title = `${item.name} — ${item.description || ''}`;
+      bar.appendChild(pill);
     });
   },
 
-  // Check on-faint Revive Potion
+  // ── Held item helpers ────────────────────────────────────────────────────
+  getHeldItem(pokemon) {
+    return pokemon?.heldItem || null;
+  },
+
+  equipItem(pokemon, itemId) {
+    const def = SHOP_ITEMS.find(s => s.id === itemId);
+    if (!def || def.category !== 'held') return false;
+    // Return old item to bag if any
+    if (pokemon.heldItem) this.addItem(pokemon.heldItem.id);
+    pokemon.heldItem = { ...def };
+    // Remove one from bag
+    this.useItem(itemId);
+    saveGame();
+    return true;
+  },
+
+  unequipItem(pokemon) {
+    if (!pokemon.heldItem) return;
+    this.addItem(pokemon.heldItem.id);
+    pokemon.heldItem = null;
+    saveGame();
+  },
+
+  moveHeldItem(fromPoke, toPoke) {
+    if (!fromPoke.heldItem) return;
+    const item = fromPoke.heldItem;
+    if (toPoke.heldItem) this.addItem(toPoke.heldItem.id); // return displaced item
+    toPoke.heldItem   = item;
+    fromPoke.heldItem = null;
+    saveGame();
+  },
+
+  // ── Oran Berry — triggers mid-battle when HP drops below 50% ────────────
+  checkBerryMidBattle(st, who) {
+    const poke  = who === 'player' ? GameState.party[GameState.activePokemonIndex] : null;
+    if (!poke) return null;
+    // Check bag berries
+    const berries = (GameState.items || []).filter(i => i.id === 'oran_berry' && i.count > 0);
+    if (!berries.length) return null;
+    if (st[who].hp > 0 && st[who].hp < st[who].maxHp * 0.5) {
+      const heal = 10;
+      st[who].hp = Math.min(st[who].maxHp, st[who].hp + heal);
+      berries[0].count--;
+      if (berries[0].count <= 0) GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
+      this.renderBagBar();
+      return `🍊 Oran Berry healed ${st[who].name} ${heal} HP!`;
+    }
+    return null;
+  },
+
+  // ── Revive Potion — triggers when player HP hits 0 ──────────────────────
   checkRevive(partyIdx) {
     if (!GameState.items) return false;
     const revive = GameState.items.find(i => i.id === 'revive_potion' && i.count > 0);
@@ -3574,7 +3835,67 @@ const ItemEngine = {
     p.hp = Math.floor(p.maxHp * 0.3);
     revive.count--;
     if (revive.count <= 0) GameState.items = GameState.items.filter(i => i !== revive);
+    this.renderBagBar();
     return true;
+  },
+
+  // ── Focus Sash — held item, survive lethal hit with 1 HP ────────────────
+  checkFocusSash(st, who, battleObj) {
+    const poke = who === 'player' ? GameState.party[GameState.activePokemonIndex] : null;
+    if (!poke || !poke.heldItem || poke.heldItem.id !== 'focus_sash') return false;
+    if (battleObj._focusSashUsed) return false; // one use per battle
+    if (st[who].hp <= 0) {
+      st[who].hp = 1;
+      battleObj._focusSashUsed = true;
+      return true;
+    }
+    return false;
+  },
+
+  // ── Shell Bell — heal on dealing damage ─────────────────────────────────
+  checkShellBell(st, battleObj) {
+    const poke = GameState.party[GameState.activePokemonIndex];
+    if (!poke?.heldItem || poke.heldItem.id !== 'shell_bell') return null;
+    const heal = 5;
+    st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
+    return `🔔 Shell Bell healed ${st.player.name} ${heal} HP!`;
+  },
+
+  // ── Leftovers — heal at start of each turn ──────────────────────────────
+  checkLeftovers(st) {
+    const poke = GameState.party[GameState.activePokemonIndex];
+    if (!poke?.heldItem || poke.heldItem.id !== 'leftovers') return null;
+    const heal = 5;
+    st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
+    return `🍖 Leftovers healed ${st.player.name} ${heal} HP!`;
+  },
+
+  // ── Type booster held items ──────────────────────────────────────────────
+  getTypeboost(poke, cardType) {
+    if (!poke?.heldItem) return 1;
+    const boosts = {
+      charcoal:     { type: 'fire',     mult: 1.2 },
+      mystic_water: { type: 'water',    mult: 1.2 },
+      miracle_seed: { type: 'grass',    mult: 1.2 },
+      magnet:       { type: 'electric', mult: 1.2 },
+    };
+    const b = boosts[poke.heldItem.id];
+    return (b && b.type === cardType) ? b.mult : 1;
+  },
+
+  // ── Post-battle Oran Berry (kept for non-battle heal check) ─────────────
+  checkPassive() {
+    if (!GameState.items) return;
+    const berries = GameState.items.filter(i => i.id === 'oran_berry' && i.count > 0);
+    if (!berries.length) return;
+    GameState.party.forEach(p => {
+      if (p.hp > 0 && p.hp < p.maxHp * 0.5 && berries[0].count > 0) {
+        p.hp = Math.min(p.maxHp, p.hp + 10);
+        berries[0].count--;
+        if (berries[0].count <= 0) GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
+      }
+    });
+    this.renderBagBar();
   },
 
   hasItem(id) {
@@ -3586,6 +3907,7 @@ const ItemEngine = {
     if (!item) return false;
     item.count--;
     if (item.count <= 0) GameState.items = GameState.items.filter(i => i !== item);
+    this.renderBagBar();
     return true;
   },
 
@@ -3595,7 +3917,8 @@ const ItemEngine = {
     const def  = SHOP_ITEMS.find(s => s.id === id);
     if (!def) return;
     if (item) { item.count++; }
-    else { GameState.items.push({ ...def, count: 1 }); }
+    else      { GameState.items.push({ ...def, count: 1 }); }
+    this.renderBagBar();
   },
 };
 
@@ -3722,34 +4045,50 @@ const ShopEngine = {
     const grid = document.getElementById('shop-items-grid');
     grid.innerHTML = '';
 
-    SHOP_ITEMS.forEach(item => {
-      const owned   = (GameState.items || []).find(i => i.id === item.id);
-      const count   = owned ? owned.count : 0;
-      const maxed   = count >= item.maxStack;
-      const isUnique = item.unique && (count > 0 || (item.id === 'master_ball' && GameState.masterBallUsed));
-      const cantAfford = (GameState.gold || 0) < item.price;
-      const disabled = maxed || isUnique || cantAfford;
+    // Split into sections
+    const sections = [
+      { label: '🎒 Consumables & Balls', items: SHOP_ITEMS.filter(i => i.category !== 'held') },
+      { label: '🏅 Held Items', items: SHOP_ITEMS.filter(i => i.category === 'held') },
+    ];
 
-      const div = document.createElement('div');
-      div.className = 'shop-item' + (disabled ? ' shop-item-disabled' : '');
-      div.innerHTML = `
-        <div class="shop-item-icon">${item.icon}</div>
-        <div class="shop-item-name">${item.name}</div>
-        <div class="shop-item-desc">${item.description}</div>
-        <div class="shop-item-footer">
-          <span class="shop-item-price">💰${item.price}g</span>
-          ${count > 0 ? `<span class="shop-item-owned">×${count}</span>` : ''}
-          <button class="btn-pixel btn-small btn-primary shop-buy-btn"
-                  ${disabled ? 'disabled' : ''}
-                  data-id="${item.id}">
-            ${isUnique ? 'Sold Out' : maxed ? 'Full' : cantAfford ? 'No gold' : 'Buy'}
-          </button>
-        </div>
-      `;
-      if (!disabled) {
-        div.querySelector('.shop-buy-btn').onclick = () => this.buy(item.id);
-      }
-      grid.appendChild(div);
+    sections.forEach(section => {
+      const header = document.createElement('div');
+      header.className = 'shop-section-header';
+      header.textContent = section.label;
+      grid.appendChild(header);
+
+      section.items.forEach(item => {
+        const owned   = (GameState.items || []).find(i => i.id === item.id);
+        const count   = owned ? owned.count : 0;
+        // Also count how many party members hold this item
+        const equipped = GameState.party.filter(p => p.heldItem?.id === item.id).length;
+        const maxed    = count >= item.maxStack;
+        const isUnique = item.unique && (count > 0 || (item.id === 'master_ball' && GameState.masterBallUsed));
+        const cantAfford = (GameState.gold || 0) < item.price;
+        const disabled = maxed || isUnique || cantAfford;
+
+        const div = document.createElement('div');
+        div.className = 'shop-item' + (disabled ? ' shop-item-disabled' : '');
+        div.innerHTML = `
+          <div class="shop-item-icon">${item.icon}</div>
+          <div class="shop-item-name">${item.name}</div>
+          <div class="shop-item-desc">${item.description}</div>
+          <div class="shop-item-footer">
+            <span class="shop-item-price">💰${item.price}g</span>
+            ${count > 0 ? `<span class="shop-item-owned">bag ×${count}</span>` : ''}
+            ${equipped > 0 ? `<span class="shop-item-owned">held ×${equipped}</span>` : ''}
+            <button class="btn-pixel btn-small btn-primary shop-buy-btn"
+                    ${disabled ? 'disabled' : ''}
+                    data-id="${item.id}">
+              ${isUnique ? 'Sold Out' : maxed ? 'Full' : cantAfford ? 'No gold' : 'Buy'}
+            </button>
+          </div>
+        `;
+        if (!disabled) {
+          div.querySelector('.shop-buy-btn').onclick = () => this.buy(item.id);
+        }
+        grid.appendChild(div);
+      });
     });
   },
 
@@ -3758,7 +4097,21 @@ const ShopEngine = {
     if (!item) return;
     if ((GameState.gold || 0) < item.price) return;
     GameState.gold -= item.price;
-    ItemEngine.addItem(id);
+
+    if (item.category === 'held') {
+      // Auto-equip to active Pokémon; if it already holds something, add to bag instead
+      const active = GameState.party[GameState.activePokemonIndex];
+      if (active && !active.heldItem) {
+        active.heldItem = { ...item };
+        // Don't add to bag — directly equipped
+      } else {
+        ItemEngine.addItem(id);
+        showModal('Item Stored', `${item.icon} ${item.name} added to your bag. Open Party to equip it.`, () => {});
+      }
+    } else {
+      ItemEngine.addItem(id);
+    }
+
     if (id === 'master_ball') GameState.masterBallUsed = true;
     SoundEngine.playFanfare();
     saveGame();
