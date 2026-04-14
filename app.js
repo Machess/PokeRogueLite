@@ -16,6 +16,33 @@ const STARTERS = [
   { id: 25, name: 'Pikachu',    type: 'electric', evolutions: [25,26,26], locked: true },
 ];
 
+// Level thresholds that trigger starter evolution
+const EVOLUTION_LEVELS = {
+  1:  { stage2: 16, stage3: 32 },
+  4:  { stage2: 16, stage3: 36 },
+  7:  { stage2: 16, stage3: 36 },
+  25: { stage2: 22 },
+};
+
+// Warm narrative lines shown on the evolve screen — (trainerName, newPokeName, prevPokeName)
+const EVOLVE_NARRATIVES = {
+  1: {
+    2: (n, next, prev) => `${n} has been an amazing trainer. All those battles, all that care — ${prev} has been watching you the whole time. It trusts you completely. Something is happening...`,
+    3: (n, next, prev) => `${n}, look! After everything you two have been through together, ${prev} has reached its final form. This is what true friendship looks like.`,
+  },
+  4: {
+    2: (n, next, prev) => `${n}, you never gave up — and neither did ${prev}. Every battle you won together made it stronger. The flame on its tail burns brighter than ever before...`,
+    3: (n, next, prev) => `${n}! The bond between you and ${prev} is extraordinary. Only a trainer with a truly warm heart could bring out this kind of power. Watch closely!`,
+  },
+  7: {
+    2: (n, next, prev) => `${n}, your calm and steady style of battling has inspired ${prev}. It has been learning from you all along. Now it wants to show you what it has learned...`,
+    3: (n, next, prev) => `${n}, ${prev} has protected you through every challenge. Now it is ready for its greatest form yet. This moment belongs to both of you.`,
+  },
+  25: {
+    2: (n, next, prev) => `${n}, Pikachu absolutely loves travelling with you! It has been getting stronger with every adventure. It is not evolving — it just wants to stay exactly as it is, but even more powerful!`,
+  },
+};
+
 const BOSS_TRAINERS = [
   // ── Kanto Gym Leaders ──────────────────────────────────────────────────────
   {
@@ -1521,6 +1548,101 @@ const TeamRocketChallenge = {
 // Keep MeowthChallenge as an alias so existing CardReward.close still works
 const MeowthChallenge = TeamRocketChallenge;
 
+// ─── LEVEL-UP SYSTEM ─────────────────────────────────────────────────────────
+
+// Awards +1 level to every living party member after a battle or training node.
+// Returns an array of evolution descriptors for any starters that crossed a threshold:
+// { partyIdx, beforeId, afterId, stage, narrative }
+function levelUpParty(source) {
+  const evolutions = [];
+  const levelled   = [];
+
+  GameState.party.forEach((p, i) => {
+    if (p.hp <= 0) return; // fainted — no XP
+    p.level++;
+    p.maxHp += 8;
+    p.hp     = Math.min(p.hp + 8, p.maxHp); // partial heal on level up
+    levelled.push(i);
+
+    // Check evolution only for the starter
+    if (!p.isStarter) return;
+    const starter  = STARTERS.find(s => s.id === GameState.starterId);
+    if (!starter)   return;
+    const thresholds = EVOLUTION_LEVELS[starter.id];
+    if (!thresholds) return;
+    const curStage   = GameState.evolutionStage;
+
+    if (curStage === 0 && thresholds.stage2 && p.level >= thresholds.stage2) {
+      evolutions.push({ partyIdx: i, stage: 2,
+        beforeId: starter.evolutions[0], afterId: starter.evolutions[1] });
+      GameState.evolutionStage = 1;
+    } else if (curStage === 1 && thresholds.stage3 && p.level >= thresholds.stage3) {
+      evolutions.push({ partyIdx: i, stage: 3,
+        beforeId: starter.evolutions[1], afterId: starter.evolutions[2] });
+      GameState.evolutionStage = 2;
+    }
+  });
+
+  // Flash level-up badges on the map party bar
+  if (levelled.length > 0) flashLevelUp(levelled);
+  return evolutions;
+}
+
+// Apply level-up flash to party portrait buttons in the map header
+function flashLevelUp(indices) {
+  const portraits = document.querySelectorAll('.map-party-btn');
+  indices.forEach(i => {
+    const el = portraits[i];
+    if (!el) return;
+    el.classList.remove('levelup-flash');
+    void el.offsetWidth;
+    el.classList.add('levelup-flash');
+    setTimeout(() => el.classList.remove('levelup-flash'), 1200);
+  });
+}
+
+// Run evolution sequence for all queued evolutions, then call onDone
+async function runEvolutions(evolutions, onDone) {
+  if (evolutions.length === 0) { onDone(); return; }
+  const evo     = evolutions[0];
+  const rest    = evolutions.slice(1);
+  const poke    = GameState.party[evo.partyIdx];
+  const name    = GameState.trainerName || 'Trainer';
+  const prevName = poke.name;
+  const starter  = STARTERS.find(s => s.id === GameState.starterId);
+  const isPikachu = starter?.id === 25;
+
+  if (isPikachu) {
+    // Pikachu: HP boost + special modal, no evolve screen
+    poke.maxHp += 20;
+    poke.hp    += 20;
+    const narrative = (EVOLVE_NARRATIVES[25]?.[2])?.(name, prevName, prevName) ?? '';
+    showModal('⚡ Pikachu Powered Up!', narrative, () => runEvolutions(rest, onDone));
+    return;
+  }
+
+  // Build narrative
+  const narrativeFn = EVOLVE_NARRATIVES[starter?.id]?.[evo.stage];
+  const afterPoke   = await fetchPoke(evo.afterId).catch(() => null);
+  const afterName   = afterPoke ? capitalize(afterPoke.name) : 'its new form';
+  const narrative   = narrativeFn ? narrativeFn(name, afterName, prevName) : `${prevName} is evolving!`;
+
+  // Update party member
+  poke.id = evo.afterId;
+  if (afterPoke) {
+    poke.name      = capitalize(afterPoke.name);
+    poke.spriteUrl = getSpriteUrl(afterPoke);
+    poke.backSpriteUrl = null;
+    poke.maxHp    += 20;
+    poke.hp        = poke.maxHp;
+  }
+
+  showScreen('evolve');
+  await EvolveEngine.run(evo.beforeId, evo.afterId, narrative, () => {
+    runEvolutions(rest, onDone);
+  });
+}
+
 // ─── GAME CONTROLLER ─────────────────────────────────────────────────────────
 
 const Game = {
@@ -1652,7 +1774,7 @@ const Game = {
     const defeated = GameState.bossesDefeated;
     const boss     = BOSS_TRAINERS[Math.min(defeated - 1, BOSS_TRAINERS.length - 1)];
 
-    // ── Won all 8 gyms → Victory ───────────────────────────────────────────
+    // ── Won all 8 gyms → Victory ──────────────────────────────────────────
     if (defeated >= 8) {
       GameState.unlockedPikachu = true;
       saveUnlocks({ pikachu: true });
@@ -1661,64 +1783,29 @@ const Game = {
       return;
     }
 
-    // ── Helper: generate next map with correct bossIndex ──────────────────
-    const nextMap = () => {
-      const nextBossIdx = Math.min(defeated, BOSS_TRAINERS.length - 1);
-      GameState.map = generateMap(nextBossIdx);
-      GameState.completedNodes = [];
-      GameState.highWaterRow   = -1;
-    };
+    // ── Generate next map ─────────────────────────────────────────────────
+    const nextBossIdx = Math.min(defeated, BOSS_TRAINERS.length - 1);
+    GameState.map            = generateMap(nextBossIdx);
+    GameState.completedNodes = [];
+    GameState.highWaterRow   = -1;
 
-    // ── Badge earned modal ────────────────────────────────────────────────
-    const badgeMsg = `${boss?.title ?? 'Badge'} earned! ${BOSS_TRAINERS[Math.min(defeated, 7)]?.name ?? 'Next challenger'} awaits!`;
+    // ── Level up party after boss win (+3 bonus levels) ───────────────────
+    for (let bonus = 0; bonus < 3; bonus++) levelUpParty('boss');
+    const evolutions = levelUpParty('boss'); // one final check after bonus
 
-    // ── Evolution only happens at bosses 1 and 2 ─────────────────────────
-    const starter = STARTERS.find(s => s.id === GameState.starterId);
-    const shouldEvolve = defeated <= 2 && starter.id !== 25
-                      && GameState.evolutionStage < (starter.evolutions.length - 1);
-    const pikachuBoost = defeated <= 2 && starter.id === 25;
+    const nextBoss  = BOSS_TRAINERS[nextBossIdx];
+    const badgeMsg  = `${boss?.title ?? 'Badge'} earned!\n${nextBoss?.name ?? 'Next challenger'} awaits!`;
 
-    if (pikachuBoost) {
-      const idx = GameState.party.findIndex(p => p.isStarter);
-      if (idx >= 0) {
-        GameState.party[idx].maxHp += 20;
-        GameState.party[idx].hp    += 20;
-      }
-      nextMap();
-      saveGame();
-      showModal('Badge Earned! ⚡', `Pikachu powered up!\n${badgeMsg}`, () => MapEngine.show());
-      return;
-    }
-
-    if (shouldEvolve) {
-      const newStage = GameState.evolutionStage + 1;
-      GameState.evolutionStage = newStage;
-      const beforeId = starter.evolutions[newStage - 1];
-      const afterId  = starter.evolutions[newStage];
-
-      showScreen('evolve');
-      await EvolveEngine.run(beforeId, afterId, () => {
-        const idx = GameState.party.findIndex(p => p.isStarter);
-        if (idx >= 0) {
-          GameState.party[idx].id = afterId;
-          fetchPoke(afterId).then(d => {
-            GameState.party[idx].name      = capitalize(d.name);
-            GameState.party[idx].spriteUrl = getSpriteUrl(d);
-            GameState.party[idx].maxHp    += 20;
-            GameState.party[idx].hp        = GameState.party[idx].maxHp;
-          });
-        }
-        nextMap();
-        saveGame();
-        MapEngine.show();
-      });
-      return;
-    }
-
-    // ── All other bosses: badge modal then next map ───────────────────────
-    nextMap();
     saveGame();
-    showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
+
+    if (evolutions.length > 0) {
+      // Evolution triggered by boss-win leveling
+      runEvolutions(evolutions, () => {
+        showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
+      });
+    } else {
+      showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
+    }
   },
 
   afterEvolve() {
@@ -2752,21 +2839,22 @@ const BattleEngine = {
     const activePoke = GameState.party[GameState.activePokemonIndex];
     activePoke.battlesWon = (activePoke.battlesWon || 0) + 1;
 
-    // Register opponent in Pokédex (seen)
     const opp = this.state.opp;
     registerPokedex(opp.id, opp.name, opp.spriteUrl, false);
 
-    // Award gold
     const earned = goldForWildBattle();
     GameState.gold = (GameState.gold || 0) + earned;
-
-    // Check Oran Berry passive trigger for all party members after battle
     ItemEngine.checkPassive();
-
     MapEngine.completeNode(GameState.currentNodeIndex);
 
-    // Show card reward screen
-    CardReward.show(earned);
+    // Level up all living party members; handle any triggered evolutions
+    const evolutions = levelUpParty('battle');
+    if (evolutions.length > 0) {
+      saveGame();
+      runEvolutions(evolutions, () => CardReward.show(earned));
+    } else {
+      CardReward.show(earned);
+    }
   },
 
   _defeat() {
@@ -2831,7 +2919,7 @@ const BossEngine = {
 
     for (const id of boss.team) {
       const d = await fetchPoke(id);
-      const level = 12 + bossIdx * 6;
+      const level = 14 + bossIdx * 7 + Math.floor(Math.random() * 4);
       this.oppTeam.push(makePokemon(id, level, getSpriteUrl(d, true), capitalize(d.name), d.types[0]?.type?.name || 'normal'));
     }
     hideLoading();
@@ -3794,11 +3882,12 @@ const TrainingEngine = {
       GameState.deck.forEach((c, i) => { if (c.improved) GameState.improvementMap[i] = c.improved; });
       saveGame();
 
+      // Award a level for completing training
+      const evolutions = levelUpParty('training');
+
       // Stay on screen — re-render so the player sees the improved badges
-      // then show a "Done" button instead of immediately navigating
       this._upgradeJustDone = true;
       this._render();
-      // Change the upgrade button to "Done ✓"
       const btn = document.getElementById('btn-improve');
       btn.textContent = 'Done ✓';
       btn.disabled    = false;
@@ -3808,7 +3897,12 @@ const TrainingEngine = {
         btn.classList.remove('btn-upgrade-done');
         this._upgradeJustDone = false;
         MapEngine.completeNode(GameState.currentNodeIndex);
-        MapEngine.show();
+        if (evolutions.length > 0) {
+          saveGame();
+          runEvolutions(evolutions, () => MapEngine.show());
+        } else {
+          MapEngine.show();
+        }
       };
     } else {
       if (this.selected.length !== 1) return;
@@ -3881,15 +3975,19 @@ const HealEngine = {
 const EvolveEngine = {
   _cb: null,
 
-  async run(beforeId, afterId, cb) {
+  async run(beforeId, afterId, narrative, cb) {
     this._cb = cb;
     showLoading();
     const [before, after] = await Promise.all([fetchPoke(beforeId), fetchPoke(afterId)]);
     hideLoading();
 
+    const beforeName = capitalize(before.name);
+    const afterName  = capitalize(after.name);
+
     document.getElementById('evolve-before').src = getSpriteUrl(before);
     document.getElementById('evolve-after').src  = getSpriteUrl(after);
-    document.getElementById('evolve-text').textContent = `${capitalize(before.name)} is evolving…`;
+    document.getElementById('evolve-narrative').textContent = narrative || '';
+    document.getElementById('evolve-text').textContent = `${beforeName} is evolving…`;
     document.getElementById('btn-evolve-continue').style.display = 'none';
     document.getElementById('evolve-after').className = 'evolve-sprite after';
 
@@ -3912,13 +4010,13 @@ const EvolveEngine = {
 
     setTimeout(() => {
       document.getElementById('evolve-after').className = 'evolve-sprite after show';
-      document.getElementById('evolve-text').textContent = `${capitalize(before.name)} evolved into ${capitalize(after.name)}!`;
+      document.getElementById('evolve-text').textContent = `${beforeName} evolved into ${afterName}!`;
       document.getElementById('btn-evolve-continue').style.display = 'inline-block';
     }, 3000);
   },
 };
 
-// Patch Game.afterEvolve to call the stored callback
+// afterEvolve is called by the Continue button on the evolve screen
 Game.afterEvolve = function() {
   if (EvolveEngine._cb) {
     const cb = EvolveEngine._cb;
