@@ -2027,6 +2027,16 @@ const Game = {
     showScreen('start');
   },
 
+  resetAll() {
+    // Wipe every persistence key — run save, unlocks, Pokédex
+    localStorage.removeItem(SAVE_KEY);
+    localStorage.removeItem(UNLOCK_KEY);
+    localStorage.removeItem(POKEDEX_KEY);
+    GameState = null;
+    // Reload page so all in-memory state is also cleared cleanly
+    window.location.reload();
+  },
+
   async afterBoss(bossIndex) {
     GameState.bossesDefeated++;
     const defeated = GameState.bossesDefeated;
@@ -4804,6 +4814,14 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-game').addEventListener('click', () => Game.startNew());
   document.getElementById('btn-continue-game').addEventListener('click', () => Game.continueGame());
   document.getElementById('btn-open-pokedex').addEventListener('click', () => PokedexEngine.show());
+  document.getElementById('btn-reset-all').addEventListener('click', () => {
+    showModal(
+      '⚠ Reset All Data?',
+      'This will wipe your Pokédex, Pikachu unlock, and all saved progress. This cannot be undone.',
+      () => Game.resetAll()
+    );
+    document.getElementById('modal-ok').textContent = 'Yes, reset everything';
+  });
 
   // ── Battle screen ──
   document.getElementById('btn-end-turn').addEventListener('click', () => BattleEngine.endTurn());

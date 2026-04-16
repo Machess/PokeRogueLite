@@ -3085,3 +3085,24 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-bottom: 1px solid var(--col-border);
   margin-top: .4rem;
 }
+
+/* Reset All Data button — start screen, bottom-left, unobtrusive */
+.btn-reset-all {
+  position: absolute;
+  bottom: 1rem; left: 1rem;
+  z-index: var(--z-ui);
+  background: transparent;
+  border: 1px solid rgba(227,53,13,.35);
+  border-radius: var(--r-sm);
+  color: rgba(227,53,13,.55);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem;
+  padding: .4em .7em;
+  cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.btn-reset-all:hover {
+  border-color: var(--col-red);
+  color: var(--col-red);
+  background: rgba(227,53,13,.1);
+}
