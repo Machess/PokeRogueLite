@@ -3935,10 +3935,46 @@ const GameOver = {
 
 // ─── CATCH ENGINE ────────────────────────────────────────────────────────────
 
+// Type-flavoured flee lines
+const FLEE_LINES = {
+  water:    ['dived back into the water!',    'splashed away!',           'slipped back into the depths!'],
+  fire:     ['blazed off into the distance!', 'vanished in a flash of flame!', 'was too hot to hold!'],
+  grass:    ['disappeared into the tall grass!','rustled away into the leaves!', 'melted back into the forest!'],
+  electric: ['zapped away in a flash!',       'discharged and vanished!',  'was too fast to catch!'],
+  rock:     ['rolled away!',                  'burrowed under the rocks!', 'was too tough for the ball!'],
+  ground:   ['dug back underground!',         'burrowed away!',            'vanished into the earth!'],
+  poison:   ['slithered away into the shadows!','dissolved into the mist!', 'was too slippery to hold!'],
+  psychic:  ['teleported away!',              'vanished with a flash of light!','was too clever to stay!'],
+  ghost:    ['phased right through the ball!','vanished into thin air!',   'dissolved into shadow!'],
+  ice:      ['slid away across the ice!',     'melted into the frost!',    'was too cold to catch!'],
+  flying:   ['took flight and disappeared!',  'soared out of reach!',      'glided away on the wind!'],
+  fighting: ['punched the ball away!',        'leaped out of reach!',      'was too strong to hold!'],
+  dragon:   ['roared and flew away!',         'vanished into the clouds!', 'was way too powerful!'],
+  dark:     ['slipped away into the shadows!','disappeared without a trace!','was too cunning to catch!'],
+  steel:    ['clinked away into the rocks!',  'deflected the ball!',       'was too hard to contain!'],
+  fairy:    ['sparkled and vanished!',        'skipped away on the breeze!','left only glitter behind!'],
+  bug:      ['scurried away into the grass!', 'flew off into the trees!',  'was too quick and nimble!'],
+  normal:   ['broke free and ran away!',      'escaped into the wild!',    'bolted off at full speed!'],
+};
+
+// Environment backdrop CSS classes per bossIndex — matches MAP_THEMES
+const CATCH_BACKDROPS = [
+  'catch-bg-rock',     // 0 Brock
+  'catch-bg-water',    // 1 Misty
+  'catch-bg-electric', // 2 Lt Surge
+  'catch-bg-grass',    // 3 Erika
+  'catch-bg-poison',   // 4 Koga
+  'catch-bg-psychic',  // 5 Sabrina
+  'catch-bg-fire',     // 6 Blaine
+  'catch-bg-dark',     // 7 Giovanni
+];
+
 const CatchEngine = {
-  current: null,
-  _caught: false,
+  current:       null,
+  _caught:       false,
   _selectedBall: 'pokeball',
+  _pendingCatch: null,
+  _speciesData:  null,  // cached from species endpoint
 
   async start(node) {
     showLoading();
@@ -3953,28 +3989,48 @@ const CatchEngine = {
       pool   = rarity === 'Uncommon' ? WILD_POOL.uncommon : WILD_POOL.rare;
       ItemEngine.useItem('repel');
     } else {
-      if (roll < .6)      { rarity = 'Common';   pool = WILD_POOL.common; }
-      else if (roll < .9) { rarity = 'Uncommon'; pool = WILD_POOL.uncommon; }
-      else                { rarity = 'Rare ✨';  pool = WILD_POOL.rare; }
+      if (roll < .6)      { rarity = 'Common';     pool = WILD_POOL.common; }
+      else if (roll < .9) { rarity = 'Uncommon';   pool = WILD_POOL.uncommon; }
+      else                { rarity = 'Rare ✨';    pool = WILD_POOL.rare; }
     }
     const id   = pool[Math.floor(Math.random() * pool.length)];
     const data = await fetchPoke(id);
-    this.current      = { data, rarity, id };
-    this._caught      = false;
+    // Fetch species data for flavour text (non-blocking — we await it here but catch errors)
+    this._speciesData = await fetch(data.species?.url || `https://pokeapi.co/api/v2/pokemon-species/${id}/`)
+      .then(r => r.json()).catch(() => null);
+
+    this.current       = { data, rarity, id };
+    this._caught       = false;
     this._selectedBall = 'pokeball';
+    this._pendingCatch = null;
     registerPokedex(id, capitalize(data.name), getSpriteUrl(data, true), false);
     hideLoading();
+
+    // ── Set environment backdrop ───────────────────────────────────────────
+    const bi      = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const bgEl    = document.getElementById('catch-bg');
+    bgEl.className = 'catch-bg ' + (CATCH_BACKDROPS[Math.min(bi, CATCH_BACKDROPS.length - 1)] || '');
+
+    // ── Reset all UI ───────────────────────────────────────────────────────
     showScreen('catch');
-    document.getElementById('catch-title').textContent      = 'Wild Pokémon Appeared!';
-    document.getElementById('catch-name').textContent       = '???';
-    document.getElementById('catch-rarity').textContent     = '';
-    document.getElementById('catch-controls').style.display = 'none';
-    document.getElementById('catch-result').style.display   = 'none';
-    document.getElementById('catch-ball-wrap').style.display = 'none';
-    document.getElementById('catch-status').textContent     = '';
+    document.getElementById('catch-title').textContent          = 'Wild Pokémon Appeared!';
+    document.getElementById('catch-name').textContent           = '???';
+    document.getElementById('catch-name-row').style.opacity     = '0';
+    document.getElementById('catch-type-badge').style.display   = 'none';
+    document.getElementById('catch-rarity-badge').style.display = 'none';
+    document.getElementById('catch-controls').style.display     = 'none';
+    document.getElementById('catch-result').style.display       = 'none';
+    document.getElementById('catch-ball-wrap').style.display    = 'none';
+    document.getElementById('catch-status').textContent         = '';
+    document.getElementById('pokedex-catch-card').style.display = 'none';
+
     const spriteEl = document.getElementById('catch-sprite');
-    spriteEl.style.display = ''; spriteEl.style.transform = ''; spriteEl.style.opacity = '1';
-    spriteEl.className = 'catch-sprite silhouette';
+    spriteEl.style.display   = '';
+    spriteEl.style.transform = '';
+    spriteEl.style.opacity   = '1';
+    spriteEl.className       = 'catch-sprite silhouette';
+
+    // Load sprite into silhouette
     const spriteUrls = [
       data.sprites?.other?.['official-artwork']?.front_default,
       data.sprites?.other?.home?.front_default,
@@ -3985,15 +4041,69 @@ const CatchEngine = {
       document.getElementById('catch-sprite-wrap').innerHTML =
         '<div class="catch-placeholder silhouette-placeholder"><svg viewBox="0 0 100 100" width="180" height="180" xmlns="http://www.w3.org/2000/svg"><ellipse cx="50" cy="65" rx="30" ry="22" fill="#fff"/><circle cx="50" cy="35" r="22" fill="#fff"/><ellipse cx="28" cy="58" rx="10" ry="7" fill="#fff" transform="rotate(-20 28 58)"/><ellipse cx="72" cy="58" rx="10" ry="7" fill="#fff" transform="rotate(20 72 58)"/></svg></div>';
     });
+
     const ball = document.getElementById('catch-ball');
     ball.className = 'catch-ball'; ball.style.transform = '';
+
+    // ── Entrance animation — silhouette shakes then flashes ───────────────
+    // Phase 1: silhouette slides in from off-bottom (0.4s)
+    spriteEl.classList.add('catch-entrance');
+    setTimeout(() => spriteEl.classList.remove('catch-entrance'), 500);
+
+    // Phase 2: two shakes at 600ms and 900ms
     setTimeout(() => {
-      spriteEl.className = 'catch-sprite revealed';
-      document.getElementById('catch-name').textContent   = capitalize(data.name);
-      document.getElementById('catch-rarity').textContent = `Rarity: ${rarity}`;
-      document.getElementById('catch-controls').style.display = 'flex';
-      this._renderBallSelector();
-    }, 2000);
+      spriteEl.classList.remove('hit-shake'); void spriteEl.offsetWidth;
+      spriteEl.classList.add('hit-shake');
+    }, 600);
+    setTimeout(() => {
+      spriteEl.classList.remove('hit-shake'); void spriteEl.offsetWidth;
+      spriteEl.classList.add('hit-shake');
+    }, 1050);
+
+    // Phase 3: flash + reveal at 1500ms
+    setTimeout(() => {
+      // White flash overlay
+      const flash = document.createElement('div');
+      flash.className = 'catch-flash-overlay';
+      document.getElementById('screen-catch').appendChild(flash);
+      setTimeout(() => flash.remove(), 220);
+
+      // Reveal sprite
+      spriteEl.className = 'catch-sprite revealed catch-reveal-pop';
+      setTimeout(() => spriteEl.classList.remove('catch-reveal-pop'), 500);
+
+      // Typewriter name reveal
+      const pokeName = capitalize(data.name);
+      const nameEl   = document.getElementById('catch-name');
+      const nameRow  = document.getElementById('catch-name-row');
+      nameEl.textContent = '';
+      nameRow.style.opacity = '1';
+      nameRow.style.transition = 'opacity .3s';
+      let ci = 0;
+      const typeInterval = setInterval(() => {
+        nameEl.textContent += pokeName[ci];
+        ci++;
+        if (ci >= pokeName.length) {
+          clearInterval(typeInterval);
+          // Slide in type badge
+          const typeStr  = data.types?.[0]?.type?.name || 'normal';
+          const typeBadge = document.getElementById('catch-type-badge');
+          typeBadge.textContent  = typeStr;
+          typeBadge.className    = `catch-type-badge type-${typeStr} catch-badge-slide`;
+          typeBadge.style.display = '';
+          // Slide in rarity badge
+          const rarityBadge = document.getElementById('catch-rarity-badge');
+          rarityBadge.textContent  = rarity;
+          rarityBadge.className    = `catch-rarity-badge catch-rarity-${rarity.includes('Rare') ? 'rare' : rarity === 'Uncommon' ? 'uncommon' : 'common'} catch-badge-slide`;
+          rarityBadge.style.display = '';
+          // Show controls after name fully revealed
+          setTimeout(() => {
+            document.getElementById('catch-controls').style.display = 'flex';
+            this._renderBallSelector();
+          }, 400);
+        }
+      }, 55); // ~55ms per character
+    }, 1500);
   },
 
   _renderBallSelector() {
@@ -4101,79 +4211,89 @@ const CatchEngine = {
   },
 
   _showResult(ball, statusEl, caught, data) {
-    const pokeName   = capitalize(data.name);
-    const spriteEl   = document.getElementById('catch-sprite');
-    const resultEl   = document.getElementById('catch-result');
-    const resultText = document.getElementById('catch-result-text');
-    const releaseEl  = document.getElementById('release-picker');
-    const continueBtn= document.getElementById('btn-catch-continue');
-
-    // Always reset ball visuals for the next encounter
+    const pokeName    = capitalize(data.name);
+    const spriteEl    = document.getElementById('catch-sprite');
+    const resultEl    = document.getElementById('catch-result');
+    const resultText  = document.getElementById('catch-result-text');
+    const releaseEl   = document.getElementById('release-picker');
+    const continueBtn = document.getElementById('btn-catch-continue');
     this._resetBallVisuals();
 
-    if (caught && GameState.party.length < 6) {
-      // ── Normal catch ─────────────────────────────────────────────────────
-      ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
-      if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
-      GameState.stats.pokemonCaught++;
-      const level = 5 + GameState.bossesDefeated * 5 + Math.floor(Math.random() * 5);
-      const poke  = makePokemon(data.id, level, getSpriteUrl(data), pokeName, data.types[0]?.type?.name || 'normal');
-      GameState.party.push(poke);
-      registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
-      saveGame();
-      releaseEl.style.display = 'none';
-      continueBtn.style.display = '';
-      setTimeout(() => {
-        SoundEngine.playFanfare();
-        resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} was caught!`;
-        resultEl.style.display = 'block';
-      }, 600);
-
-    } else if (caught && GameState.party.length >= 6) {
-      // ── Party full — show release picker ────────────────────────────────
-      ball.className = 'catch-ball ball-caught'; statusEl.textContent = '';
+    if (caught) {
+      ball.className = 'catch-ball ball-caught';
+      statusEl.textContent = '';
+      const level     = 5 + GameState.bossesDefeated * 5 + Math.floor(Math.random() * 5);
+      const typeStr   = data.types?.[0]?.type?.name || 'normal';
+      const newPoke   = makePokemon(data.id, level, getSpriteUrl(data), pokeName, typeStr);
+      const isNewDex  = !loadPokedex()[data.id]?.caught;
       registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
 
-      // Build the new Pokémon object but don't add to party yet
-      const level   = 5 + GameState.bossesDefeated * 5 + Math.floor(Math.random() * 5);
-      const newPoke = makePokemon(data.id, level, getSpriteUrl(data), pokeName, data.types[0]?.type?.name || 'normal');
-      this._pendingCatch = newPoke;
-
-      setTimeout(() => {
+      setTimeout(async () => {
         SoundEngine.playFanfare();
-        resultText.innerHTML =
-          `<span style="color:#FFD700">★</span> Gotcha! <strong>${pokeName}</strong> was caught!<br>` +
-          `<span style="font-size:.65rem;color:var(--col-text-dim)">Your party is full — release a Pokémon to make room, or Continue to let ${pokeName} go.</span>`;
-        resultEl.style.display = 'block';
 
-        // Build release grid
-        const grid = document.getElementById('release-party-grid');
-        grid.innerHTML = '';
-        GameState.party.forEach((p, i) => {
-          const card = document.createElement('button');
-          card.className = 'release-party-card';
-          card.innerHTML = `
-            <img src="${p.spriteUrl}" alt="${p.name}"
-                 onerror="this.src='assets/sprites/${p.id}.png'"
-                 class="release-party-sprite" />
-            <div class="release-party-name">${p.name}</div>
-            <div class="release-party-hp">${Math.max(0,p.hp)}/${p.maxHp} HP</div>
-            <div class="release-party-label">Release</div>
-          `;
-          card.onclick = () => this._releasePokemon(i, newPoke);
-          grid.appendChild(card);
-        });
-        releaseEl.style.display = 'block';
-        // Continue button still available — lets them skip and release newPoke instead
-        continueBtn.textContent = `Let ${pokeName} go`;
-        continueBtn.style.display = '';
+        if (GameState.party.length < 6) {
+          // ── Normal catch ────────────────────────────────────────────────
+          if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
+          GameState.stats.pokemonCaught++;
+          GameState.party.push(newPoke);
+          saveGame();
+
+          resultText.innerHTML = `<span style="color:#FFD700">★</span> Gotcha! ${pokeName} joined your team!`;
+          releaseEl.style.display = 'none';
+          continueBtn.style.display = '';
+          resultEl.style.display = 'block';
+
+          // Show Pokédex card
+          await this._showPokedexCard(data, newPoke, isNewDex);
+
+        } else {
+          // ── Party full — show Pokédex card first, then release picker ───
+          this._pendingCatch = newPoke;
+
+          resultText.innerHTML =
+            `<span style="color:#FFD700">★</span> Gotcha! <strong>${pokeName}</strong> was caught!<br>` +
+            `<span style="font-size:.6rem;color:var(--col-text-dim)">Party is full — release one to make room, or let ${pokeName} go.</span>`;
+          resultEl.style.display = 'block';
+
+          // Show Pokédex card; once dismissed, show release picker
+          await this._showPokedexCard(data, newPoke, isNewDex);
+
+          // Build release grid after card is dismissed
+          const grid = document.getElementById('release-party-grid');
+          grid.innerHTML = '';
+          GameState.party.forEach((p, i) => {
+            const card = document.createElement('button');
+            card.className = 'release-party-card';
+            card.innerHTML = `
+              <img src="${p.spriteUrl}" alt="${p.name}"
+                   onerror="this.src='assets/sprites/${p.id}.png'"
+                   class="release-party-sprite" />
+              <div class="release-party-name">${p.name}</div>
+              <div class="release-party-lv">Lv.${p.level}</div>
+              <div class="release-party-hp">${Math.max(0,p.hp)}/${p.maxHp} HP</div>
+              <div class="release-party-label">Release</div>
+            `;
+            card.onclick = () => this._releasePokemon(i, newPoke);
+            grid.appendChild(card);
+          });
+          releaseEl.style.display = 'block';
+          continueBtn.textContent = `Let ${pokeName} go`;
+          continueBtn.style.display = '';
+        }
       }, 600);
 
     } else {
-      // ── Escaped ──────────────────────────────────────────────────────────
-      ball.className = 'catch-ball ball-burst'; statusEl.textContent = '';
+      // ── Escaped ────────────────────────────────────────────────────────
+      ball.className = 'catch-ball ball-burst';
+      statusEl.textContent = '';
       releaseEl.style.display = 'none';
       continueBtn.style.display = '';
+
+      // Type-flavoured flee text
+      const typeStr   = data.types?.[0]?.type?.name || 'normal';
+      const fleePool  = FLEE_LINES[typeStr] || FLEE_LINES.normal;
+      const fleeLine  = fleePool[Math.floor(Math.random() * fleePool.length)];
+
       setTimeout(() => {
         if (spriteEl) {
           spriteEl.style.display = '';
@@ -4184,14 +4304,103 @@ const CatchEngine = {
           ], () => { spriteEl.style.display = 'none'; });
           spriteEl.className = 'catch-sprite revealed catch-escape';
         }
-        statusEl.textContent = `${pokeName} broke free!`;
+        statusEl.textContent = `${pokeName} ${fleeLine}`;
       }, 300);
       setTimeout(() => {
-        resultText.innerHTML = `Oh no! ${pokeName} broke free!`;
+        resultText.innerHTML = `Oh no! ${pokeName} ${fleeLine}`;
         resultEl.style.display = 'block';
         if (spriteEl) spriteEl.className = 'catch-sprite catch-runaway';
       }, 1400);
     }
+  },
+
+  // Shows the Pokédex card and returns a Promise that resolves when dismissed
+  _showPokedexCard(data, poke, isNewDex) {
+    return new Promise(resolve => {
+      const card     = document.getElementById('pokedex-catch-card');
+      const spriteEl = document.getElementById('pdx-sprite');
+      const numEl    = document.getElementById('pdx-number');
+      const nameEl   = document.getElementById('pdx-name');
+      const badgesEl = document.getElementById('pdx-badges');
+      const measEl   = document.getElementById('pdx-measures');
+      const flavEl   = document.getElementById('pdx-flavour');
+      const statsEl  = document.getElementById('pdx-stats');
+      const newBanner= document.getElementById('pdx-new-banner');
+      const continueBtn = document.getElementById('btn-catch-continue');
+
+      // Sprite
+      spriteEl.src = getSpriteUrl(data);
+      spriteEl.onerror = () => { spriteEl.src = `assets/sprites/${data.id}.png`; };
+
+      // Number + name
+      numEl.textContent  = `#${String(data.id).padStart(3, '0')}`;
+      nameEl.textContent = capitalize(data.name);
+
+      // Type badges
+      badgesEl.innerHTML = (data.types || []).map(t =>
+        `<span class="type-${t.type.name} hud-type-badge">${t.type.name}</span>`
+      ).join('');
+
+      // Height + weight (data is in decimetres/hectograms)
+      const hm   = ((data.height || 0) / 10).toFixed(1);
+      const wkg  = ((data.weight || 0) / 10).toFixed(1);
+      measEl.textContent = `${hm} m · ${wkg} kg`;
+
+      // Flavour text — pull English entry from species data
+      let flavour = '';
+      if (this._speciesData?.flavor_text_entries) {
+        const entry = this._speciesData.flavor_text_entries
+          .find(e => e.language?.name === 'en');
+        if (entry) flavour = entry.flavor_text.replace(/[\n\f]/g, ' ');
+      }
+      // Typewriter for flavour text
+      flavEl.textContent = '';
+      let fi = 0;
+      const flavInterval = setInterval(() => {
+        if (fi >= flavour.length) { clearInterval(flavInterval); return; }
+        flavEl.textContent += flavour[fi];
+        fi += 2; // skip 2 chars at a time for speed
+      }, 25);
+
+      // Base stats mini bars
+      const statDefs = [
+        { key: 'hp',       label: 'HP',  colour: '#4ade80' },
+        { key: 'attack',   label: 'ATK', colour: '#f97316' },
+        { key: 'defense',  label: 'DEF', colour: '#60a5fa' },
+      ];
+      statsEl.innerHTML = statDefs.map(s => {
+        const val   = data.stats?.find(st => st.stat.name === s.key)?.base_stat ?? 0;
+        const pct   = Math.round(val / 255 * 100);
+        return `
+          <div class="pdx-stat-row">
+            <span class="pdx-stat-label">${s.label}</span>
+            <div class="pdx-stat-bar-bg">
+              <div class="pdx-stat-bar" style="width:${pct}%;background:${s.colour}"></div>
+            </div>
+            <span class="pdx-stat-val">${val}</span>
+          </div>`;
+      }).join('');
+
+      // First-catch badge
+      newBanner.style.display = isNewDex ? '' : 'none';
+
+      // Show with slide-up animation
+      card.style.display = 'block';
+      card.classList.remove('pdx-card-show');
+      void card.offsetWidth;
+      card.classList.add('pdx-card-show');
+
+      // Re-purpose continue button to dismiss the card
+      continueBtn.textContent = 'View Details ▶';
+      continueBtn.onclick = () => {
+        continueBtn.onclick     = null;
+        continueBtn.textContent = 'Continue ▶';
+        card.classList.remove('pdx-card-show');
+        card.style.display = 'none';
+        clearInterval(flavInterval);
+        resolve();
+      };
+    });
   },
 
   _releasePokemon(releaseIdx, newPoke) {

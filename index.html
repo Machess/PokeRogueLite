@@ -427,22 +427,27 @@
      SCREEN: CATCH
 ═══════════════════════════════════════════ -->
 <div id="screen-catch" class="screen">
-  <div class="catch-bg"></div>
+  <!-- Environment backdrop — class set by JS from MAP_THEMES -->
+  <div class="catch-bg" id="catch-bg"></div>
+
   <h1 class="screen-title" id="catch-title">Wild Pokémon Appeared!</h1>
 
-  <!-- Arena: pokemon sprite -->
+  <!-- Arena -->
   <div class="catch-arena">
     <div class="catch-sprite-wrap" id="catch-sprite-wrap">
       <img id="catch-sprite" src="" alt="Wild Pokémon" class="catch-sprite silhouette" />
     </div>
-    <div class="catch-name" id="catch-name">???</div>
-    <div class="catch-rarity" id="catch-rarity"></div>
+    <!-- Name revealed via typewriter — hidden until reveal -->
+    <div class="catch-name-row" id="catch-name-row" style="opacity:0">
+      <span class="catch-name" id="catch-name">???</span>
+      <span class="catch-type-badge type-normal" id="catch-type-badge" style="display:none"></span>
+      <span class="catch-rarity-badge" id="catch-rarity-badge" style="display:none"></span>
+    </div>
   </div>
 
-  <!-- Animated pokeball (hidden until thrown) -->
+  <!-- Animated pokeball -->
   <div class="catch-ball-wrap" id="catch-ball-wrap" style="display:none">
     <div class="catch-ball" id="catch-ball">
-      <!-- Asset slot: replace inner with <img src="assets/ui/pokeball.png"> -->
       <div class="ball-top"></div>
       <div class="ball-mid"></div>
       <div class="ball-bot"></div>
@@ -450,7 +455,7 @@
     </div>
   </div>
 
-  <!-- Wiggle status text -->
+  <!-- Wiggle status -->
   <div class="catch-status" id="catch-status"></div>
 
   <!-- Controls -->
@@ -458,20 +463,33 @@
     <div class="ball-selector" id="ball-selector"></div>
     <button class="btn-pixel btn-pokeball" id="btn-throw-ball">
       <span class="pokeball-icon">
-        <span class="pbi-top"></span>
-        <span class="pbi-mid"></span>
-        <span class="pbi-bot"></span>
-        <span class="pbi-btn"></span>
+        <span class="pbi-top"></span><span class="pbi-mid"></span>
+        <span class="pbi-bot"></span><span class="pbi-btn"></span>
       </span>
       <span id="catch-throw-label">Throw Poké Ball!</span>
     </button>
     <button class="btn-pixel btn-secondary" id="btn-flee">Run Away</button>
   </div>
 
-  <!-- Result message + continue button -->
+  <!-- Pokédex card — slides up after catch -->
+  <div class="pokedex-catch-card" id="pokedex-catch-card" style="display:none">
+    <div class="pdx-card-header">
+      <img class="pdx-card-sprite" id="pdx-sprite" src="" alt="" />
+      <div class="pdx-card-info">
+        <div class="pdx-card-number" id="pdx-number">#001</div>
+        <div class="pdx-card-name"   id="pdx-name">Bulbasaur</div>
+        <div class="pdx-card-badges" id="pdx-badges"></div>
+        <div class="pdx-card-measures" id="pdx-measures"></div>
+      </div>
+    </div>
+    <div class="pdx-card-flavour" id="pdx-flavour"></div>
+    <div class="pdx-card-stats"   id="pdx-stats"></div>
+    <div class="pdx-new-banner"   id="pdx-new-banner" style="display:none">✨ New Pokédex Entry!</div>
+  </div>
+
+  <!-- Result message -->
   <div class="catch-result" id="catch-result" style="display:none">
     <div class="catch-result-text" id="catch-result-text"></div>
-    <!-- Release picker — shown when party is full and a Pokémon was caught -->
     <div class="release-picker" id="release-picker" style="display:none">
       <div class="release-picker-title">Choose a Pokémon to release:</div>
       <div class="release-party-grid" id="release-party-grid"></div>
