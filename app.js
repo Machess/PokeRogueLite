@@ -772,7 +772,11 @@ const SAVE_KEY        = 'pokerogue_save_v1';
 const UNLOCK_KEY      = 'pokerogue_unlocks_v1';
 
 function saveGame() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(GameState)); } catch(e) {}
+  try {
+    // Never persist _evolutionPending as true — it should always re-evaluate fresh
+    const toSave = { ...GameState, _evolutionPending: false };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(toSave));
+  } catch(e) {}
 }
 function loadGame() {
   try {
@@ -1885,13 +1889,13 @@ function levelUpParty(source) {
 
     // Only the starter can evolve, and only one stage per call
     if (!p.isStarter) return;
-    if (GameState._evolutionPending) return; // already queued one this session
+    if (GameState._evolutionPending) return;
 
-    const starter    = STARTERS.find(s => s.id === GameState.starterId);
-    if (!starter)    return;
+    const starter = STARTERS.find(s => s.id === Number(GameState.starterId));
+    if (!starter) return;
     const thresholds = EVOLUTION_LEVELS[starter.id];
     if (!thresholds) return;
-    const curStage   = GameState.evolutionStage;
+    const curStage = GameState.evolutionStage;
 
     let triggered = false;
     if (curStage === 0 && thresholds.stage2 && p.level >= thresholds.stage2) {
@@ -1901,7 +1905,6 @@ function levelUpParty(source) {
       GameState._evolutionPending = true;
       triggered = true;
     }
-    // Only check stage3 if we did NOT just trigger stage2
     if (!triggered && curStage === 1 && thresholds.stage3 && p.level >= thresholds.stage3) {
       evolutions.push({ partyIdx: i, stage: 3,
         beforeId: starter.evolutions[1], afterId: starter.evolutions[2] });
@@ -1916,7 +1919,7 @@ function levelUpParty(source) {
 
 // Apply level-up flash to party portrait buttons in the map header
 function flashLevelUp(indices) {
-  const portraits = document.querySelectorAll('.map-party-btn');
+  const portraits = document.querySelectorAll('.map-poke-thumb');
   indices.forEach(i => {
     const el = portraits[i];
     if (!el) return;
@@ -2017,6 +2020,15 @@ const Game = {
       return;
     }
     GameState = saved;
+    // Sanitise fields that can get stuck across save/load cycles
+    GameState._evolutionPending = false;   // never carry a pending flag across sessions
+    GameState.starterId         = Number(GameState.starterId); // ensure numeric for strict ===
+    // Ensure all party members have required fields that may be missing from old saves
+    (GameState.party || []).forEach(p => {
+      if (p.heldItem === undefined) p.heldItem = null;
+      if (!p.moves)                 p.moves    = [];
+      if (!p.statusEffects)         p.statusEffects = [];
+    });
     MapEngine.show();
   },
 
