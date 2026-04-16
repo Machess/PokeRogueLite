@@ -4034,7 +4034,8 @@ const CatchEngine = {
     document.getElementById('catch-result').style.display       = 'none';
     document.getElementById('catch-ball-wrap').style.display    = 'none';
     document.getElementById('catch-status').textContent         = '';
-    document.getElementById('pokedex-catch-card').style.display = 'none';
+    const pdxOverlay = document.getElementById('pdx-modal-overlay');
+    if (pdxOverlay) { pdxOverlay.style.display = 'none'; pdxOverlay.classList.remove('pdx-modal-in'); }
 
     const spriteEl = document.getElementById('catch-sprite');
     spriteEl.style.display   = '';
