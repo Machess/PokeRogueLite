@@ -471,22 +471,6 @@
     <button class="btn-pixel btn-secondary" id="btn-flee">Run Away</button>
   </div>
 
-  <!-- Pokédex card — slides up after catch -->
-  <div class="pokedex-catch-card" id="pokedex-catch-card" style="display:none">
-    <div class="pdx-card-header">
-      <img class="pdx-card-sprite" id="pdx-sprite" src="" alt="" />
-      <div class="pdx-card-info">
-        <div class="pdx-card-number" id="pdx-number">#001</div>
-        <div class="pdx-card-name"   id="pdx-name">Bulbasaur</div>
-        <div class="pdx-card-badges" id="pdx-badges"></div>
-        <div class="pdx-card-measures" id="pdx-measures"></div>
-      </div>
-    </div>
-    <div class="pdx-card-flavour" id="pdx-flavour"></div>
-    <div class="pdx-card-stats"   id="pdx-stats"></div>
-    <div class="pdx-new-banner"   id="pdx-new-banner" style="display:none">✨ New Pokédex Entry!</div>
-  </div>
-
   <!-- Result message -->
   <div class="catch-result" id="catch-result" style="display:none">
     <div class="catch-result-text" id="catch-result-text"></div>
@@ -495,6 +479,59 @@
       <div class="release-party-grid" id="release-party-grid"></div>
     </div>
     <button class="btn-pixel btn-primary" id="btn-catch-continue">Continue ▶</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     POKÉDEX MODAL (shown after catch)
+═══════════════════════════════════════════ -->
+<div class="pdx-modal-overlay" id="pdx-modal-overlay" style="display:none">
+  <div class="pdx-device">
+    <!-- Left panel — the screen side -->
+    <div class="pdx-left">
+      <div class="pdx-top-lights">
+        <div class="pdx-big-lens"></div>
+        <div class="pdx-dot pdx-dot-red"></div>
+        <div class="pdx-dot pdx-dot-yellow"></div>
+        <div class="pdx-dot pdx-dot-green"></div>
+      </div>
+      <div class="pdx-screen-bezel">
+        <div class="pdx-screen-inner-dots">
+          <div class="pdx-sdot"></div><div class="pdx-sdot"></div>
+        </div>
+        <div class="pdx-screen">
+          <img class="pdx-pokemon-sprite" id="pdx-sprite" src="" alt="" />
+        </div>
+        <div class="pdx-screen-speaker">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="pdx-new-banner" id="pdx-new-banner" style="display:none">✨ New Entry!</div>
+      <div class="pdx-controls-row">
+        <div class="pdx-joystick"></div>
+        <div class="pdx-btn-group">
+          <div class="pdx-btn pdx-btn-red"></div>
+          <div class="pdx-btn pdx-btn-blue"></div>
+        </div>
+        <div class="pdx-dpad">
+          <div class="pdx-dpad-v"></div><div class="pdx-dpad-h"></div>
+        </div>
+      </div>
+      <div class="pdx-green-bar"></div>
+    </div>
+    <!-- Right panel — the data side -->
+    <div class="pdx-right">
+      <div class="pdx-data-screen pdx-data-top">
+        <div class="pdx-entry-number" id="pdx-number">#001</div>
+        <div class="pdx-entry-name"   id="pdx-name">Pokémon</div>
+      </div>
+      <div class="pdx-data-screen pdx-data-types" id="pdx-badges"></div>
+      <div class="pdx-data-screen pdx-data-flavour" id="pdx-flavour">Loading...</div>
+      <div class="pdx-data-screen pdx-data-measures" id="pdx-measures"></div>
+      <div class="pdx-close-row">
+        <button class="btn-pixel btn-primary pdx-close-btn" id="pdx-close-btn">Got it! ▶</button>
+      </div>
+    </div>
   </div>
 </div>
 

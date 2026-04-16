@@ -4326,92 +4326,84 @@ const CatchEngine = {
     }
   },
 
-  // Shows the Pokédex card and returns a Promise that resolves when dismissed
-  _showPokedexCard(data, poke, isNewDex) {
-    return new Promise(resolve => {
-      const card     = document.getElementById('pokedex-catch-card');
-      const spriteEl = document.getElementById('pdx-sprite');
-      const numEl    = document.getElementById('pdx-number');
-      const nameEl   = document.getElementById('pdx-name');
-      const badgesEl = document.getElementById('pdx-badges');
-      const measEl   = document.getElementById('pdx-measures');
-      const flavEl   = document.getElementById('pdx-flavour');
-      const statsEl  = document.getElementById('pdx-stats');
-      const newBanner= document.getElementById('pdx-new-banner');
-      const continueBtn = document.getElementById('btn-catch-continue');
+  // Shows the Pokédex modal and returns a Promise that resolves when "Got it!" is pressed
+  async _showPokedexCard(data, poke, isNewDex) {
+    const overlay  = document.getElementById('pdx-modal-overlay');
+    const spriteEl = document.getElementById('pdx-sprite');
+    const numEl    = document.getElementById('pdx-number');
+    const nameEl   = document.getElementById('pdx-name');
+    const badgesEl = document.getElementById('pdx-badges');
+    const measEl   = document.getElementById('pdx-measures');
+    const flavEl   = document.getElementById('pdx-flavour');
+    const newBanner= document.getElementById('pdx-new-banner');
+    const closeBtn = document.getElementById('pdx-close-btn');
 
-      // Sprite
-      spriteEl.src = getSpriteUrl(data);
-      spriteEl.onerror = () => { spriteEl.src = `assets/sprites/${data.id}.png`; };
+    // ── Sprite ───────────────────────────────────────────────────────────
+    spriteEl.src = data.sprites?.other?.['official-artwork']?.front_default
+                || data.sprites?.front_default
+                || getSpriteUrl(data);
+    spriteEl.onerror = () => { spriteEl.src = getSpriteUrl(data); };
 
-      // Number + name
-      numEl.textContent  = `#${String(data.id).padStart(3, '0')}`;
-      nameEl.textContent = capitalize(data.name);
+    // ── Number + Name ────────────────────────────────────────────────────
+    numEl.textContent  = `#${String(data.id).padStart(3, '0')}`;
+    nameEl.textContent = capitalize(data.name);
 
-      // Type badges
-      badgesEl.innerHTML = (data.types || []).map(t =>
-        `<span class="type-${t.type.name} hud-type-badge">${t.type.name}</span>`
-      ).join('');
+    // ── Type badges ──────────────────────────────────────────────────────
+    badgesEl.innerHTML = (data.types || [])
+      .map(t => `<span class="hud-type-badge type-${t.type.name}">${t.type.name}</span>`)
+      .join('');
 
-      // Height + weight (data is in decimetres/hectograms)
-      const hm   = ((data.height || 0) / 10).toFixed(1);
-      const wkg  = ((data.weight || 0) / 10).toFixed(1);
-      measEl.textContent = `${hm} m · ${wkg} kg`;
+    // ── Height + weight ──────────────────────────────────────────────────
+    const hm  = ((data.height || 0) / 10).toFixed(1);
+    const wkg = ((data.weight || 0) / 10).toFixed(1);
+    measEl.textContent = `📏 ${hm} m  ·  ⚖ ${wkg} kg`;
 
-      // Flavour text — pull English entry from species data
-      let flavour = '';
-      if (this._speciesData?.flavor_text_entries) {
-        const entry = this._speciesData.flavor_text_entries
-          .find(e => e.language?.name === 'en');
-        if (entry) flavour = entry.flavor_text.replace(/[\n\f]/g, ' ');
+    // ── Flavour text — fetch from species endpoint ───────────────────────
+    flavEl.textContent = '…';
+    let flavour = '';
+    try {
+      // Use cached species data from start() if available, otherwise fetch now
+      let species = this._speciesData;
+      if (!species && data.species?.url) {
+        species = await fetch(data.species.url).then(r => r.json());
+        this._speciesData = species;
       }
-      // Typewriter for flavour text
-      flavEl.textContent = '';
-      let fi = 0;
-      const flavInterval = setInterval(() => {
-        if (fi >= flavour.length) { clearInterval(flavInterval); return; }
-        flavEl.textContent += flavour[fi];
-        fi += 2; // skip 2 chars at a time for speed
-      }, 25);
+      if (species?.flavor_text_entries) {
+        const entry = species.flavor_text_entries.find(e => e.language?.name === 'en');
+        if (entry) flavour = entry.flavor_text.replace(/[\n\f\r]/g, ' ').replace(/\s+/g, ' ').trim();
+      }
+    } catch (_) { /* API fail — just show empty */ }
 
-      // Base stats mini bars
-      const statDefs = [
-        { key: 'hp',       label: 'HP',  colour: '#4ade80' },
-        { key: 'attack',   label: 'ATK', colour: '#f97316' },
-        { key: 'defense',  label: 'DEF', colour: '#60a5fa' },
-      ];
-      statsEl.innerHTML = statDefs.map(s => {
-        const val   = data.stats?.find(st => st.stat.name === s.key)?.base_stat ?? 0;
-        const pct   = Math.round(val / 255 * 100);
-        return `
-          <div class="pdx-stat-row">
-            <span class="pdx-stat-label">${s.label}</span>
-            <div class="pdx-stat-bar-bg">
-              <div class="pdx-stat-bar" style="width:${pct}%;background:${s.colour}"></div>
-            </div>
-            <span class="pdx-stat-val">${val}</span>
-          </div>`;
-      }).join('');
+    // Typewriter for flavour text
+    flavEl.textContent = '';
+    let fi = 0;
+    const flavInterval = setInterval(() => {
+      if (fi >= flavour.length) { clearInterval(flavInterval); return; }
+      flavEl.textContent += flavour[fi];
+      fi++;
+    }, 30);
 
-      // First-catch badge
-      newBanner.style.display = isNewDex ? '' : 'none';
+    // ── First-catch badge ────────────────────────────────────────────────
+    newBanner.style.display = isNewDex ? '' : 'none';
 
-      // Show with slide-up animation
-      card.style.display = 'block';
-      card.classList.remove('pdx-card-show');
-      void card.offsetWidth;
-      card.classList.add('pdx-card-show');
+    // ── Show modal ───────────────────────────────────────────────────────
+    overlay.style.display = 'flex';
+    overlay.classList.remove('pdx-modal-in');
+    void overlay.offsetWidth;
+    overlay.classList.add('pdx-modal-in');
 
-      // Re-purpose continue button to dismiss the card
-      continueBtn.textContent = 'View Details ▶';
-      continueBtn.onclick = () => {
-        continueBtn.onclick     = null;
-        continueBtn.textContent = 'Continue ▶';
-        card.classList.remove('pdx-card-show');
-        card.style.display = 'none';
+    // ── Return Promise — resolves ONLY when close button is pressed ──────
+    return new Promise(resolve => {
+      const handler = () => {
         clearInterval(flavInterval);
-        resolve();
+        closeBtn.removeEventListener('click', handler);
+        overlay.classList.remove('pdx-modal-in');
+        setTimeout(() => {
+          overlay.style.display = 'none';
+          resolve();
+        }, 200);
       };
+      closeBtn.addEventListener('click', handler);
     });
   },
 

@@ -3343,3 +3343,176 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   text-align: center;
   animation: levelup-pop .6s ease-out;
 }
+
+/* ═══════════════════════════════════════════
+   POKÉDEX MODAL — device-styled
+   Based on the classic red flip Pokédex
+═══════════════════════════════════════════ */
+
+.pdx-modal-overlay {
+  position: fixed; inset: 0; z-index: 500;
+  background: rgba(0,0,0,.78);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  opacity: 0; transition: opacity .2s;
+}
+.pdx-modal-overlay.pdx-modal-in { opacity: 1; }
+
+/* The device itself */
+.pdx-device {
+  display: flex;
+  gap: 0;
+  max-width: 420px; width: 100%;
+  filter: drop-shadow(0 8px 32px rgba(0,0,0,.7));
+  animation: pop-in .25s cubic-bezier(.34,1.56,.64,1);
+}
+
+/* ── Left panel ── */
+.pdx-left {
+  background: #cc1a1a;
+  border-radius: 14px 4px 4px 14px;
+  padding: .7rem .6rem .6rem .8rem;
+  display: flex; flex-direction: column; gap: .35rem;
+  min-width: 160px; flex-shrink: 0;
+  border-right: 3px solid #8a0a0a;
+  position: relative;
+}
+
+.pdx-top-lights {
+  display: flex; align-items: center; gap: .3rem;
+  margin-bottom: .1rem;
+}
+.pdx-big-lens {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #90e8ff, #1a9cc8 60%, #0a6090);
+  border: 3px solid #fff;
+  box-shadow: 0 0 6px rgba(0,180,255,.5);
+  flex-shrink: 0;
+}
+.pdx-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  border: 1.5px solid rgba(0,0,0,.3);
+}
+.pdx-dot-red    { background: #ff4444; }
+.pdx-dot-yellow { background: #ffcc00; }
+.pdx-dot-green  { background: #44dd44; }
+
+.pdx-screen-bezel {
+  background: #ccc;
+  border-radius: 6px 6px 4px 4px;
+  padding: .25rem .3rem .3rem;
+  border: 2px solid #999;
+}
+.pdx-screen-inner-dots {
+  display: flex; gap: .25rem; margin-bottom: .2rem; justify-content: center;
+}
+.pdx-sdot {
+  width: 6px; height: 6px; border-radius: 50%; background: #cc1a1a;
+}
+.pdx-screen {
+  width: 128px; height: 100px;
+  background: #1a3a1a;
+  border-radius: 3px;
+  border: 2px solid #888;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  margin: 0 auto;
+}
+.pdx-pokemon-sprite {
+  max-width: 96px; max-height: 96px;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
+}
+.pdx-screen-speaker {
+  display: flex; flex-direction: column; gap: 2px;
+  margin-top: .2rem; padding-left: .1rem;
+}
+.pdx-screen-speaker span {
+  display: block; height: 2px; background: #999; border-radius: 1px;
+  width: 28px;
+}
+
+.pdx-new-banner {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: #ffd700;
+  text-align: center; text-shadow: 0 0 6px rgba(255,215,0,.6);
+}
+
+.pdx-controls-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: .1rem 0;
+}
+.pdx-joystick {
+  width: 18px; height: 18px; border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #555, #1a1a1a);
+  border: 2px solid #333;
+}
+.pdx-btn-group { display: flex; flex-direction: column; gap: 3px; }
+.pdx-btn { width: 22px; height: 7px; border-radius: 3px; }
+.pdx-btn-red  { background: #ee3333; }
+.pdx-btn-blue { background: #2288cc; }
+.pdx-dpad { position: relative; width: 28px; height: 28px; }
+.pdx-dpad-v, .pdx-dpad-h {
+  position: absolute; background: #1a1a1a; border-radius: 2px;
+}
+.pdx-dpad-v { width: 10px; height: 100%; left: 50%; transform: translateX(-50%); }
+.pdx-dpad-h { height: 10px; width: 100%; top:  50%; transform: translateY(-50%); }
+
+.pdx-green-bar {
+  background: #44bb44;
+  height: 10px; border-radius: 3px;
+  border: 1.5px solid #229922;
+  margin-top: .1rem;
+}
+
+/* ── Right panel ── */
+.pdx-right {
+  background: #cc1a1a;
+  border-radius: 4px 14px 14px 4px;
+  padding: .6rem .7rem .6rem .5rem;
+  display: flex; flex-direction: column; gap: .35rem;
+  flex: 1;
+}
+
+/* Dark data screens */
+.pdx-data-screen {
+  background: #0a1a0a;
+  border: 2px solid #333;
+  border-radius: 4px;
+  padding: .35rem .5rem;
+  color: #88dd88;
+  font-family: 'Press Start 2P', monospace;
+}
+.pdx-data-top {
+  display: flex; align-items: baseline; gap: .4rem;
+}
+.pdx-entry-number { font-size: .3rem; color: #559955; }
+.pdx-entry-name   { font-size: .55rem; color: #aaffaa; }
+
+.pdx-data-types {
+  display: flex; gap: .3rem; flex-wrap: wrap;
+  background: #1a3acc;
+  border-color: #0a2a99;
+  min-height: 26px; align-items: center;
+}
+.pdx-data-types .hud-type-badge { font-size: .38rem; }
+
+.pdx-data-flavour {
+  font-size: .42rem; line-height: 1.8;
+  color: #88dd88; min-height: 52px;
+  font-family: monospace; /* use plain monospace for typewriter feel */
+  font-size: .56rem;
+}
+
+.pdx-data-measures {
+  font-size: .38rem; color: #66bb66;
+  letter-spacing: .03em;
+}
+
+.pdx-close-row {
+  display: flex; justify-content: flex-end; margin-top: .1rem;
+}
+.pdx-close-btn {
+  font-size: .38rem !important;
+  padding: .45em .9em !important;
+}
