@@ -259,16 +259,17 @@
     </div>
   </div>
 
-  <!-- Battle log -->
+  <!-- Battle log — 3 lines, most recent first -->
   <div class="battle-log" id="battle-log">
-    <div class="log-inner" id="log-inner">Battle starts!</div>
+    <div class="log-line log-line-1" id="log-inner">Battle starts!</div>
+    <div class="log-line log-line-2" id="log-inner-2"></div>
+    <div class="log-line log-line-3" id="log-inner-3"></div>
   </div>
 
   <!-- Hand & controls -->
   <div class="battle-controls">
     <div class="pile-area">
       <div class="pile draw-pile" id="draw-pile-display">
-        <!-- Asset slot: card back icon -->
         <div class="pile-icon">🃏</div>
         <div class="pile-count" id="draw-count">0</div>
         <div class="pile-label">Draw</div>
@@ -283,7 +284,7 @@
       <!-- Cards injected by JS -->
     </div>
     <div class="action-info">
-      <div class="actions-left" id="actions-left">Actions: 3</div>
+      <div class="actions-left" id="actions-left"></div>
       <div class="turn-btn-wrap">
         <button class="btn-pixel btn-end-turn" id="btn-end-turn">End Turn ▶</button>
       </div>
@@ -348,7 +349,9 @@
     </div>
 
     <div class="battle-log" id="boss-battle-log">
-      <div class="log-inner" id="boss-log-inner">Boss battle!</div>
+      <div class="log-line log-line-1" id="boss-log-inner">Boss battle!</div>
+      <div class="log-line log-line-2" id="boss-log-inner-2"></div>
+      <div class="log-line log-line-3" id="boss-log-inner-3"></div>
     </div>
 
     <div class="battle-controls">
@@ -366,7 +369,7 @@
       </div>
       <div class="hand-area" id="boss-hand-area"></div>
       <div class="action-info">
-        <div class="actions-left" id="boss-actions-left">Actions: 3</div>
+        <div class="actions-left" id="boss-actions-left"></div>
         <div class="turn-btn-wrap">
           <button class="btn-pixel btn-end-turn" id="btn-boss-end-turn">End Turn ▶</button>
         </div>

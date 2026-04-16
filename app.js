@@ -414,142 +414,214 @@ const OPPONENT_MOVES = {
 };
 
 // Card templates keyed by starter type
+// ─── CARD TEMPLATES (starter decks) ──────────────────────────────────────────
+// cost: 0=free utility, 1=standard, 2=powerful, 3=ultimate(exhaust)
 const CARD_TEMPLATES = {
   grass: [
-    { id:'tackle',      name:'Tackle',       icon:'💥', type:'normal',  power:40,  effect:'',                          special: null },
-    { id:'growl',       name:'Growl',        icon:'🗣️', type:'normal',  power:0,   effect:'Opp ATK -10 next turn',    special: 'debuff_atk' },
-    { id:'vine_whip',   name:'Vine Whip',    icon:'🌿', type:'grass',   power:45,  effect:'',                          special: null },
-    { id:'absorb',      name:'Absorb',       icon:'🌱', type:'grass',   power:30,  effect:'Heal 10 HP',                special: 'heal_10' },
-    { id:'razor_leaf',  name:'Razor Leaf',   icon:'🍃', type:'grass',   power:55,  effect:'High crit rate',            special: 'high_crit' },
-    { id:'sleep_powder',name:'Sleep Powder', icon:'💤', type:'grass',   power:0,   effect:'Skip opp next turn',        special: 'skip_opp' },
-    { id:'leech_seed',  name:'Leech Seed',   icon:'🌾', type:'grass',   power:20,  effect:'Drain 15/turn for 3 turns', special: 'leech' },
-    { id:'synthesis',   name:'Synthesis',    icon:'☀️', type:'grass',   power:0,   effect:'Heal 25 HP + draw 1',       special: 'heal_25_draw' },
-    { id:'solar_beam',  name:'Solar Beam',   icon:'🌟', type:'grass',   power:80,  effect:'Powerhouse! One use only.',    special: null, exhaust: true },
-    { id:'poison_powder',name:'Pois. Powder',icon:'☠️', type:'poison',  power:0,   effect:'Poison: 15 dmg/turn',      special: 'poison' },
+    { id:'vine_whip',    name:'Vine Whip',    icon:'🌿', type:'grass',   power:45, cost:1, effect:'',                          special: null },
+    { id:'absorb',       name:'Absorb',       icon:'🌱', type:'grass',   power:25, cost:1, effect:'Heal 12 HP',                special: 'heal_10' },
+    { id:'growl',        name:'Growl',        icon:'🗣️', type:'normal',  power:0,  cost:0, effect:'Opp ATK -10, draw 1',      special: 'growl_draw' },
+    { id:'razor_leaf',   name:'Razor Leaf',   icon:'🍃', type:'grass',   power:55, cost:2, effect:'High crit rate',            special: 'high_crit' },
+    { id:'sleep_powder', name:'Sleep Powder', icon:'💤', type:'grass',   power:0,  cost:1, effect:'Skip opp next turn',        special: 'skip_opp' },
+    { id:'leech_seed',   name:'Leech Seed',   icon:'🌾', type:'grass',   power:20, cost:2, effect:'Drain 20/turn × 3',        special: 'leech' },
+    { id:'synthesis',    name:'Synthesis',    icon:'☀️', type:'grass',   power:0,  cost:2, effect:'Heal 35 HP + draw 1',      special: 'heal_25_draw' },
+    { id:'mega_drain',   name:'Mega Drain',   icon:'💚', type:'grass',   power:40, cost:2, effect:'Heal 20 HP',               special: 'mega_drain' },
+    { id:'spore',        name:'Spore',        icon:'🍄', type:'grass',   power:0,  cost:0, effect:'Skip opp + draw 1',        special: 'spore' },
+    { id:'solar_beam',   name:'Solar Beam',   icon:'🌟', type:'grass',   power:95, cost:3, effect:'One use only.',            special: null, exhaust: true },
   ],
   fire: [
-    { id:'tackle',      name:'Tackle',       icon:'💥', type:'normal',  power:40,  effect:'',                          special: null },
-    { id:'growl',       name:'Growl',        icon:'🗣️', type:'normal',  power:0,   effect:'Opp ATK -10 next turn',    special: 'debuff_atk' },
-    { id:'ember',       name:'Ember',        icon:'🔥', type:'fire',    power:40,  effect:'10% burn: 10 dmg/turn',     special: 'burn_chance' },
-    { id:'scratch',     name:'Scratch',      icon:'🐾', type:'normal',  power:35,  effect:'Draw 1 card',               special: 'draw_1' },
-    { id:'flamethrower',name:'Flamethrower', icon:'🌋', type:'fire',    power:60,  effect:'',                          special: null },
-    { id:'smokescreen', name:'Smokescreen',  icon:'💨', type:'normal',  power:0,   effect:'Opp accuracy -25% next',    special: 'debuff_acc' },
-    { id:'dragon_rage', name:'Dragon Rage',  icon:'🐉', type:'fire',    power:50,  effect:'',                          special: null },
-    { id:'inferno',     name:'Inferno',      icon:'🌠', type:'fire',    power:35,  effect:'Burn guaranteed',           special: 'burn' },
-    { id:'fire_blast',  name:'Fire Blast',   icon:'💫', type:'fire',    power:90,  effect:'Rare powerhouse! One use only.', special: null, exhaust: true },
-    { id:'slash',       name:'Slash',        icon:'⚡', type:'normal',  power:45,  effect:'Always crits',              special: 'always_crit' },
+    { id:'ember',        name:'Ember',        icon:'🔥', type:'fire',    power:40, cost:1, effect:'15% burn',                 special: 'burn_chance' },
+    { id:'scratch',      name:'Scratch',      icon:'🐾', type:'normal',  power:32, cost:1, effect:'Draw 1 card',              special: 'draw_1' },
+    { id:'leer',         name:'Leer',         icon:'👁️', type:'normal',  power:0,  cost:0, effect:'Opp DEF -15, free',       special: 'leer_free' },
+    { id:'flamethrower', name:'Flamethrower', icon:'🌋', type:'fire',    power:65, cost:2, effect:'',                         special: null },
+    { id:'smokescreen',  name:'Smokescreen',  icon:'💨', type:'normal',  power:0,  cost:1, effect:'Opp accuracy -25%',        special: 'debuff_acc' },
+    { id:'inferno',      name:'Inferno',      icon:'🌠', type:'fire',    power:35, cost:2, effect:'Burn guaranteed',          special: 'burn' },
+    { id:'flame_charge', name:'Flame Charge', icon:'🫧', type:'fire',    power:35, cost:1, effect:'+1 energy next turn',      special: 'flame_charge' },
+    { id:'overheat',     name:'Overheat',     icon:'♨️', type:'fire',    power:85, cost:2, effect:'25 recoil',               special: 'overheat' },
+    { id:'slash',        name:'Slash',        icon:'⚔️', type:'normal',  power:45, cost:1, effect:'Always crits',             special: 'always_crit' },
+    { id:'fire_blast',   name:'Fire Blast',   icon:'💫', type:'fire',    power:105,cost:3, effect:'One use only.',            special: null, exhaust: true },
   ],
   water: [
-    { id:'tackle',      name:'Tackle',       icon:'💥', type:'normal',  power:40,  effect:'',                          special: null },
-    { id:'growl',       name:'Growl',        icon:'🗣️', type:'normal',  power:0,   effect:'Opp ATK -10 next turn',    special: 'debuff_atk' },
-    { id:'water_gun',   name:'Water Gun',    icon:'💧', type:'water',   power:40,  effect:'',                          special: null },
-    { id:'shell_armor', name:'Shell Armor',  icon:'🐢', type:'water',   power:0,   effect:'Block 20 dmg + draw 1',     special: 'shield_draw' },
-    { id:'bubble',      name:'Bubble',       icon:'🫧', type:'water',   power:30,  effect:'Slow opp: extra turn',      special: 'slow_opp' },
-    { id:'withdraw',    name:'Withdraw',     icon:'🛡️', type:'water',   power:0,   effect:'Block 35 dmg next hit',     special: 'shield_35' },
-    { id:'bite',        name:'Bite',         icon:'🦷', type:'normal',  power:50,  effect:'May flinch',                special: 'flinch' },
-    { id:'rain_dance',  name:'Rain Dance',   icon:'🌧️', type:'water',   power:0,   effect:'Water moves +20% for 3t',  special: 'rain' },
-    { id:'hydro_pump',  name:'Hydro Pump',   icon:'🌊', type:'water',   power:85,  effect:'Rare powerhouse! One use only.', special: null, exhaust: true },
-    { id:'aqua_tail',   name:'Aqua Tail',    icon:'🐟', type:'water',   power:55,  effect:'',                          special: null },
+    { id:'water_gun',    name:'Water Gun',    icon:'💧', type:'water',   power:42, cost:1, effect:'',                         special: null },
+    { id:'withdraw',     name:'Withdraw',     icon:'🛡️', type:'water',   power:0,  cost:1, effect:'Block 30 dmg next hit',   special: 'shield_35' },
+    { id:'growl',        name:'Growl',        icon:'🗣️', type:'normal',  power:0,  cost:0, effect:'Opp ATK -10, draw 1',     special: 'growl_draw' },
+    { id:'bubble',       name:'Bubble',       icon:'🫧', type:'water',   power:30, cost:1, effect:'Slow opp',                 special: 'slow_opp' },
+    { id:'shell_armor',  name:'Shell Armor',  icon:'🐢', type:'water',   power:0,  cost:2, effect:'Block 45 dmg + draw 1',   special: 'shield_draw' },
+    { id:'rain_dance',   name:'Rain Dance',   icon:'🌧️', type:'water',   power:0,  cost:1, effect:'Water +25% × 3 turns',   special: 'rain' },
+    { id:'aqua_jet',     name:'Aqua Jet',     icon:'💦', type:'water',   power:50, cost:2, effect:'Always first',             special: null },
+    { id:'surf',         name:'Surf',         icon:'🏄', type:'water',   power:62, cost:2, effect:'',                         special: null },
+    { id:'whirlpool',    name:'Whirlpool',    icon:'🌀', type:'water',   power:35, cost:2, effect:'Trap opp: skip next turn', special: 'skip_opp' },
+    { id:'hydro_pump',   name:'Hydro Pump',   icon:'🌊', type:'water',   power:100,cost:3, effect:'One use only.',            special: null, exhaust: true },
   ],
   electric: [
-    { id:'tackle',       name:'Tackle',       icon:'💥', type:'normal',   power:40, effect:'',                          special: null },
-    { id:'growl',        name:'Growl',        icon:'🗣️', type:'normal',   power:0,  effect:'Opp ATK -10 next turn',    special: 'debuff_atk' },
-    { id:'thundershock', name:'ThunderShock', icon:'⚡', type:'electric', power:40, effect:'10% paralyse',              special: 'para_chance' },
-    { id:'quick_attack', name:'Quick Attack', icon:'💨', type:'normal',   power:35, effect:'Always goes first',         special: 'draw_1' },
-    { id:'thunder_wave', name:'Thunder Wave', icon:'🌩️', type:'electric', power:0,  effect:'Paralyse opp',             special: 'paralyse' },
-    { id:'spark',        name:'Spark',        icon:'🔆', type:'electric', power:45, effect:'',                          special: null },
-    { id:'agility',      name:'Agility',      icon:'🏃', type:'normal',   power:0,  effect:'+1 action this turn',       special: 'bonus_action' },
-    { id:'volt_tackle',  name:'Volt Tackle',  icon:'⚡', type:'electric', power:70, effect:'Recoil 15 HP. One use only.',   special: 'recoil_15', exhaust: true },
-    { id:'thunder',      name:'Thunder',      icon:'🌪️', type:'electric', power:90, effect:'30% paralyse. One use only.',   special: null, exhaust: true },
-    { id:'iron_tail',    name:'Iron Tail',    icon:'🔩', type:'normal',   power:55, effect:'May lower opp DEF',         special: 'debuff_def' },
+    { id:'quick_attack', name:'Quick Attack', icon:'💨', type:'normal',  power:25, cost:0, effect:'Free! Draw 1',             special: 'draw_1' },
+    { id:'thundershock', name:'ThunderShock', icon:'⚡', type:'electric',power:40, cost:1, effect:'15% paralyse',             special: 'para_chance' },
+    { id:'thunder_wave', name:'Thunder Wave', icon:'🌩️', type:'electric',power:0,  cost:1, effect:'Paralyse opp',            special: 'paralyse' },
+    { id:'spark',        name:'Spark',        icon:'🔆', type:'electric',power:45, cost:1, effect:'',                         special: null },
+    { id:'charge',       name:'Charge',       icon:'🔋', type:'electric',power:0,  cost:1, effect:'Next elec. move +50%',    special: 'charge' },
+    { id:'agility',      name:'Agility',      icon:'🏃', type:'normal',  power:0,  cost:1, effect:'+1 energy + draw 1',       special: 'agility' },
+    { id:'thunderbolt',  name:'Thunderbolt',  icon:'☇',  type:'electric',power:65, cost:2, effect:'25% paralyse',             special: 'para_chance' },
+    { id:'discharge',    name:'Discharge',    icon:'🌐', type:'electric',power:50, cost:2, effect:'15 self damage',           special: 'discharge' },
+    { id:'volt_tackle',  name:'Volt Tackle',  icon:'⚡', type:'electric',power:75, cost:2, effect:'20 recoil. One use only.', special: 'recoil_15', exhaust: true },
+    { id:'thunder',      name:'Thunder',      icon:'🌪️', type:'electric',power:100,cost:3, effect:'35% paralyse. One use only.', special: 'para_chance', exhaust: true },
   ],
 };
 
-// Standard deck for caught Pokémon (8 generic + 2 type-specific placeholders)
-// Index 0-7 are generic, index 8-9 are type-specific (filled by buildPokemonDeck)
+// Standard cards for caught Pokémon — 5 cards, varied utility
+// Growl and Leer are cost-0 so they're never dead cards
 const STANDARD_CARDS = [
-  { id:'tackle',   name:'Tackle',    icon:'💥', type:'normal', power:40, effect:'',                    special: null },
-  { id:'tackle',   name:'Tackle',    icon:'💥', type:'normal', power:40, effect:'',                    special: null },
-  { id:'growl',    name:'Growl',     icon:'🗣️', type:'normal', power:0,  effect:'Opp ATK -10',         special: 'debuff_atk' },
-  { id:'scratch',  name:'Scratch',   icon:'🐾', type:'normal', power:35, effect:'Draw 1 card',          special: 'draw_1' },
-  { id:'headbutt', name:'Headbutt',  icon:'💫', type:'normal', power:50, effect:'',                    special: null },
-  { id:'leer',     name:'Leer',      icon:'👁️', type:'normal', power:0,  effect:'Opp DEF -10',         special: 'debuff_def' },
-  { id:'bite',     name:'Bite',      icon:'🦷', type:'normal', power:45, effect:'May flinch',           special: 'flinch' },
-  { id:'swift',    name:'Swift',     icon:'⭐', type:'normal', power:40, effect:'Never misses',         special: null },
+  { id:'tackle',   name:'Tackle',   icon:'💥', type:'normal', power:38, cost:1, effect:'',              special: null },
+  { id:'scratch',  name:'Scratch',  icon:'🐾', type:'normal', power:32, cost:1, effect:'Draw 1',        special: 'draw_1' },
+  { id:'headbutt', name:'Headbutt', icon:'💫', type:'normal', power:48, cost:1, effect:'',              special: null },
+  { id:'growl',    name:'Growl',    icon:'🗣️', type:'normal', power:0,  cost:0, effect:'ATK -10, draw 1', special: 'growl_draw' },
+  { id:'leer',     name:'Leer',     icon:'👁️', type:'normal', power:0,  cost:0, effect:'DEF -15, free', special: 'leer_free' },
 ];
 
-// 2 type-specific cards per type for caught Pokémon
+// 5 type-specific cards per type — full identity for caught Pokémon
 const TYPE_SIGNATURE_CARDS = {
   fire:     [
-    { id:'ember',        name:'Ember',       icon:'🔥', type:'fire',     power:40, effect:'10% burn',           special: 'burn_chance' },
-    { id:'flamethrower', name:'Flamethrower',icon:'🌋', type:'fire',     power:60, effect:'',                   special: null },
+    { id:'ember',        name:'Ember',       icon:'🔥', type:'fire',     power:40, cost:1, effect:'15% burn',         special: 'burn_chance' },
+    { id:'flamethrower', name:'Flamethrower',icon:'🌋', type:'fire',     power:65, cost:2, effect:'',                 special: null },
+    { id:'inferno',      name:'Inferno',     icon:'🌠', type:'fire',     power:35, cost:2, effect:'Burn guaranteed',  special: 'burn' },
+    { id:'flame_charge', name:'Flame Charge',icon:'🫧', type:'fire',     power:35, cost:1, effect:'+1 energy next',  special: 'flame_charge' },
+    { id:'smokescreen',  name:'Smokescreen', icon:'💨', type:'normal',   power:0,  cost:1, effect:'Acc -25%',         special: 'debuff_acc' },
   ],
   water:    [
-    { id:'water_gun',    name:'Water Gun',   icon:'💧', type:'water',    power:40, effect:'',                   special: null },
-    { id:'bubble',       name:'Bubble',      icon:'🫧', type:'water',    power:30, effect:'May slow opp',        special: 'slow_opp' },
+    { id:'water_gun',   name:'Water Gun',   icon:'💧', type:'water',    power:42, cost:1, effect:'',                 special: null },
+    { id:'bubble',      name:'Bubble',      icon:'🫧', type:'water',    power:30, cost:1, effect:'Slow opp',         special: 'slow_opp' },
+    { id:'withdraw',    name:'Withdraw',    icon:'🛡️', type:'water',    power:0,  cost:1, effect:'Block 30 dmg',    special: 'shield_35' },
+    { id:'surf',        name:'Surf',        icon:'🏄', type:'water',    power:62, cost:2, effect:'',                 special: null },
+    { id:'aqua_jet',    name:'Aqua Jet',    icon:'💦', type:'water',    power:50, cost:2, effect:'Always first',     special: null },
   ],
   grass:    [
-    { id:'vine_whip',    name:'Vine Whip',   icon:'🌿', type:'grass',    power:45, effect:'',                   special: null },
-    { id:'absorb',       name:'Absorb',      icon:'🌱', type:'grass',    power:30, effect:'Heal 10 HP',          special: 'heal_10' },
+    { id:'vine_whip',   name:'Vine Whip',   icon:'🌿', type:'grass',    power:45, cost:1, effect:'',                 special: null },
+    { id:'absorb',      name:'Absorb',      icon:'🌱', type:'grass',    power:25, cost:1, effect:'Heal 12 HP',       special: 'heal_10' },
+    { id:'sleep_powder',name:'Sleep Powder',icon:'💤', type:'grass',    power:0,  cost:1, effect:'Skip opp',         special: 'skip_opp' },
+    { id:'mega_drain',  name:'Mega Drain',  icon:'💚', type:'grass',    power:40, cost:2, effect:'Heal 20 HP',       special: 'mega_drain' },
+    { id:'leech_seed',  name:'Leech Seed',  icon:'🌾', type:'grass',    power:20, cost:2, effect:'Drain 20/turn×3', special: 'leech' },
   ],
   electric: [
-    { id:'thundershock', name:'ThunderShock',icon:'⚡', type:'electric', power:40, effect:'10% paralyse',        special: 'para_chance' },
-    { id:'spark',        name:'Spark',       icon:'🔆', type:'electric', power:45, effect:'',                   special: null },
+    { id:'thundershock',name:'ThunderShock',icon:'⚡', type:'electric', power:40, cost:1, effect:'15% paralyse',    special: 'para_chance' },
+    { id:'spark',       name:'Spark',       icon:'🔆', type:'electric', power:45, cost:1, effect:'',                 special: null },
+    { id:'thunder_wave',name:'Thunder Wave',icon:'🌩️', type:'electric', power:0,  cost:1, effect:'Paralyse opp',   special: 'paralyse' },
+    { id:'thunderbolt', name:'Thunderbolt', icon:'☇',  type:'electric', power:65, cost:2, effect:'25% paralyse',   special: 'para_chance' },
+    { id:'discharge',   name:'Discharge',   icon:'🌐', type:'electric', power:50, cost:2, effect:'15 self dmg',     special: 'discharge' },
   ],
   psychic:  [
-    { id:'confusion',    name:'Confusion',   icon:'🌀', type:'psychic',  power:40, effect:'May confuse',         special: 'debuff_atk' },
-    { id:'psybeam',      name:'Psybeam',     icon:'💜', type:'psychic',  power:50, effect:'',                   special: null },
+    { id:'confusion',   name:'Confusion',   icon:'🌀', type:'psychic',  power:38, cost:1, effect:'20% ATK debuff',  special: 'debuff_atk' },
+    { id:'psybeam',     name:'Psybeam',     icon:'💜', type:'psychic',  power:48, cost:1, effect:'',                 special: null },
+    { id:'psyshock',    name:'Psyshock',    icon:'🔮', type:'psychic',  power:55, cost:2, effect:'Pierces shield',   special: 'psyshock' },
+    { id:'calm_mind',   name:'Calm Mind',   icon:'🧘', type:'psychic',  power:0,  cost:1, effect:'Next move +30%',  special: 'calm_mind' },
+    { id:'future_sight',name:'Future Sight',icon:'👁', type:'psychic',  power:70, cost:2, effect:'Hits next turn',  special: 'future_sight' },
   ],
   rock:     [
-    { id:'rock_throw',   name:'Rock Throw',  icon:'🪨', type:'rock',     power:45, effect:'',                   special: null },
-    { id:'rollout',      name:'Rollout',     icon:'⚙️', type:'rock',     power:40, effect:'Hits hard',           special: null },
+    { id:'rock_throw',  name:'Rock Throw',  icon:'🪨', type:'rock',     power:42, cost:1, effect:'',                 special: null },
+    { id:'rollout',     name:'Rollout',     icon:'⚙️', type:'rock',     power:35, cost:1, effect:'',                 special: null },
+    { id:'stealth_rock',name:'Stealth Rock',icon:'💎', type:'rock',     power:0,  cost:1, effect:'Chip 15/turn×3',  special: 'stealth_rock' },
+    { id:'rock_slide',  name:'Rock Slide',  icon:'🏔️', type:'rock',     power:58, cost:2, effect:'25% flinch',      special: 'flinch' },
+    { id:'stone_edge',  name:'Stone Edge',  icon:'🗿', type:'rock',     power:65, cost:2, effect:'High crit',        special: 'high_crit' },
   ],
   ground:   [
-    { id:'mud_slap',     name:'Mud Slap',    icon:'🟫', type:'ground',   power:30, effect:'Opp accuracy -15',   special: 'debuff_acc' },
-    { id:'dig',          name:'Dig',         icon:'⛏️', type:'ground',    power:55, effect:'',                   special: null },
+    { id:'mud_slap',    name:'Mud Slap',    icon:'🟫', type:'ground',   power:28, cost:1, effect:'Acc -20%',         special: 'debuff_acc' },
+    { id:'sand_attack', name:'Sand Attack', icon:'🏜️', type:'ground',   power:0,  cost:0, effect:'Acc -30%, free',  special: 'debuff_acc' },
+    { id:'dig',         name:'Dig',         icon:'⛏️', type:'ground',   power:58, cost:2, effect:'',                 special: null },
+    { id:'earthquake',  name:'Earthquake',  icon:'🌋', type:'ground',   power:70, cost:2, effect:'15 recoil',        special: 'recoil_15' },
+    { id:'bulldoze',    name:'Bulldoze',    icon:'🚜', type:'ground',   power:40, cost:1, effect:'Opp speed -1',     special: 'slow_opp' },
   ],
   poison:   [
-    { id:'poison_sting', name:'Poison Sting',icon:'☠️', type:'poison',   power:35, effect:'30% poison',          special: 'poison' },
-    { id:'acid',         name:'Acid',        icon:'🧪', type:'poison',   power:40, effect:'May lower DEF',       special: 'debuff_def' },
+    { id:'poison_sting',name:'Poison Sting',icon:'☠️', type:'poison',   power:30, cost:1, effect:'35% poison',      special: 'poison' },
+    { id:'acid',        name:'Acid',        icon:'🧪', type:'poison',   power:38, cost:1, effect:'DEF -10',          special: 'debuff_def' },
+    { id:'toxic',       name:'Toxic',       icon:'💀', type:'poison',   power:0,  cost:1, effect:'Poison guaranteed', special: 'poison' },
+    { id:'sludge',      name:'Sludge',      icon:'🟢', type:'poison',   power:50, cost:2, effect:'50% poison',       special: 'poison' },
+    { id:'venoshock',   name:'Venoshock',   icon:'💉', type:'poison',   power:55, cost:2, effect:'×2 if poisoned',   special: 'venoshock' },
   ],
   normal:   [
-    { id:'double_slap',  name:'Double Slap', icon:'👋', type:'normal',   power:45, effect:'',                   special: null },
-    { id:'body_slam',    name:'Body Slam',   icon:'🏋️', type:'normal',   power:55, effect:'May paralyse',        special: 'para_chance' },
+    { id:'double_slap', name:'Double Slap', icon:'👋', type:'normal',   power:45, cost:1, effect:'',                 special: null },
+    { id:'swift',       name:'Swift',       icon:'⭐', type:'normal',   power:40, cost:1, effect:'Never misses',     special: null },
+    { id:'body_slam',   name:'Body Slam',   icon:'🏋️', type:'normal',   power:58, cost:2, effect:'25% para',        special: 'para_chance' },
+    { id:'hyper_voice', name:'Hyper Voice', icon:'📣', type:'normal',   power:55, cost:2, effect:'ATK -15',          special: 'debuff_atk' },
+    { id:'metronome',   name:'Metronome',   icon:'🎵', type:'normal',   power:0,  cost:0, effect:'Draw 2, free',     special: 'metronome' },
   ],
   flying:   [
-    { id:'gust',         name:'Gust',        icon:'🌬️', type:'flying',   power:40, effect:'',                   special: null },
-    { id:'wing_attack',  name:'Wing Attack', icon:'🦅', type:'flying',   power:50, effect:'',                   special: null },
+    { id:'gust',        name:'Gust',        icon:'🌬️', type:'flying',   power:38, cost:1, effect:'',                 special: null },
+    { id:'wing_attack', name:'Wing Attack', icon:'🦅', type:'flying',   power:48, cost:1, effect:'',                 special: null },
+    { id:'aerial_ace',  name:'Aerial Ace',  icon:'✈️', type:'flying',   power:45, cost:1, effect:'Never misses',     special: null },
+    { id:'roost',       name:'Roost',       icon:'🪺', type:'flying',   power:0,  cost:2, effect:'Heal 35 HP',       special: 'roost' },
+    { id:'air_slash',   name:'Air Slash',   icon:'🌪️', type:'flying',   power:58, cost:2, effect:'25% flinch',      special: 'flinch' },
   ],
   ice:      [
-    { id:'ice_shard',    name:'Ice Shard',   icon:'❄️', type:'ice',      power:40, effect:'Always first',        special: null },
-    { id:'blizzard',     name:'Blizzard',    icon:'🌨️', type:'ice',      power:60, effect:'',                   special: null },
+    { id:'ice_shard',   name:'Ice Shard',   icon:'❄️', type:'ice',      power:38, cost:1, effect:'Always first',     special: null },
+    { id:'icy_wind',    name:'Icy Wind',    icon:'🌬️', type:'ice',      power:40, cost:1, effect:'Opp speed -1',     special: 'slow_opp' },
+    { id:'hail',        name:'Hail',        icon:'🌨️', type:'ice',      power:0,  cost:1, effect:'Opp -12/turn×3',  special: 'hail' },
+    { id:'blizzard',    name:'Blizzard',    icon:'❄️', type:'ice',      power:65, cost:2, effect:'',                 special: null },
+    { id:'frost_breath',name:'Frost Breath',icon:'🥶', type:'ice',      power:52, cost:2, effect:'Always crits',     special: 'always_crit' },
   ],
   fighting: [
-    { id:'karate_chop',  name:'Karate Chop', icon:'🥊', type:'fighting', power:45, effect:'High crit',           special: 'high_crit' },
-    { id:'low_kick',     name:'Low Kick',    icon:'🦵', type:'fighting', power:50, effect:'',                   special: null },
+    { id:'karate_chop', name:'Karate Chop', icon:'🥊', type:'fighting', power:45, cost:1, effect:'High crit',        special: 'high_crit' },
+    { id:'low_kick',    name:'Low Kick',    icon:'🦵', type:'fighting', power:40, cost:1, effect:'',                 special: null },
+    { id:'cross_chop',  name:'Cross Chop',  icon:'✊', type:'fighting', power:65, cost:2, effect:'High crit',        special: 'high_crit' },
+    { id:'close_combat',name:'Close Combat',icon:'💪', type:'fighting', power:80, cost:2, effect:'25 recoil',        special: 'close_combat' },
+    { id:'focus_punch', name:'Focus Punch', icon:'🎯', type:'fighting', power:75, cost:2, effect:'Miss if hit first', special: 'focus_punch' },
   ],
   ghost:    [
-    { id:'lick',         name:'Lick',        icon:'👻', type:'ghost',    power:30, effect:'30% paralyse',        special: 'para_chance' },
-    { id:'shadow_ball',  name:'Shadow Ball', icon:'🌑', type:'ghost',    power:55, effect:'',                   special: null },
+    { id:'lick',        name:'Lick',        icon:'👻', type:'ghost',    power:28, cost:1, effect:'35% para',         special: 'para_chance' },
+    { id:'shadow_sneak',name:'Shadow Sneak',icon:'🌑', type:'ghost',    power:38, cost:1, effect:'Always first',     special: null },
+    { id:'night_shade', name:'Night Shade', icon:'🌙', type:'ghost',    power:0,  cost:1, effect:'Dmg = opp level',  special: 'night_shade' },
+    { id:'curse',       name:'Curse',       icon:'💢', type:'ghost',    power:0,  cost:1, effect:'Opp -20/turn, you -10', special: 'curse' },
+    { id:'shadow_ball', name:'Shadow Ball', icon:'🌑', type:'ghost',    power:58, cost:2, effect:'DEF -15',          special: 'debuff_def' },
   ],
   dragon:   [
-    { id:'dragon_rage',  name:'Dragon Rage', icon:'🐉', type:'dragon',   power:50, effect:'',                   special: null },
-    { id:'twister',      name:'Twister',     icon:'🌪️', type:'dragon',   power:40, effect:'May flinch',          special: 'flinch' },
+    { id:'twister',     name:'Twister',     icon:'🌪️', type:'dragon',  power:38, cost:1, effect:'25% flinch',       special: 'flinch' },
+    { id:'dragon_rage', name:'Dragon Rage', icon:'🐉', type:'dragon',  power:55, cost:2, effect:'',                 special: null },
+    { id:'dragon_breath',name:'Dragon Breath',icon:'💨',type:'dragon', power:52, cost:2, effect:'25% para',          special: 'para_chance' },
+    { id:'dragon_dance',name:'Dragon Dance',icon:'💃', type:'dragon',  power:0,  cost:2, effect:'+20% dmg forever', special: 'dragon_dance' },
+    { id:'outrage',     name:'Outrage',     icon:'😤', type:'dragon',  power:95, cost:3, effect:'20 recoil. Once.',  special: 'recoil_15', exhaust: true },
+  ],
+  dark:     [
+    { id:'bite',        name:'Bite',        icon:'🦷', type:'dark',     power:42, cost:1, effect:'25% flinch',      special: 'flinch' },
+    { id:'sucker_punch',name:'Sucker Punch',icon:'🌑', type:'dark',     power:40, cost:1, effect:'First if opp higher HP', special: null },
+    { id:'crunch',      name:'Crunch',      icon:'💀', type:'dark',     power:55, cost:2, effect:'DEF -15',          special: 'debuff_def' },
+    { id:'taunt',       name:'Taunt',       icon:'😈', type:'dark',     power:0,  cost:0, effect:'Opp utility blocked×2', special: 'taunt' },
+    { id:'dark_pulse',  name:'Dark Pulse',  icon:'🌑', type:'dark',     power:58, cost:2, effect:'',                 special: null },
+  ],
+  steel:    [
+    { id:'metal_claw',  name:'Metal Claw',  icon:'⚙️', type:'steel',   power:40, cost:1, effect:'',                 special: null },
+    { id:'iron_defense',name:'Iron Defense',icon:'🛡️', type:'steel',   power:0,  cost:1, effect:'Block 50 dmg',    special: 'iron_defense' },
+    { id:'flash_cannon', name:'Flash Cannon',icon:'💡', type:'steel',  power:52, cost:2, effect:'ATK -10',           special: 'debuff_atk' },
+    { id:'iron_head',   name:'Iron Head',   icon:'⚙️', type:'steel',   power:58, cost:2, effect:'25% flinch',       special: 'flinch' },
+    { id:'steel_beam',  name:'Steel Beam',  icon:'🔩', type:'steel',   power:90, cost:3, effect:'30 recoil. Once.', special: 'close_combat', exhaust: true },
+  ],
+  fairy:    [
+    { id:'fairy_wind',  name:'Fairy Wind',  icon:'🧚', type:'fairy',   power:38, cost:1, effect:'',                 special: null },
+    { id:'sweet_kiss',  name:'Sweet Kiss',  icon:'💋', type:'fairy',   power:0,  cost:1, effect:'ATK -25 for 1t',  special: 'debuff_atk' },
+    { id:'misty_terrain',name:'Misty Terrain',icon:'✨',type:'fairy',  power:0,  cost:1, effect:'Clears status',    special: 'misty_terrain' },
+    { id:'moonblast',   name:'Moonblast',   icon:'🌕', type:'fairy',   power:62, cost:2, effect:'ATK -10',          special: 'debuff_atk' },
+    { id:'dazzling_gleam',name:'Dazzling Gleam',icon:'💫',type:'fairy',power:55, cost:2, effect:'',                 special: null },
+  ],
+  bug:      [
+    { id:'bug_bite',    name:'Bug Bite',    icon:'🐛', type:'bug',      power:40, cost:1, effect:'',                 special: null },
+    { id:'string_shot', name:'String Shot', icon:'🕸️', type:'bug',      power:0,  cost:0, effect:'Speed -1, draw 1',special: 'string_shot' },
+    { id:'signal_beam', name:'Signal Beam', icon:'📡', type:'bug',      power:48, cost:1, effect:'',                 special: null },
+    { id:'x_scissor',   name:'X-Scissor',   icon:'✂️', type:'bug',      power:60, cost:2, effect:'',                 special: null },
+    { id:'megahorn',    name:'Megahorn',    icon:'🦏', type:'bug',      power:70, cost:2, effect:'20 recoil',        special: 'recoil_15' },
   ],
 };
 
-// Build a deck for a caught (non-starter) Pokémon
+// Build a deck for a caught (non-starter) Pokémon — 5 standard + 5 type-specific
 function buildPokemonDeck(type) {
   const typeSig = TYPE_SIGNATURE_CARDS[type] || TYPE_SIGNATURE_CARDS.normal;
-  return [
-    ...STANDARD_CARDS.map(c => ({ ...c })),
-    ...typeSig.map(c => ({ ...c })),
-  ];
+  const std     = STANDARD_CARDS.slice(0, 5).map(c => ({ ...c }));
+  const sig     = typeSig.slice(0, 5).map(c => ({ ...c }));
+  return [...std, ...sig];
 }
 
-// Default starter deck: indices into CARD_TEMPLATES[type]
-// 3×tackle, 1×growl, 3×type[2], 2×type[3..4], 1×type[8]
-const DEFAULT_DECK_INDICES = [0,0,0,1,2,2,2,3,4,8];
+// Starter deck composition: indices into CARD_TEMPLATES[type]
+// Grass:    0=VineWhip 1=Absorb 2=Growl(0cost) 3=RazorLeaf 4=SleepPowder 5=LeechSeed 6=Synthesis 7=MegaDrain 8=Spore(0cost) 9=SolarBeam
+// Fire:     0=Ember 1=Scratch 2=Leer(0cost) 3=Flamethrower 4=Smokescreen 5=Inferno 6=FlameCharge 7=Overheat 8=Slash 9=FireBlast
+// Water:    0=WaterGun 1=Withdraw 2=Growl(0cost) 3=Bubble 4=ShellArmor 5=RainDance 6=AquaJet 7=Surf 8=Whirlpool 9=HydroPump
+// Electric: 0=QuickAttack(0cost) 1=ThunderShock 2=ThunderWave 3=Spark 4=Charge 5=Agility 6=Thunderbolt 7=Discharge 8=VoltTackle 9=Thunder
+// Starting 10 cards — variety of costs to give interesting first turns
+const DEFAULT_DECK_INDICES = [0, 1, 2, 3, 4, 0, 1, 5, 6, 3];
 
 // Common wild Pokémon pool (ids)
 const WILD_POOL = {
@@ -2818,7 +2890,10 @@ const BattleEngine = {
 
   _initBattle(playerPoke, oppPoke, isBoss) {
     this.isBoss = isBoss;
-    // Use the active pokemon's own deck (falls back to GameState.deck for starters without one yet)
+    this._focusSashUsed  = false;
+    this._chargeBonus    = 0;
+    this._futureSightDmg = 0;
+    this._dragonDanceBonus = 0;
     const activeDeck = playerPoke.deck || GameState.deck;
     this.state = {
       player: { ...playerPoke },
@@ -2826,7 +2901,8 @@ const BattleEngine = {
       drawPile:    shuffle([...activeDeck]),
       hand:        [],
       discardPile: [],
-      actionsLeft: 2,
+      exhaustedPile: [],
+      energy:      3,
       statusEffects: { player: [], opp: [] },
       shield: 0,
       oppAtkDebuff: 0,
@@ -2835,9 +2911,9 @@ const BattleEngine = {
       leechStacks: 0,
       oppSkipped: false,
       playerFlinch: false,
-      bonusAction: false,
+      bonusEnergy: 0,
     };
-    this._dealHand(3);
+    this._dealHand(5);
     this._render();
     showScreen('battle');
     this._log(`A wild ${oppPoke.name} appeared!`);
@@ -2917,8 +2993,14 @@ const BattleEngine = {
     document.getElementById('draw-count').textContent    = st.drawPile.length;
     document.getElementById('discard-count').textContent = st.discardPile.length;
 
-    // Actions
-    document.getElementById('actions-left').textContent = `Actions: ${st.actionsLeft}`;
+    // Energy orbs
+    const energyEl = document.getElementById('actions-left');
+    if (energyEl) {
+      const orbs = [0,1,2].map(i =>
+        `<span class="energy-orb ${i < st.energy ? 'energy-orb-full' : 'energy-orb-empty'}"></span>`
+      ).join('');
+      energyEl.innerHTML = `<span class="energy-label">Energy</span>${orbs}`;
+    }
 
     // Hand
     const handEl = document.getElementById('hand-area');
@@ -2933,29 +3015,38 @@ const BattleEngine = {
 
   _makeCardEl(card, idx) {
     const st = this.state;
-    const oppType = st.opp?.type || 'normal';
-    const mult = card.power > 0 ? getTypeMultiplier(card.type, oppType) : 1;
-    const effLabel = card.power > 0 ? typeEffectivenessLabel(mult) : null;
-
-    // Effective damage after type modifier (for display only)
+    const oppType   = st.opp?.type || 'normal';
+    const mult      = card.power > 0 ? getTypeMultiplier(card.type, oppType) : 1;
+    const effLabel  = card.power > 0 ? typeEffectivenessLabel(mult) : null;
     const dispPower = card.power > 0 ? Math.round(card.power * mult) : 0;
+    const cost      = card.cost ?? 1;
+    const canAfford = st.energy >= cost;
+    const disabled  = !canAfford;
 
-    const disabled = st.actionsLeft <= 0;
     const el = document.createElement('div');
-    el.className = 'card' + (disabled ? ' disabled' : '') + (mult >= 2 ? ' card-super' : mult === 0 || mult <= 0.5 ? ' card-weak' : '');
+    el.className = 'card'
+      + (disabled ? ' disabled' : '')
+      + (mult >= 2 ? ' card-super' : mult === 0 || mult <= 0.5 ? ' card-weak' : '');
     el.dataset.type = card.type;
 
-    // Build effectiveness badge HTML
     const effBadge = effLabel
       ? `<div class="card-eff-badge" style="color:${effLabel.color}">${effLabel.text}</div>`
       : '';
 
-    // Power display: show base → effective if different
     const powerDisplay = card.power > 0
-      ? (mult !== 1 ? `<span class="card-power-base">${card.power}</span> → <span style="color:${mult>=2?'#FFD700':mult===0?'#888':'#aaa'}">${dispPower}</span>` : `${card.power}`)
+      ? (mult !== 1
+          ? `<span class="card-power-base">${card.power}</span> → <span style="color:${mult>=2?'#FFD700':mult===0?'#888':'#aaa'}">${dispPower}</span>`
+          : `${card.power}`)
       : '✦';
 
+    // Cost pip: 0=gold star, 1=white dot, 2=orange dots, 3=red dots
+    const costColour = cost === 0 ? '#ffd700' : cost === 1 ? '#ccc' : cost === 2 ? '#ff9040' : '#ff4040';
+    const costPips   = cost === 0
+      ? `<span class="card-cost-pip" style="color:${costColour}">★</span>`
+      : Array(cost).fill(`<span class="card-cost-pip" style="color:${costColour}">●</span>`).join('');
+
     el.innerHTML = `
+      <div class="card-cost-row">${costPips}</div>
       <div class="card-icon">${card.icon}</div>
       <div class="card-name">${card.name}</div>
       <div class="card-power">⚔ ${powerDisplay}</div>
@@ -2985,26 +3076,32 @@ const BattleEngine = {
   },
 
   _log(msg) {
-    const el = document.getElementById('log-inner');
-    el.textContent = msg;
-    // subtle flash
-    el.style.opacity = '0';
-    requestAnimationFrame(() => { el.style.transition = 'opacity .2s'; el.style.opacity = '1'; });
+    // Shift lines down: line1→line2→line3, new message→line1
+    const l1 = document.getElementById('log-inner');
+    const l2 = document.getElementById('log-inner-2');
+    const l3 = document.getElementById('log-inner-3');
+    if (l3) l3.textContent = l2 ? l2.textContent : '';
+    if (l2) l2.textContent = l1 ? l1.textContent : '';
+    if (l1) {
+      l1.textContent = msg;
+      l1.style.opacity = '0';
+      requestAnimationFrame(() => { l1.style.transition = 'opacity .18s'; l1.style.opacity = '1'; });
+    }
   },
 
   playCard(handIndex) {
-    const st = this.state;
-    if (st.actionsLeft <= 0) return;
+    const st   = this.state;
     const card = st.hand[handIndex];
+    const cost = card.cost ?? 1;
+    if (st.energy < cost) return;
     st.hand.splice(handIndex, 1);
-    // Exhaust cards go to a separate pile — never reshuffled back
     if (card.exhaust) {
       if (!st.exhaustedPile) st.exhaustedPile = [];
       st.exhaustedPile.push(card);
     } else {
       st.discardPile.push(card);
     }
-    st.actionsLeft--;
+    st.energy -= cost;
     this._applyCardEffect(card);
     if (this.isBoss) BossEngine._syncFromBattleState(st);
     this._checkDefeated();
@@ -3027,6 +3124,17 @@ const BattleEngine = {
 
     // Rain boost
     if (st.rainTurns > 0 && card.type === 'water') dmg = Math.round(dmg * 1.2);
+
+    // Charge bonus (Charge card, Calm Mind)
+    if (dmg > 0 && this._chargeBonus > 0) {
+      dmg = Math.round(dmg * (1 + this._chargeBonus));
+      this._chargeBonus = 0;
+    }
+
+    // Dragon Dance accumulated bonus
+    if (dmg > 0 && this._dragonDanceBonus > 0) {
+      dmg = Math.round(dmg * (1 + this._dragonDanceBonus));
+    }
 
     // Crit
     let crit = false;
@@ -3057,30 +3165,80 @@ const BattleEngine = {
     switch (card.special) {
       case 'heal_10':       st.player.hp = Math.min(st.player.maxHp, st.player.hp + 10);
                             this._log(`${card.name}! Healed 10 HP!`); break;
-      case 'heal_25_draw':  st.player.hp = Math.min(st.player.maxHp, st.player.hp + 25);
+      case 'mega_drain':    st.player.hp = Math.min(st.player.maxHp, st.player.hp + 20);
+                            this._log(`${card.name}! Dealt damage + healed 20 HP!`); break;
+      case 'roost':         st.player.hp = Math.min(st.player.maxHp, st.player.hp + 35);
+                            this._log(`${card.name}! Healed 35 HP!`); break;
+      case 'heal_25_draw':  st.player.hp = Math.min(st.player.maxHp, st.player.hp + 35);
                             this._dealHand(1);
-                            this._log(`${card.name}! Healed 25 HP and drew a card!`); break;
+                            this._log(`${card.name}! Healed 35 HP + drew a card!`); break;
       case 'draw_1':        this._dealHand(1); this._log(`${card.name}! Drew a card!`); break;
-      case 'shield_draw':   st.shield += 20; this._dealHand(1);
-                            this._log(`Shell Armor! Blocked 20 dmg + drew a card!`); break;
-      case 'shield_35':     st.shield += 35; this._log(`Withdrew! Blocked 35 dmg next hit!`); break;
+      case 'growl_draw':    st.oppAtkDebuff += 10; this._dealHand(1);
+                            this._log(`${card.name}! Opp ATK fell + drew a card!`); break;
+      case 'leer_free':     st.oppAtkDebuff += 5;
+                            this._log(`${card.name}! Opp DEF fell!`); break;
+      case 'string_shot':   st.oppSkipped = false; st.oppAtkDebuff += 5; this._dealHand(1);
+                            this._log(`${card.name}! Opp slowed + drew a card!`); break;
+      case 'metronome':     this._dealHand(2); this._log(`${card.name}! Drew 2 cards!`); break;
+      case 'shield_draw':   st.shield += 45; this._dealHand(1);
+                            this._log(`Shell Armor! Blocked 45 dmg + drew a card!`); break;
+      case 'shield_35':     st.shield += 30; this._log(`${card.name}! Blocked 30 dmg next hit!`); break;
+      case 'iron_defense':  st.shield += 50; this._log(`${card.name}! Blocked 50 dmg next hit!`); break;
       case 'debuff_atk':    st.oppAtkDebuff += 10; this._log(`${st.opp.name}'s ATK fell!`); break;
-      case 'debuff_acc':    st.oppAtkDebuff += 8; this._log(`${st.opp.name}'s accuracy fell!`); break;
+      case 'debuff_acc':    st.oppAtkDebuff += 8;  this._log(`${st.opp.name}'s accuracy fell!`); break;
+      case 'debuff_def':    if(Math.random()<.35){ st.oppAtkDebuff += 5; this._log(`${st.opp.name}'s DEF fell!`); } break;
       case 'skip_opp':      st.oppSkipped = true; this._log(`${st.opp.name} fell asleep!`); break;
-      case 'slow_opp':      st.oppSkipped = true; this._log(`${st.opp.name} is slowed! Extra action!`);
-                            st.actionsLeft++; break;
-      case 'burn_chance':   if (Math.random()<.1){ addStatus(st,'opp','burn'); this._log(`${st.opp.name} is burned!`); } break;
+      case 'slow_opp':      st.oppSkipped = true; this._log(`${st.opp.name} is slowed!`); break;
+      case 'burn_chance':   if (Math.random()<.15){ addStatus(st,'opp','burn'); this._log(`${st.opp.name} is burned!`); } break;
       case 'burn':          addStatus(st,'opp','burn'); this._log(`${st.opp.name} is burning!`); break;
       case 'paralyse':      addStatus(st,'opp','para'); this._log(`${st.opp.name} is paralysed!`); break;
-      case 'para_chance':   if(Math.random()<.1){ addStatus(st,'opp','para'); this._log(`${st.opp.name} is paralysed!`); } break;
+      case 'para_chance':   if(Math.random()<.2){ addStatus(st,'opp','para'); this._log(`${st.opp.name} is paralysed!`); } break;
       case 'poison':        addStatus(st,'opp','poison'); this._log(`${st.opp.name} is poisoned!`); break;
       case 'leech':         st.leechStacks++; st.leechTurns = 3; this._log(`Leech Seed latched!`); break;
-      case 'flinch':        if(Math.random()<.3){ st.oppSkipped = true; this._log(`${st.opp.name} flinched!`); } break;
+      case 'flinch':        if(Math.random()<.25){ st.oppSkipped = true; this._log(`${st.opp.name} flinched!`); } break;
       case 'rain':          st.rainTurns = 3; this._log(`It started to rain!`); break;
-      case 'bonus_action':  st.actionsLeft++; this._log(`Agility! Gained an extra action!`); break;
       case 'recoil_15':     st.player.hp = Math.max(1, st.player.hp - 15);
                             this._log(`${card.name}! Recoil 15 HP!`); break;
-      case 'debuff_def':    if(Math.random()<.3){ st.oppAtkDebuff += 5; this._log(`${st.opp.name}'s DEF fell!`); } break;
+      case 'close_combat':  st.player.hp = Math.max(1, st.player.hp - 25);
+                            this._log(`${card.name}! Recoil 25 HP!`); break;
+      case 'overheat':      st.player.hp = Math.max(1, st.player.hp - 25);
+                            this._log(`${card.name}! Recoil 25 HP!`); break;
+      case 'discharge':     st.player.hp = Math.max(1, st.player.hp - 15);
+                            this._log(`${card.name}! 15 self damage!`); break;
+      case 'always_crit':   break; // handled in crit block above
+      case 'high_crit':     break;
+      case 'flame_charge':  st.bonusEnergy = (st.bonusEnergy || 0) + 1;
+                            this._log(`${card.name}! +1 energy next turn!`); break;
+      case 'agility':       st.energy = Math.min(3, st.energy + 1); this._dealHand(1);
+                            this._log(`Agility! +1 energy + drew a card!`); break;
+      case 'charge':        this._chargeBonus = 0.5;
+                            this._log(`Charged up! Next electric move +50%!`); break;
+      case 'bonus_action':  st.energy = Math.min(3, st.energy + 1);
+                            this._log(`Gained +1 energy!`); break;
+      case 'psyshock':      // pierces shield — already dealt as normal dmg ignoring shield
+                            this._log(`${card.name}! Pierced the shield!`); break;
+      case 'calm_mind':     this._chargeBonus = 0.3;
+                            this._log(`${card.name}! Next move +30% dmg!`); break;
+      case 'future_sight':  this._futureSightDmg = 70;
+                            this._log(`${card.name}! Attack incoming next turn!`); break;
+      case 'stealth_rock':  st.stealthRock = 3;
+                            this._log(`Stealth Rock floats in the air!`); break;
+      case 'hail':          st.hailTurns = 3;
+                            this._log(`Hail started! Opp takes 12/turn!`); break;
+      case 'venoshock':     if(hasStatus(st,'opp','poison')){ st.opp.hp = Math.max(0, st.opp.hp - dmg); this._log(`Venoshock doubled on poisoned target!`); } break;
+      case 'night_shade':   { const nsDmg = st.opp.level || 10; st.opp.hp = Math.max(0, st.opp.hp - nsDmg); this._log(`${card.name}! ${nsDmg} dmg!`); } break;
+      case 'curse':         st.opp.curseTurns = 2; st.player.hp = Math.max(1, st.player.hp - 10);
+                            this._log(`${card.name}! Opp cursed, you paid 10 HP!`); break;
+      case 'dragon_dance':  this._dragonDanceBonus = (this._dragonDanceBonus || 0) + 0.2;
+                            this._log(`${card.name}! Attack +20% this battle!`); break;
+      case 'taunt':         st.oppTauntTurns = 2;
+                            this._log(`${card.name}! Opp can only use damaging moves!`); break;
+      case 'misty_terrain': st.statusEffects.player = [];
+                            this._log(`${card.name}! All status effects cleared!`); break;
+      case 'focus_punch':   // handled in damage section — miss if hit same turn
+                            break;
+      case 'spore':         st.oppSkipped = true; this._dealHand(1);
+                            this._log(`Spore! Opp fell asleep + drew a card!`); break;
     }
 
     // Oran Berry mid-battle check after taking/dealing damage
@@ -3092,6 +3250,25 @@ const BattleEngine = {
 
   endTurn() {
     const st = this.state;
+
+    // ── End Turn warning — no energy spent ───────────────────────────────
+    if (st.energy === 3) {
+      const btn = document.getElementById('btn-end-turn');
+      if (btn && !btn.dataset.warned) {
+        btn.dataset.warned = '1';
+        btn.textContent    = 'No cards played! Sure? ▶';
+        btn.classList.add('btn-end-turn-warn');
+        setTimeout(() => {
+          btn.dataset.warned = '';
+          btn.textContent    = 'End Turn ▶';
+          btn.classList.remove('btn-end-turn-warn');
+        }, 1800);
+        return; // require second press
+      }
+      btn.dataset.warned = '';
+      btn.textContent    = 'End Turn ▶';
+      btn.classList.remove('btn-end-turn-warn');
+    }
 
     // Discard remaining hand
     st.discardPile.push(...st.hand);
@@ -3105,6 +3282,34 @@ const BattleEngine = {
       st.oppSkipped = false;
     }
 
+    // Future Sight delayed damage
+    if (this._futureSightDmg > 0) {
+      st.opp.hp = Math.max(0, st.opp.hp - this._futureSightDmg);
+      this._log(`Future Sight strikes for ${this._futureSightDmg} dmg!`);
+      this._futureSightDmg = 0;
+    }
+
+    // Stealth Rock chip damage
+    if (st.stealthRock > 0) {
+      st.opp.hp = Math.max(0, st.opp.hp - 15);
+      st.stealthRock--;
+      this._log(`Stealth Rock chip! 15 dmg.`);
+    }
+
+    // Hail chip damage
+    if (st.hailTurns > 0) {
+      st.opp.hp = Math.max(0, st.opp.hp - 12);
+      st.hailTurns--;
+      this._log(`Hail chips ${st.opp.name} for 12!`);
+    }
+
+    // Curse damage
+    if (st.opp.curseTurns > 0) {
+      st.opp.hp = Math.max(0, st.opp.hp - 20);
+      st.opp.curseTurns--;
+      this._log(`Curse drains ${st.opp.name} for 20!`);
+    }
+
     // Status ticks
     ['burn','poison'].forEach(s => {
       if (hasStatus(st, 'opp', s)) {
@@ -3113,44 +3318,42 @@ const BattleEngine = {
         this._log(`${st.opp.name} is hurt by ${s}! (${dmg})`);
       }
     });
-    if (hasStatus(st, 'player', 'burn')) {
-      st.player.hp = Math.max(0, st.player.hp - 10);
-      this._log(`Your ${st.player.name} is burned! (-10)`);
-    }
-    if (hasStatus(st, 'player', 'poison')) {
-      st.player.hp = Math.max(0, st.player.hp - 15);
-      this._log(`Your ${st.player.name} is hurt by poison! (-15)`);
-    }
+    if (hasStatus(st, 'player', 'burn'))   { st.player.hp = Math.max(0, st.player.hp - 10);  this._log(`${st.player.name} is burned! (-10)`); }
+    if (hasStatus(st, 'player', 'poison')) { st.player.hp = Math.max(0, st.player.hp - 15);  this._log(`${st.player.name} is hurt by poison! (-15)`); }
 
     // Leech
     if (st.leechTurns > 0) {
       const drain = 15 * st.leechStacks;
-      st.opp.hp = Math.max(0, st.opp.hp - drain);
+      st.opp.hp    = Math.max(0, st.opp.hp - drain);
       st.player.hp = Math.min(st.player.maxHp, st.player.hp + Math.floor(drain/2));
       st.leechTurns--;
       this._log(`Leech Seed drained ${drain} HP from ${st.opp.name}!`);
     }
 
-    // Rain countdown
-    if (st.rainTurns > 0) st.rainTurns--;
+    // Weather countdowns
+    if (st.rainTurns > 0)  st.rainTurns--;
+    if (st.oppTauntTurns > 0) st.oppTauntTurns--;
 
-    // Opp debuff decay
+    // Debuff decay
     if (st.oppAtkDebuff > 0) st.oppAtkDebuff = Math.max(0, st.oppAtkDebuff - 5);
 
-    // Check defeats after all damage ticks
+    // Check defeats
     if (this._checkDefeated()) return;
 
-    // New turn start
-    st.actionsLeft = 2;
+    // New turn — restore energy + apply bonus from Flame Charge etc.
+    st.energy = 3 + (st.bonusEnergy || 0);
+    st.bonusEnergy = 0;
+    if (st.energy > 3) st.energy = Math.min(5, st.energy);
     st.shield = 0;
+    this._chargeBonus = 0;
 
-    // Leftovers — heal at start of new turn
+    // Leftovers
     const leftoversMsg = ItemEngine.checkLeftovers(st);
     if (leftoversMsg) this._log(leftoversMsg);
 
-    this._dealHand(3);
+    this._dealHand(5);
     this._render();
-    this._log(`Your turn! You have ${st.actionsLeft} actions.`);
+    this._log(`Your turn! ${st.energy} energy.`);
   },
 
   _oppAttack() {
@@ -3247,7 +3450,7 @@ const BattleEngine = {
           st.hand = [];
           st.discardPile = [];
           st.player = { ...p };
-          this._dealHand(3);
+          this._dealHand(5);
           this._log(`Go, ${p.name}!`);
           this._render();
           fetchPoke(p.id).then(d => {
@@ -3297,36 +3500,29 @@ const BattleEngine = {
 
   switchPokemon(idx) {
     const st = this.state;
-    if (st.actionsLeft < 2) {
-      this._log(`Not enough actions to switch! (costs 2)`);
+    if (st.energy < 2) {
+      this._log(`Not enough energy to switch! (costs 2)`);
       return;
     }
-    // Sync current HP back to party
     GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
     GameState.activePokemonIndex = idx;
     const newPoke = GameState.party[idx];
-
-    // Swap active deck to the new pokemon's deck
     const newDeck = newPoke.deck || GameState.deck;
     GameState.deck = newDeck;
-
-    // Reset hand/draw/discard for the new pokemon's deck
     st.discardPile.push(...st.hand);
     st.hand = [];
     st.drawPile = shuffle([...newDeck]);
     st.discardPile = [];
-
     st.player = { ...newPoke };
-    st.actionsLeft -= 2;
-
+    st.energy -= 2;
     fetchPoke(newPoke.id).then(d => {
       const back = d.sprites?.back_default || d.sprites?.front_default || newPoke.spriteUrl;
       st.player.backSpriteUrl = back;
-      // Also persist back sprite to the party member
       GameState.party[idx].backSpriteUrl = back;
       this._render();
     });
-    this._log(`Go, ${newPoke.name}! (2 actions used)`);
+    this._dealHand(5);
+    this._log(`Go, ${newPoke.name}! (2 energy used)`);
     this._render();
   },
 };
@@ -3397,13 +3593,14 @@ const BossEngine = {
       player: { ...player },
       opp:    { ...opp },
       drawPile: shuffle([...activeDeck]),
-      hand: [], discardPile: [],
-      actionsLeft: 2,
+      hand: [], discardPile: [], exhaustedPile: [],
+      energy: 3,
       statusEffects: { player: [], opp: [] },
       shield: 0, oppAtkDebuff: 0, rainTurns: 0,
       leechTurns: 0, leechStacks: 0, oppSkipped: false,
+      bonusEnergy: 0,
     };
-    BattleEngine._dealHand.call({ state: this.bState }, 3);
+    BattleEngine._dealHand.call({ state: this.bState }, 5);
     this._render();
     this._log(`${this.bossData.name} sent out ${opp.name}!`);
     // Fetch back sprite for player (non-blocking)
@@ -3445,7 +3642,13 @@ const BossEngine = {
 
     document.getElementById('boss-draw-count').textContent    = st.drawPile.length;
     document.getElementById('boss-discard-count').textContent = st.discardPile.length;
-    document.getElementById('boss-actions-left').textContent  = `Actions: ${st.actionsLeft}`;
+    const bossEnergyEl = document.getElementById('boss-actions-left');
+    if (bossEnergyEl) {
+      const orbs = [0,1,2].map(i =>
+        `<span class="energy-orb ${i < st.energy ? 'energy-orb-full' : 'energy-orb-empty'}"></span>`
+      ).join('');
+      bossEnergyEl.innerHTML = `<span class="energy-label">Energy</span>${orbs}`;
+    }
 
     const handEl = document.getElementById('boss-hand-area');
     handEl.innerHTML = '';
@@ -3475,31 +3678,130 @@ const BossEngine = {
   },
 
   _log(msg) {
-    const el = document.getElementById('boss-log-inner');
-    el.textContent = msg;
+    const l1 = document.getElementById('boss-log-inner');
+    const l2 = document.getElementById('boss-log-inner-2');
+    const l3 = document.getElementById('boss-log-inner-3');
+    if (l3) l3.textContent = l2 ? l2.textContent : '';
+    if (l2) l2.textContent = l1 ? l1.textContent : '';
+    if (l1) {
+      l1.textContent = msg;
+      l1.style.opacity = '0';
+      requestAnimationFrame(() => { l1.style.transition = 'opacity .18s'; l1.style.opacity = '1'; });
+    }
   },
 
   playCard(idx) {
-    const st = this.bState;
-    if (st.actionsLeft <= 0) return;
+    const st   = this.bState;
     const card = st.hand[idx];
+    const cost = card.cost ?? 1;
+    if (st.energy < cost) return;
     st.hand.splice(idx, 1);
-    st.discardPile.push(card);
-    st.actionsLeft--;
-    BattleEngine._applyCardEffect.call({ state: st, _log: (m) => this._log(m), _render: () => this._render(), _checkDefeated: () => false, _dealHand: (n) => BattleEngine._dealHand.call({ state: st }, n) }, card);
+    if (card.exhaust) {
+      if (!st.exhaustedPile) st.exhaustedPile = [];
+      st.exhaustedPile.push(card);
+    } else {
+      st.discardPile.push(card);
+    }
+    st.energy -= cost;
+    BattleEngine._applyCardEffect.call({
+      state: st, isBoss: true,
+      _log:          (m) => this._log(m),
+      _render:       ()  => this._render(),
+      _checkDefeated:()  => false,
+      _dealHand:     (n) => BattleEngine._dealHand.call({ state: st }, n),
+      _chargeBonus:  0, _futureSightDmg: 0, _dragonDanceBonus: 0,
+    }, card);
     this._checkDefeated();
     this._render();
   },
 
   endTurn() {
     const st = this.bState;
+
+    // End Turn warning — no energy spent
+    if (st.energy === 3) {
+      const btn = document.getElementById('btn-boss-end-turn');
+      if (btn && !btn.dataset.warned) {
+        btn.dataset.warned = '1';
+        btn.textContent    = 'No cards played! Sure? ▶';
+        btn.classList.add('btn-end-turn-warn');
+        setTimeout(() => {
+          btn.dataset.warned = '';
+          btn.textContent    = 'End Turn ▶';
+          btn.classList.remove('btn-end-turn-warn');
+        }, 1800);
+        return;
+      }
+      if (btn) { btn.dataset.warned = ''; btn.textContent = 'End Turn ▶'; btn.classList.remove('btn-end-turn-warn'); }
+    }
+
     st.discardPile.push(...st.hand);
     st.hand = [];
-    BattleEngine._oppAttack.call({ state: st, _log: (m) => this._log(m) });
+
+    BattleEngine._oppAttack.call({
+      state: st, isBoss: true,
+      _log:    (m) => this._log(m),
+      _render: ()  => this._render(),
+    });
+
+    // Status ticks
+    ['burn','poison'].forEach(s => {
+      if (hasStatus(st, 'opp', s)) {
+        const dmg = s === 'burn' ? 10 : 15;
+        st.opp.hp = Math.max(0, st.opp.hp - dmg);
+        this._log(`${st.opp.name} is hurt by ${s}! (${dmg})`);
+      }
+    });
+    if (hasStatus(st, 'player', 'burn'))   { st.player.hp = Math.max(0, st.player.hp - 10); this._log(`${st.player.name} is burned! (-10)`); }
+    if (hasStatus(st, 'player', 'poison')) { st.player.hp = Math.max(0, st.player.hp - 15); this._log(`${st.player.name} is poisoned! (-15)`); }
+
+    if (st.leechTurns > 0) {
+      const drain = 15 * st.leechStacks;
+      st.opp.hp    = Math.max(0, st.opp.hp - drain);
+      st.player.hp = Math.min(st.player.maxHp, st.player.hp + Math.floor(drain/2));
+      st.leechTurns--;
+      this._log(`Leech Seed drained ${drain} HP!`);
+    }
+    if (st.rainTurns > 0)  st.rainTurns--;
+    if (st.hailTurns > 0)  { st.opp.hp = Math.max(0, st.opp.hp - 12); st.hailTurns--; }
+    if (st.stealthRock > 0){ st.opp.hp = Math.max(0, st.opp.hp - 15); st.stealthRock--; }
+    if (st.opp.curseTurns > 0){ st.opp.hp = Math.max(0, st.opp.hp - 20); st.opp.curseTurns--; }
+    if (st.oppAtkDebuff > 0) st.oppAtkDebuff = Math.max(0, st.oppAtkDebuff - 5);
+
     if (this._checkDefeated()) return;
-    st.actionsLeft = 2;
+
+    st.energy = 3 + (st.bonusEnergy || 0);
+    st.bonusEnergy = 0;
+    if (st.energy > 5) st.energy = 5;
     st.shield = 0;
-    BattleEngine._dealHand.call({ state: st }, 3);
+
+    BattleEngine._dealHand.call({ state: st }, 5);
+    this._render();
+    this._log(`Your turn! ${st.energy} energy.`);
+  },
+
+  switchPokemon(idx) {
+    const st = this.bState;
+    if (st.energy < 2) { this._log(`Not enough energy to switch! (costs 2)`); return; }
+    GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
+    GameState.activePokemonIndex = idx;
+    const newPoke = GameState.party[idx];
+    const newDeck = newPoke.deck || GameState.deck;
+    GameState.deck = newDeck;
+    st.discardPile.push(...st.hand);
+    st.hand = [];
+    st.drawPile  = shuffle([...newDeck]);
+    st.discardPile = [];
+    st.player    = { ...newPoke };
+    st.energy   -= 2;
+    BattleEngine._dealHand.call({ state: st }, 5);
+    fetchPoke(newPoke.id).then(d => {
+      const back = d.sprites?.back_default || d.sprites?.front_default || newPoke.spriteUrl;
+      st.player.backSpriteUrl = back;
+      GameState.party[idx].backSpriteUrl = back;
+      this._render();
+    });
+    this._log(`Go, ${newPoke.name}! (2 energy used)`);
     this._render();
   },
 
@@ -3559,36 +3861,6 @@ const BossEngine = {
       }
     }
     return false;
-  },
-
-  switchPokemon(idx) {
-    const st = this.bState;
-    if (st.actionsLeft < 2) {
-      this._log(`Not enough actions to switch! (costs 2)`);
-      return;
-    }
-    GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
-    GameState.activePokemonIndex = idx;
-    const newPoke = GameState.party[idx];
-    const newDeck = newPoke.deck || GameState.deck;
-    GameState.deck = newDeck;
-    st.discardPile.push(...st.hand);
-    st.hand = [];
-    st.drawPile = shuffle([...newDeck]);
-    st.discardPile = [];
-    st.player = { ...newPoke };
-    st.actionsLeft -= 2;
-    this._log(`Go, ${newPoke.name}! (2 actions used)`);
-    this._render();
-    // Fetch back sprite non-blocking
-    if (!newPoke.backSpriteUrl) {
-      fetchPoke(newPoke.id).then(d => {
-        const back = d.sprites?.back_default || d.sprites?.front_default || newPoke.spriteUrl;
-        st.player.backSpriteUrl = back;
-        GameState.party[idx].backSpriteUrl = back;
-        this._render();
-      });
-    }
   },
 
   _syncFromBattleState(st) { this.bState = st; },
@@ -4171,7 +4443,7 @@ const CardReward = {
 
     const el = document.getElementById('card-reward-screen');
     const deckSize = GameState.deck.length;
-    const MAX_DECK = 21;
+    const MAX_DECK = 31;
     const atCap    = deckSize >= MAX_DECK;
     document.getElementById('cr-gold-earned').textContent =
       `+${goldEarned}g earned  ·  Deck: ${deckSize}/${MAX_DECK}${atCap ? ' — FULL' : ''}`;
@@ -4205,7 +4477,7 @@ const CardReward = {
     if (atCap) {
       const notice = document.createElement('div');
       notice.className = 'cr-cap-notice';
-      notice.textContent = '⚠ Deck is full (21 cards max). Remove a card at Training to make room.';
+      notice.textContent = '⚠ Deck is full (31 cards max). Remove a card at Training to make room.';
       grid.after(notice);
     }
 
@@ -4215,7 +4487,7 @@ const CardReward = {
   pickCard(idx) {
     const card   = this._pool[idx];
     const active = GameState.party[GameState.activePokemonIndex];
-    const MAX_DECK = 21;
+    const MAX_DECK = 31;
 
     // Guard: don't exceed 2 copies of the same card
     const existingCount = (GameState.deck || []).filter(c => c.id === card.id).length;
