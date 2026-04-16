@@ -772,11 +772,7 @@ const SAVE_KEY        = 'pokerogue_save_v1';
 const UNLOCK_KEY      = 'pokerogue_unlocks_v1';
 
 function saveGame() {
-  try {
-    // Never persist _evolutionPending as true — it should always re-evaluate fresh
-    const toSave = { ...GameState, _evolutionPending: false };
-    localStorage.setItem(SAVE_KEY, JSON.stringify(toSave));
-  } catch(e) {}
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(GameState)); } catch(e) {}
 }
 function loadGame() {
   try {
@@ -1874,6 +1870,10 @@ const MeowthChallenge = TeamRocketChallenge;
 // Awards +1 level to every living party member after a battle or training node.
 // Returns an array of evolution descriptors for any starters that crossed a threshold:
 // { partyIdx, beforeId, afterId, stage, narrative }
+// Awards +1 level to every living party member.
+// Checks the starter for evolution thresholds — fires whenever level >= threshold,
+// regardless of whether it just crossed or was already past it.
+// Returns at most ONE evolution descriptor per call.
 function levelUpParty(source) {
   const evolutions = [];
   const levelled   = [];
@@ -1881,35 +1881,29 @@ function levelUpParty(source) {
   GameState.party.forEach((p, i) => {
     if (p.hp <= 0) return;
     p.level++;
-    // Lucky Egg — gain an extra level
     if (p.heldItem?.id === 'lucky_egg') p.level++;
     p.maxHp += 8;
     p.hp     = Math.min(p.hp + 8, p.maxHp);
     levelled.push(i);
 
-    // Only the starter can evolve, and only one stage per call
     if (!p.isStarter) return;
-    if (GameState._evolutionPending) return;
+    if (evolutions.length > 0) return; // only one evo per call
 
-    const starter = STARTERS.find(s => s.id === Number(GameState.starterId));
+    const starterId  = Number(GameState.starterId);
+    const starter    = STARTERS.find(s => s.id === starterId);
     if (!starter) return;
-    const thresholds = EVOLUTION_LEVELS[starter.id];
+    const thresholds = EVOLUTION_LEVELS[starterId];
     if (!thresholds) return;
-    const curStage = GameState.evolutionStage;
+    const stage      = GameState.evolutionStage;
 
-    let triggered = false;
-    if (curStage === 0 && thresholds.stage2 && p.level >= thresholds.stage2) {
+    if (stage === 0 && thresholds.stage2 && p.level >= thresholds.stage2) {
       evolutions.push({ partyIdx: i, stage: 2,
         beforeId: starter.evolutions[0], afterId: starter.evolutions[1] });
-      GameState.evolutionStage    = 1;
-      GameState._evolutionPending = true;
-      triggered = true;
-    }
-    if (!triggered && curStage === 1 && thresholds.stage3 && p.level >= thresholds.stage3) {
+      GameState.evolutionStage = 1;
+    } else if (stage === 1 && thresholds.stage3 && p.level >= thresholds.stage3) {
       evolutions.push({ partyIdx: i, stage: 3,
         beforeId: starter.evolutions[1], afterId: starter.evolutions[2] });
-      GameState.evolutionStage    = 2;
-      GameState._evolutionPending = true;
+      GameState.evolutionStage = 2;
     }
   });
 
@@ -1932,9 +1926,6 @@ function flashLevelUp(indices) {
 
 // Run evolution sequence for all queued evolutions, then call onDone
 async function runEvolutions(evolutions, onDone) {
-  // Clear the pending guard now that we are actually running the cutscene
-  GameState._evolutionPending = false;
-
   if (evolutions.length === 0) { onDone(); return; }
 
   const evo      = evolutions[0];
@@ -2008,7 +1999,6 @@ const Game = {
       difficultyTier: 2,       // 1=Rookie(6-7), 2=Rising(8-9), 3=Expert(10-12)
       battlesSinceChallenge: 0, // trigger challenge every ~3-5 battles
       lastChallengeWasBattle: false,
-      _evolutionPending: false,
     };
     showScreen('register');
   },
@@ -2021,7 +2011,6 @@ const Game = {
     }
     GameState = saved;
     // Sanitise fields that can get stuck across save/load cycles
-    GameState._evolutionPending = false;   // never carry a pending flag across sessions
     GameState.starterId         = Number(GameState.starterId); // ensure numeric for strict ===
     // Ensure all party members have required fields that may be missing from old saves
     (GameState.party || []).forEach(p => {
@@ -2145,12 +2134,13 @@ const Game = {
     GameState.highWaterRow   = -1;
 
     // ── Level up party after boss win (+3 bonus levels) ───────────────────
-    // Collect all evolutions across the 4 calls; the _evolutionPending guard
-    // ensures at most one evolution fires per complete boss-win session.
+    // Give everyone 4 bonus levels after a boss win.
+    // Only the first evolution that fires is used — GameState.evolutionStage
+    // is updated on first trigger so subsequent calls won't re-trigger the same stage.
     const evolutions = [];
     for (let bonus = 0; bonus < 4; bonus++) {
       const evo = levelUpParty('boss');
-      if (evo.length > 0) evolutions.push(...evo);
+      if (evo.length > 0 && evolutions.length === 0) evolutions.push(...evo);
     }
 
     const nextBoss  = BOSS_TRAINERS[nextBossIdx];
