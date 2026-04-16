@@ -1933,16 +1933,16 @@ async function runEvolutions(evolutions, onDone) {
   GameState._evolutionPending = false;
 
   if (evolutions.length === 0) { onDone(); return; }
-  const evo     = evolutions[0];
-  const rest    = evolutions.slice(1);
-  const poke    = GameState.party[evo.partyIdx];
-  const name    = GameState.trainerName || 'Trainer';
+
+  const evo      = evolutions[0];
+  const rest     = evolutions.slice(1);
+  const poke     = GameState.party[evo.partyIdx];
+  const name     = GameState.trainerName || 'Trainer';
   const prevName = poke.name;
   const starter  = STARTERS.find(s => s.id === GameState.starterId);
   const isPikachu = starter?.id === 25;
 
   if (isPikachu) {
-    // Pikachu: HP boost + special modal, no evolve screen
     poke.maxHp += 20;
     poke.hp    += 20;
     const narrative = (EVOLVE_NARRATIVES[25]?.[2])?.(name, prevName, prevName) ?? '';
@@ -1950,26 +1950,29 @@ async function runEvolutions(evolutions, onDone) {
     return;
   }
 
-  // Build narrative
+  // Build narrative before updating the pokemon's name
   const narrativeFn = EVOLVE_NARRATIVES[starter?.id]?.[evo.stage];
   const afterPoke   = await fetchPoke(evo.afterId).catch(() => null);
   const afterName   = afterPoke ? capitalize(afterPoke.name) : 'its new form';
   const narrative   = narrativeFn ? narrativeFn(name, afterName, prevName) : `${prevName} is evolving!`;
 
-  // Update party member
+  // Update party member data now so the evolve screen shows the right sprites
   poke.id = evo.afterId;
   if (afterPoke) {
-    poke.name      = capitalize(afterPoke.name);
-    poke.spriteUrl = getSpriteUrl(afterPoke);
+    poke.name          = capitalize(afterPoke.name);
+    poke.spriteUrl     = getSpriteUrl(afterPoke);
     poke.backSpriteUrl = null;
-    poke.maxHp    += 20;
-    poke.hp        = poke.maxHp;
+    poke.maxHp        += 20;
+    poke.hp            = poke.maxHp;
   }
 
   showScreen('evolve');
-  await EvolveEngine.run(evo.beforeId, evo.afterId, narrative, () => {
-    runEvolutions(rest, onDone);
-  });
+
+  // await the Promise — this genuinely pauses here until Continue is pressed
+  await EvolveEngine.run(evo.beforeId, evo.afterId, narrative, null);
+
+  // Continue pressed — chain to next evolution or finish
+  await runEvolutions(rest, onDone);
 }
 
 // ─── GAME CONTROLLER ─────────────────────────────────────────────────────────
@@ -4833,51 +4836,75 @@ const HealEngine = {
 // ─── EVOLVE ENGINE ───────────────────────────────────────────────────────────
 
 const EvolveEngine = {
-  _cb: null,
 
-  async run(beforeId, afterId, narrative, cb) {
+  // Returns a Promise that resolves only when the player taps Continue
+  run(beforeId, afterId, narrative, cb) {
+    // Store callback — resolved by Game.afterEvolve() when button pressed
     this._cb = cb;
-    showLoading();
-    const [before, after] = await Promise.all([fetchPoke(beforeId), fetchPoke(afterId)]);
-    hideLoading();
 
-    const beforeName = capitalize(before.name);
-    const afterName  = capitalize(after.name);
+    return new Promise(async (resolve) => {
+      showLoading();
+      let before, after;
+      try {
+        [before, after] = await Promise.all([fetchPoke(beforeId), fetchPoke(afterId)]);
+      } catch(e) {
+        hideLoading();
+        // On API failure, still call the callback so the game doesn't freeze
+        if (cb) cb();
+        resolve();
+        return;
+      }
+      hideLoading();
 
-    document.getElementById('evolve-before').src = getSpriteUrl(before);
-    document.getElementById('evolve-after').src  = getSpriteUrl(after);
-    document.getElementById('evolve-narrative').textContent = narrative || '';
-    document.getElementById('evolve-text').textContent = `${beforeName} is evolving…`;
-    document.getElementById('btn-evolve-continue').style.display = 'none';
-    document.getElementById('evolve-after').className = 'evolve-sprite after';
+      const beforeName = capitalize(before.name);
+      const afterName  = capitalize(after.name);
 
-    // Particles
-    const partsEl = document.getElementById('evolve-particles');
-    partsEl.innerHTML = '';
-    for (let i = 0; i < 25; i++) {
-      const p = document.createElement('div');
-      p.className = 'evo-particle';
-      const size = 4 + Math.random() * 10;
-      p.style.cssText = `
-        width:${size}px;height:${size}px;
-        left:${Math.random()*100}%;
-        background:hsl(${40+Math.random()*40},100%,${60+Math.random()*30}%);
-        animation-duration:${2+Math.random()*3}s;
-        animation-delay:${Math.random()*2}s;
-      `;
-      partsEl.appendChild(p);
-    }
+      document.getElementById('evolve-before').src = getSpriteUrl(before);
+      document.getElementById('evolve-after').src  = getSpriteUrl(after);
+      document.getElementById('evolve-narrative').textContent = narrative || '';
+      document.getElementById('evolve-text').textContent = `${beforeName} is evolving…`;
+      document.getElementById('btn-evolve-continue').style.display = 'none';
+      document.getElementById('evolve-after').className = 'evolve-sprite after';
 
-    setTimeout(() => {
-      document.getElementById('evolve-after').className = 'evolve-sprite after show';
-      document.getElementById('evolve-text').textContent = `${beforeName} evolved into ${afterName}!`;
-      document.getElementById('btn-evolve-continue').style.display = 'inline-block';
-    }, 3000);
+      // Particles
+      const partsEl = document.getElementById('evolve-particles');
+      partsEl.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'evo-particle';
+        const size = 4 + Math.random() * 10;
+        p.style.cssText = `
+          width:${size}px; height:${size}px;
+          left:${Math.random()*100}%;
+          background:hsl(${40+Math.random()*40},100%,${60+Math.random()*30}%);
+          animation-duration:${2+Math.random()*3}s;
+          animation-delay:${Math.random()*2}s;
+        `;
+        partsEl.appendChild(p);
+      }
+
+      // After 3s reveal the evolved form — player must press Continue to proceed
+      setTimeout(() => {
+        document.getElementById('evolve-after').className = 'evolve-sprite after show';
+        document.getElementById('evolve-text').textContent = `${beforeName} evolved into ${afterName}!`;
+        const btn = document.getElementById('btn-evolve-continue');
+        btn.style.display = 'inline-block';
+        // Wire the resolve to the continue button so the Promise waits here
+        this._resolve = resolve;
+      }, 3000);
+    });
   },
 };
 
 // afterEvolve is called by the Continue button on the evolve screen
 Game.afterEvolve = function() {
+  // Resolve the waiting Promise so runEvolutions' await completes
+  if (EvolveEngine._resolve) {
+    const resolve = EvolveEngine._resolve;
+    EvolveEngine._resolve = null;
+    resolve();
+  }
+  // Also call the direct callback (used by boss path)
   if (EvolveEngine._cb) {
     const cb = EvolveEngine._cb;
     EvolveEngine._cb = null;
