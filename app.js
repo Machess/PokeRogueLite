@@ -3423,9 +3423,10 @@ const BossEngine = {
       BOSS_TRAINERS.length - 1
     );
     const boss = BOSS_TRAINERS[bossIdx];
-    this.bossData = boss;
-    this.oppIdx   = 0;
-    this.oppTeam  = [];
+    this.bossData    = boss;
+    this.oppIdx      = 0;
+    this.oppTeam     = [];
+    this._isRocket   = false;  // always clear — Rocket sets it separately
 
     for (const id of boss.team) {
       try {
@@ -3910,6 +3911,7 @@ const RocketBattleEngine = {
 
     hideLoading();
     showScreen('boss');
+    BossEngine._isRocket = true;  // set NOW so button handler routes correctly
 
     // Show boss-party-bar for Rocket team
     document.getElementById('boss-party-bar').innerHTML =
@@ -3989,11 +3991,9 @@ const RocketBattleEngine = {
     document.getElementById('trainer-intro').style.display    = 'none';
     document.getElementById('boss-battle-area').style.display = 'block';
 
-    // Delegate all battle logic to BossEngine, just swap its team data
-    BossEngine.bossData  = this.bossData;
-    BossEngine.oppTeam   = this._oppTeam;
-    BossEngine.oppIdx    = 0;
-    BossEngine._isRocket = true;
+    BossEngine.bossData = this.bossData;
+    BossEngine.oppTeam  = this._oppTeam;
+    BossEngine.oppIdx   = 0;
     BossEngine._loadNextOpp();
   },
 
