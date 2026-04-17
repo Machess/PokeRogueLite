@@ -140,156 +140,81 @@ const BOSS_TRAINERS = [
 ];
 
 // ─── MAP THEMES ──────────────────────────────────────────────────────────────
-// One theme per boss index — defines purely visual map styling
 const MAP_THEMES = [
-  // 0: Brock — rocky cave, browns and greys
+  // 0: Brock — rocky plateau, dusty brown highlands
   {
     name: 'Boulder Cave Trail',
-    bgTop: '#8a7060', bgMid: '#6e5a4a', bgBot: '#5a4838',
-    pathActive: 'rgba(220,180,100,0.85)', pathDone: 'rgba(255,210,80,0.9)',
-    pathBypassed: 'rgba(60,45,35,0.4)',   pathLocked: 'rgba(70,55,45,0.3)',
-    glowActive: 'rgba(200,140,60,0.6)',   glowDone: 'rgba(255,190,50,0.8)',
-    texture: 'rock',
-    accent: '#c8a060',
-    bandColor: 'rgba(60,45,35,0.25)',
+    ocean: '#4a5a6a', land: '#8a7250', landHi: '#b09060', landShadow: '#3a2c1e',
+    roadFill: '#d4a832', roadEdge: '#8a6010', roadHi: '#f0d070',
+    pathDone: 'rgba(255,210,80,0.9)', pathBypassed: 'rgba(60,45,35,0.4)', pathLocked: 'rgba(70,55,45,0.3)',
+    glowDone: 'rgba(255,190,50,0.8)', accent: '#c8a060', texture: 'rock',
   },
-  // 1: Misty — ocean blues and teals
+  // 1: Misty — coastal island, vivid greens with cerulean ocean
   {
     name: 'Cerulean Sea Path',
-    bgTop: '#2a5a8a', bgMid: '#1e4a7a', bgBot: '#123060',
-    pathActive: 'rgba(80,200,240,0.85)', pathDone: 'rgba(120,230,255,0.9)',
-    pathBypassed: 'rgba(20,40,80,0.4)',  pathLocked: 'rgba(20,50,90,0.3)',
-    glowActive: 'rgba(40,160,220,0.7)',  glowDone: 'rgba(80,220,255,0.9)',
-    texture: 'water',
-    accent: '#40c0e0',
-    bandColor: 'rgba(10,30,70,0.3)',
+    ocean: '#1a6a9a', land: '#3a8a3a', landHi: '#60b840', landShadow: '#1a4a1a',
+    roadFill: '#d4a832', roadEdge: '#8a6010', roadHi: '#f0d070',
+    pathDone: 'rgba(120,230,255,0.9)', pathBypassed: 'rgba(20,40,80,0.4)', pathLocked: 'rgba(20,50,90,0.3)',
+    glowDone: 'rgba(80,220,255,0.9)', accent: '#40c0e0', texture: 'water',
   },
-  // 2: Lt. Surge — electric yellow, military steel
+  // 2: Lt. Surge — military scrubland, olive drab
   {
     name: 'Vermilion Thunder Road',
-    bgTop: '#4a4a20', bgMid: '#3a3a18', bgBot: '#2a2a10',
-    pathActive: 'rgba(255,240,60,0.9)',  pathDone: 'rgba(255,255,100,0.95)',
-    pathBypassed: 'rgba(40,40,20,0.45)', pathLocked: 'rgba(50,50,25,0.3)',
-    glowActive: 'rgba(220,210,0,0.8)',   glowDone: 'rgba(255,255,80,0.95)',
-    texture: 'electric',
-    accent: '#f0e020',
-    bandColor: 'rgba(30,30,10,0.35)',
+    ocean: '#2a3a20', land: '#5a6a30', landHi: '#7a8a40', landShadow: '#1a2010',
+    roadFill: '#e8cc30', roadEdge: '#907800', roadHi: '#fff080',
+    pathDone: 'rgba(255,255,100,0.95)', pathBypassed: 'rgba(40,40,20,0.45)', pathLocked: 'rgba(50,50,25,0.3)',
+    glowDone: 'rgba(255,255,80,0.95)', accent: '#f0e020', texture: 'electric',
   },
-  // 3: Erika — lush greens, flower garden
+  // 3: Erika — emerald forest, deep rich greens
   {
     name: 'Celadon Garden Walk',
-    bgTop: '#2a5a2a', bgMid: '#1e4a1e', bgBot: '#143414',
-    pathActive: 'rgba(100,220,80,0.85)', pathDone: 'rgba(140,255,100,0.9)',
-    pathBypassed: 'rgba(20,50,20,0.4)',  pathLocked: 'rgba(20,55,20,0.3)',
-    glowActive: 'rgba(60,180,40,0.7)',   glowDone: 'rgba(100,240,60,0.9)',
-    texture: 'grass',
-    accent: '#60d040',
-    bandColor: 'rgba(10,40,10,0.3)',
+    ocean: '#1a5a2a', land: '#2a8a2a', landHi: '#50c050', landShadow: '#0a2a0a',
+    roadFill: '#d4a832', roadEdge: '#7a5a08', roadHi: '#f0d060',
+    pathDone: 'rgba(140,255,100,0.9)', pathBypassed: 'rgba(20,50,20,0.4)', pathLocked: 'rgba(20,55,20,0.3)',
+    glowDone: 'rgba(100,240,60,0.9)', accent: '#60d040', texture: 'grass',
   },
-  // 4: Koga — purple poison, ninja mist
+  // 4: Koga — foggy purple marshland
   {
     name: 'Fuschia Shadow Maze',
-    bgTop: '#2e1a4a', bgMid: '#221438', bgBot: '#180e28',
-    pathActive: 'rgba(180,80,240,0.85)', pathDone: 'rgba(210,120,255,0.9)',
-    pathBypassed: 'rgba(30,15,50,0.45)', pathLocked: 'rgba(35,18,55,0.3)',
-    glowActive: 'rgba(150,40,220,0.7)',  glowDone: 'rgba(200,100,255,0.9)',
-    texture: 'poison',
-    accent: '#a040d0',
-    bandColor: 'rgba(20,10,40,0.35)',
+    ocean: '#1a0a2a', land: '#3a2a5a', landHi: '#5a3a7a', landShadow: '#0e0618',
+    roadFill: '#b060e0', roadEdge: '#6020a0', roadHi: '#d090ff',
+    pathDone: 'rgba(210,120,255,0.9)', pathBypassed: 'rgba(30,15,50,0.45)', pathLocked: 'rgba(35,18,55,0.3)',
+    glowDone: 'rgba(200,100,255,0.9)', accent: '#a040d0', texture: 'poison',
   },
-  // 5: Sabrina — psychic pink and deep space
+  // 5: Sabrina — lavender psychic hills
   {
     name: 'Saffron Psychic Plane',
-    bgTop: '#3a1a3a', bgMid: '#2e1030', bgBot: '#200a22',
-    pathActive: 'rgba(255,100,200,0.85)', pathDone: 'rgba(255,160,240,0.9)',
-    pathBypassed: 'rgba(40,15,40,0.45)', pathLocked: 'rgba(45,18,45,0.3)',
-    glowActive: 'rgba(220,60,180,0.7)',  glowDone: 'rgba(255,140,230,0.9)',
-    texture: 'psychic',
-    accent: '#e060c0',
-    bandColor: 'rgba(30,10,30,0.35)',
+    ocean: '#200828', land: '#5a2a6a', landHi: '#8a4a9a', landShadow: '#120416',
+    roadFill: '#e060c0', roadEdge: '#902880', roadHi: '#ff90e0',
+    pathDone: 'rgba(255,160,240,0.9)', pathBypassed: 'rgba(40,15,40,0.45)', pathLocked: 'rgba(45,18,45,0.3)',
+    glowDone: 'rgba(255,140,230,0.9)', accent: '#e060c0', texture: 'psychic',
   },
-  // 6: Blaine — volcanic fire, molten orange
+  // 6: Blaine — volcanic rock island, black with lava veins
   {
     name: 'Cinnabar Volcano Climb',
-    bgTop: '#5a2000', bgMid: '#481800', bgBot: '#361000',
-    pathActive: 'rgba(255,120,20,0.9)',  pathDone: 'rgba(255,180,60,0.95)',
-    pathBypassed: 'rgba(50,20,5,0.45)',  pathLocked: 'rgba(55,22,8,0.3)',
-    glowActive: 'rgba(220,80,0,0.8)',    glowDone: 'rgba(255,160,40,0.95)',
-    texture: 'fire',
-    accent: '#ff6010',
-    bandColor: 'rgba(40,15,5,0.4)',
+    ocean: '#1a0a00', land: '#3a1800', landHi: '#6a2800', landShadow: '#0a0400',
+    roadFill: '#ff6010', roadEdge: '#8a2800', roadHi: '#ffb060',
+    pathDone: 'rgba(255,180,60,0.95)', pathBypassed: 'rgba(50,20,5,0.45)', pathLocked: 'rgba(55,22,8,0.3)',
+    glowDone: 'rgba(255,160,40,0.95)', accent: '#ff6010', texture: 'fire',
   },
-  // 7: Giovanni — dark urban, Team Rocket red
+  // 7: Giovanni — dark urban concrete, near-black
   {
     name: 'Viridian Dark City',
-    bgTop: '#1a1a1a', bgMid: '#141414', bgBot: '#0e0e0e',
-    pathActive: 'rgba(220,40,40,0.85)', pathDone: 'rgba(255,80,80,0.9)',
-    pathBypassed: 'rgba(40,10,10,0.5)',  pathLocked: 'rgba(40,15,15,0.3)',
-    glowActive: 'rgba(200,20,20,0.7)',   glowDone: 'rgba(255,60,60,0.9)',
-    texture: 'dark',
-    accent: '#cc2020',
-    bandColor: 'rgba(30,8,8,0.4)',
+    ocean: '#0a0a0a', land: '#1e1e1e', landHi: '#2e2e2e', landShadow: '#000000',
+    roadFill: '#cc2020', roadEdge: '#6a0808', roadHi: '#ff6060',
+    pathDone: 'rgba(255,80,80,0.9)', pathBypassed: 'rgba(40,10,10,0.5)', pathLocked: 'rgba(40,15,15,0.3)',
+    glowDone: 'rgba(255,60,60,0.9)', accent: '#cc2020', texture: 'dark',
   },
-  // 8: Lorelei — icy arctic blue-white
-  {
-    name: 'Ice Path — Elite Four',
-    bgTop: '#c0d8f0', bgMid: '#90b8e0', bgBot: '#5090c0',
-    pathActive: 'rgba(180,230,255,0.9)', pathDone: 'rgba(220,250,255,0.95)',
-    pathBypassed: 'rgba(80,120,160,0.4)', pathLocked: 'rgba(80,130,170,0.3)',
-    glowActive: 'rgba(140,200,240,0.8)',  glowDone: 'rgba(200,240,255,0.95)',
-    texture: 'ice',
-    accent: '#b0e0ff',
-    bandColor: 'rgba(60,100,150,0.25)',
-  },
-  // 9: Bruno — fighting dojo, earthy red clay
-  {
-    name: 'Fighting Dojo — Elite Four',
-    bgTop: '#5a2010', bgMid: '#481808', bgBot: '#361008',
-    pathActive: 'rgba(220,120,60,0.85)', pathDone: 'rgba(255,160,80,0.9)',
-    pathBypassed: 'rgba(50,20,10,0.45)', pathLocked: 'rgba(55,22,10,0.3)',
-    glowActive: 'rgba(190,80,30,0.7)',   glowDone: 'rgba(250,140,60,0.9)',
-    texture: 'rock',
-    accent: '#d06030',
-    bandColor: 'rgba(40,15,5,0.35)',
-  },
-  // 10: Agatha — ghost, deep dark purple-black
-  {
-    name: 'Ghost Tower — Elite Four',
-    bgTop: '#0e0e18', bgMid: '#0a0a14', bgBot: '#060610',
-    pathActive: 'rgba(140,100,220,0.85)', pathDone: 'rgba(180,140,255,0.9)',
-    pathBypassed: 'rgba(15,12,30,0.5)',   pathLocked: 'rgba(18,14,35,0.3)',
-    glowActive: 'rgba(110,70,200,0.7)',   glowDone: 'rgba(160,120,255,0.9)',
-    texture: 'ghost',
-    accent: '#8050d0',
-    bandColor: 'rgba(12,10,25,0.4)',
-  },
-  // 11: Lance — dragon, deep indigo and gold
-  {
-    name: 'Dragon\'s Den — Elite Four',
-    bgTop: '#0a1a3a', bgMid: '#081430', bgBot: '#060e22',
-    pathActive: 'rgba(100,160,255,0.85)', pathDone: 'rgba(140,200,255,0.9)',
-    pathBypassed: 'rgba(10,20,50,0.45)',  pathLocked: 'rgba(12,22,55,0.3)',
-    glowActive: 'rgba(60,120,240,0.7)',   glowDone: 'rgba(120,180,255,0.9)',
-    texture: 'dragon',
-    accent: '#4080e0',
-    bandColor: 'rgba(8,15,40,0.4)',
-  },
-  // 12: Blue (Champion) — rich crimson and gold
-  {
-    name: '★ Champion\'s Hall',
-    bgTop: '#2a0808', bgMid: '#1e0606', bgBot: '#140404',
-    pathActive: 'rgba(255,200,40,0.9)',  pathDone: 'rgba(255,230,100,0.95)',
-    pathBypassed: 'rgba(40,10,10,0.5)',  pathLocked: 'rgba(45,12,12,0.3)',
-    glowActive: 'rgba(220,160,0,0.8)',   glowDone: 'rgba(255,220,80,0.95)',
-    texture: 'champion',
-    accent: '#ffc820',
-    bandColor: 'rgba(30,8,8,0.4)',
-  },
+  // 8-12 Elite Four / Champion — keep existing colour feel
+  { name:'Ice Path',       ocean:'#3060a0', land:'#a0c8e8', landHi:'#d0f0ff', landShadow:'#2050808', roadFill:'#c0e8ff', roadEdge:'#6090c0', roadHi:'#ffffff', pathDone:'rgba(220,250,255,0.95)', pathBypassed:'rgba(80,120,160,0.4)', pathLocked:'rgba(80,130,170,0.3)', glowDone:'rgba(200,240,255,0.95)', accent:'#b0e0ff', texture:'ice' },
+  { name:'Fighting Dojo',  ocean:'#2a1008', land:'#6a3018', landHi:'#8a4a28', landShadow:'#180808', roadFill:'#d06030', roadEdge:'#6a2808', roadHi:'#f09060', pathDone:'rgba(255,160,80,0.9)', pathBypassed:'rgba(50,20,10,0.45)', pathLocked:'rgba(55,22,10,0.3)', glowDone:'rgba(250,140,60,0.9)', accent:'#d06030', texture:'rock' },
+  { name:'Ghost Tower',    ocean:'#06060e', land:'#1a1430', landHi:'#2a2048', landShadow:'#02020a', roadFill:'#8050d0', roadEdge:'#3010a0', roadHi:'#b080ff', pathDone:'rgba(180,140,255,0.9)', pathBypassed:'rgba(15,12,30,0.5)', pathLocked:'rgba(18,14,35,0.3)', glowDone:'rgba(160,120,255,0.9)', accent:'#8050d0', texture:'ghost' },
+  { name:"Dragon's Den",   ocean:'#060c20', land:'#0a1a40', landHi:'#1030608', landShadow:'#020608', roadFill:'#4080e0', roadEdge:'#103080', roadHi:'#80b8ff', pathDone:'rgba(140,200,255,0.9)', pathBypassed:'rgba(10,20,50,0.45)', pathLocked:'rgba(12,22,55,0.3)', glowDone:'rgba(120,180,255,0.9)', accent:'#4080e0', texture:'dragon' },
+  { name:'★ Champions Hall', ocean:'#0e0202', land:'#2a0808', landHi:'#4a1010', landShadow:'#060000', roadFill:'#ffc820', roadEdge:'#a07800', roadHi:'#fff080', pathDone:'rgba(255,230,100,0.95)', pathBypassed:'rgba(40,10,10,0.5)', pathLocked:'rgba(45,12,12,0.3)', glowDone:'rgba(255,220,80,0.95)', accent:'#ffc820', texture:'champion' },
 ];
 
 const NODE_TYPES = ['battle', 'heal', 'catch', 'training', 'shop'];
 const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓' };
-// All non-boss, non-start nodes appear as ❓ until visited
 const NODE_MYSTERY_ICON = '❓';
 
 const STATUS_LABELS = {
@@ -2562,97 +2487,104 @@ const MapEngine = {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, W, H);
 
-    // ── Pick theme ──
     const bi    = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
     const theme = MAP_THEMES[Math.min(bi, MAP_THEMES.length - 1)];
 
-    // ── Background gradient ──
-    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
-    bgGrad.addColorStop(0,   theme.bgTop);
-    bgGrad.addColorStop(0.5, theme.bgMid);
-    bgGrad.addColorStop(1,   theme.bgBot);
-    ctx.fillStyle = bgGrad;
+    // ── 1. Ocean fill ──────────────────────────────────────────────────────
+    ctx.fillStyle = theme.ocean;
     ctx.fillRect(0, 0, W, H);
 
-    // ── Themed texture overlay ──
+    // ── 2. Landmass polygon (unique per theme) ─────────────────────────────
+    this._drawLandmass(ctx, W, H, bi, theme);
+
+    // ── 3. Texture overlay on land ──────────────────────────────────────────
     this._drawTexture(ctx, W, H, theme);
 
-    // ── Horizontal band dividers ──
-    for (let i = 1; i < 5; i++) {
-      const bandY = (i / 5) * H;
-      ctx.beginPath();
-      ctx.moveTo(0, bandY);
-      ctx.lineTo(W, bandY);
-      ctx.strokeStyle = theme.bandColor;
-      ctx.lineWidth = 1;
-      ctx.setLineDash([4, 10]);
-      ctx.stroke();
-      ctx.setLineDash([]);
-    }
+    // ── 4. Topographic radial highlight ────────────────────────────────────
+    const topo = ctx.createRadialGradient(W*0.5, H*0.42, H*0.05, W*0.5, H*0.42, H*0.72);
+    topo.addColorStop(0,   'rgba(255,255,255,0.10)');
+    topo.addColorStop(0.5, 'rgba(255,255,255,0.03)');
+    topo.addColorStop(1,   'rgba(0,0,0,0.22)');
+    ctx.fillStyle = topo;
+    ctx.fillRect(0, 0, W, H);
 
     const nodes = GameState.map;
+    nodes.forEach(n => { n.px = n.x * W; n.py = n.y * H; });
 
-    // Compute pixel positions
-    nodes.forEach(n => {
-      n.px = n.x * W;
-      n.py = n.y * H;
-    });
+    // ── 5. Orthogonal roads ─────────────────────────────────────────────────
+    const ROAD_W   = Math.max(14, W * 0.038);
+    const drawn    = new Set();
 
-    // ── Draw path edges ──
     nodes.forEach(n => {
       n.links.forEach(li => {
         const target = nodes[li];
         if (!target) return;
+        const key = [Math.min(n.idx, li), Math.max(n.idx, li)].join('-');
+        if (drawn.has(key)) return;
+        drawn.add(key);
 
-        const done     = GameState.completedNodes.includes(n.idx);
+        const done     = GameState.completedNodes.includes(n.idx) && GameState.completedNodes.includes(li);
         const bypassed = !!n.bypassed;
         const locked   = !n.unlocked && !done && !bypassed;
 
-        // Lane tint — left paths slightly warmer, right paths slightly cooler
-        const isRight = n.lane === 'right';
+        const ax = n.px, ay = n.py;
+        const bx = target.px, by = target.py;
+        // Orthogonal elbow: go horizontal first then vertical
+        const ex = bx, ey = ay;
 
-        ctx.beginPath();
-        ctx.moveTo(n.px, n.py);
-        // Slight curve for visual interest
-        const mx = (n.px + target.px) / 2 + (isRight ? 12 : -12);
-        const my = (n.py + target.py) / 2;
-        ctx.quadraticCurveTo(mx, my, target.px, target.py);
+        const drawRoad = (x1, y1, x2, y2) => {
+          if (Math.abs(x1-x2) < 2 && Math.abs(y1-y2) < 2) return;
+          ctx.lineCap = 'square';
 
-        if (done) {
-          ctx.strokeStyle = theme.pathDone;
-          ctx.lineWidth   = 5;
-          ctx.shadowColor = theme.glowDone;
-          ctx.shadowBlur  = 12;
-          ctx.setLineDash([]);
-        } else if (bypassed) {
-          ctx.strokeStyle = theme.pathBypassed;
-          ctx.lineWidth   = 1.5;
-          ctx.shadowBlur  = 0;
-          ctx.setLineDash([2, 7]);
-        } else if (locked) {
-          ctx.strokeStyle = theme.pathLocked;
-          ctx.lineWidth   = 1.5;
-          ctx.shadowBlur  = 0;
-          ctx.setLineDash([]);
-        } else {
-          ctx.strokeStyle = theme.pathActive;
-          ctx.lineWidth   = 3;
-          ctx.shadowColor = theme.glowActive;
-          ctx.shadowBlur  = 8;
-          ctx.setLineDash([]);
-        }
-        ctx.stroke();
-        ctx.shadowBlur = 0;
-        ctx.setLineDash([]);
+          if (locked || bypassed) {
+            // Thin dashed locked/bypassed road
+            ctx.beginPath();
+            ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+            ctx.strokeStyle = locked ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.15)';
+            ctx.lineWidth   = ROAD_W * 0.5;
+            ctx.setLineDash(locked ? [6, 8] : [3, 10]);
+            ctx.stroke(); ctx.setLineDash([]);
+            return;
+          }
+
+          // Shadow
+          ctx.beginPath(); ctx.moveTo(x1+2, y1+3); ctx.lineTo(x2+2, y2+3);
+          ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = ROAD_W + 4; ctx.stroke();
+
+          // Road edge (dark border)
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+          ctx.strokeStyle = theme.roadEdge; ctx.lineWidth = ROAD_W; ctx.stroke();
+
+          // Road fill
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+          ctx.strokeStyle = done ? theme.pathDone : theme.roadFill;
+          ctx.lineWidth = ROAD_W - 4;
+          if (done) { ctx.shadowColor = theme.glowDone; ctx.shadowBlur = 8; }
+          ctx.stroke(); ctx.shadowBlur = 0;
+
+          // Centre highlight strip
+          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
+          ctx.strokeStyle = done ? 'rgba(255,255,255,0.25)' : theme.roadHi + '55';
+          ctx.lineWidth = ROAD_W * 0.22;
+          ctx.stroke();
+        };
+
+        // Horizontal segment
+        drawRoad(ax, ay, ex, ey);
+        // Vertical segment
+        drawRoad(ex, ey, bx, by);
+
+        ctx.lineCap = 'round';
       });
     });
 
-    // ── Draw node buttons ──
+    // ── 6. Node buttons ────────────────────────────────────────────────────
     nodes.forEach(n => {
       const btn      = document.createElement('button');
       const done     = GameState.completedNodes.includes(n.idx);
       const bypassed = !!n.bypassed;
       const revealed = !!n.revealed || n.type === 'boss';
+      const isBoss   = n.type === 'boss';
 
       let typeClass;
       if (done)             typeClass = 'node-done';
@@ -2661,30 +2593,99 @@ const MapEngine = {
       else if (!revealed)   typeClass = 'node-mystery';
       else                  typeClass = `node-${n.type}`;
 
-      // Apply lane class for themed border tint
-      const laneClass = n.lane ? ` node-lane-${n.lane}` : '';
-
-      btn.className  = `map-node-btn ${typeClass}${laneClass}`;
+      btn.className  = `map-node-btn ${typeClass}${isBoss ? ' node-boss-city' : ''}`;
       btn.style.left = n.px + 'px';
       btn.style.top  = n.py + 'px';
-      // Pass theme accent to node via CSS custom property
       btn.style.setProperty('--theme-accent', theme.accent);
 
-      if (done)             btn.textContent = '✓';
-      else if (bypassed)    btn.textContent = '✗';
-      else if (!revealed)   btn.textContent = NODE_MYSTERY_ICON;
-      else                  btn.textContent = NODE_ICONS[n.type] || '?';
+      const icon = done      ? '✓'
+                 : bypassed  ? '–'
+                 : !revealed ? NODE_MYSTERY_ICON
+                 :             NODE_ICONS[n.type] || '?';
 
-      if (done)             btn.title = 'Completed';
-      else if (bypassed)    btn.title = 'Path not taken';
-      else if (!n.unlocked) btn.title = 'Locked';
-      else if (!revealed)   btn.title = 'Mystery node — enter to find out!';
-      else                  btn.title = capitalize(n.type) + ' Node';
+      // City node inner HTML — orb + label
+      btn.innerHTML = `<span class="node-orb">${icon}</span>`;
+
+      btn.title = done      ? 'Completed'
+                : bypassed  ? 'Path not taken'
+                : !n.unlocked ? 'Locked'
+                : !revealed ? 'Mystery node!'
+                :             capitalize(n.type) + ' Node';
 
       if (!n.unlocked || done || bypassed) btn.setAttribute('disabled', true);
       btn.onclick = () => this.visitNode(n);
       layer.appendChild(btn);
     });
+  },
+
+  // ── Per-gym landmass shapes ──────────────────────────────────────────────
+  _drawLandmass(ctx, W, H, bi, theme) {
+    // Each gym has a unique organic landmass polygon
+    // Shapes are defined as relative control points [0-1] of W/H
+    const shapes = [
+      // 0 Brock — wide plateau, flat top
+      [[0.1,0.05],[0.9,0.05],[0.95,0.15],[0.88,0.5],[0.92,0.85],[0.8,0.98],[0.2,0.98],[0.08,0.85],[0.12,0.5],[0.05,0.15]],
+      // 1 Misty — island with inlet on left
+      [[0.2,0.02],[0.85,0.05],[0.92,0.3],[0.88,0.6],[0.75,0.95],[0.25,0.98],[0.1,0.7],[0.15,0.45],[0.05,0.3],[0.12,0.1]],
+      // 2 Surge — rectangular military base shape
+      [[0.08,0.08],[0.92,0.08],[0.92,0.92],[0.08,0.92]],
+      // 3 Erika — round lush island
+      [[0.15,0.05],[0.78,0.03],[0.93,0.2],[0.95,0.6],[0.85,0.92],[0.5,0.98],[0.18,0.95],[0.05,0.72],[0.04,0.3],[0.08,0.12]],
+      // 4 Koga — jagged shadowy terrain
+      [[0.12,0.1],[0.7,0.04],[0.9,0.18],[0.95,0.5],[0.85,0.78],[0.65,0.96],[0.3,0.98],[0.1,0.88],[0.05,0.6],[0.08,0.3]],
+      // 5 Sabrina — abstract flowing shape
+      [[0.2,0.02],[0.8,0.06],[0.96,0.28],[0.9,0.65],[0.72,0.96],[0.35,0.97],[0.1,0.78],[0.06,0.45],[0.15,0.18]],
+      // 6 Blaine — volcano island, roughly circular
+      [[0.28,0.05],[0.72,0.05],[0.92,0.25],[0.96,0.55],[0.82,0.88],[0.5,0.98],[0.18,0.9],[0.04,0.58],[0.08,0.28],[0.18,0.1]],
+      // 7 Giovanni — urban grid, squared off
+      [[0.06,0.06],[0.94,0.06],[0.94,0.94],[0.06,0.94]],
+    ];
+
+    const pts = shapes[Math.min(bi, shapes.length - 1)].map(([x,y]) => [x*W, y*H]);
+
+    // Shadow/depth layer
+    ctx.save();
+    ctx.translate(4, 6);
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      const [x1,y1] = pts[i-1], [x2,y2] = pts[i];
+      ctx.quadraticCurveTo((x1+x2)/2, (y1+y2)/2, x2, y2);
+    }
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(0,0,0,0.3)';
+    ctx.fill();
+    ctx.restore();
+
+    // Main land fill
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let i = 1; i < pts.length; i++) {
+      const [x1,y1] = pts[i-1], [x2,y2] = pts[i];
+      ctx.quadraticCurveTo((x1+x2)/2, (y1+y2)/2, x2, y2);
+    }
+    // Close back to start smoothly
+    const [lx,ly] = pts[pts.length-1], [fx,fy] = pts[0];
+    ctx.quadraticCurveTo((lx+fx)/2, (ly+fy)/2, fx, fy);
+    ctx.closePath();
+
+    // Land gradient — lighter in centre, darker at edges
+    const landGrad = ctx.createRadialGradient(W*0.5, H*0.4, H*0.05, W*0.5, H*0.45, H*0.65);
+    landGrad.addColorStop(0,   theme.landHi);
+    landGrad.addColorStop(0.5, theme.land);
+    landGrad.addColorStop(1,   theme.landShadow);
+    ctx.fillStyle = landGrad;
+    ctx.fill();
+
+    // Coastline stroke
+    ctx.strokeStyle = theme.landShadow;
+    ctx.lineWidth   = 3;
+    ctx.stroke();
+
+    // Inner coast highlight
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth   = 1.5;
+    ctx.stroke();
   },
 
   // ── Texture painter ─────────────────────────────────────────────────────

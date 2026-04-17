@@ -404,25 +404,20 @@ button:disabled { opacity: .45; cursor: not-allowed; }
    MAP SCREEN
 ═══════════════════════════════════════════ */
 #screen-map {
-  background: #1a1408;
+  background: #0a0a0a;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 .map-header {
   display: flex; align-items: center; justify-content: space-between;
   width: 100%;
   padding: .6rem 1rem;
-  background: rgba(0,0,0,.4);
+  background: rgba(0,0,0,.5);
   border-bottom: 2px solid var(--col-border);
   z-index: var(--z-ui);
   flex-shrink: 0;
-}
-
-.map-title {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .6rem;
-  color: var(--col-yellow);
-  text-align: center;
 }
 
 .map-party {
@@ -759,68 +754,96 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .map-canvas-wrap {
   flex: 1;
   position: relative;
-  overflow: auto;
+  overflow: hidden;      /* terrain fills edge to edge, no scrollbars */
   width: 100%;
+  min-height: 300px;
 }
 
 #map-canvas {
   display: block;
+  width: 100%;
+  height: 100%;
 }
 
 #map-nodes-layer {
   position: absolute;
   top: 0; left: 0;
-  pointer-events: none;
+  width: 100%; height: 100%;
+  pointer-events: none;   /* layer itself transparent; buttons have pointer-events: all */
 }
 
 /* Node buttons rendered over canvas */
+/* ── Map node buttons — city marker style ──────────────────────────────── */
 .map-node-btn {
   position: absolute;
-  width: 44px; height: 44px;
+  width: 40px; height: 40px;
   border-radius: 50%;
-  border: 3px solid rgba(255,255,255,0.35);
+  border: 3px solid rgba(255,255,255,0.6);
   display: flex; align-items: center; justify-content: center;
-  font-size: 1rem;
   cursor: pointer;
   transform: translate(-50%, -50%);
-  transition: filter .15s, box-shadow .15s, border-color .15s;
+  transition: filter .15s, box-shadow .15s;
   pointer-events: all;
-  box-shadow: 0 3px 8px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.25);
+  padding: 0;
+  /* Default: neutral city orb */
+  background: radial-gradient(circle at 35% 30%, #ff6655, #cc2210);
+  box-shadow: 0 3px 10px rgba(0,0,0,.55),
+              inset 0 1px 0 rgba(255,255,255,.35),
+              inset 0 -2px 4px rgba(0,0,0,.3);
 }
 .map-node-btn:hover:not([disabled]) {
-  filter: brightness(1.25);
-  box-shadow: 0 4px 16px rgba(0,0,0,.55), 0 0 14px rgba(255,200,80,.6);
+  filter: brightness(1.3);
+  box-shadow: 0 4px 18px rgba(0,0,0,.6), 0 0 14px rgba(255,200,80,.55),
+              inset 0 1px 0 rgba(255,255,255,.35);
 }
-.map-node-btn[disabled] { cursor: not-allowed; opacity: .55; }
+.map-node-btn[disabled] { cursor: not-allowed; opacity: .5; }
 
-.node-battle   { background: radial-gradient(circle at 35% 35%, #e85030, #a52010); }
-.node-heal     { background: radial-gradient(circle at 35% 35%, #50cc70, #228844); }
-.node-catch    { background: radial-gradient(circle at 35% 35%, #7060d0, #4030a0); }
-.node-training { background: radial-gradient(circle at 35% 35%, #f0b020, #c07800); }
-.node-boss     {
-  background: radial-gradient(circle at 35% 35%, #cc2020, #800000);
-  width: 54px; height: 54px; font-size: 1.3rem;
-  border-color: var(--col-yellow);
-  box-shadow: 0 0 20px rgba(220,50,20,.7), inset 0 1px 0 rgba(255,255,255,.2);
+/* Inner orb icon */
+.node-orb {
+  font-size: .85rem; line-height: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
+}
+
+/* Node type colours — all share the city-orb shape, different hues */
+.node-battle   { background: radial-gradient(circle at 35% 30%, #ff5533, #bb1800); border-color: rgba(255,180,160,.7); }
+.node-heal     { background: radial-gradient(circle at 35% 30%, #44dd77, #1a8840); border-color: rgba(160,255,190,.7); }
+.node-catch    { background: radial-gradient(circle at 35% 30%, #6688ee, #2233aa); border-color: rgba(160,190,255,.7); }
+.node-training { background: radial-gradient(circle at 35% 30%, #ffbb22, #cc7700); border-color: rgba(255,230,150,.7); }
+.node-shop     { background: radial-gradient(circle at 35% 30%, #cc88ff, #7722cc); border-color: rgba(220,180,255,.7); }
+.node-mystery  { background: radial-gradient(circle at 35% 30%, #8899aa, #445566); border-color: rgba(200,220,240,.5); }
+
+/* Boss — large gold-rimmed city */
+.node-boss, .node-boss-city {
+  width: 52px; height: 52px;
+  background: radial-gradient(circle at 35% 30%, #ff3311, #990000);
+  border: 3px solid var(--col-yellow, #ffd700);
+  box-shadow: 0 0 24px rgba(255,80,20,.8),
+              0 4px 12px rgba(0,0,0,.6),
+              inset 0 1px 0 rgba(255,255,255,.3);
   animation: pulse-boss 2s ease-in-out infinite;
 }
-.node-done     {
-  background: radial-gradient(circle at 35% 35%, #708860, #405030);
-  opacity: 0.75;
+.node-boss .node-orb, .node-boss-city .node-orb { font-size: 1.1rem; }
+
+.node-done {
+  background: radial-gradient(circle at 35% 30%, #88aa77, #446633);
+  border-color: rgba(180,220,160,.6);
+  opacity: 0.8;
 }
-.node-locked   {
-  background: radial-gradient(circle at 35% 35%, #a09070, #706050);
+.node-locked {
+  background: radial-gradient(circle at 35% 30%, #888877, #555544);
+  border-color: rgba(180,180,140,.4);
 }
-/* Path not taken — permanently bypassed */
 .node-bypassed {
-  background: radial-gradient(circle at 35% 35%, #6a5a4a, #3a2e22);
-  opacity: 0.45;
-  filter: grayscale(0.8);
+  background: radial-gradient(circle at 35% 30%, #666655, #333322);
+  border-color: rgba(140,140,120,.3);
+  opacity: 0.4;
+  filter: grayscale(0.9);
 }
 
 @keyframes pulse-boss {
-  0%,100% { box-shadow: 0 0 20px rgba(227,53,13,.6); }
-  50%      { box-shadow: 0 0 35px rgba(227,53,13,.9); }
+  0%,100% { box-shadow: 0 0 20px rgba(255,60,20,.6), 0 4px 12px rgba(0,0,0,.5); }
+  50%      { box-shadow: 0 0 40px rgba(255,60,20,.95), 0 4px 16px rgba(0,0,0,.6); }
 }
 
 /* ═══════════════════════════════════════════
@@ -2689,22 +2712,10 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 ═══════════════════════════════════════════ */
 
 /* Active unlocked nodes pick up the theme accent from the CSS variable */
-.map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed) {
-  border-color: color-mix(in srgb, var(--theme-accent, var(--col-yellow)) 60%, transparent);
-  box-shadow: 0 0 8px color-mix(in srgb, var(--theme-accent, var(--col-yellow)) 40%, transparent);
-}
+/* Node accent glow on hover — uses CSS custom property from JS */
 .map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed):hover {
   border-color: var(--theme-accent, var(--col-yellow));
   box-shadow: 0 0 18px var(--theme-accent, var(--col-yellow));
-}
-
-/* Left lane — very subtle warm tint on border */
-.node-lane-left:not([disabled]) {
-  border-left-width: 3px;
-}
-/* Right lane — very subtle cool tint on border */
-.node-lane-right:not([disabled]) {
-  border-right-width: 3px;
 }
 
 /* ═══════════════════════════════════════════
