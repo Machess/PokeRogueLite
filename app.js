@@ -733,12 +733,12 @@ function freshState(starterId) {
 // ─── POKÉMON INSTANCE ────────────────────────────────────────────────────────
 
 function makePokemon(id, level, spriteUrl, name, type, isStarter = false) {
+  const safeName = name || capitalize(String(id));  // fallback to id string if name missing
   const maxHp = 80 + level * 8 + (isStarter ? 20 : 0);
   const deck  = isStarter ? null : buildPokemonDeck(type);
-  // Assign 3 moves from the opponent move table for this type
   const movePool = OPPONENT_MOVES[type] || OPPONENT_MOVES.normal;
   const moves    = shuffle([...movePool]).slice(0, 3);
-  return { id, name, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves, heldItem: null };
+  return { id, name: safeName, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves, heldItem: null };
 }
 
 // ─── DECK BUILDER ────────────────────────────────────────────────────────────
@@ -1906,6 +1906,7 @@ const Game = {
       if (p.heldItem === undefined) p.heldItem = null;
       if (!p.moves)                 p.moves    = [];
       if (!p.statusEffects)         p.statusEffects = [];
+      if (!p.name)                  p.name     = capitalize(String(p.id));
     });
     // Backfill new counter fields for saves that predate them
     if (!GameState.nodesSinceRocket)    GameState.nodesSinceRocket    = 0;
@@ -3468,6 +3469,10 @@ const BossEngine = {
   _loadNextOpp() {
     const opp    = this.oppTeam[this.oppIdx];
     const player = GameState.party[GameState.activePokemonIndex];
+    if (!opp || !player) {
+      console.error('BossEngine._loadNextOpp: missing opp or player', { opp, player, oppIdx: this.oppIdx, team: this.oppTeam });
+      return;
+    }
     const activeDeck = player.deck || GameState.deck;
     this.bState = {
       player: { ...player },
@@ -5310,7 +5315,7 @@ function setHpBar(barId, hp, maxHp, name, level) {
   bar.style.width = pct + '%';
   bar.style.background = hpColor(hp, maxHp);
   if (text)    text.textContent  = `${Math.max(0, hp)} / ${maxHp}`;
-  if (nameEl)  nameEl.textContent  = name.toUpperCase();
+  if (nameEl)  nameEl.textContent  = (name || '???').toUpperCase();
   if (levelEl) levelEl.textContent = `Lv.${level}`;
 }
 
