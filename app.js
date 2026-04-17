@@ -3428,9 +3428,17 @@ const BossEngine = {
     this.oppTeam  = [];
 
     for (const id of boss.team) {
-      const d = await fetchPoke(id);
-      const level = 14 + bossIdx * 7 + Math.floor(Math.random() * 4);
-      this.oppTeam.push(makePokemon(id, level, getSpriteUrl(d, true), capitalize(d.name), d.types[0]?.type?.name || 'normal'));
+      try {
+        const d = await fetchPoke(id);
+        if (!d) continue;
+        const level = 14 + bossIdx * 7 + Math.floor(Math.random() * 4);
+        const pType = d.types?.[0]?.type?.name || 'normal';
+        this.oppTeam.push(makePokemon(id, level, getSpriteUrl(d, true), capitalize(d.name), pType));
+      } catch(e) {
+        console.warn(`BossEngine: fetchPoke failed for id ${id}:`, e);
+        const level = 14 + bossIdx * 7;
+        this.oppTeam.push(makePokemon(id, level, '', `Pokémon #${id}`, 'normal'));
+      }
     }
     hideLoading();
 
@@ -3872,11 +3880,25 @@ const RocketBattleEngine = {
     const rocketLvl = Math.max(5, lvl - 3 + Math.floor(Math.random() * 4));
 
     for (const id of teamIds) {
-      const d = await fetchPoke(id);
-      this._oppTeam.push(makePokemon(
-        id, rocketLvl, getSpriteUrl(d, true),
-        capitalize(d.name), d.types[0]?.type?.name || 'normal'
-      ));
+      try {
+        const d = await fetchPoke(id);
+        if (!d) continue;
+        const pType = d.types?.[0]?.type?.name || 'poison';
+        const pName = capitalize(d.name) || `Pokémon #${id}`;
+        const sprite = getSpriteUrl(d, true) || '';
+        this._oppTeam.push(makePokemon(id, rocketLvl, sprite, pName, pType));
+      } catch(e) {
+        // API failure — create a fallback Pokémon so the team is never empty
+        console.warn(`fetchPoke failed for id ${id}:`, e);
+        this._oppTeam.push(makePokemon(id, rocketLvl, '', `Pokémon #${id}`, 'poison'));
+      }
+    }
+
+    // Safety: if all fetches failed, use bare stubs
+    if (this._oppTeam.length === 0) {
+      this._oppTeam = teamIds.map(id =>
+        makePokemon(id, rocketLvl, '', `Pokémon #${id}`, 'poison')
+      );
     }
 
     // ── Pick a random dialogue script ─────────────────────────────────────────
