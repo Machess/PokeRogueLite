@@ -770,9 +770,9 @@ function generateMap(bossIndex) {
   // Early (0–2): battle-heavy, lots of catching
   // Mid   (3–6): mix of everything including heals and shops
   // Late  (7–9): battle-heavy, training, shop
-  const earlyPool    = ['battle','battle','battle','catch','catch','training','heal'];
-  const midPool      = ['battle','battle','catch','training','heal','shop','battle'];
-  const latePool     = ['battle','battle','battle','training','shop','catch','battle'];
+  const earlyPool = ['battle','battle','battle','catch','catch','training','heal','mystery'];
+  const midPool   = ['battle','battle','catch','training','heal','shop','battle','mystery','mystery'];
+  const latePool  = ['battle','battle','battle','training','shop','catch','battle','mystery'];
 
   const poolForStep  = s => s <= 2 ? earlyPool : s <= 6 ? midPool : latePool;
   const pickType     = s => {
@@ -833,8 +833,8 @@ function generateMap(bossIndex) {
     prevRow = currRow;
   }
 
-  // Boss node — step 10, linked from every node in the final row
-  const bossNode        = makeNode(STEPS, 'boss', false, false);
+  // Boss node — step 10, always revealed so it shows boss_icon not mystery
+  const bossNode        = makeNode(STEPS, 'boss', false, true);
   bossNode.lane         = 'mid';
   bossNode.bossIndex    = bi;
   prevRow.forEach(p => p.links.push(bossNode.idx));
@@ -2696,12 +2696,13 @@ const MapEngine = {
     }
     GameState.currentNodeIndex = node.idx;
     switch (node.type) {
-      case 'battle':   BattleEngine.start(node);  break;
-      case 'heal':     HealEngine.start(node);     break;
-      case 'catch':    CatchEngine.start(node);    break;
-      case 'training': TrainingEngine.start(node); break;
-      case 'shop':     ShopEngine.start(node);     break;
-      case 'boss':     BossEngine.start(node);     break;
+      case 'battle':   BattleEngine.start(node);       break;
+      case 'heal':     HealEngine.start(node);          break;
+      case 'catch':    CatchEngine.start(node);         break;
+      case 'training': TrainingEngine.start(node);      break;
+      case 'shop':     ShopEngine.start(node);          break;
+      case 'boss':     BossEngine.start(node);          break;
+      case 'mystery':  MysteryEngine.start(node);       break;
     }
   },
 
@@ -3690,18 +3691,40 @@ const BossEngine = {
       this.oppTeam[this.oppIdx].hp = 0;
       this.oppIdx++;
       if (this.oppIdx >= this.oppTeam.length) {
-        // Boss defeated
+        // All opponents defeated
         GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
         MapEngine.completeNode(GameState.currentNodeIndex);
-        setTimeout(() => {
-          const isFinalBoss = GameState.bossesDefeated >= 7;
-          const modalMsg = isFinalBoss
-            ? `You defeated ${this.bossData.name}! You are the Champion!`
-            : `You defeated ${this.bossData.name}! Your team is getting stronger!`;
-          showModal('Boss Defeated! 🏅', modalMsg, () => {
-            Game.afterBoss(GameState.bossesDefeated);
-          });
-        }, 800);
+
+        if (this._isRocket) {
+          // Rocket battle win — card reward + gold, no badge
+          this._isRocket = false;
+          const earned = Math.floor(20 + Math.random() * 30);
+          GameState.gold = (GameState.gold || 0) + earned;
+          setTimeout(() => {
+            showModal('Team Rocket Fled! 🚀',
+              `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`,
+              () => {
+                const evolutions = levelUpParty('battle');
+                if (evolutions.length > 0) {
+                  runEvolutions(evolutions, () => CardReward.show(earned));
+                } else {
+                  CardReward.show(earned);
+                }
+              }
+            );
+          }, 800);
+        } else {
+          // Normal gym boss win
+          setTimeout(() => {
+            const isFinalBoss = GameState.bossesDefeated >= 7;
+            const modalMsg = isFinalBoss
+              ? `You defeated ${this.bossData.name}! You are the Champion!`
+              : `You defeated ${this.bossData.name}! Your team is getting stronger!`;
+            showModal('Boss Defeated! 🏅', modalMsg, () => {
+              Game.afterBoss(GameState.bossesDefeated);
+            });
+          }, 800);
+        }
         return true;
       }
       this._log(`${this.bossData.name} sent out ${this.oppTeam[this.oppIdx].name}!`);
@@ -3745,7 +3768,212 @@ const BossEngine = {
   _syncFromBattleState(st) { this.bState = st; },
 };
 
-// ─── GAME OVER ENGINE ────────────────────────────────────────────────────────
+// ─── ROCKET DIALOGUE SCRIPTS ─────────────────────────────────────────────────
+// Each script is an array of lines. Each line: { speaker, name, img, text }
+// ${name} in text is replaced with the trainer's name at render time.
+
+const ROCKET_SCRIPTS = [
+  [
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Prepare for trouble, ${name}!' },
+    { speaker:'james',  name:'James',  img:'assets/james.png',
+      text:'And make it double!' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'To protect the world from devastation!' },
+    { speaker:'james',  name:'James',  img:'assets/james.png',
+      text:'To unite all peoples within our nation!' },
+    { speaker:'meowth', name:'Meowth', img:'assets/meowth.png',
+      text:'Meowth! That\'s right!' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Hand over your Pokémon, ${name}. This is your only warning!' },
+  ],
+  [
+    { speaker:'meowth', name:'Meowth', img:'assets/meowth.png',
+      text:'Well well well… look who wandered into our territory, ${name}!' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Team Rocket doesn\'t tolerate trespassers.' },
+    { speaker:'james',  name:'James',  img:'assets/james.png',
+      text:'We\'ve been watching you for some time, ${name}. Your Pokémon look… valuable.' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Hand them over nicely and maybe we\'ll let you leave.' },
+    { speaker:'meowth', name:'Meowth', img:'assets/meowth.png',
+      text:'Or don\'t. Meowth could use a good battle today! NYAH!' },
+  ],
+  [
+    { speaker:'james',  name:'James',  img:'assets/james.png',
+      text:'Oh my… a trainer all alone. How… convenient.' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Team Rocket has eyes everywhere, ${name}. There\'s no escape.' },
+    { speaker:'meowth', name:'Meowth', img:'assets/meowth.png',
+      text:'The Boss will be very pleased when we bring him your Pokémon!' },
+    { speaker:'james',  name:'James',  img:'assets/james.png',
+      text:'Don\'t take it personally. It\'s just… business.' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Now, ${name} — show us what you\'ve got. If you dare!' },
+  ],
+  [
+    { speaker:'meowth', name:'Meowth', img:'assets/meowth.png',
+      text:'Psst — hey ${name}! Yeah, you! Come a little closer…' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'SURPRISE! Team Rocket! Prepare for trouble!' },
+    { speaker:'james',  name:'James',  img:'assets/james.png',
+      text:'We leaped out from the tall grass just for you!' },
+    { speaker:'meowth', name:'Meowth', img:'assets/meowth.png',
+      text:'Meowth always wanted to do that. Worth it. NYAH!' },
+    { speaker:'jessie', name:'Jessie', img:'assets/jessi.png',
+      text:'Stop laughing, James. ${name}, you\'re battling us. Now.' },
+  ],
+];
+
+// ─── MYSTERY ENGINE ───────────────────────────────────────────────────────────
+const MysteryEngine = {
+  start(node) {
+    // 60% rare catch, 40% Rocket battle
+    if (Math.random() < 0.60) {
+      // Rare catch — override the node type perception, use rare pool
+      CatchEngine.start(node, 'rare');
+    } else {
+      RocketBattleEngine.start(node);
+    }
+  },
+};
+
+// ─── ROCKET BATTLE ENGINE ────────────────────────────────────────────────────
+const RocketBattleEngine = {
+  _script:   [],
+  _lineIdx:  0,
+  _oppTeam:  [],
+  _oppIdx:   0,
+  bState:    null,
+  bossData:  null,  // mirrors BossEngine interface so _checkDefeated etc. work
+
+  async start(node) {
+    showLoading();
+
+    // ── Pick team based on starter level ─────────────────────────────────────
+    const starter = GameState.party.find(p => p.isStarter);
+    const lvl     = starter?.level ?? 1;
+
+    // Low < 20: Koffing + Ekans
+    // Mid 20–35: Weezing + Arbok
+    // High > 35: Weezing + Arbok + Lickitung + Meowth
+    let teamIds;
+    if (lvl < 20)       teamIds = [109, 23];
+    else if (lvl <= 35) teamIds = [110, 24];
+    else                teamIds = [110, 24, 108, 52];
+
+    this._oppTeam = [];
+    this._oppIdx  = 0;
+    const rocketLvl = Math.max(5, lvl - 3 + Math.floor(Math.random() * 4));
+
+    for (const id of teamIds) {
+      const d = await fetchPoke(id);
+      this._oppTeam.push(makePokemon(
+        id, rocketLvl, getSpriteUrl(d, true),
+        capitalize(d.name), d.types[0]?.type?.name || 'normal'
+      ));
+    }
+
+    // ── Pick a random dialogue script ─────────────────────────────────────────
+    this._script  = ROCKET_SCRIPTS[Math.floor(Math.random() * ROCKET_SCRIPTS.length)];
+    this._lineIdx = 0;
+
+    // bossData stub so BossEngine._checkDefeated-style logic works
+    this.bossData = { name: 'Team Rocket' };
+
+    hideLoading();
+    showScreen('boss');
+
+    // Show boss-party-bar for Rocket team
+    document.getElementById('boss-party-bar').innerHTML =
+      this._oppTeam.map((_,i) => `<div class="boss-poke-pip" id="boss-pip-${i}"></div>`).join('');
+
+    const introEl  = document.getElementById('trainer-intro');
+    const battleEl = document.getElementById('boss-battle-area');
+    if (introEl)  introEl.style.display  = 'flex';
+    if (battleEl) battleEl.style.display = 'none';
+
+    this._showLine(0);
+  },
+
+  // ── Render one dialogue line ──────────────────────────────────────────────
+  _showLine(idx) {
+    const script    = this._script;
+    const line      = script[idx];
+    const trainerName = GameState.trainerName || 'Trainer';
+    const text      = line.text.replace(/\$\{name\}/g, trainerName);
+    const isLast    = idx === script.length - 1;
+
+    // Portrait
+    const wrap = document.getElementById('trainer-sprite-wrap');
+    const img  = document.getElementById('boss-trainer-sprite');
+    if (img) {
+      img.src = line.img;
+      img.onerror = () => {
+        img.onerror = null;
+        wrap.innerHTML = `<div style="font-size:4rem;line-height:1">👤</div>`;
+      };
+    }
+
+    // Text — typewriter effect
+    const nameEl = document.getElementById('dialogue-name');
+    const textEl = document.getElementById('dialogue-text');
+    const nextBtn  = document.getElementById('btn-dialogue-next');
+    const startBtn = document.getElementById('btn-start-boss-battle');
+
+    nameEl.textContent = line.name;
+    textEl.textContent = '';
+
+    // Hide both buttons while typing
+    if (nextBtn)  nextBtn.style.display  = 'none';
+    if (startBtn) startBtn.style.display = 'none';
+
+    // Typewriter
+    let ci = 0;
+    const interval = setInterval(() => {
+      textEl.textContent += text[ci];
+      ci++;
+      if (ci >= text.length) {
+        clearInterval(interval);
+        // Show correct button after typing completes
+        if (isLast) {
+          if (startBtn) startBtn.style.display = '';
+          if (nextBtn)  nextBtn.style.display  = 'none';
+        } else {
+          if (nextBtn)  nextBtn.style.display  = '';
+          if (startBtn) startBtn.style.display = 'none';
+        }
+      }
+    }, 28);
+
+    this._lineIdx = idx;
+  },
+
+  // ── Player taps Next ─────────────────────────────────────────────────────
+  advanceDialogue() {
+    const next = this._lineIdx + 1;
+    if (next < this._script.length) {
+      this._showLine(next);
+    }
+  },
+
+  // ── Start the actual battle (called by btn-start-boss-battle) ─────────────
+  startBattle() {
+    document.getElementById('trainer-intro').style.display    = 'none';
+    document.getElementById('boss-battle-area').style.display = 'block';
+
+    // Delegate all battle logic to BossEngine, just swap its team data
+    BossEngine.bossData  = this.bossData;
+    BossEngine.oppTeam   = this._oppTeam;
+    BossEngine.oppIdx    = 0;
+    BossEngine._isRocket = true;
+    BossEngine._loadNextOpp();
+  },
+
+  // Delegate log, render etc. to BossEngine at battle time
+  _log(m)   { BossEngine._log(m); },
+  _render() { BossEngine._render(); },
+};
 
 const GameOver = {
   show(defeatedBy) {
@@ -3852,13 +4080,15 @@ const CatchEngine = {
   _pendingCatch: null,
   _speciesData:  null,  // cached from species endpoint
 
-  async start(node) {
+  async start(node, forceRarity) {
     showLoading();
     const hasRepel = ItemEngine.hasItem('repel');
     const hasLure  = ItemEngine.hasItem('lure');
     let rarity, pool;
     const roll = Math.random();
-    if (hasLure && Math.random() < 0.3) {
+    if (forceRarity === 'rare') {
+      rarity = 'Rare ✨'; pool = WILD_POOL.rare;
+    } else if (hasLure && Math.random() < 0.3) {
       rarity = 'Rare ✨'; pool = WILD_POOL.rare;
     } else if (hasRepel) {
       rarity = Math.random() < 0.7 ? 'Uncommon' : 'Rare ✨';
@@ -5206,7 +5436,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-end-turn').addEventListener('click', () => BattleEngine.endTurn());
 
   // ── Boss screen ──
-  document.getElementById('btn-start-boss-battle').addEventListener('click', () => BossEngine.startBattle());
+  document.getElementById('btn-start-boss-battle').addEventListener('click', () => {
+    // Route to RocketBattleEngine if it's a Rocket battle, otherwise BossEngine
+    if (BossEngine._isRocket) {
+      RocketBattleEngine.startBattle();
+    } else {
+      BossEngine.startBattle();
+    }
+  });
+  document.getElementById('btn-dialogue-next').addEventListener('click', () => {
+    RocketBattleEngine.advanceDialogue();
+  });
   document.getElementById('btn-boss-end-turn').addEventListener('click', () => BossEngine.endTurn());
 
   // ── Catch screen ──

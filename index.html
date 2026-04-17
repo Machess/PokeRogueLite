@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=4" />
 </head>
 <body>
 
@@ -320,16 +320,19 @@
     <div class="battle-bg-overlay boss-overlay"></div>
   </div>
 
-  <!-- Trainer intro -->
+  <!-- Trainer intro — supports single trainer (gym) and multi-character (Rocket) -->
   <div class="trainer-intro" id="trainer-intro">
-    <div class="trainer-sprite-wrap">
-      <!-- Asset slot: trainer sprite — src set dynamically by BossEngine -->
+    <div class="trainer-sprite-wrap" id="trainer-sprite-wrap">
       <img id="boss-trainer-sprite" src="" alt="Boss Trainer" class="trainer-sprite" />
     </div>
     <div class="trainer-dialogue-box" id="trainer-dialogue">
       <div class="dialogue-name" id="dialogue-name">Trainer</div>
       <div class="dialogue-text" id="dialogue-text">...</div>
-      <button class="btn-pixel btn-small" id="btn-start-boss-battle">Battle! ▶</button>
+      <div class="dialogue-btn-row">
+        <button class="btn-pixel btn-small btn-secondary" id="btn-dialogue-next"
+                style="display:none">Next ▶</button>
+        <button class="btn-pixel btn-small" id="btn-start-boss-battle">Battle! ▶</button>
+      </div>
     </div>
   </div>
 
@@ -722,6 +725,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=3"></script>
+<script src="app.js?v=4"></script>
 </body>
 </html>

@@ -3682,3 +3682,30 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .38rem !important;
   padding: .45em .9em !important;
 }
+
+/* ═══════════════════════════════════════════
+   ROCKET MULTI-CHARACTER DIALOGUE
+═══════════════════════════════════════════ */
+.dialogue-btn-row {
+  display: flex; gap: .6rem; margin-top: .6rem; justify-content: flex-end;
+}
+
+/* Trainer portrait slide-in on speaker change */
+.trainer-sprite {
+  transition: opacity .18s ease, transform .18s ease;
+}
+.trainer-sprite.speaker-change {
+  animation: speaker-swap .25s ease;
+}
+@keyframes speaker-swap {
+  0%   { opacity: 0; transform: translateX(-12px) scale(.95); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* Rocket background tint on boss screen during Rocket battles */
+#screen-boss.rocket-battle .boss-overlay {
+  background: linear-gradient(180deg,
+    rgba(20,0,0,.6) 0%,
+    rgba(180,20,20,.25) 60%,
+    rgba(20,0,0,.7) 100%);
+}
