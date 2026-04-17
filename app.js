@@ -757,130 +757,90 @@ function buildDeck(type, improvementMap = {}) {
 }
 
 // ─── MAP GENERATION ──────────────────────────────────────────────────────────
-// Generates a winding trail with nodes placed at bends and a fork in the middle.
-// Each node stores px/py waypoint coords (relative 0-1) and trail segment info.
+// Pure decision graph — 10 choice steps then boss.
+// Every step has 2 or 3 choices (70% chance of 3).
+// No coordinates needed for display — only row/links matter.
 
 function generateMap(bossIndex) {
-  const bi    = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, MAP_THEMES.length - 1);
-  const style = PATH_STYLES[Math.min(bi, PATH_STYLES.length - 1)];
-  const { bendRange, segments } = style;
+  const bi = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, MAP_THEMES.length - 1);
 
-  // ── Shuffle node types ────────────────────────────────────────────────────
-  const typePool = [
-    'battle','battle','battle','battle','battle','battle',
-    'heal','heal',
-    'catch','catch',
-    'training','training',
-    'shop','shop',
-  ].sort(() => Math.random() - 0.5);
-  let typeIdx = 0;
-  const nextType = () => typePool[typeIdx++ % typePool.length];
+  const STEPS = 10; // decision steps before boss
 
-  // ── Generate main spine waypoints ─────────────────────────────────────────
-  // Trail runs bottom→top. Start near bottom-centre, end at top-centre.
-  // Each step moves upward by 1/segments of the height, with a random horizontal
-  // offset constrained by bendRange. Direction alternates to create the S-curve.
-  const waypoints = [];
-  const margin = 0.12;
-  let x = 0.5;
-  let dir = Math.random() < 0.5 ? 1 : -1;
+  // ── Type pools per step band ───────────────────────────────────────────────
+  // Early (0–2): battle-heavy, lots of catching
+  // Mid   (3–6): mix of everything including heals and shops
+  // Late  (7–9): battle-heavy, training, shop
+  const earlyPool    = ['battle','battle','battle','catch','catch','training','heal'];
+  const midPool      = ['battle','battle','catch','training','heal','shop','battle'];
+  const latePool     = ['battle','battle','battle','training','shop','catch','battle'];
 
-  for (let i = 0; i <= segments; i++) {
-    const y = 1.0 - (i / segments) * 0.85 - 0.07; // bottom (0.93) to top (0.08)
-    waypoints.push({ x, y });
-    // Alternate direction with some randomness
-    if (i < segments) {
-      const jitter = (Math.random() * 0.4 + 0.6); // 0.6–1.0 multiplier
-      x += dir * bendRange * jitter;
-      x  = Math.max(margin, Math.min(1 - margin, x));
-      // Flip direction at each step (with 30% chance of double-flip for variety)
-      dir = -dir;
-      if (Math.random() < 0.3) dir = -dir;
-    }
-  }
-  // Force last waypoint to centre-top
-  waypoints[waypoints.length - 1].x = 0.5 + (Math.random() - 0.5) * 0.08;
+  const poolForStep  = s => s <= 2 ? earlyPool : s <= 6 ? midPool : latePool;
+  const pickType     = s => {
+    const pool = poolForStep(s);
+    return pool[Math.floor(Math.random() * pool.length)];
+  };
 
-  // ── Build nodes from waypoints ────────────────────────────────────────────
-  // Main path: one node per waypoint (excluding start and end which become
-  // special). Fork happens at the midpoint: two parallel branches for 2 steps.
+  // ── Build graph ────────────────────────────────────────────────────────────
   const nodes = [];
-  let idx = 0;
+  let   idx   = 0;
 
-  const forkAt  = Math.floor(segments * 0.45); // fork ~45% up
-  const mergeAt = forkAt + 2;                  // merge 2 steps later
-
-  const makeNode = (x, y, type, unlocked, revealed) => {
-    const n = { idx: idx++, x, y, type, unlocked, revealed, done: false,
-                bypassed: false, links: [], row: 0, col: 0, lane: 'mid' };
+  const makeNode = (row, type, unlocked = false, revealed = false) => {
+    const n = {
+      idx: idx++, row, type, unlocked, revealed,
+      done: false, bypassed: false, links: [],
+      // Dummy coords — not used for display but kept for save/load compat
+      x: 0.5, y: 1 - row / (STEPS + 1), col: 0, lane: 'mid',
+    };
     nodes.push(n);
     return n;
   };
 
-  // Build sequential main path + fork
-  let prevMain  = null; // last main-path node index
-  let forkLeft  = null; // fork left branch last node
-  let forkRight = null; // fork right branch last node
+  // Step 0: always 3 choices, all unlocked and revealed immediately
+  const firstRow = [
+    makeNode(0, pickType(0), true, true),
+    makeNode(0, pickType(0), true, true),
+    makeNode(0, pickType(0), true, true),
+  ];
+  // Assign directions
+  firstRow[0].lane = 'left';
+  firstRow[1].lane = 'mid';
+  firstRow[2].lane = 'right';
 
-  for (let i = 0; i < waypoints.length; i++) {
-    const wp = waypoints[i];
-    const isBoss  = (i === waypoints.length - 1);
-    const isFirst = (i === 0);
-    const type    = isBoss ? 'boss' : nextType();
-    const node    = makeNode(wp.x, wp.y, type, isFirst, isFirst || isBoss);
-    node.row      = i;
+  // Steps 1–9: build row by row
+  // Each completed node from the previous row links to nodes in the current row.
+  // The current row has 2 or 3 nodes (70% chance of 3).
+  // Children are NOT unlocked/revealed until the parent is completed.
 
-    if (prevMain !== null) {
-      if (i === forkAt + 1) {
-        // Create fork: left and right branch off the fork node
-        const fwp    = waypoints[i];
-        const spread = bendRange * 0.6;
-        const lNode  = makeNode(fwp.x - spread, fwp.y, nextType(), false, false);
-        const rNode  = makeNode(fwp.x + spread, fwp.y, nextType(), false, false);
-        lNode.row    = i; lNode.lane = 'left';
-        rNode.row    = i; rNode.lane = 'right';
-        // Fork node (prevMain) links to both branches
-        nodes[prevMain].links.push(lNode.idx, rNode.idx);
-        forkLeft  = lNode.idx;
-        forkRight = rNode.idx;
-        // Don't link main node normally — skip it
-        continue;
-      } else if (i === mergeAt && forkLeft !== null) {
-        // Merge: both branch nodes link to current node
-        nodes[forkLeft].links.push(node.idx);
-        nodes[forkRight].links.push(node.idx);
-        forkLeft = forkRight = null;
-      } else if (forkLeft !== null && i === forkAt + 2) {
-        // Mid-fork step: extend both branches
-        const prevL = forkLeft;
-        const prevR = forkRight;
-        const spread = bendRange * 0.5;
-        const lNode  = makeNode(waypoints[i].x - spread, waypoints[i].y, nextType(), false, false);
-        const rNode  = makeNode(waypoints[i].x + spread, waypoints[i].y, nextType(), false, false);
-        lNode.row    = i; lNode.lane = 'left';
-        rNode.row    = i; rNode.lane = 'right';
-        nodes[prevL].links.push(lNode.idx);
-        nodes[prevR].links.push(rNode.idx);
-        forkLeft  = lNode.idx;
-        forkRight = rNode.idx;
-        continue;
-      } else {
-        nodes[prevMain].links.push(node.idx);
-      }
+  let prevRow = firstRow;
+
+  for (let step = 1; step < STEPS; step++) {
+    const count    = Math.random() < 0.70 ? 3 : 2;
+    const currRow  = [];
+
+    for (let c = 0; c < count; c++) {
+      const n  = makeNode(step, pickType(step));
+      n.lane   = count === 3 ? (['left','mid','right'][c]) : (['left','right'][c]);
+      currRow.push(n);
     }
-    prevMain = node.idx;
+
+    // Every node in prevRow links to ALL nodes in currRow.
+    // This ensures that no matter which choice was made, the next step
+    // always has count choices available after completeNode runs.
+    prevRow.forEach(p => {
+      currRow.forEach(c => p.links.push(c.idx));
+    });
+
+    prevRow = currRow;
   }
 
-  // ── Boss node always gets a revealed flag ─────────────────────────────────
-  const bossNode      = nodes[nodes.length - 1];
-  bossNode.type       = 'boss';
-  bossNode.revealed   = false;
-  bossNode.bossIndex  = bi;
+  // Boss node — step 10, linked from every node in the final row
+  const bossNode        = makeNode(STEPS, 'boss', false, false);
+  bossNode.lane         = 'mid';
+  bossNode.bossIndex    = bi;
+  prevRow.forEach(p => p.links.push(bossNode.idx));
 
-  // ── Store trail waypoints on the map for drawMap to use ───────────────────
-  nodes._bossIndex    = bi;
-  nodes._waypoints    = waypoints;
-  nodes._pathStyle    = style;
+  // ── Store metadata ────────────────────────────────────────────────────────
+  nodes._bossIndex = bi;
 
   return nodes;
 }
@@ -1590,23 +1550,31 @@ const TeamRocketChallenge = {
   _type: null,     // 'meowth' | 'jessie' | 'james'
   _challenge: null,
 
-  // Shared trigger check — called from CardReward.close
-  shouldTrigger() {
-    if (GameState.battlesSinceChallenge === undefined) GameState.battlesSinceChallenge = 0;
-    GameState.battlesSinceChallenge++;
-    if (GameState.battlesSinceChallenge < 2) return false;
-    if (GameState.battlesSinceChallenge >= 5) return true;
-    return Math.random() < 0.35;
+  // Trigger check — called after every node completion (not just battles).
+  // Rules:
+  //   • Hard cooldown of 2 nodes after any Rocket event (never consecutive)
+  //   • Guaranteed trigger at nodesSinceRocket >= 4
+  //   • 40% random chance between 2 and 4
+  //   • Boss nodes never trigger a Rocket event
+  shouldTrigger(nodeType) {
+    if (nodeType === 'boss') return false; // never interrupt the boss moment
+
+    if (!GameState.nodesSinceRocket) GameState.nodesSinceRocket = 0;
+    GameState.nodesSinceRocket++;
+
+    if (GameState.nodesSinceRocket < 3) return false;       // hard cooldown
+    if (GameState.nodesSinceRocket >= 5) return true;       // guaranteed
+    return Math.random() < 0.40;                            // 40% between 3–4
   },
 
   // Pick a random character and show their challenge
   show(onComplete) {
     this._onComplete = onComplete;
-    // Rotate through characters — weight them evenly, avoid same char twice in a row
     const chars = ['meowth', 'jessie', 'james'];
-    const pool  = chars.filter(c => c !== this._type); // avoid repeat
+    const pool  = chars.filter(c => c !== this._type);
     this._type  = pool[Math.floor(Math.random() * pool.length)];
-    GameState.battlesSinceChallenge = 0;
+    // Reset counter so next event can't fire for at least 3 more nodes
+    GameState.nodesSinceRocket = 0;
 
     if (this._type === 'meowth') this._showMeowth();
     else if (this._type === 'jessie') this._showJessie();
@@ -1919,8 +1887,8 @@ const Game = {
       trainerName: '',
       trainerAge: 10,
       difficultyTier: 2,       // 1=Rookie(6-7), 2=Rising(8-9), 3=Expert(10-12)
-      battlesSinceChallenge: 0, // trigger challenge every ~3-5 battles
-      lastChallengeWasBattle: false,
+      nodesSinceRocket:    0,   // nodes completed since last Rocket event
+      _lastRocketCheckAt:  0,   // completedNodes.length at last check
     };
     showScreen('register');
   },
@@ -1933,13 +1901,15 @@ const Game = {
     }
     GameState = saved;
     // Sanitise fields that can get stuck across save/load cycles
-    GameState.starterId         = Number(GameState.starterId); // ensure numeric for strict ===
-    // Ensure all party members have required fields that may be missing from old saves
+    GameState.starterId         = Number(GameState.starterId);
     (GameState.party || []).forEach(p => {
       if (p.heldItem === undefined) p.heldItem = null;
       if (!p.moves)                 p.moves    = [];
       if (!p.statusEffects)         p.statusEffects = [];
     });
+    // Backfill new counter fields for saves that predate them
+    if (!GameState.nodesSinceRocket)    GameState.nodesSinceRocket    = 0;
+    if (!GameState._lastRocketCheckAt)  GameState._lastRocketCheckAt  = 0;
     MapEngine.show();
   },
 
@@ -2003,11 +1973,12 @@ const Game = {
     GameState.activePokemonIndex = 0;
     GameState.deck           = starterDeck; // active deck mirrors active pokemon
     GameState.improvementMap = {};
-    GameState.map            = null;
-    GameState.map            = generateMap();
-    GameState.completedNodes = [];
-    GameState.bossesDefeated = 0;
-    GameState.evolutionStage = 0;
+    GameState.map               = generateMap();
+    GameState.completedNodes    = [];
+    GameState.bossesDefeated    = 0;
+    GameState.evolutionStage    = 0;
+    GameState.nodesSinceRocket  = 0;
+    GameState._lastRocketCheckAt = 0;
     hideLoading();
     MapEngine.show();
   },
@@ -2051,9 +2022,11 @@ const Game = {
 
     // ── Generate next map ─────────────────────────────────────────────────
     const nextBossIdx = Math.min(defeated, BOSS_TRAINERS.length - 1);
-    GameState.map            = generateMap(nextBossIdx);
-    GameState.completedNodes = [];
-    GameState.highWaterRow   = -1;
+    GameState.map               = generateMap(nextBossIdx);
+    GameState.completedNodes    = [];
+    GameState.highWaterRow      = -1;
+    GameState.nodesSinceRocket  = 0;
+    GameState._lastRocketCheckAt = 0;
 
     // ── Level up party after boss win (+3 bonus levels) ───────────────────
     // Give everyone 4 bonus levels after a boss win.
@@ -2479,6 +2452,23 @@ const MapEngine = {
   _lastBi: -1,
 
   show() {
+    // Check if a Rocket event should fire before returning to the nav screen.
+    // Only trigger if we just completed a node (completedNodes has grown).
+    const justCompleted = GameState._lastRocketCheckAt !== GameState.completedNodes.length;
+    if (justCompleted) {
+      GameState._lastRocketCheckAt = GameState.completedNodes.length;
+      const lastNodeIdx  = GameState.completedNodes[GameState.completedNodes.length - 1];
+      const lastNode     = GameState.map?.find(n => n.idx === lastNodeIdx);
+      const lastNodeType = lastNode?.type ?? 'battle';
+      if (MeowthChallenge.shouldTrigger(lastNodeType)) {
+        MeowthChallenge.show(() => this._showNav());
+        return;
+      }
+    }
+    this._showNav();
+  },
+
+  _showNav() {
     showScreen('map');
     this.renderParty();
     this.renderNav();
@@ -2564,24 +2554,36 @@ const MapEngine = {
     document.getElementById('nav-location-sub').textContent =
       `Heading toward ${boss?.name ?? 'the Boss'} · ${GameState.bossesDefeated}/8 badges`;
 
-    // ── Find available choices ─────────────────────────────────────────────
-    // Available = unlocked, not done, not bypassed
-    const available = nodes.filter(n =>
+    // ── Find available choices ──────────────────────────────────────────────
+    // With the decision-graph structure, multiple rows may have unlocked nodes
+    // (all children of the previously completed node are unlocked at once).
+    // We only want to show the CURRENT step — the minimum row among unlocked nodes.
+    const allUnlocked = nodes.filter(n =>
       typeof n.idx === 'number' &&
       n.unlocked &&
       !n.done &&
       !n.bypassed
     );
+    const minRow  = allUnlocked.length > 0
+      ? Math.min(...allUnlocked.map(n => n.row))
+      : 0;
+    const available = allUnlocked
+      .filter(n => n.row === minRow)
+      .sort((a, b) => {
+        // Sort by lane: left → mid → right for consistent arrow layout
+        const order = { left: 0, mid: 1, right: 2 };
+        return (order[a.lane] ?? 1) - (order[b.lane] ?? 1);
+      });
 
-    // ── Progress bar ───────────────────────────────────────────────────────
-    const totalNodes  = nodes.filter(n => typeof n.idx === 'number').length;
-    const doneCount   = GameState.completedNodes.length;
-    const pct         = Math.round((doneCount / Math.max(totalNodes - 1, 1)) * 100);
+    // ── Progress: count completed steps (one per row visited) ─────────────
+    const TOTAL_STEPS  = 10;
+    const doneSteps    = GameState.highWaterRow ?? 0;
+    const pct          = Math.round((doneSteps / TOTAL_STEPS) * 100);
     document.getElementById('nav-progress-bar').style.width = pct + '%';
     document.getElementById('nav-progress-label').textContent =
-      doneCount === 0 ? 'Begin your journey!' :
+      doneSteps === 0        ? 'Begin your journey!'    :
       available[0]?.type === 'boss' ? '⚔ Boss approaching!' :
-      `Step ${doneCount} of ${totalNodes - 1}`;
+      `Step ${doneSteps} of ${TOTAL_STEPS}`;
 
     // ── Build choice arrows ────────────────────────────────────────────────
     const choicesEl = document.getElementById('nav-choices');
@@ -2656,6 +2658,10 @@ const MapEngine = {
         const child = GameState.map[li];
         if (child) { child.unlocked = true; child.revealed = true; }
       });
+      // Track furthest row visited for progress bar
+      if ((node.row ?? 0) > (GameState.highWaterRow ?? -1)) {
+        GameState.highWaterRow = node.row;
+      }
     }
     saveGame();
   },
@@ -4530,12 +4536,7 @@ const CardReward = {
 
   close() {
     document.getElementById('card-reward-screen').classList.add('hidden');
-    // Check for Meowth challenge after card reward
-    if (MeowthChallenge.shouldTrigger()) {
-      MeowthChallenge.show(() => MapEngine.show());
-    } else {
-      MapEngine.show();
-    }
+    MapEngine.show();
   },
 };
 
