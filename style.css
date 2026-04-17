@@ -840,56 +840,32 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .nav-arrow:active { transform: translateY(-1px) scale(1.01); }
 
-/* Arrow icon (emoji) */
+/* Arrow icon — image or emoji, fixed size so all icons look the same */
 .nav-arrow-icon {
-  font-size: 1.6rem; line-height: 1;
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.nav-arrow-img {
+  width: 48px; height: 48px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
+}
+.nav-arrow-emoji {
+  font-size: 2rem; line-height: 1;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
 }
 
-/* Directional chevron SVG drawn in CSS */
-.nav-arrow-chevron {
-  width: 36px; height: 28px;
-  position: relative;
-}
-.nav-arrow-chevron::before,
-.nav-arrow-chevron::after {
-  content: '';
-  position: absolute;
-  width: 18px; height: 3px;
-  background: rgba(255,255,255,.8);
-  border-radius: 2px;
-  left: 50%; transform-origin: right center;
+/* Inline SVG chevron */
+.nav-chevron-svg {
+  display: block;
+  flex-shrink: 0;
+  filter: drop-shadow(0 1px 3px rgba(0,0,0,.7));
 }
 
-/* Straight — up chevron */
-.nav-arrow-straight .nav-arrow-chevron::before {
-  transform: translateX(-50%) rotate(-35deg) translateY(-5px);
-  top: 50%;
-}
-.nav-arrow-straight .nav-arrow-chevron::after {
-  transform: translateX(-100%) rotate(35deg) translateY(-5px);
-  top: 50%; left: 50%;
-}
-
-/* Left — left-pointing chevron */
-.nav-arrow-left .nav-arrow-chevron::before {
-  transform: translateX(-70%) rotate(-145deg) translateY(-5px);
-  top: 50%;
-}
-.nav-arrow-left .nav-arrow-chevron::after {
-  transform: translateX(-100%) rotate(145deg) translateY(-5px);
-  top: 50%; left: 70%;
-}
-
-/* Right — right-pointing chevron */
-.nav-arrow-right .nav-arrow-chevron::before {
-  transform: translateX(-30%) rotate(35deg) translateY(-5px);
-  top: 50%;
-}
-.nav-arrow-right .nav-arrow-chevron::after {
-  transform: translateX(-100%) rotate(-35deg) translateY(-5px);
-  top: 50%; left: 30%;
-}
+/* Remove old pseudo-element chevron rules */
+.nav-arrow-chevron { display: none; }
 
 .nav-arrow-label {
   font-family: 'Press Start 2P', monospace;

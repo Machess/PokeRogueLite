@@ -2438,15 +2438,64 @@ const ARROW_DIRS = {
   3: ['left', 'straight', 'right'],
 };
 
+// icon: path to asset (null = emoji fallback), label shown under arrow
 const ARROW_LABELS = {
-  battle:   { icon: '⚔️', label: 'Battle' },
-  heal:     { icon: '💚', label: 'Heal' },
-  catch:    { icon: '🎣', label: 'Catch' },
-  training: { icon: '⚡', label: 'Train' },
-  shop:     { icon: '🛒', label: 'Shop' },
-  boss:     { icon: '💀', label: 'GYM!' },
-  mystery:  { icon: '❓', label: '???' },
+  battle:   { icon: 'assets/battle_icon.png',  label: 'Battle'  },
+  heal:     { icon: 'assets/heal_icon.png',    label: 'Heal'    },
+  catch:    { icon: 'assets/catch_icon.png',   label: 'Catch'   },
+  training: { icon: null, emoji: '⚡',          label: 'Train'   },
+  shop:     { icon: 'assets/shop_icon.png',    label: 'Shop'    },
+  boss:     { icon: 'assets/boss_icon.png',    label: 'GYM!'   },
+  mystery:  { icon: null, emoji: '❓',          label: '???'    },
 };
+
+// Builds an inline SVG directional chevron for nav arrows.
+// left  → arrow pointing left  (←)
+// straight → arrow pointing up  (↑)
+// right → arrow pointing right (→)
+function _navChevronSvg(dir) {
+  const W = 44, H = 36;
+  const stroke = 'rgba(255,255,255,0.88)';
+  const sw = 3.5; // stroke-width
+  const cap = 'round';
+  let path = '';
+
+  if (dir === 'straight') {
+    // Vertical line with upward arrowhead — clearly means "go forward / up"
+    const cx = W / 2;
+    path = `
+      <line x1="${cx}" y1="${H - 4}" x2="${cx}" y2="6"
+            stroke="${stroke}" stroke-width="${sw}" stroke-linecap="${cap}"/>
+      <polyline points="${cx - 10},18 ${cx},6 ${cx + 10},18"
+                stroke="${stroke}" stroke-width="${sw}"
+                stroke-linecap="${cap}" stroke-linejoin="round" fill="none"/>
+    `;
+  } else if (dir === 'left') {
+    // Horizontal line with leftward arrowhead — clearly means "go left"
+    const cy = H / 2;
+    path = `
+      <line x1="${W - 5}" y1="${cy}" x2="8" y2="${cy}"
+            stroke="${stroke}" stroke-width="${sw}" stroke-linecap="${cap}"/>
+      <polyline points="${8 + 12},${cy - 9} ${8},${cy} ${8 + 12},${cy + 9}"
+                stroke="${stroke}" stroke-width="${sw}"
+                stroke-linecap="${cap}" stroke-linejoin="round" fill="none"/>
+    `;
+  } else {
+    // dir === 'right'
+    const cy = H / 2;
+    path = `
+      <line x1="5" y1="${cy}" x2="${W - 8}" y2="${cy}"
+            stroke="${stroke}" stroke-width="${sw}" stroke-linecap="${cap}"/>
+      <polyline points="${W - 8 - 12},${cy - 9} ${W - 8},${cy} ${W - 8 - 12},${cy + 9}"
+                stroke="${stroke}" stroke-width="${sw}"
+                stroke-linecap="${cap}" stroke-linejoin="round" fill="none"/>
+    `;
+  }
+
+  return `<svg class="nav-chevron-svg" viewBox="0 0 ${W} ${H}"
+               width="${W}" height="${H}"
+               xmlns="http://www.w3.org/2000/svg">${path}</svg>`;
+}
 
 const MapEngine = {
   _lastBi: -1,
@@ -2607,12 +2656,22 @@ const MapEngine = {
 
       const isBoss = node.type === 'boss';
 
+      // Build icon HTML — image file if available, emoji otherwise
+      const iconHtml = info.icon
+        ? `<img src="${info.icon}" alt="${info.label}" class="nav-arrow-img"
+               onerror="this.style.display='none';this.nextElementSibling.style.display=''"
+           /><span class="nav-arrow-emoji" style="display:none">${info.emoji || '?'}</span>`
+        : `<span class="nav-arrow-emoji">${info.emoji || '?'}</span>`;
+
+      // Inline SVG chevron — unambiguous directional indicator
+      const chevronSvg = _navChevronSvg(dir);
+
       const btn = document.createElement('button');
       btn.className = `nav-arrow nav-arrow-${dir}${isBoss ? ' nav-arrow-boss' : ''}`;
       btn.style.setProperty('--arrow-accent', theme.accent);
       btn.innerHTML = `
-        <div class="nav-arrow-icon">${info.icon}</div>
-        <div class="nav-arrow-chevron"></div>
+        <div class="nav-arrow-icon">${iconHtml}</div>
+        ${chevronSvg}
         <div class="nav-arrow-label">${info.label}</div>
       `;
       btn.title = `Go ${dir} — ${info.label}`;
