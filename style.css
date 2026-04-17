@@ -406,7 +406,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 #screen-map {
   background: #0a0a0a;
   overflow: hidden;
-  display: flex;
   flex-direction: column;
 }
 
