@@ -750,99 +750,286 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .35rem; color: #6FCF97;
 }
 
-.map-canvas-wrap {
+/* ═══════════════════════════════════════════
+   MAP / NAVIGATION SCREEN
+═══════════════════════════════════════════ */
+#screen-map {
+  background: #0a0a12;
+  overflow: hidden;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+/* ── Full-screen background image ── */
+.nav-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: linear-gradient(180deg,#2a2a3a 0%,#1a1a2e 100%);
+  background-size: cover;
+  background-position: center;
+  transition: opacity .4s ease;
+}
+.nav-bg-fade {
+  animation: nav-bg-crossfade .5s ease;
+}
+@keyframes nav-bg-crossfade {
+  0%   { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+/* Vignette for readability */
+.nav-vignette {
+  position: absolute; inset: 0; z-index: 1;
+  background: radial-gradient(ellipse at 50% 40%,
+    rgba(0,0,0,0) 30%, rgba(0,0,0,0.55) 100%);
+  pointer-events: none;
+}
+
+/* ── Location badge ── */
+.nav-location {
+  position: relative; z-index: 10;
+  display: flex; flex-direction: column; align-items: center;
+  margin-top: .5rem;
+  padding: .4rem 1.2rem;
+  background: rgba(0,0,0,.55);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--r-lg);
+  backdrop-filter: blur(6px);
+  align-self: center;
+  max-width: 90%;
+}
+.nav-location-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: var(--col-yellow);
+  text-shadow: 0 0 8px rgba(255,215,0,.5);
+}
+.nav-location-sub {
+  font-size: .52rem; color: var(--col-text-dim);
+  margin-top: .2rem;
+}
+
+/* ── Choice arrows area ── */
+.nav-choices {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  gap: 1.2rem;
   flex: 1;
+  padding: 1rem .5rem;
+}
+
+/* Base arrow button */
+.nav-arrow {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .5rem;
+  background: rgba(0,0,0,.6);
+  border: 2px solid rgba(255,255,255,.25);
+  border-radius: var(--r-lg);
+  padding: 1.2rem .9rem .8rem;
+  cursor: pointer;
+  transition: transform .15s, box-shadow .15s, border-color .2s, background .2s;
+  min-width: 88px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
   position: relative;
-  overflow: hidden;      /* terrain fills edge to edge, no scrollbars */
-  width: 100%;
-  min-height: 300px;
+}
+.nav-arrow:hover {
+  transform: translateY(-4px) scale(1.04);
+  border-color: var(--arrow-accent, var(--col-yellow));
+  box-shadow: 0 8px 28px rgba(0,0,0,.6),
+              0 0 16px color-mix(in srgb, var(--arrow-accent, var(--col-yellow)) 50%, transparent);
+  background: rgba(0,0,0,.75);
+}
+.nav-arrow:active { transform: translateY(-1px) scale(1.01); }
+
+/* Arrow icon (emoji) */
+.nav-arrow-icon {
+  font-size: 1.6rem; line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.8));
 }
 
-#map-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
+/* Directional chevron SVG drawn in CSS */
+.nav-arrow-chevron {
+  width: 36px; height: 28px;
+  position: relative;
 }
-
-#map-nodes-layer {
+.nav-arrow-chevron::before,
+.nav-arrow-chevron::after {
+  content: '';
   position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  pointer-events: none;   /* layer itself transparent; buttons have pointer-events: all */
+  width: 18px; height: 3px;
+  background: rgba(255,255,255,.8);
+  border-radius: 2px;
+  left: 50%; transform-origin: right center;
 }
 
-/* Node buttons rendered over canvas */
-/* ── Map node buttons — city marker style ──────────────────────────────── */
+/* Straight — up chevron */
+.nav-arrow-straight .nav-arrow-chevron::before {
+  transform: translateX(-50%) rotate(-35deg) translateY(-5px);
+  top: 50%;
+}
+.nav-arrow-straight .nav-arrow-chevron::after {
+  transform: translateX(-100%) rotate(35deg) translateY(-5px);
+  top: 50%; left: 50%;
+}
+
+/* Left — left-pointing chevron */
+.nav-arrow-left .nav-arrow-chevron::before {
+  transform: translateX(-70%) rotate(-145deg) translateY(-5px);
+  top: 50%;
+}
+.nav-arrow-left .nav-arrow-chevron::after {
+  transform: translateX(-100%) rotate(145deg) translateY(-5px);
+  top: 50%; left: 70%;
+}
+
+/* Right — right-pointing chevron */
+.nav-arrow-right .nav-arrow-chevron::before {
+  transform: translateX(-30%) rotate(35deg) translateY(-5px);
+  top: 50%;
+}
+.nav-arrow-right .nav-arrow-chevron::after {
+  transform: translateX(-100%) rotate(-35deg) translateY(-5px);
+  top: 50%; left: 30%;
+}
+
+.nav-arrow-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem;
+  color: rgba(255,255,255,.85);
+  letter-spacing: .05em;
+}
+
+/* Boss arrow — special styling */
+.nav-arrow-boss {
+  border-color: var(--col-yellow);
+  background: rgba(60,10,10,.75);
+  box-shadow: 0 0 24px rgba(255,60,20,.5), 0 4px 20px rgba(0,0,0,.6);
+  animation: nav-boss-pulse 2s ease-in-out infinite;
+}
+.nav-arrow-boss .nav-arrow-label { color: var(--col-yellow); }
+@keyframes nav-boss-pulse {
+  0%,100% { box-shadow: 0 0 20px rgba(255,60,20,.4), 0 4px 16px rgba(0,0,0,.5); }
+  50%      { box-shadow: 0 0 40px rgba(255,60,20,.8), 0 4px 24px rgba(0,0,0,.6); }
+}
+
+.nav-empty {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: var(--col-text-dim);
+}
+
+/* ── Progress bar at bottom ── */
+.nav-progress {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; gap: .7rem;
+  padding: .5rem 1rem .8rem;
+  background: rgba(0,0,0,.45);
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+.nav-progress-bar {
+  flex: 1; height: 6px;
+  background: var(--col-yellow);
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(255,215,0,.4);
+  transition: width .4s ease;
+  max-width: calc(100% - 80px);
+}
+.nav-progress-bar::before {
+  content: '';
+  display: block; height: 100%;
+  background: rgba(255,255,255,.2);
+  border-radius: 3px;
+  /* Track behind — handled by parent background */
+}
+.nav-progress {
+  background: rgba(0,0,0,.5);
+}
+/* Track */
+.nav-progress::before {
+  content: '';
+  position: absolute; left: 1rem; right: 80px; height: 6px;
+  background: rgba(255,255,255,.1); border-radius: 3px;
+  top: 50%; transform: translateY(-50%);
+}
+.nav-progress-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem; color: var(--col-text-dim);
+  white-space: nowrap; flex-shrink: 0; width: 72px; text-align: right;
+}
+
+/* ── Old canvas / node button CSS (kept for future use, hidden) ── */
+.map-canvas-wrap { display: none; }
+#map-canvas      { display: none; }
+#map-nodes-layer { display: none; }
 .map-node-btn {
   position: absolute;
-  width: 40px; height: 40px;
+  width: 32px; height: 32px;
   border-radius: 50%;
-  border: 3px solid rgba(255,255,255,0.6);
+  border: 2px solid rgba(255,255,255,0.65);
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
   transform: translate(-50%, -50%);
   transition: filter .15s, box-shadow .15s;
   pointer-events: all;
   padding: 0;
-  /* Default: neutral city orb */
   background: radial-gradient(circle at 35% 30%, #ff6655, #cc2210);
-  box-shadow: 0 3px 10px rgba(0,0,0,.55),
+  box-shadow: 0 2px 8px rgba(0,0,0,.6),
               inset 0 1px 0 rgba(255,255,255,.35),
-              inset 0 -2px 4px rgba(0,0,0,.3);
+              inset 0 -2px 3px rgba(0,0,0,.3);
 }
 .map-node-btn:hover:not([disabled]) {
   filter: brightness(1.3);
-  box-shadow: 0 4px 18px rgba(0,0,0,.6), 0 0 14px rgba(255,200,80,.55),
+  box-shadow: 0 3px 14px rgba(0,0,0,.6), 0 0 12px rgba(255,200,80,.55),
               inset 0 1px 0 rgba(255,255,255,.35);
 }
 .map-node-btn[disabled] { cursor: not-allowed; opacity: .5; }
 
-/* Inner orb icon */
 .node-orb {
-  font-size: .85rem; line-height: 1;
+  font-size: .7rem; line-height: 1;
   pointer-events: none;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,.6));
 }
 
-/* Node type colours — all share the city-orb shape, different hues */
-.node-battle   { background: radial-gradient(circle at 35% 30%, #ff5533, #bb1800); border-color: rgba(255,180,160,.7); }
-.node-heal     { background: radial-gradient(circle at 35% 30%, #44dd77, #1a8840); border-color: rgba(160,255,190,.7); }
-.node-catch    { background: radial-gradient(circle at 35% 30%, #6688ee, #2233aa); border-color: rgba(160,190,255,.7); }
-.node-training { background: radial-gradient(circle at 35% 30%, #ffbb22, #cc7700); border-color: rgba(255,230,150,.7); }
-.node-shop     { background: radial-gradient(circle at 35% 30%, #cc88ff, #7722cc); border-color: rgba(220,180,255,.7); }
-.node-mystery  { background: radial-gradient(circle at 35% 30%, #8899aa, #445566); border-color: rgba(200,220,240,.5); }
+.node-battle   { background: radial-gradient(circle at 35% 30%, #ff5533, #bb1800); border-color: rgba(255,180,160,.8); }
+.node-heal     { background: radial-gradient(circle at 35% 30%, #44dd77, #1a8840); border-color: rgba(160,255,190,.8); }
+.node-catch    { background: radial-gradient(circle at 35% 30%, #6688ee, #2233aa); border-color: rgba(160,190,255,.8); }
+.node-training { background: radial-gradient(circle at 35% 30%, #ffbb22, #cc7700); border-color: rgba(255,230,150,.8); }
+.node-shop     { background: radial-gradient(circle at 35% 30%, #cc88ff, #7722cc); border-color: rgba(220,180,255,.8); }
+.node-mystery  { background: radial-gradient(circle at 35% 30%, #8899aa, #445566); border-color: rgba(200,220,240,.6); }
 
-/* Boss — large gold-rimmed city */
+/* Boss node — larger, gold-rimmed, pulsing */
 .node-boss, .node-boss-city {
-  width: 52px; height: 52px;
+  width: 44px; height: 44px;
   background: radial-gradient(circle at 35% 30%, #ff3311, #990000);
   border: 3px solid var(--col-yellow, #ffd700);
-  box-shadow: 0 0 24px rgba(255,80,20,.8),
-              0 4px 12px rgba(0,0,0,.6),
+  box-shadow: 0 0 20px rgba(255,80,20,.8), 0 3px 10px rgba(0,0,0,.6),
               inset 0 1px 0 rgba(255,255,255,.3);
   animation: pulse-boss 2s ease-in-out infinite;
 }
-.node-boss .node-orb, .node-boss-city .node-orb { font-size: 1.1rem; }
+.node-boss .node-orb, .node-boss-city .node-orb { font-size: .9rem; }
 
 .node-done {
   background: radial-gradient(circle at 35% 30%, #88aa77, #446633);
   border-color: rgba(180,220,160,.6);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 .node-locked {
-  background: radial-gradient(circle at 35% 30%, #888877, #555544);
-  border-color: rgba(180,180,140,.4);
+  background: radial-gradient(circle at 35% 30%, #777766, #444433);
+  border-color: rgba(160,160,130,.4);
 }
 .node-bypassed {
-  background: radial-gradient(circle at 35% 30%, #666655, #333322);
-  border-color: rgba(140,140,120,.3);
-  opacity: 0.4;
-  filter: grayscale(0.9);
+  background: radial-gradient(circle at 35% 30%, #555544, #222211);
+  border-color: rgba(120,120,100,.3);
+  opacity: 0.3;
+  filter: grayscale(1);
 }
 
 @keyframes pulse-boss {
-  0%,100% { box-shadow: 0 0 20px rgba(255,60,20,.6), 0 4px 12px rgba(0,0,0,.5); }
-  50%      { box-shadow: 0 0 40px rgba(255,60,20,.95), 0 4px 16px rgba(0,0,0,.6); }
+  0%,100% { box-shadow: 0 0 18px rgba(255,60,20,.6), 0 3px 10px rgba(0,0,0,.5); }
+  50%      { box-shadow: 0 0 36px rgba(255,60,20,.95), 0 3px 14px rgba(0,0,0,.6); }
+}
+
+.map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed):hover {
+  border-color: var(--theme-accent, var(--col-yellow));
+  box-shadow: 0 0 16px var(--theme-accent, var(--col-yellow));
 }
 
 /* ═══════════════════════════════════════════
@@ -2709,13 +2896,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* ═══════════════════════════════════════════
    THEMED NODE BUTTONS — lane + accent tint
 ═══════════════════════════════════════════ */
-
-/* Active unlocked nodes pick up the theme accent from the CSS variable */
-/* Node accent glow on hover — uses CSS custom property from JS */
-.map-node-btn:not([disabled]):not(.node-done):not(.node-bypassed):hover {
-  border-color: var(--theme-accent, var(--col-yellow));
-  box-shadow: 0 0 18px var(--theme-accent, var(--col-yellow));
-}
 
 /* ═══════════════════════════════════════════
    PARTY ROW — Set Active button + actions col

@@ -141,81 +141,72 @@ const BOSS_TRAINERS = [
 
 // ─── MAP THEMES ──────────────────────────────────────────────────────────────
 const MAP_THEMES = [
-  // 0: Brock — rocky plateau, dusty brown highlands
-  {
-    name: 'Boulder Cave Trail',
-    ocean: '#4a5a6a', land: '#8a7250', landHi: '#b09060', landShadow: '#3a2c1e',
-    roadFill: '#d4a832', roadEdge: '#8a6010', roadHi: '#f0d070',
-    pathDone: 'rgba(255,210,80,0.9)', pathBypassed: 'rgba(60,45,35,0.4)', pathLocked: 'rgba(70,55,45,0.3)',
-    glowDone: 'rgba(255,190,50,0.8)', accent: '#c8a060', texture: 'rock',
-  },
-  // 1: Misty — coastal island, vivid greens with cerulean ocean
-  {
-    name: 'Cerulean Sea Path',
-    ocean: '#1a6a9a', land: '#3a8a3a', landHi: '#60b840', landShadow: '#1a4a1a',
-    roadFill: '#d4a832', roadEdge: '#8a6010', roadHi: '#f0d070',
-    pathDone: 'rgba(120,230,255,0.9)', pathBypassed: 'rgba(20,40,80,0.4)', pathLocked: 'rgba(20,50,90,0.3)',
-    glowDone: 'rgba(80,220,255,0.9)', accent: '#40c0e0', texture: 'water',
-  },
-  // 2: Lt. Surge — military scrubland, olive drab
-  {
-    name: 'Vermilion Thunder Road',
-    ocean: '#2a3a20', land: '#5a6a30', landHi: '#7a8a40', landShadow: '#1a2010',
-    roadFill: '#e8cc30', roadEdge: '#907800', roadHi: '#fff080',
-    pathDone: 'rgba(255,255,100,0.95)', pathBypassed: 'rgba(40,40,20,0.45)', pathLocked: 'rgba(50,50,25,0.3)',
-    glowDone: 'rgba(255,255,80,0.95)', accent: '#f0e020', texture: 'electric',
-  },
-  // 3: Erika — emerald forest, deep rich greens
-  {
-    name: 'Celadon Garden Walk',
-    ocean: '#1a5a2a', land: '#2a8a2a', landHi: '#50c050', landShadow: '#0a2a0a',
-    roadFill: '#d4a832', roadEdge: '#7a5a08', roadHi: '#f0d060',
-    pathDone: 'rgba(140,255,100,0.9)', pathBypassed: 'rgba(20,50,20,0.4)', pathLocked: 'rgba(20,55,20,0.3)',
-    glowDone: 'rgba(100,240,60,0.9)', accent: '#60d040', texture: 'grass',
-  },
-  // 4: Koga — foggy purple marshland
-  {
-    name: 'Fuschia Shadow Maze',
-    ocean: '#1a0a2a', land: '#3a2a5a', landHi: '#5a3a7a', landShadow: '#0e0618',
-    roadFill: '#b060e0', roadEdge: '#6020a0', roadHi: '#d090ff',
-    pathDone: 'rgba(210,120,255,0.9)', pathBypassed: 'rgba(30,15,50,0.45)', pathLocked: 'rgba(35,18,55,0.3)',
-    glowDone: 'rgba(200,100,255,0.9)', accent: '#a040d0', texture: 'poison',
-  },
-  // 5: Sabrina — lavender psychic hills
-  {
-    name: 'Saffron Psychic Plane',
-    ocean: '#200828', land: '#5a2a6a', landHi: '#8a4a9a', landShadow: '#120416',
-    roadFill: '#e060c0', roadEdge: '#902880', roadHi: '#ff90e0',
-    pathDone: 'rgba(255,160,240,0.9)', pathBypassed: 'rgba(40,15,40,0.45)', pathLocked: 'rgba(45,18,45,0.3)',
-    glowDone: 'rgba(255,140,230,0.9)', accent: '#e060c0', texture: 'psychic',
-  },
-  // 6: Blaine — volcanic rock island, black with lava veins
-  {
-    name: 'Cinnabar Volcano Climb',
-    ocean: '#1a0a00', land: '#3a1800', landHi: '#6a2800', landShadow: '#0a0400',
-    roadFill: '#ff6010', roadEdge: '#8a2800', roadHi: '#ffb060',
-    pathDone: 'rgba(255,180,60,0.95)', pathBypassed: 'rgba(50,20,5,0.45)', pathLocked: 'rgba(55,22,8,0.3)',
-    glowDone: 'rgba(255,160,40,0.95)', accent: '#ff6010', texture: 'fire',
-  },
-  // 7: Giovanni — dark urban concrete, near-black
-  {
-    name: 'Viridian Dark City',
-    ocean: '#0a0a0a', land: '#1e1e1e', landHi: '#2e2e2e', landShadow: '#000000',
-    roadFill: '#cc2020', roadEdge: '#6a0808', roadHi: '#ff6060',
-    pathDone: 'rgba(255,80,80,0.9)', pathBypassed: 'rgba(40,10,10,0.5)', pathLocked: 'rgba(40,15,15,0.3)',
-    glowDone: 'rgba(255,60,60,0.9)', accent: '#cc2020', texture: 'dark',
-  },
-  // 8-12 Elite Four / Champion — keep existing colour feel
-  { name:'Ice Path',       ocean:'#3060a0', land:'#a0c8e8', landHi:'#d0f0ff', landShadow:'#2050808', roadFill:'#c0e8ff', roadEdge:'#6090c0', roadHi:'#ffffff', pathDone:'rgba(220,250,255,0.95)', pathBypassed:'rgba(80,120,160,0.4)', pathLocked:'rgba(80,130,170,0.3)', glowDone:'rgba(200,240,255,0.95)', accent:'#b0e0ff', texture:'ice' },
-  { name:'Fighting Dojo',  ocean:'#2a1008', land:'#6a3018', landHi:'#8a4a28', landShadow:'#180808', roadFill:'#d06030', roadEdge:'#6a2808', roadHi:'#f09060', pathDone:'rgba(255,160,80,0.9)', pathBypassed:'rgba(50,20,10,0.45)', pathLocked:'rgba(55,22,10,0.3)', glowDone:'rgba(250,140,60,0.9)', accent:'#d06030', texture:'rock' },
-  { name:'Ghost Tower',    ocean:'#06060e', land:'#1a1430', landHi:'#2a2048', landShadow:'#02020a', roadFill:'#8050d0', roadEdge:'#3010a0', roadHi:'#b080ff', pathDone:'rgba(180,140,255,0.9)', pathBypassed:'rgba(15,12,30,0.5)', pathLocked:'rgba(18,14,35,0.3)', glowDone:'rgba(160,120,255,0.9)', accent:'#8050d0', texture:'ghost' },
-  { name:"Dragon's Den",   ocean:'#060c20', land:'#0a1a40', landHi:'#1030608', landShadow:'#020608', roadFill:'#4080e0', roadEdge:'#103080', roadHi:'#80b8ff', pathDone:'rgba(140,200,255,0.9)', pathBypassed:'rgba(10,20,50,0.45)', pathLocked:'rgba(12,22,55,0.3)', glowDone:'rgba(120,180,255,0.9)', accent:'#4080e0', texture:'dragon' },
-  { name:'★ Champions Hall', ocean:'#0e0202', land:'#2a0808', landHi:'#4a1010', landShadow:'#060000', roadFill:'#ffc820', roadEdge:'#a07800', roadHi:'#fff080', pathDone:'rgba(255,230,100,0.95)', pathBypassed:'rgba(40,10,10,0.5)', pathLocked:'rgba(45,12,12,0.3)', glowDone:'rgba(255,220,80,0.95)', accent:'#ffc820', texture:'champion' },
+  // 0: Brock
+  { name:'Boulder Cave Trail', ocean:'#4a5a6a', land:'#8a7250', landHi:'#b09060', landShadow:'#3a2c1e',
+    trailFill:'#c8a060', trailEdge:'#7a5820', trailHi:'#e8c880', trailShadow:'rgba(30,18,8,0.5)',
+    pathDone:'rgba(255,210,80,0.9)', glowDone:'rgba(255,190,50,0.8)', accent:'#c8a060', texture:'rock', deco:'rocks' },
+  // 1: Misty
+  { name:'Cerulean Sea Path', ocean:'#1a6a9a', land:'#3a8a3a', landHi:'#60b840', landShadow:'#1a4a1a',
+    trailFill:'#a09060', trailEdge:'#605030', trailHi:'#c8b880', trailShadow:'rgba(10,30,10,0.45)',
+    pathDone:'rgba(120,230,255,0.9)', glowDone:'rgba(80,220,255,0.9)', accent:'#40c0e0', texture:'water', deco:'flowers' },
+  // 2: Lt. Surge
+  { name:'Vermilion Thunder Road', ocean:'#2a3a20', land:'#5a6a30', landHi:'#7a8a40', landShadow:'#1a2010',
+    trailFill:'#808060', trailEdge:'#404828', trailHi:'#a0a878', trailShadow:'rgba(20,24,10,0.5)',
+    pathDone:'rgba(255,255,100,0.95)', glowDone:'rgba(255,255,80,0.95)', accent:'#f0e020', texture:'electric', deco:'cracks' },
+  // 3: Erika
+  { name:'Celadon Garden Walk', ocean:'#1a5a2a', land:'#2a8a2a', landHi:'#50c050', landShadow:'#0a2a0a',
+    trailFill:'#7a5c30', trailEdge:'#3a2808', trailHi:'#a07840', trailShadow:'rgba(10,16,4,0.5)',
+    pathDone:'rgba(140,255,100,0.9)', glowDone:'rgba(100,240,60,0.9)', accent:'#60d040', texture:'grass', deco:'flowers' },
+  // 4: Koga
+  { name:'Fuschia Shadow Maze', ocean:'#1a0a2a', land:'#3a2a5a', landHi:'#5a3a7a', landShadow:'#0e0618',
+    trailFill:'#504840', trailEdge:'#201828', trailHi:'#706860', trailShadow:'rgba(14,8,20,0.6)',
+    pathDone:'rgba(210,120,255,0.9)', glowDone:'rgba(200,100,255,0.9)', accent:'#a040d0', texture:'poison', deco:'mushrooms' },
+  // 5: Sabrina
+  { name:'Saffron Psychic Plane', ocean:'#200828', land:'#5a2a6a', landHi:'#8a4a9a', landShadow:'#120416',
+    trailFill:'#9080a8', trailEdge:'#503860', trailHi:'#c0b0d8', trailShadow:'rgba(16,4,24,0.5)',
+    pathDone:'rgba(255,160,240,0.9)', glowDone:'rgba(255,140,230,0.9)', accent:'#e060c0', texture:'psychic', deco:'crystals' },
+  // 6: Blaine
+  { name:'Cinnabar Volcano Climb', ocean:'#1a0a00', land:'#3a1800', landHi:'#6a2800', landShadow:'#0a0400',
+    trailFill:'#2a1808', trailEdge:'#0a0400', trailHi:'#6a3010', trailShadow:'rgba(8,2,0,0.7)',
+    pathDone:'rgba(255,180,60,0.95)', glowDone:'rgba(255,160,40,0.95)', accent:'#ff6010', texture:'fire', deco:'embers' },
+  // 7: Giovanni
+  { name:'Viridian Dark City', ocean:'#0a0a0a', land:'#1e1e1e', landHi:'#2e2e2e', landShadow:'#000000',
+    trailFill:'#383838', trailEdge:'#101010', trailHi:'#585858', trailShadow:'rgba(0,0,0,0.7)',
+    pathDone:'rgba(255,80,80,0.9)', glowDone:'rgba(255,60,60,0.9)', accent:'#cc2020', texture:'dark', deco:'ruins' },
+  // 8-12 Elite Four / Champion
+  { name:'Ice Path', ocean:'#3060a0', land:'#a0c8e8', landHi:'#d0f0ff', landShadow:'#205080',
+    trailFill:'#c0ddf0', trailEdge:'#6090c0', trailHi:'#e8f4ff', trailShadow:'rgba(20,50,80,0.4)',
+    pathDone:'rgba(220,250,255,0.95)', glowDone:'rgba(200,240,255,0.95)', accent:'#b0e0ff', texture:'ice', deco:'crystals' },
+  { name:'Fighting Dojo', ocean:'#2a1008', land:'#6a3018', landHi:'#8a4a28', landShadow:'#180808',
+    trailFill:'#8a5030', trailEdge:'#401808', trailHi:'#b07048', trailShadow:'rgba(20,8,4,0.5)',
+    pathDone:'rgba(255,160,80,0.9)', glowDone:'rgba(250,140,60,0.9)', accent:'#d06030', texture:'rock', deco:'rocks' },
+  { name:'Ghost Tower', ocean:'#06060e', land:'#1a1430', landHi:'#2a2048', landShadow:'#02020a',
+    trailFill:'#282038', trailEdge:'#0c0818', trailHi:'#483858', trailShadow:'rgba(2,0,8,0.7)',
+    pathDone:'rgba(180,140,255,0.9)', glowDone:'rgba(160,120,255,0.9)', accent:'#8050d0', texture:'ghost', deco:'mushrooms' },
+  { name:"Dragon's Den", ocean:'#060c20', land:'#0a1a40', landHi:'#183060', landShadow:'#020608',
+    trailFill:'#1a3050', trailEdge:'#081020', trailHi:'#305080', trailShadow:'rgba(2,4,12,0.6)',
+    pathDone:'rgba(140,200,255,0.9)', glowDone:'rgba(120,180,255,0.9)', accent:'#4080e0', texture:'dragon', deco:'crystals' },
+  { name:'Champions Hall', ocean:'#0e0202', land:'#2a0808', landHi:'#4a1010', landShadow:'#060000',
+    trailFill:'#4a3010', trailEdge:'#201008', trailHi:'#806020', trailShadow:'rgba(6,2,0,0.6)',
+    pathDone:'rgba(255,230,100,0.95)', glowDone:'rgba(255,220,80,0.95)', accent:'#ffc820', texture:'champion', deco:'ruins' },
+];
+
+// Per-gym path style — controls trail winding character
+const PATH_STYLES = [
+  { bendRange:0.28, cornerStyle:'round',  segments:9  }, // 0 Brock   — wide sweeping
+  { bendRange:0.22, cornerStyle:'round',  segments:10 }, // 1 Misty   — coastal curves
+  { bendRange:0.12, cornerStyle:'sharp',  segments:8  }, // 2 Surge   — tight grid
+  { bendRange:0.20, cornerStyle:'round',  segments:11 }, // 3 Erika   — winding forest
+  { bendRange:0.14, cornerStyle:'round',  segments:10 }, // 4 Koga    — cramped maze
+  { bendRange:0.18, cornerStyle:'smooth', segments:10 }, // 5 Sabrina — flowing
+  { bendRange:0.22, cornerStyle:'sharp',  segments:9  }, // 6 Blaine  — serpentine
+  { bendRange:0.10, cornerStyle:'sharp',  segments:8  }, // 7 Giovanni— urban grid
 ];
 
 const NODE_TYPES = ['battle', 'heal', 'catch', 'training', 'shop'];
 const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓' };
 const NODE_MYSTERY_ICON = '❓';
+
 
 const STATUS_LABELS = {
   burn:   '🔥BRN',
@@ -766,124 +757,130 @@ function buildDeck(type, improvementMap = {}) {
 }
 
 // ─── MAP GENERATION ──────────────────────────────────────────────────────────
+// Generates a winding trail with nodes placed at bends and a fork in the middle.
+// Each node stores px/py waypoint coords (relative 0-1) and trail segment info.
 
 function generateMap(bossIndex) {
-  const bi = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, MAP_THEMES.length - 1);
+  const bi    = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, MAP_THEMES.length - 1);
+  const style = PATH_STYLES[Math.min(bi, PATH_STYLES.length - 1)];
+  const { bendRange, segments } = style;
 
-  function makeTypes() {
-    const t = [
-      'battle','battle','battle','battle','battle','battle','battle','battle',
-      'heal','heal','heal',
-      'catch','catch','catch',
-      'training','training','training',
-      'shop','shop','shop',
-    ];
-    return t.sort(() => Math.random() - .5);
-  }
-
-  const allTypes = makeTypes();
+  // ── Shuffle node types ────────────────────────────────────────────────────
+  const typePool = [
+    'battle','battle','battle','battle','battle','battle',
+    'heal','heal',
+    'catch','catch',
+    'training','training',
+    'shop','shop',
+  ].sort(() => Math.random() - 0.5);
   let typeIdx = 0;
-  const nextType = () => allTypes[typeIdx++ % allTypes.length];
+  const nextType = () => typePool[typeIdx++ % typePool.length];
 
-  function jitter(base, amount = 0.05) {
-    return base + (Math.random() * 2 - 1) * amount;
-  }
+  // ── Generate main spine waypoints ─────────────────────────────────────────
+  // Trail runs bottom→top. Start near bottom-centre, end at top-centre.
+  // Each step moves upward by 1/segments of the height, with a random horizontal
+  // offset constrained by bendRange. Direction alternates to create the S-curve.
+  const waypoints = [];
+  const margin = 0.12;
+  let x = 0.5;
+  let dir = Math.random() < 0.5 ? 1 : -1;
 
-  const WIDE_ROWS = 10;
-  const TOTAL_Y   = WIDE_ROWS + 2;
-
-  // ── Build layout rows ───────────────────────────────────────────────────
-  // Each row has 2–3 nodes. Each node carries a 'lane': 'left' | 'mid' | 'right'
-  // This drives diverging link logic below.
-  const layoutRows = [];
-  for (let r = 0; r < WIDE_ROWS; r++) {
-    const y      = (r + 1) / TOTAL_Y;
-    const hasMid = Math.random() < 0.40;
-    const row = [
-      { x: jitter(0.18, 0.05), y, type: nextType(), lane: 'left'  },
-      { x: jitter(0.82, 0.05), y, type: nextType(), lane: 'right' },
-    ];
-    if (hasMid) {
-      row.splice(1, 0, { x: jitter(0.50, 0.04), y, type: nextType(), lane: 'mid' });
+  for (let i = 0; i <= segments; i++) {
+    const y = 1.0 - (i / segments) * 0.85 - 0.07; // bottom (0.93) to top (0.08)
+    waypoints.push({ x, y });
+    // Alternate direction with some randomness
+    if (i < segments) {
+      const jitter = (Math.random() * 0.4 + 0.6); // 0.6–1.0 multiplier
+      x += dir * bendRange * jitter;
+      x  = Math.max(margin, Math.min(1 - margin, x));
+      // Flip direction at each step (with 30% chance of double-flip for variety)
+      dir = -dir;
+      if (Math.random() < 0.3) dir = -dir;
     }
-    layoutRows.push(row);
   }
-  layoutRows.push([{ x: 0.50, y: (WIDE_ROWS + 1) / TOTAL_Y, type: 'boss', lane: 'mid' }]);
+  // Force last waypoint to centre-top
+  waypoints[waypoints.length - 1].x = 0.5 + (Math.random() - 0.5) * 0.08;
 
-  // ── Build nodes array ───────────────────────────────────────────────────
+  // ── Build nodes from waypoints ────────────────────────────────────────────
+  // Main path: one node per waypoint (excluding start and end which become
+  // special). Fork happens at the midpoint: two parallel branches for 2 steps.
   const nodes = [];
   let idx = 0;
-  const rowStartIdx = [];
 
-  layoutRows.forEach((row, ri) => {
-    rowStartIdx.push(nodes.length);
-    row.forEach((spec, ni) => {
-      nodes.push({
-        idx,
-        row:      ri,
-        col:      ni,
-        lane:     spec.lane,
-        type:     spec.type,
-        revealed: ri === 0,
-        x:        spec.x,
-        y:        spec.y,
-        unlocked: ri === 0,
-        done:     false,
-        links:    [],
-      });
-      idx++;
-    });
-  });
+  const forkAt  = Math.floor(segments * 0.45); // fork ~45% up
+  const mergeAt = forkAt + 2;                  // merge 2 steps later
 
-  // ── Diverging links ─────────────────────────────────────────────────────
-  // Rule: a left-lane node links to left/mid nodes next row.
-  //       a right-lane node links to right/mid nodes next row.
-  //       a mid-lane node links to all nodes next row.
-  // "Merge rows" at rows 3 and 7 — every lane links to all next-row nodes,
-  // allowing paths to rejoin after diverging.
-  const MERGE_ROWS = new Set([3, 7]);
+  const makeNode = (x, y, type, unlocked, revealed) => {
+    const n = { idx: idx++, x, y, type, unlocked, revealed, done: false,
+                bypassed: false, links: [], row: 0, col: 0, lane: 'mid' };
+    nodes.push(n);
+    return n;
+  };
 
-  layoutRows.forEach((_, ri) => {
-    if (ri >= layoutRows.length - 1) return;
-    const curStart  = rowStartIdx[ri];
-    const nextStart = rowStartIdx[ri + 1];
-    const curNodes  = layoutRows[ri];
-    const nxtNodes  = layoutRows[ri + 1];
-    const isMerge   = MERGE_ROWS.has(ri);
+  // Build sequential main path + fork
+  let prevMain  = null; // last main-path node index
+  let forkLeft  = null; // fork left branch last node
+  let forkRight = null; // fork right branch last node
 
-    curNodes.forEach((spec, ci) => {
-      const fromNode = nodes[curStart + ci];
-      nxtNodes.forEach((nspec, ni) => {
-        const toIdx = nextStart + ni;
-        let shouldLink = false;
-        if (isMerge) {
-          // Merge row: everyone connects to everyone — paths rejoin
-          shouldLink = true;
-        } else if (spec.lane === 'mid') {
-          shouldLink = true;
-        } else if (spec.lane === 'left') {
-          shouldLink = nspec.lane === 'left' || nspec.lane === 'mid';
-        } else { // right
-          shouldLink = nspec.lane === 'right' || nspec.lane === 'mid';
-        }
-        if (shouldLink && !fromNode.links.includes(toIdx)) {
-          fromNode.links.push(toIdx);
-        }
-      });
-      // Safety: every node must link to at least one next-row node
-      if (fromNode.links.length === 0) {
-        const fallback = nextStart + Math.floor(Math.random() * nxtNodes.length);
-        fromNode.links.push(fallback);
+  for (let i = 0; i < waypoints.length; i++) {
+    const wp = waypoints[i];
+    const isBoss  = (i === waypoints.length - 1);
+    const isFirst = (i === 0);
+    const type    = isBoss ? 'boss' : nextType();
+    const node    = makeNode(wp.x, wp.y, type, isFirst, isFirst || isBoss);
+    node.row      = i;
+
+    if (prevMain !== null) {
+      if (i === forkAt + 1) {
+        // Create fork: left and right branch off the fork node
+        const fwp    = waypoints[i];
+        const spread = bendRange * 0.6;
+        const lNode  = makeNode(fwp.x - spread, fwp.y, nextType(), false, false);
+        const rNode  = makeNode(fwp.x + spread, fwp.y, nextType(), false, false);
+        lNode.row    = i; lNode.lane = 'left';
+        rNode.row    = i; rNode.lane = 'right';
+        // Fork node (prevMain) links to both branches
+        nodes[prevMain].links.push(lNode.idx, rNode.idx);
+        forkLeft  = lNode.idx;
+        forkRight = rNode.idx;
+        // Don't link main node normally — skip it
+        continue;
+      } else if (i === mergeAt && forkLeft !== null) {
+        // Merge: both branch nodes link to current node
+        nodes[forkLeft].links.push(node.idx);
+        nodes[forkRight].links.push(node.idx);
+        forkLeft = forkRight = null;
+      } else if (forkLeft !== null && i === forkAt + 2) {
+        // Mid-fork step: extend both branches
+        const prevL = forkLeft;
+        const prevR = forkRight;
+        const spread = bendRange * 0.5;
+        const lNode  = makeNode(waypoints[i].x - spread, waypoints[i].y, nextType(), false, false);
+        const rNode  = makeNode(waypoints[i].x + spread, waypoints[i].y, nextType(), false, false);
+        lNode.row    = i; lNode.lane = 'left';
+        rNode.row    = i; rNode.lane = 'right';
+        nodes[prevL].links.push(lNode.idx);
+        nodes[prevR].links.push(rNode.idx);
+        forkLeft  = lNode.idx;
+        forkRight = rNode.idx;
+        continue;
+      } else {
+        nodes[prevMain].links.push(node.idx);
       }
-    });
-  });
+    }
+    prevMain = node.idx;
+  }
 
-  const bossNode = nodes[nodes.length - 1];
-  bossNode.bossIndex = bi;
-  bossNode.revealed  = false;
+  // ── Boss node always gets a revealed flag ─────────────────────────────────
+  const bossNode      = nodes[nodes.length - 1];
+  bossNode.type       = 'boss';
+  bossNode.revealed   = false;
+  bossNode.bossIndex  = bi;
 
-  // Store theme index on the map so drawMap can read it
-  nodes._bossIndex = bi;
+  // ── Store trail waypoints on the map for drawMap to use ───────────────────
+  nodes._bossIndex    = bi;
+  nodes._waypoints    = waypoints;
+  nodes._pathStyle    = style;
 
   return nodes;
 }
@@ -2425,22 +2422,103 @@ const PartyOverview = {
   },
 };
 
-// ─── MAP ENGINE ──────────────────────────────────────────────────────────────
+// ─── MAP ENGINE (Navigation View) ────────────────────────────────────────────
+
+// Background image filenames per boss index
+const GYM_BACKGROUNDS = [
+  'bg_0_brock.png',
+  'bg_1_misty.png',
+  'bg_2_surge.png',
+  'bg_3_erika.png',
+  'bg_4_koga.png',
+  'bg_5_sabrina.png',
+  'bg_6_blaine.png',
+  'bg_7_giovanni.png',
+  'bg_8_lorelei.png',
+  'bg_9_bruno.png',
+  'bg_10_agatha.png',
+  'bg_11_lance.png',
+  'bg_12_blue.png',
+];
+
+// Fallback CSS gradient per boss index (shown if image hasn't loaded)
+const GYM_FALLBACKS = [
+  'linear-gradient(180deg,#6a5a40 0%,#8a7250 40%,#5a4838 100%)',  // Brock
+  'linear-gradient(180deg,#1a6a9a 0%,#2a7a3a 50%,#1a4a2a 100%)', // Misty
+  'linear-gradient(180deg,#2a3a20 0%,#4a5a28 50%,#1a2810 100%)', // Surge
+  'linear-gradient(180deg,#1a5a1a 0%,#2a8a2a 50%,#0a3a0a 100%)', // Erika
+  'linear-gradient(180deg,#1a0a2a 0%,#2a1a4a 50%,#0e0618 100%)', // Koga
+  'linear-gradient(180deg,#200828 0%,#4a2a6a 50%,#120416 100%)', // Sabrina
+  'linear-gradient(180deg,#1a0800 0%,#3a1800 50%,#0a0400 100%)', // Blaine
+  'linear-gradient(180deg,#0a0a0a 0%,#1a1a1a 50%,#000000 100%)', // Giovanni
+  'linear-gradient(180deg,#3060a0 0%,#a0c8e8 50%,#205080 100%)', // Lorelei
+  'linear-gradient(180deg,#2a1008 0%,#6a3018 50%,#180808 100%)', // Bruno
+  'linear-gradient(180deg,#06060e 0%,#1a1430 50%,#02020a 100%)', // Agatha
+  'linear-gradient(180deg,#060c20 0%,#0a1a40 50%,#020608 100%)', // Lance
+  'linear-gradient(180deg,#0e0202 0%,#2a0808 50%,#060000 100%)', // Blue
+];
+
+// Arrow directions by number of choices
+const ARROW_DIRS = {
+  1: ['straight'],
+  2: ['left', 'right'],
+  3: ['left', 'straight', 'right'],
+};
+
+const ARROW_LABELS = {
+  battle:   { icon: '⚔️', label: 'Battle' },
+  heal:     { icon: '💚', label: 'Heal' },
+  catch:    { icon: '🎣', label: 'Catch' },
+  training: { icon: '⚡', label: 'Train' },
+  shop:     { icon: '🛒', label: 'Shop' },
+  boss:     { icon: '💀', label: 'GYM!' },
+  mystery:  { icon: '❓', label: '???' },
+};
 
 const MapEngine = {
+  _lastBi: -1,
+
   show() {
     showScreen('map');
     this.renderParty();
-    this.drawMap();
+    this.renderNav();
     ItemEngine.renderBagBar();
     saveGame();
   },
 
+  // ── Set gym background image ─────────────────────────────────────────────
+  _applyBackground(bi) {
+    const bgEl = document.getElementById('nav-bg');
+    if (!bgEl) return;
+    const file     = GYM_BACKGROUNDS[Math.min(bi, GYM_BACKGROUNDS.length - 1)];
+    const fallback = GYM_FALLBACKS[Math.min(bi, GYM_FALLBACKS.length - 1)];
+    const url      = `assets/backgrounds/${file}`;
+
+    // Always set fallback gradient first so something shows immediately
+    bgEl.style.background = fallback;
+
+    // Preload image then swap in
+    const img = new Image();
+    img.onload  = () => {
+      bgEl.style.background = `url('${url}') center center / cover no-repeat`;
+    };
+    img.onerror = () => { /* keep fallback gradient */ };
+    img.src = url;
+
+    // Fade transition when gym changes
+    if (bi !== this._lastBi) {
+      bgEl.classList.remove('nav-bg-fade');
+      void bgEl.offsetWidth;
+      bgEl.classList.add('nav-bg-fade');
+      this._lastBi = bi;
+    }
+  },
+
+  // ── Render party bar ─────────────────────────────────────────────────────
   renderParty() {
     const el = document.getElementById('map-party');
+    if (!el) return;
     el.innerHTML = '';
-
-    // Active Pokémon shown first (larger), rest smaller
     GameState.party.forEach((p, i) => {
       const d = document.createElement('div');
       const isActive = i === GameState.activePokemonIndex;
@@ -2456,376 +2534,105 @@ const MapEngine = {
       d.addEventListener('click', () => PartyOverview.open());
       el.appendChild(d);
     });
-
-    // "Manage" hint button if party exists
     if (GameState.party.length > 0) {
       const hint = document.createElement('div');
       hint.className = 'map-party-manage-hint';
       hint.textContent = '⚙';
-      hint.title = 'Manage party';
       hint.addEventListener('click', () => PartyOverview.open());
       el.appendChild(hint);
     }
-
     const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
     const boss = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     document.getElementById('map-meta').textContent =
       `💰 ${GameState.gold || 0}g  |  ⚔ ${boss?.name ?? 'Boss'} (${GameState.bossesDefeated}/8)  |  Party: ${GameState.party.length}/6`;
   },
 
-  drawMap() {
-    const wrap   = document.querySelector('.map-canvas-wrap');
-    const canvas = document.getElementById('map-canvas');
-    const layer  = document.getElementById('map-nodes-layer');
-    layer.innerHTML = '';
+  // ── Main navigation renderer ─────────────────────────────────────────────
+  renderNav() {
+    const nodes = GameState.map;
+    if (!nodes) return;
 
-    const W = Math.max(wrap.clientWidth,  320);
-    const H = Math.max(wrap.clientHeight, 600);
-    canvas.width  = W;
-    canvas.height = H;
-
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, W, H);
-
-    const bi    = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const bi    = nodes._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const boss  = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     const theme = MAP_THEMES[Math.min(bi, MAP_THEMES.length - 1)];
 
-    // ── 1. Ocean fill ──────────────────────────────────────────────────────
-    ctx.fillStyle = theme.ocean;
-    ctx.fillRect(0, 0, W, H);
+    // Apply background
+    this._applyBackground(bi);
 
-    // ── 2. Landmass polygon (unique per theme) ─────────────────────────────
-    this._drawLandmass(ctx, W, H, bi, theme);
+    // ── Location badge ─────────────────────────────────────────────────────
+    document.getElementById('nav-location-name').textContent = theme.name;
+    document.getElementById('nav-location-sub').textContent =
+      `Heading toward ${boss?.name ?? 'the Boss'} · ${GameState.bossesDefeated}/8 badges`;
 
-    // ── 3. Texture overlay on land ──────────────────────────────────────────
-    this._drawTexture(ctx, W, H, theme);
+    // ── Find available choices ─────────────────────────────────────────────
+    // Available = unlocked, not done, not bypassed
+    const available = nodes.filter(n =>
+      typeof n.idx === 'number' &&
+      n.unlocked &&
+      !n.done &&
+      !n.bypassed
+    );
 
-    // ── 4. Topographic radial highlight ────────────────────────────────────
-    const topo = ctx.createRadialGradient(W*0.5, H*0.42, H*0.05, W*0.5, H*0.42, H*0.72);
-    topo.addColorStop(0,   'rgba(255,255,255,0.10)');
-    topo.addColorStop(0.5, 'rgba(255,255,255,0.03)');
-    topo.addColorStop(1,   'rgba(0,0,0,0.22)');
-    ctx.fillStyle = topo;
-    ctx.fillRect(0, 0, W, H);
+    // ── Progress bar ───────────────────────────────────────────────────────
+    const totalNodes  = nodes.filter(n => typeof n.idx === 'number').length;
+    const doneCount   = GameState.completedNodes.length;
+    const pct         = Math.round((doneCount / Math.max(totalNodes - 1, 1)) * 100);
+    document.getElementById('nav-progress-bar').style.width = pct + '%';
+    document.getElementById('nav-progress-label').textContent =
+      doneCount === 0 ? 'Begin your journey!' :
+      available[0]?.type === 'boss' ? '⚔ Boss approaching!' :
+      `Step ${doneCount} of ${totalNodes - 1}`;
 
-    const nodes = GameState.map;
-    nodes.forEach(n => { n.px = n.x * W; n.py = n.y * H; });
+    // ── Build choice arrows ────────────────────────────────────────────────
+    const choicesEl = document.getElementById('nav-choices');
+    choicesEl.innerHTML = '';
 
-    // ── 5. Orthogonal roads ─────────────────────────────────────────────────
-    const ROAD_W   = Math.max(14, W * 0.038);
-    const drawn    = new Set();
+    if (available.length === 0) {
+      // Shouldn't happen — safety fallback
+      choicesEl.innerHTML = '<div class="nav-empty">No paths available…</div>';
+      return;
+    }
 
-    nodes.forEach(n => {
-      n.links.forEach(li => {
-        const target = nodes[li];
-        if (!target) return;
-        const key = [Math.min(n.idx, li), Math.max(n.idx, li)].join('-');
-        if (drawn.has(key)) return;
-        drawn.add(key);
+    const count = Math.min(available.length, 3);
+    const dirs  = ARROW_DIRS[count] || ARROW_DIRS[3];
 
-        const done     = GameState.completedNodes.includes(n.idx) && GameState.completedNodes.includes(li);
-        const bypassed = !!n.bypassed;
-        const locked   = !n.unlocked && !done && !bypassed;
+    available.slice(0, 3).forEach((node, i) => {
+      const dir      = dirs[i];
+      const revealed = !!node.revealed || node.type === 'boss';
+      const info     = revealed
+        ? (ARROW_LABELS[node.type] || ARROW_LABELS.mystery)
+        : ARROW_LABELS.mystery;
 
-        const ax = n.px, ay = n.py;
-        const bx = target.px, by = target.py;
-        // Orthogonal elbow: go horizontal first then vertical
-        const ex = bx, ey = ay;
+      const isBoss = node.type === 'boss';
 
-        const drawRoad = (x1, y1, x2, y2) => {
-          if (Math.abs(x1-x2) < 2 && Math.abs(y1-y2) < 2) return;
-          ctx.lineCap = 'square';
-
-          if (locked || bypassed) {
-            // Thin dashed locked/bypassed road
-            ctx.beginPath();
-            ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-            ctx.strokeStyle = locked ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.15)';
-            ctx.lineWidth   = ROAD_W * 0.5;
-            ctx.setLineDash(locked ? [6, 8] : [3, 10]);
-            ctx.stroke(); ctx.setLineDash([]);
-            return;
-          }
-
-          // Shadow
-          ctx.beginPath(); ctx.moveTo(x1+2, y1+3); ctx.lineTo(x2+2, y2+3);
-          ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = ROAD_W + 4; ctx.stroke();
-
-          // Road edge (dark border)
-          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-          ctx.strokeStyle = theme.roadEdge; ctx.lineWidth = ROAD_W; ctx.stroke();
-
-          // Road fill
-          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-          ctx.strokeStyle = done ? theme.pathDone : theme.roadFill;
-          ctx.lineWidth = ROAD_W - 4;
-          if (done) { ctx.shadowColor = theme.glowDone; ctx.shadowBlur = 8; }
-          ctx.stroke(); ctx.shadowBlur = 0;
-
-          // Centre highlight strip
-          ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2);
-          ctx.strokeStyle = done ? 'rgba(255,255,255,0.25)' : theme.roadHi + '55';
-          ctx.lineWidth = ROAD_W * 0.22;
-          ctx.stroke();
-        };
-
-        // Horizontal segment
-        drawRoad(ax, ay, ex, ey);
-        // Vertical segment
-        drawRoad(ex, ey, bx, by);
-
-        ctx.lineCap = 'round';
-      });
-    });
-
-    // ── 6. Node buttons ────────────────────────────────────────────────────
-    nodes.forEach(n => {
-      const btn      = document.createElement('button');
-      const done     = GameState.completedNodes.includes(n.idx);
-      const bypassed = !!n.bypassed;
-      const revealed = !!n.revealed || n.type === 'boss';
-      const isBoss   = n.type === 'boss';
-
-      let typeClass;
-      if (done)             typeClass = 'node-done';
-      else if (bypassed)    typeClass = 'node-bypassed';
-      else if (!n.unlocked) typeClass = 'node-locked';
-      else if (!revealed)   typeClass = 'node-mystery';
-      else                  typeClass = `node-${n.type}`;
-
-      btn.className  = `map-node-btn ${typeClass}${isBoss ? ' node-boss-city' : ''}`;
-      btn.style.left = n.px + 'px';
-      btn.style.top  = n.py + 'px';
-      btn.style.setProperty('--theme-accent', theme.accent);
-
-      const icon = done      ? '✓'
-                 : bypassed  ? '–'
-                 : !revealed ? NODE_MYSTERY_ICON
-                 :             NODE_ICONS[n.type] || '?';
-
-      // City node inner HTML — orb + label
-      btn.innerHTML = `<span class="node-orb">${icon}</span>`;
-
-      btn.title = done      ? 'Completed'
-                : bypassed  ? 'Path not taken'
-                : !n.unlocked ? 'Locked'
-                : !revealed ? 'Mystery node!'
-                :             capitalize(n.type) + ' Node';
-
-      if (!n.unlocked || done || bypassed) btn.setAttribute('disabled', true);
-      btn.onclick = () => this.visitNode(n);
-      layer.appendChild(btn);
+      const btn = document.createElement('button');
+      btn.className = `nav-arrow nav-arrow-${dir}${isBoss ? ' nav-arrow-boss' : ''}`;
+      btn.style.setProperty('--arrow-accent', theme.accent);
+      btn.innerHTML = `
+        <div class="nav-arrow-icon">${info.icon}</div>
+        <div class="nav-arrow-chevron"></div>
+        <div class="nav-arrow-label">${info.label}</div>
+      `;
+      btn.title = `Go ${dir} — ${info.label}`;
+      btn.addEventListener('click', () => this.visitNode(node));
+      choicesEl.appendChild(btn);
     });
   },
 
-  // ── Per-gym landmass shapes ──────────────────────────────────────────────
-  _drawLandmass(ctx, W, H, bi, theme) {
-    // Each gym has a unique organic landmass polygon
-    // Shapes are defined as relative control points [0-1] of W/H
-    const shapes = [
-      // 0 Brock — wide plateau, flat top
-      [[0.1,0.05],[0.9,0.05],[0.95,0.15],[0.88,0.5],[0.92,0.85],[0.8,0.98],[0.2,0.98],[0.08,0.85],[0.12,0.5],[0.05,0.15]],
-      // 1 Misty — island with inlet on left
-      [[0.2,0.02],[0.85,0.05],[0.92,0.3],[0.88,0.6],[0.75,0.95],[0.25,0.98],[0.1,0.7],[0.15,0.45],[0.05,0.3],[0.12,0.1]],
-      // 2 Surge — rectangular military base shape
-      [[0.08,0.08],[0.92,0.08],[0.92,0.92],[0.08,0.92]],
-      // 3 Erika — round lush island
-      [[0.15,0.05],[0.78,0.03],[0.93,0.2],[0.95,0.6],[0.85,0.92],[0.5,0.98],[0.18,0.95],[0.05,0.72],[0.04,0.3],[0.08,0.12]],
-      // 4 Koga — jagged shadowy terrain
-      [[0.12,0.1],[0.7,0.04],[0.9,0.18],[0.95,0.5],[0.85,0.78],[0.65,0.96],[0.3,0.98],[0.1,0.88],[0.05,0.6],[0.08,0.3]],
-      // 5 Sabrina — abstract flowing shape
-      [[0.2,0.02],[0.8,0.06],[0.96,0.28],[0.9,0.65],[0.72,0.96],[0.35,0.97],[0.1,0.78],[0.06,0.45],[0.15,0.18]],
-      // 6 Blaine — volcano island, roughly circular
-      [[0.28,0.05],[0.72,0.05],[0.92,0.25],[0.96,0.55],[0.82,0.88],[0.5,0.98],[0.18,0.9],[0.04,0.58],[0.08,0.28],[0.18,0.1]],
-      // 7 Giovanni — urban grid, squared off
-      [[0.06,0.06],[0.94,0.06],[0.94,0.94],[0.06,0.94]],
-    ];
-
-    const pts = shapes[Math.min(bi, shapes.length - 1)].map(([x,y]) => [x*W, y*H]);
-
-    // Shadow/depth layer
-    ctx.save();
-    ctx.translate(4, 6);
-    ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 1; i < pts.length; i++) {
-      const [x1,y1] = pts[i-1], [x2,y2] = pts[i];
-      ctx.quadraticCurveTo((x1+x2)/2, (y1+y2)/2, x2, y2);
-    }
-    ctx.closePath();
-    ctx.fillStyle = 'rgba(0,0,0,0.3)';
-    ctx.fill();
-    ctx.restore();
-
-    // Main land fill
-    ctx.beginPath();
-    ctx.moveTo(pts[0][0], pts[0][1]);
-    for (let i = 1; i < pts.length; i++) {
-      const [x1,y1] = pts[i-1], [x2,y2] = pts[i];
-      ctx.quadraticCurveTo((x1+x2)/2, (y1+y2)/2, x2, y2);
-    }
-    // Close back to start smoothly
-    const [lx,ly] = pts[pts.length-1], [fx,fy] = pts[0];
-    ctx.quadraticCurveTo((lx+fx)/2, (ly+fy)/2, fx, fy);
-    ctx.closePath();
-
-    // Land gradient — lighter in centre, darker at edges
-    const landGrad = ctx.createRadialGradient(W*0.5, H*0.4, H*0.05, W*0.5, H*0.45, H*0.65);
-    landGrad.addColorStop(0,   theme.landHi);
-    landGrad.addColorStop(0.5, theme.land);
-    landGrad.addColorStop(1,   theme.landShadow);
-    ctx.fillStyle = landGrad;
-    ctx.fill();
-
-    // Coastline stroke
-    ctx.strokeStyle = theme.landShadow;
-    ctx.lineWidth   = 3;
-    ctx.stroke();
-
-    // Inner coast highlight
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth   = 1.5;
-    ctx.stroke();
-  },
-
-  // ── Texture painter ─────────────────────────────────────────────────────
-  _drawTexture(ctx, W, H, theme) {
-    const t = theme.texture;
-    if (t === 'rock') {
-      // Scattered pebble ovals
-      for (let i = 0; i < 120; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        const rx = 4 + Math.random() * 10, ry = 3 + Math.random() * 6;
-        ctx.beginPath();
-        ctx.ellipse(x, y, rx, ry, Math.random() * Math.PI, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(40,30,20,${0.06 + Math.random() * 0.08})`;
-        ctx.fill();
-      }
-    } else if (t === 'water') {
-      // Horizontal wave lines
-      for (let i = 0; i < 30; i++) {
-        const y = Math.random() * H;
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        for (let x = 0; x <= W; x += 20) {
-          ctx.lineTo(x, y + Math.sin(x * 0.05 + i) * 3);
-        }
-        ctx.strokeStyle = `rgba(255,255,255,${0.03 + Math.random() * 0.04})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    } else if (t === 'electric') {
-      // Jagged lightning streaks
-      for (let i = 0; i < 8; i++) {
-        const sx = Math.random() * W;
-        ctx.beginPath();
-        ctx.moveTo(sx, 0);
-        let cx = sx, cy = 0;
-        while (cy < H) {
-          cx += (Math.random() - 0.5) * 30;
-          cy += 30 + Math.random() * 40;
-          ctx.lineTo(cx, cy);
-        }
-        ctx.strokeStyle = `rgba(255,255,100,${0.04 + Math.random() * 0.06})`;
-        ctx.lineWidth = 1;
-        ctx.stroke();
-      }
-    } else if (t === 'grass') {
-      // Tiny leaf dots scattered
-      for (let i = 0; i < 200; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        ctx.beginPath();
-        ctx.ellipse(x, y, 2, 5, Math.random() * Math.PI, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(60,160,40,${0.06 + Math.random() * 0.08})`;
-        ctx.fill();
-      }
-    } else if (t === 'poison' || t === 'ghost') {
-      // Soft floating blobs (mist / spores)
-      for (let i = 0; i < 60; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        const r = 8 + Math.random() * 20;
-        const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-        const alpha = 0.04 + Math.random() * 0.06;
-        grad.addColorStop(0, t === 'poison' ? `rgba(160,50,220,${alpha * 2})` : `rgba(100,60,200,${alpha * 2})`);
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = grad;
-        ctx.fill();
-      }
-    } else if (t === 'psychic') {
-      // Concentric ripple circles
-      for (let i = 0; i < 15; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        for (let r = 5; r < 40; r += 12) {
-          ctx.beginPath();
-          ctx.arc(x, y, r, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(220,80,180,${0.04 + Math.random() * 0.04})`;
-          ctx.lineWidth = 1;
-          ctx.stroke();
-        }
-      }
-    } else if (t === 'fire') {
-      // Upward ember dots
-      for (let i = 0; i < 150; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        const r = 1 + Math.random() * 3;
-        ctx.beginPath();
-        ctx.arc(x, y, r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,${100 + Math.floor(Math.random()*100)},20,${0.06 + Math.random() * 0.1})`;
-        ctx.fill();
-      }
-    } else if (t === 'dark' || t === 'champion') {
-      // Subtle vignette only — keep it clean and dramatic
-      const vig = ctx.createRadialGradient(W/2, H/2, H*0.2, W/2, H/2, H*0.85);
-      vig.addColorStop(0, 'rgba(0,0,0,0)');
-      vig.addColorStop(1, 'rgba(0,0,0,0.45)');
-      ctx.fillStyle = vig;
-      ctx.fillRect(0, 0, W, H);
-    } else if (t === 'ice') {
-      // Snowflake-like cross marks
-      for (let i = 0; i < 60; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        const s = 4 + Math.random() * 8;
-        ctx.strokeStyle = `rgba(200,240,255,${0.08 + Math.random() * 0.1})`;
-        ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(x-s,y); ctx.lineTo(x+s,y); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x,y-s); ctx.lineTo(x,y+s); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x-s*.7,y-s*.7); ctx.lineTo(x+s*.7,y+s*.7); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(x+s*.7,y-s*.7); ctx.lineTo(x-s*.7,y+s*.7); ctx.stroke();
-      }
-    } else if (t === 'dragon') {
-      // Large sweeping arc strokes
-      for (let i = 0; i < 12; i++) {
-        const x = Math.random() * W, y = Math.random() * H;
-        ctx.beginPath();
-        ctx.arc(x, y, 30 + Math.random() * 60, 0, Math.PI * (0.5 + Math.random()));
-        ctx.strokeStyle = `rgba(80,140,255,${0.04 + Math.random() * 0.05})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-    } else {
-      // Generic subtle noise dots
-      for (let i = 0; i < 300; i++) {
-        const tx = Math.random() * W, ty = Math.random() * H;
-        ctx.beginPath();
-        ctx.arc(tx, ty, Math.random() * 6 + 2, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.04})`;
-        ctx.fill();
-      }
-    }
-  },
-
+  // ── Visit a node ─────────────────────────────────────────────────────────
   visitNode(node) {
-    if (node.row > (GameState.highWaterRow ?? -1)) {
-      GameState.highWaterRow = node.row;
-    }
+    // Bypass sibling nodes at same row
     GameState.map.forEach(n => {
-      if (!n.done && n.row <= GameState.highWaterRow && n.idx !== node.idx) {
+      if (typeof n.idx !== 'number') return;
+      if (n.idx === node.idx) return;
+      if (n.row === node.row && !n.done) {
         n.bypassed = true;
         n.unlocked = false;
       }
     });
+    if (node.row > (GameState.highWaterRow ?? -1)) {
+      GameState.highWaterRow = node.row;
+    }
     GameState.currentNodeIndex = node.idx;
     switch (node.type) {
       case 'battle':   BattleEngine.start(node);  break;
@@ -2837,6 +2644,7 @@ const MapEngine = {
     }
   },
 
+  // ── Complete a node, unlock its children ─────────────────────────────────
   completeNode(nodeIdx) {
     if (!GameState.completedNodes.includes(nodeIdx)) {
       GameState.completedNodes.push(nodeIdx);
@@ -5001,7 +4809,14 @@ const TrainingEngine = {
 const HealEngine = {
   start(node) {
     showScreen('heal');
-    // Play recovery jingle after a brief moment (BGM has just started)
+    // Apply heal center background
+    const healBg = document.getElementById('heal-bg');
+    if (healBg) {
+      healBg.style.background = 'linear-gradient(180deg,#fff0f4 0%,#ffe0e8 50%,#ffd0e0 100%)';
+      const img = new Image();
+      img.onload  = () => { healBg.style.background = `url('assets/backgrounds/bg_heal.png') center center / cover no-repeat`; };
+      img.src = 'assets/backgrounds/bg_heal.png';
+    }
     setTimeout(() => SoundEngine.playRecovery(), 400);
     // Create sparkles
     const field = document.getElementById('heal-sparkles');

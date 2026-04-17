@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=2" />
+  <link rel="stylesheet" href="style.css?v=3" />
 </head>
 <body>
 
@@ -155,9 +155,15 @@
 </div>
 
 <!-- ═══════════════════════════════════════════
-     SCREEN: MAP
+     SCREEN: MAP / NAVIGATION
 ═══════════════════════════════════════════ -->
 <div id="screen-map" class="screen">
+  <!-- Full-screen gym background image + fallback gradient -->
+  <div class="nav-bg" id="nav-bg"></div>
+  <!-- Dark vignette overlay for readability -->
+  <div class="nav-vignette"></div>
+
+  <!-- Header: party + meta + bag + controls -->
   <div class="map-header">
     <div class="map-party" id="map-party" title="Click to manage party"></div>
     <div class="map-meta" id="map-meta"></div>
@@ -165,9 +171,20 @@
     <button class="btn-pixel btn-map-menu" id="btn-map-menu" title="Back to Main Menu">⌂</button>
     <button class="mute-btn" id="btn-mute" title="Toggle music">🔊</button>
   </div>
-  <div class="map-canvas-wrap">
-    <canvas id="map-canvas"></canvas>
-    <div id="map-nodes-layer"></div>
+
+  <!-- Location badge -->
+  <div class="nav-location" id="nav-location">
+    <span class="nav-location-name" id="nav-location-name">Route 1</span>
+    <span class="nav-location-sub"  id="nav-location-sub">Heading toward Brock</span>
+  </div>
+
+  <!-- Choice arrows — 1, 2, or 3 injected by JS -->
+  <div class="nav-choices" id="nav-choices"></div>
+
+  <!-- Step progress bar -->
+  <div class="nav-progress">
+    <div class="nav-progress-bar" id="nav-progress-bar"></div>
+    <div class="nav-progress-label" id="nav-progress-label">Step 1</div>
   </div>
 </div>
 
@@ -558,7 +575,7 @@
      SCREEN: HEAL
 ═══════════════════════════════════════════ -->
 <div id="screen-heal" class="screen">
-  <div class="heal-bg">
+  <div class="heal-bg" id="heal-bg">
     <div class="heal-sparkle-field" id="heal-sparkles"></div>
   </div>
   <div class="heal-center">
@@ -705,6 +722,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
