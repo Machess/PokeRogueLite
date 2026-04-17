@@ -3709,3 +3709,215 @@ button:disabled { opacity: .45; cursor: not-allowed; }
     rgba(180,20,20,.25) 60%,
     rgba(20,0,0,.7) 100%);
 }
+
+/* ═══════════════════════════════════════════
+   TUTORIAL SCREEN
+═══════════════════════════════════════════ */
+#screen-tutorial {
+  background: #000;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+.tut-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, #0e1a2e 0%, #000 75%);
+  z-index: 0;
+}
+
+/* ── Oak row ── */
+.tut-oak-row {
+  position: relative; z-index: 10;
+  display: flex; align-items: center; gap: .7rem;
+  padding: .7rem 1rem .5rem;
+  background: rgba(255,255,255,.04);
+  border-bottom: 1px solid var(--col-border);
+  flex-shrink: 0;
+}
+.tut-oak-portrait {
+  width: 52px; height: 52px;
+  object-fit: contain; image-rendering: pixelated;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 6px rgba(255,215,0,.3));
+}
+.tut-oak-bubble {
+  flex: 1;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .45rem .7rem;
+}
+.tut-oak-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem; color: var(--col-yellow);
+  margin-bottom: .2rem;
+}
+.tut-oak-text {
+  font-size: .58rem; color: var(--col-text);
+  line-height: 1.6;
+}
+
+/* ── Big visual area ── */
+.tut-visual {
+  position: relative; z-index: 10;
+  flex: 1;
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  min-height: 0;
+}
+
+/* ── Path demo ── */
+.tut-path-demo {
+  display: flex; gap: 1.4rem; align-items: center; justify-content: center;
+}
+.tut-path-arrow {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.2);
+  border-radius: var(--r-lg);
+  padding: 1.1rem .9rem .7rem;
+  min-width: 72px;
+}
+.tut-path-arrow span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: rgba(255,255,255,.7);
+}
+
+/* ── Types grid ── */
+.tut-types-grid {
+  display: grid; grid-template-columns: repeat(3,1fr); gap: .6rem;
+  width: 100%; max-width: 340px;
+}
+.tut-type-chip {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  padding: .6rem .4rem;
+  border-radius: var(--r-md);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem;
+  border: 2px solid rgba(255,255,255,.15);
+}
+.tut-type-chip img { width: 32px; height: 32px; object-fit: contain; }
+.tut-type-battle  { background: rgba(220,60,20,.25);  border-color: rgba(220,80,40,.5);  color: #ff9977; }
+.tut-type-heal    { background: rgba(40,180,80,.2);   border-color: rgba(60,200,100,.4); color: #88ffaa; }
+.tut-type-catch   { background: rgba(80,100,220,.2);  border-color: rgba(100,130,255,.4);color: #aabbff; }
+.tut-type-train   { background: rgba(220,180,0,.2);   border-color: rgba(255,210,0,.4);  color: #ffdd88; }
+.tut-type-shop    { background: rgba(160,60,220,.2);  border-color: rgba(180,80,255,.4); color: #dd99ff; }
+.tut-type-mystery { background: rgba(100,100,100,.2); border-color: rgba(150,150,150,.4);color: #cccccc; }
+
+/* ── Cards demo ── */
+.tut-cards-demo {
+  display: flex; flex-direction: column; align-items: center; gap: .8rem;
+}
+.tut-cards-demo > .tut-energy-row {
+  display: flex; align-items: center; gap: .4rem;
+}
+.tut-energy-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: var(--col-text-dim);
+  margin-left: .3rem;
+}
+/* Hand of 3 demo cards displayed in a row */
+.tut-cards-demo {
+  flex-direction: row; flex-wrap: wrap; justify-content: center;
+}
+.tut-cards-demo > .tut-energy-row {
+  flex-basis: 100%; justify-content: center;
+}
+.tut-demo-card {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .5rem .4rem;
+  width: 72px; text-align: center;
+  position: relative;
+  display: flex; flex-direction: column; gap: .25rem;
+  box-shadow: 0 3px 10px rgba(0,0,0,.5);
+}
+.tut-card-cost {
+  position: absolute; top: 3px; left: 4px;
+  font-size: .32rem; color: var(--col-yellow);
+}
+.tut-card-icon  { font-size: 1.4rem; }
+.tut-card-name  { font-family: 'Press Start 2P', monospace; font-size: .28rem; color: var(--col-text); }
+.tut-card-dmg   { font-size: .38rem; color: var(--col-yellow); font-weight: 800; }
+
+/* ── Rocket row ── */
+.tut-rocket-row {
+  display: flex; gap: 1.5rem; align-items: flex-end; justify-content: center;
+}
+.tut-rocket-char {
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+}
+.tut-rocket-img {
+  height: 100px; width: auto;
+  object-fit: contain; image-rendering: pixelated;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,.6));
+}
+.tut-rocket-char span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: var(--col-text-dim);
+}
+
+/* ── Goal / badges row ── */
+.tut-goal-row {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  align-items: center; justify-content: center;
+  max-width: 320px;
+}
+.tut-badge-slot {
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  width: 44px;
+}
+.tut-badge-icon { font-size: 1.6rem; }
+.tut-badge-num  {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem; color: var(--col-text-dim);
+}
+.tut-trophy { font-size: 2.4rem; margin-left: .4rem; filter: drop-shadow(0 0 8px rgba(255,215,0,.6)); }
+
+/* ── Content area ── */
+.tut-content {
+  position: relative; z-index: 10;
+  padding: .6rem 1.2rem;
+  text-align: center;
+  background: rgba(0,0,0,.4);
+  border-top: 1px solid var(--col-border);
+  flex-shrink: 0;
+}
+.tut-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .7rem; color: var(--col-yellow);
+  margin-bottom: .4rem;
+  text-shadow: 0 0 10px rgba(255,215,0,.4);
+}
+.tut-body {
+  font-size: .6rem; color: var(--col-text);
+  line-height: 1.8; min-height: 2.5em;
+}
+
+/* ── Progress dots ── */
+.tut-dots {
+  position: relative; z-index: 10;
+  display: flex; gap: .5rem; justify-content: center;
+  padding: .4rem 0;
+}
+.tut-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  transition: background .2s, transform .2s;
+}
+.tut-dot-active {
+  background: var(--col-yellow);
+  transform: scale(1.3);
+  box-shadow: 0 0 6px rgba(255,215,0,.5);
+}
+
+/* ── Buttons ── */
+.tut-btns {
+  position: relative; z-index: 10;
+  display: flex; gap: .8rem; justify-content: center;
+  padding: .5rem 1rem .8rem;
+  flex-shrink: 0;
+}
+.tut-skip-btn { font-size: .38rem !important; padding: .5em .9em !important; }
+.tut-next-btn { font-size: .52rem !important; }

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=4" />
+  <link rel="stylesheet" href="style.css?v=5" />
 </head>
 <body>
 
@@ -96,9 +96,44 @@
     <div class="intro-text" id="intro-text"></div>
     <div class="intro-progress" id="intro-progress">1 / 7</div>
     <div class="intro-btns">
-      <button class="btn-pixel btn-secondary intro-skip-btn" id="btn-intro-skip">Skip</button>
+      <button class="btn-pixel btn-secondary intro-skip-btn" id="btn-intro-skip">Skip All</button>
       <button class="btn-pixel btn-primary intro-next-btn" id="btn-intro-next">Next ▶</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: TUTORIAL
+═══════════════════════════════════════════ -->
+<div id="screen-tutorial" class="screen">
+  <div class="tut-bg"></div>
+
+  <!-- Oak narration bubble at top -->
+  <div class="tut-oak-row">
+    <img src="assets/prof_oak.png" alt="Prof. Oak" class="tut-oak-portrait"
+         onerror="this.style.display='none'" />
+    <div class="tut-oak-bubble">
+      <div class="tut-oak-name">Prof. Oak</div>
+      <div class="tut-oak-text" id="tut-oak-text">Let me show you how it works!</div>
+    </div>
+  </div>
+
+  <!-- Big visual area -->
+  <div class="tut-visual" id="tut-visual"></div>
+
+  <!-- Title + body text -->
+  <div class="tut-content">
+    <div class="tut-title" id="tut-title">The Path</div>
+    <div class="tut-body"  id="tut-body">Each crossroads shows 2 or 3 paths ahead.</div>
+  </div>
+
+  <!-- Progress dots -->
+  <div class="tut-dots" id="tut-dots"></div>
+
+  <!-- Buttons -->
+  <div class="tut-btns">
+    <button class="btn-pixel btn-secondary tut-skip-btn" id="btn-tut-skip">Skip All</button>
+    <button class="btn-pixel btn-primary  tut-next-btn" id="btn-tut-next">Next ▶</button>
   </div>
 </div>
 
@@ -725,6 +760,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=4"></script>
+<script src="app.js?v=5"></script>
 </body>
 </html>
