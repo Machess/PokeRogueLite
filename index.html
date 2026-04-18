@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=5" />
+  <link rel="stylesheet" href="style.css?v=6" />
 </head>
 <body>
 
@@ -318,6 +318,9 @@
     <div class="log-line log-line-3" id="log-inner-3"></div>
   </div>
 
+  <!-- Berry / item notification toast -->
+  <div class="battle-item-toast" id="battle-item-toast"></div>
+
   <!-- Hand & controls -->
   <div class="battle-controls">
     <div class="pile-area">
@@ -338,11 +341,14 @@
     <div class="action-info">
       <div class="actions-left" id="actions-left"></div>
       <div class="turn-btn-wrap">
+        <button class="btn-pixel btn-use-item" id="btn-use-item">🎒 Item</button>
         <button class="btn-pixel btn-end-turn" id="btn-end-turn">End Turn ▶</button>
       </div>
       <div class="party-swap" id="party-swap"></div>
     </div>
   </div>
+  <!-- In-battle item picker (hidden by default) -->
+  <div class="battle-item-picker" id="battle-item-picker" style="display:none"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -409,6 +415,8 @@
       <div class="log-line log-line-3" id="boss-log-inner-3"></div>
     </div>
 
+    <div class="battle-item-toast" id="boss-battle-item-toast"></div>
+
     <div class="battle-controls">
       <div class="pile-area">
         <div class="pile draw-pile">
@@ -426,11 +434,13 @@
       <div class="action-info">
         <div class="actions-left" id="boss-actions-left"></div>
         <div class="turn-btn-wrap">
+          <button class="btn-pixel btn-use-item" id="btn-boss-use-item">🎒 Item</button>
           <button class="btn-pixel btn-end-turn" id="btn-boss-end-turn">End Turn ▶</button>
         </div>
         <div class="party-swap" id="boss-party-swap"></div>
       </div>
     </div>
+    <div class="battle-item-picker" id="boss-battle-item-picker" style="display:none"></div>
   </div>
 </div>
 
@@ -760,6 +770,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=6"></script>
 </body>
 </html>

@@ -3921,3 +3921,110 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .tut-skip-btn { font-size: .38rem !important; padding: .5em .9em !important; }
 .tut-next-btn { font-size: .52rem !important; }
+
+/* ═══════════════════════════════════════════
+   ITEM SYSTEM — battle toast, item button, picker
+═══════════════════════════════════════════ */
+
+/* ── Berry / item notification toast ── */
+.battle-item-toast {
+  position: absolute;
+  top: 12px; left: 50%; transform: translateX(-50%);
+  z-index: 50;
+  background: rgba(0,0,0,.82);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: .45rem 1rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .45rem;
+  color: var(--col-yellow);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .2s;
+  text-shadow: 0 0 8px rgba(255,215,0,.4);
+}
+.battle-item-toast.toast-show { opacity: 1; }
+
+/* ── Use Item button ── */
+.btn-use-item {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem !important;
+  padding: .5em .8em !important;
+  background: rgba(60,40,0,.85) !important;
+  border-color: var(--col-yellow) !important;
+  color: var(--col-yellow) !important;
+  transition: opacity .2s, background .15s;
+}
+.btn-use-item:hover:not(:disabled) {
+  background: rgba(100,70,0,.95) !important;
+}
+
+/* ── In-battle item picker ── */
+.battle-item-picker {
+  position: absolute;
+  bottom: 80px; left: 50%; transform: translateX(-50%);
+  z-index: 40;
+  background: var(--col-surface);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: .6rem .8rem;
+  display: flex; flex-direction: column; gap: .4rem;
+  min-width: 180px;
+  box-shadow: 0 4px 20px rgba(0,0,0,.7);
+}
+.item-picker-btn {
+  display: flex; align-items: center; gap: .5rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .45rem .7rem;
+  cursor: pointer;
+  transition: background .15s, border-color .15s;
+  width: 100%;
+  text-align: left;
+}
+.item-picker-btn:hover {
+  background: rgba(255,215,0,.12);
+  border-color: var(--col-yellow);
+}
+.item-picker-icon { font-size: 1.1rem; flex-shrink: 0; }
+.item-picker-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: var(--col-text); flex: 1;
+}
+.item-picker-count {
+  font-size: .45rem; color: var(--col-text-dim);
+}
+.item-picker-empty {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: var(--col-text-dim);
+  text-align: center; padding: .4rem;
+}
+.item-picker-close {
+  align-self: flex-end;
+  background: none; border: none;
+  color: var(--col-text-dim); font-size: .9rem;
+  cursor: pointer; padding: 0;
+  margin-top: -.2rem;
+}
+.item-picker-close:hover { color: var(--col-text); }
+
+/* ── Lure / Repel arrow glow ── */
+.nav-arrow-lure {
+  border-color: var(--col-yellow) !important;
+  box-shadow: 0 0 22px rgba(255,215,0,.6), 0 4px 16px rgba(0,0,0,.5) !important;
+  animation: lure-pulse 1.8s ease-in-out infinite;
+}
+.nav-arrow-lure .nav-arrow-label { color: var(--col-yellow) !important; font-weight: 800; }
+
+.nav-arrow-repel {
+  border-color: #bb88ff !important;
+  box-shadow: 0 0 22px rgba(170,100,255,.6), 0 4px 16px rgba(0,0,0,.5) !important;
+}
+.nav-arrow-repel .nav-arrow-label { color: #bb88ff !important; }
+
+@keyframes lure-pulse {
+  0%,100% { box-shadow: 0 0 18px rgba(255,215,0,.5), 0 4px 14px rgba(0,0,0,.4); }
+  50%      { box-shadow: 0 0 36px rgba(255,215,0,.9), 0 4px 20px rgba(0,0,0,.5); }
+}

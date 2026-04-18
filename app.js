@@ -2258,6 +2258,7 @@ const Game = {
     GameState.highWaterRow      = -1;
     GameState.nodesSinceRocket  = 0;
     GameState._lastRocketCheckAt = 0;
+    GameState.lureActive        = false; // lure expires per-map
 
     // ── Level up party after boss win (+3 bonus levels) ───────────────────
     // Give everyone 4 bonus levels after a boss win.
@@ -2881,24 +2882,37 @@ const MapEngine = {
     available.slice(0, 3).forEach((node, i) => {
       const dir      = dirs[i];
       const revealed = !!node.revealed || node.type === 'boss';
-      const info     = revealed
+      const isCatch  = node.type === 'catch' || node.type === 'mystery';
+      const isBoss   = node.type === 'boss';
+
+      // Lure: glow all catch nodes gold; Repel: glow next catch node purple
+      const lureGlow  = isCatch && GameState.lureActive;
+      const repelCount = (GameState.items || []).find(i => i.id === 'repel' && i.count > 0)?.count || 0;
+      // Repel glows the first repelCount catch nodes encountered
+      const catchNodesSoFar = available.slice(0, i).filter(n => n.type === 'catch' || n.type === 'mystery').length;
+      const repelGlow = isCatch && repelCount > 0 && catchNodesSoFar < repelCount;
+
+      // Override label for lure/repel
+      let info = revealed
         ? (ARROW_LABELS[node.type] || ARROW_LABELS.mystery)
         : ARROW_LABELS.mystery;
+      if (lureGlow)  info = { ...info, label: '🎣 Rare!' };
+      if (repelGlow) info = { ...info, label: '🚫 Repel' };
 
-      const isBoss = node.type === 'boss';
-
-      // Build icon HTML — image file if available, emoji otherwise
+      // Build icon HTML
       const iconHtml = info.icon
         ? `<img src="${info.icon}" alt="${info.label}" class="nav-arrow-img"
                onerror="this.style.display='none';this.nextElementSibling.style.display=''"
            /><span class="nav-arrow-emoji" style="display:none">${info.emoji || '?'}</span>`
         : `<span class="nav-arrow-emoji">${info.emoji || '?'}</span>`;
 
-      // Inline SVG chevron — unambiguous directional indicator
       const chevronSvg = _navChevronSvg(dir);
 
       const btn = document.createElement('button');
-      btn.className = `nav-arrow nav-arrow-${dir}${isBoss ? ' nav-arrow-boss' : ''}`;
+      btn.className = `nav-arrow nav-arrow-${dir}`
+        + (isBoss   ? ' nav-arrow-boss'  : '')
+        + (lureGlow ? ' nav-arrow-lure'  : '')
+        + (repelGlow? ' nav-arrow-repel' : '');
       btn.style.setProperty('--arrow-accent', theme.accent);
       btn.innerHTML = `
         <div class="nav-arrow-icon">${iconHtml}</div>
@@ -3001,10 +3015,11 @@ const BattleEngine = {
 
   _initBattle(playerPoke, oppPoke, isBoss) {
     this.isBoss = isBoss;
-    this._focusSashUsed  = false;
-    this._chargeBonus    = 0;
-    this._futureSightDmg = 0;
-    this._dragonDanceBonus = 0;
+    this._focusSashUsed     = false;
+    this._chargeBonus       = 0;
+    this._futureSightDmg    = 0;
+    this._dragonDanceBonus  = 0;
+    this._itemUsedThisTurn  = false;
     const activeDeck = playerPoke.deck || GameState.deck;
     this.state = {
       player: { ...playerPoke },
@@ -3184,6 +3199,16 @@ const BattleEngine = {
       btn.onclick = () => this.switchPokemon(i);
       el.appendChild(btn);
     });
+
+    // Use Item button — grey out if already used this turn or no potions
+    const itemBtn = document.getElementById('btn-use-item');
+    if (itemBtn) {
+      const hasPotions = ItemEngine.hasPotions();
+      const used       = this._itemUsedThisTurn;
+      itemBtn.disabled = used || !hasPotions;
+      itemBtn.style.opacity = (used || !hasPotions) ? '0.4' : '1';
+      itemBtn.textContent   = used ? '✓ Item Used' : '🎒 Item';
+    }
   },
 
   _log(msg) {
@@ -3353,7 +3378,7 @@ const BattleEngine = {
     }
 
     // Oran Berry mid-battle check after taking/dealing damage
-    const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player');
+    const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player', this.isBoss);
     if (berryMsg) setTimeout(() => this._log(berryMsg), 500);
 
     this._render();
@@ -3451,12 +3476,13 @@ const BattleEngine = {
     // Check defeats
     if (this._checkDefeated()) return;
 
-    // New turn — restore energy + apply bonus from Flame Charge etc.
+    // New turn — restore energy + reset item use
     st.energy = 3 + (st.bonusEnergy || 0);
     st.bonusEnergy = 0;
     if (st.energy > 3) st.energy = Math.min(5, st.energy);
     st.shield = 0;
     this._chargeBonus = 0;
+    this._itemUsedThisTurn = false;
 
     // Leftovers
     const leftoversMsg = ItemEngine.checkLeftovers(st);
@@ -3512,7 +3538,7 @@ const BattleEngine = {
       this._log(logMsg);
 
       // Oran Berry — check after taking damage
-      const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player');
+      const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player', this.isBoss);
       if (berryMsg) setTimeout(() => this._log(berryMsg), 400);
     } else if (move.power > 0) {
       applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
@@ -3799,6 +3825,16 @@ const BossEngine = {
       btn.onclick = () => this.switchPokemon(i);
       swapEl.appendChild(btn);
     });
+
+    // Boss item button state
+    const bossItemBtn = document.getElementById('btn-boss-use-item');
+    if (bossItemBtn) {
+      const hasPotions = ItemEngine.hasPotions();
+      const used       = BattleEngine._itemUsedThisTurn;
+      bossItemBtn.disabled = used || !hasPotions;
+      bossItemBtn.style.opacity = (used || !hasPotions) ? '0.4' : '1';
+      bossItemBtn.textContent   = used ? '✓ Item Used' : '🎒 Item';
+    }
   },
 
   _log(msg) {
@@ -4807,25 +4843,40 @@ const CatchEngine = {
 
 const ItemEngine = {
 
-  // ── Bag bar (map header) ────────────────────────────────────────────────
+  // ── Show a toast notification over the battle screen ────────────────────
+  showBattleToast(msg, isBoss = false) {
+    const id  = isBoss ? 'boss-battle-item-toast' : 'battle-item-toast';
+    const el  = document.getElementById(id);
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove('toast-show');
+    void el.offsetWidth;
+    el.classList.add('toast-show');
+    clearTimeout(el._toastTimer);
+    el._toastTimer = setTimeout(() => el.classList.remove('toast-show'), 2200);
+  },
+
+  // ── Bag bar (map header) ─────────────────────────────────────────────────
   renderBagBar() {
     const bar = document.getElementById('bag-bar');
     if (!bar) return;
     bar.innerHTML = '';
-    const consumables = (GameState.items || []).filter(i => {
-      const def = SHOP_ITEMS.find(s => s.id === i.id);
-      return def && def.category !== 'held' && def.category !== 'ball' && i.count > 0;
-    });
-    // Lure active indicator (persistent flag)
+
+    // Lure active indicator
     if (GameState.lureActive) {
       const pill = document.createElement('div');
       pill.className = 'bag-pill bag-pill-lure';
       pill.innerHTML = `<span class="bag-pill-icon">🎣</span><span class="bag-pill-label">Lure</span>`;
-      pill.title = 'Lure active — increased Rare encounters this map';
+      pill.title = 'Lure active — Rare encounters boosted this map';
       bar.appendChild(pill);
     }
+
+    const consumables = (GameState.items || []).filter(i => {
+      const def = SHOP_ITEMS.find(s => s.id === i.id);
+      return def && def.category !== 'held' && def.category !== 'ball' && i.count > 0;
+    });
     consumables.forEach(item => {
-      if (item.id === 'lure') return; // shown as active flag above
+      if (item.id === 'lure') return;
       const pill = document.createElement('div');
       pill.className = 'bag-pill';
       pill.innerHTML = `<span class="bag-pill-icon">${item.icon}</span><span class="bag-pill-count">${item.count > 1 ? '×' + item.count : ''}</span>`;
@@ -4835,17 +4886,13 @@ const ItemEngine = {
   },
 
   // ── Held item helpers ────────────────────────────────────────────────────
-  getHeldItem(pokemon) {
-    return pokemon?.heldItem || null;
-  },
+  getHeldItem(pokemon)  { return pokemon?.heldItem || null; },
 
   equipItem(pokemon, itemId) {
     const def = SHOP_ITEMS.find(s => s.id === itemId);
     if (!def || def.category !== 'held') return false;
-    // Return old item to bag if any
     if (pokemon.heldItem) this.addItem(pokemon.heldItem.id);
     pokemon.heldItem = { ...def };
-    // Remove one from bag
     this.useItem(itemId);
     saveGame();
     return true;
@@ -4861,31 +4908,119 @@ const ItemEngine = {
   moveHeldItem(fromPoke, toPoke) {
     if (!fromPoke.heldItem) return;
     const item = fromPoke.heldItem;
-    if (toPoke.heldItem) this.addItem(toPoke.heldItem.id); // return displaced item
+    if (toPoke.heldItem) this.addItem(toPoke.heldItem.id);
     toPoke.heldItem   = item;
     fromPoke.heldItem = null;
     saveGame();
   },
 
-  // ── Oran Berry — triggers mid-battle when HP drops below 50% ────────────
-  checkBerryMidBattle(st, who) {
-    const poke  = who === 'player' ? GameState.party[GameState.activePokemonIndex] : null;
-    if (!poke) return null;
-    // Check bag berries
+  // ── Oran Berry — passive, starter only, 20HP, visible toast ─────────────
+  checkBerryMidBattle(st, who, isBoss = false) {
+    // Only apply to the starter
+    const starter = GameState.party.find(p => p.isStarter);
+    if (!starter) return null;
+    const activeIsStarter = GameState.party[GameState.activePokemonIndex]?.isStarter;
+    if (!activeIsStarter) return null;
+
     const berries = (GameState.items || []).filter(i => i.id === 'oran_berry' && i.count > 0);
     if (!berries.length) return null;
+
     if (st[who].hp > 0 && st[who].hp < st[who].maxHp * 0.5) {
-      const heal = 10;
+      const heal = 20;
       st[who].hp = Math.min(st[who].maxHp, st[who].hp + heal);
       berries[0].count--;
-      if (berries[0].count <= 0) GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
+      if (berries[0].count <= 0)
+        GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
       this.renderBagBar();
-      return `🍊 Oran Berry healed ${st[who].name} ${heal} HP!`;
+      const msg = `🍊 Oran Berry! ${st[who].name} healed 20 HP!`;
+      this.showBattleToast(msg, isBoss);
+      return msg;
     }
     return null;
   },
 
-  // ── Revive Potion — triggers when player HP hits 0 ──────────────────────
+  // ── Active potion use — called from Use Item button ──────────────────────
+  // Returns { healed, msg } or null if no potions available
+  usePotion(st, isBoss = false) {
+    const items = GameState.items || [];
+    // Prefer Super Potion if available, else Potion
+    let item = items.find(i => i.id === 'super_potion' && i.count > 0)
+            || items.find(i => i.id === 'potion'       && i.count > 0);
+    if (!item) return null;
+
+    const healAmt = item.id === 'super_potion' ? 60 : 30;
+    const before  = st.player.hp;
+    st.player.hp  = Math.min(st.player.maxHp, st.player.hp + healAmt);
+    const actual  = st.player.hp - before;
+
+    item.count--;
+    if (item.count <= 0) GameState.items = GameState.items.filter(i => i !== item);
+    this.renderBagBar();
+    saveGame();
+
+    const icon = item.id === 'super_potion' ? '💉' : '💊';
+    const msg  = `${icon} ${item.id === 'super_potion' ? 'Super Potion' : 'Potion'}! ${st.player.name} healed ${actual} HP!`;
+    this.showBattleToast(msg, isBoss);
+    return { healed: actual, msg };
+  },
+
+  // Returns true if any potion is in the bag
+  hasPotions() {
+    return (GameState.items || []).some(i =>
+      (i.id === 'potion' || i.id === 'super_potion') && i.count > 0
+    );
+  },
+
+  // ── Show/hide the in-battle item picker ──────────────────────────────────
+  renderItemPicker(isBoss, onUse) {
+    const pickerId = isBoss ? 'boss-battle-item-picker' : 'battle-item-picker';
+    const picker   = document.getElementById(pickerId);
+    if (!picker) return;
+
+    // Build list of usable bag items (potions only for now)
+    const usable = (GameState.items || []).filter(i =>
+      (i.id === 'potion' || i.id === 'super_potion') && i.count > 0
+    );
+
+    if (usable.length === 0) {
+      picker.innerHTML = '<div class="item-picker-empty">No usable items!</div>';
+      picker.style.display = 'block';
+      setTimeout(() => { picker.style.display = 'none'; }, 1200);
+      return;
+    }
+
+    picker.innerHTML = '';
+    usable.forEach(item => {
+      const def  = SHOP_ITEMS.find(s => s.id === item.id);
+      const btn  = document.createElement('button');
+      btn.className = 'item-picker-btn';
+      btn.innerHTML = `<span class="item-picker-icon">${item.icon}</span>
+                       <span class="item-picker-name">${item.name}</span>
+                       <span class="item-picker-count">×${item.count}</span>`;
+      btn.onclick = () => {
+        picker.style.display = 'none';
+        onUse(item.id);
+      };
+      picker.appendChild(btn);
+    });
+
+    // Close button
+    const close = document.createElement('button');
+    close.className = 'item-picker-close';
+    close.textContent = '✕';
+    close.onclick = () => { picker.style.display = 'none'; };
+    picker.appendChild(close);
+
+    picker.style.display = 'block';
+  },
+
+  closeItemPicker(isBoss) {
+    const id = isBoss ? 'boss-battle-item-picker' : 'battle-item-picker';
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  },
+
+  // ── Revive Potion ────────────────────────────────────────────────────────
   checkRevive(partyIdx) {
     if (!GameState.items) return false;
     const revive = GameState.items.find(i => i.id === 'revive_potion' && i.count > 0);
@@ -4898,11 +5033,11 @@ const ItemEngine = {
     return true;
   },
 
-  // ── Focus Sash — held item, survive lethal hit with 1 HP ────────────────
+  // ── Focus Sash ───────────────────────────────────────────────────────────
   checkFocusSash(st, who, battleObj) {
     const poke = who === 'player' ? GameState.party[GameState.activePokemonIndex] : null;
     if (!poke || !poke.heldItem || poke.heldItem.id !== 'focus_sash') return false;
-    if (battleObj._focusSashUsed) return false; // one use per battle
+    if (battleObj._focusSashUsed) return false;
     if (st[who].hp <= 0) {
       st[who].hp = 1;
       battleObj._focusSashUsed = true;
@@ -4911,22 +5046,22 @@ const ItemEngine = {
     return false;
   },
 
-  // ── Shell Bell — heal on dealing damage ─────────────────────────────────
+  // ── Shell Bell ───────────────────────────────────────────────────────────
   checkShellBell(st, battleObj) {
     const poke = GameState.party[GameState.activePokemonIndex];
     if (!poke?.heldItem || poke.heldItem.id !== 'shell_bell') return null;
     const heal = 5;
     st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
-    return `🔔 Shell Bell healed ${st.player.name} ${heal} HP!`;
+    return `🔔 Shell Bell! ${st.player.name} healed ${heal} HP!`;
   },
 
-  // ── Leftovers — heal at start of each turn ──────────────────────────────
+  // ── Leftovers ────────────────────────────────────────────────────────────
   checkLeftovers(st) {
     const poke = GameState.party[GameState.activePokemonIndex];
     if (!poke?.heldItem || poke.heldItem.id !== 'leftovers') return null;
     const heal = 5;
     st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
-    return `🍖 Leftovers healed ${st.player.name} ${heal} HP!`;
+    return `🍖 Leftovers! ${st.player.name} healed ${heal} HP!`;
   },
 
   // ── Type booster held items ──────────────────────────────────────────────
@@ -4942,18 +5077,19 @@ const ItemEngine = {
     return (b && b.type === cardType) ? b.mult : 1;
   },
 
-  // ── Post-battle Oran Berry (kept for non-battle heal check) ─────────────
+  // ── Post-battle passive berry check ─────────────────────────────────────
   checkPassive() {
     if (!GameState.items) return;
     const berries = GameState.items.filter(i => i.id === 'oran_berry' && i.count > 0);
     if (!berries.length) return;
-    GameState.party.forEach(p => {
-      if (p.hp > 0 && p.hp < p.maxHp * 0.5 && berries[0].count > 0) {
-        p.hp = Math.min(p.maxHp, p.hp + 10);
-        berries[0].count--;
-        if (berries[0].count <= 0) GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
-      }
-    });
+    // Only heal starter passively between battles
+    const starter = GameState.party.find(p => p.isStarter);
+    if (starter && starter.hp > 0 && starter.hp < starter.maxHp * 0.5 && berries[0].count > 0) {
+      starter.hp = Math.min(starter.maxHp, starter.hp + 20);
+      berries[0].count--;
+      if (berries[0].count <= 0)
+        GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
+    }
     this.renderBagBar();
   },
 
@@ -5167,6 +5303,8 @@ const ShopEngine = {
     }
 
     if (id === 'master_ball') GameState.masterBallUsed = true;
+    // Activate lure flag immediately when purchased
+    if (id === 'lure') GameState.lureActive = true;
     SoundEngine.playFanfare();
     saveGame();
     this._render();
@@ -5693,6 +5831,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Battle screen ──
   document.getElementById('btn-end-turn').addEventListener('click', () => BattleEngine.endTurn());
+  document.getElementById('btn-use-item').addEventListener('click', () => {
+    if (BattleEngine._itemUsedThisTurn) return;
+    ItemEngine.renderItemPicker(false, (itemId) => {
+      const result = ItemEngine.usePotion(BattleEngine.state, false);
+      if (result) {
+        BattleEngine._itemUsedThisTurn = true;
+        BattleEngine._log(result.msg);
+        BattleEngine._render();
+      }
+    });
+  });
 
   // ── Boss screen ──
   document.getElementById('btn-start-boss-battle').addEventListener('click', () => {
@@ -5707,6 +5856,17 @@ document.addEventListener('DOMContentLoaded', () => {
     RocketBattleEngine.advanceDialogue();
   });
   document.getElementById('btn-boss-end-turn').addEventListener('click', () => BossEngine.endTurn());
+  document.getElementById('btn-boss-use-item').addEventListener('click', () => {
+    if (BattleEngine._itemUsedThisTurn) return;
+    ItemEngine.renderItemPicker(true, (itemId) => {
+      const result = ItemEngine.usePotion(BossEngine.bState, true);
+      if (result) {
+        BattleEngine._itemUsedThisTurn = true;
+        BossEngine._log(result.msg);
+        BossEngine._render();
+      }
+    });
+  });
 
   // ── Catch screen ──
   document.getElementById('btn-throw-ball').addEventListener('click', () => CatchEngine.throwBall());
