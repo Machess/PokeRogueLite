@@ -1015,67 +1015,101 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 .battle-bg {
   position: absolute; inset: 0; z-index: var(--z-bg);
+  overflow: hidden;
 }
+/* Battle arena: the visible background zone.
+   We constrain the image to the top 55% of the screen max, but never less than 280px.
+   The image is 241×113px (ratio 2.133:1). We display it full-width, pixel-doubled
+   so the ovals are large enough for sprites to stand on. */
 .battle-bg-img {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  object-position: center 40%;
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 50%;        /* fills top half of screen — card controls occupy bottom half */
+  object-fit: fill;   /* stretch to fill exactly — no crop, all ovals visible */
+  min-height: 180px;
+  image-rendering: pixelated;
 }
 .battle-bg-overlay {
   position: absolute; inset: 0;
   background: linear-gradient(
     180deg,
-    rgba(10,10,26,.3) 0%,
-    rgba(10,10,26,.2) 50%,
-    rgba(10,10,26,.8) 80%,
+    rgba(0,0,0,.04) 0%,
+    rgba(0,0,0,.10) 45%,
+    rgba(10,10,26,.75) 68%,
     rgba(10,10,26,.95) 100%
   );
 }
 .boss-overlay {
   background: linear-gradient(
     180deg,
-    rgba(80,0,0,.4) 0%,
-    rgba(10,10,26,.3) 50%,
-    rgba(10,10,26,.9) 80%,
-    rgba(10,10,26,.98) 100%
+    rgba(60,0,0,.15) 0%,
+    rgba(0,0,0,.15) 45%,
+    rgba(10,10,26,.82) 68%,
+    rgba(10,10,26,.97) 100%
   );
 }
 
-/* Pokémon sprite areas */
+/* ── Pokémon sprite areas ─────────────────────────────────────────────────
+   Background image = top 50% of screen height.
+   Oval measurements (all backgrounds consistent):
+     Opponent oval bottom = 49% of img height = 24.5% of screen height
+     Player oval top      = 50% of img height = 25.0% of screen height
+
+   We anchor each sprite's BOTTOM edge to its oval edge.
+   "bottom from top" = screen_height - position_from_bottom
+     Opponent sprite bottom at 24.5vh  →  bottom: calc(100vh - 24.5vh) = bottom: 75.5vh
+     Player sprite bottom at 25.0vh    →  bottom: calc(100vh - 25.0vh) = bottom: 75.0vh
+
+   But that stacks them at nearly the same height. In the classic Pokémon layout:
+     - Opponent is in the TOP HALF of the screen (upper right)
+     - Player is in the BOTTOM HALF (lower left, above controls)
+
+   The ovals in the image span exactly top-half / bottom-half of the image.
+   The image covers the top 50% of the screen, so:
+     - Opponent oval: top 25% of screen
+     - Player oval:   25–50% of screen (lower portion of image)
+
+   Opponent: position from top, sprite bottom touches oval bottom (24.5% screen)
+   Player:   position from top, sprite bottom sits just above the card area (~48% screen)
+   ────────────────────────────────────────────────────────────────────── */
 .battle-opponent-area {
   position: absolute;
-  top: 4%;
-  right: 2%;
+  /* Opponent HUD: top-right corner */
+  top: 2%;
+  right: 3%;
   display: flex;
-  flex-direction: column;
+  flex-direction: column;    /* HUD above, sprite below */
   align-items: flex-end;
-  gap: .5rem;
+  gap: .3rem;
   z-index: var(--z-content);
 }
 .battle-player-area {
   position: absolute;
-  bottom: 32%;
-  left: 2%;
+  /* Player: lower-left, sprite bottom sits on player oval */
+  bottom: 52%;               /* just above the card controls zone */
+  left: 3%;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;  /* sprite on bottom, HUD above */
   align-items: flex-start;
-  gap: .5rem;
+  gap: .3rem;
   z-index: var(--z-content);
 }
 
 .battle-sprite-wrap { position: relative; }
-
 .battle-sprite {
   image-rendering: pixelated;
-  filter: drop-shadow(4px 4px 0 rgba(0,0,0,.5));
+  filter: drop-shadow(2px 4px 0 rgba(0,0,0,.45));
 }
 .opponent-sprite {
-  width: 140px; height: 140px;
-  /* Asset slot: override via JS with PokeAPI front sprite */
+  width: 120px; height: 120px;
+  object-fit: contain;
+  display: block;
 }
 .player-sprite {
-  width: 160px; height: 160px;
-  /* Asset slot: override via JS with PokeAPI back sprite */
+  width: 140px; height: 140px;
+  object-fit: contain;
+  display: block;
 }
 
 /* Shake animation for hits */

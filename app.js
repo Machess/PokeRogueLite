@@ -546,6 +546,36 @@ const WILD_POOL = {
   rare: [131,130,142,149,143,6,9,3,65,68,71,76,78,80,82,83,85,87,89,91,93,94,97,99,101,103,105,107,110,112],
 };
 
+// ── Battle background selection by opponent type ──────────────────────────
+const BATTLE_BACKGROUNDS = {
+  water:    'assets/water_bg.png',
+  ice:      'assets/water_bg.png',
+  grass:    'assets/grass_bg.png',
+  bug:      'assets/grass_bg.png',
+  normal:   'assets/grass_bg.png',
+  flying:   'assets/grass_bg.png',
+  rock:     'assets/ground_rock_bg.png',
+  ground:   'assets/ground_rock_bg.png',
+  fighting: 'assets/ground_rock_bg.png',
+  steel:    'assets/ground_rock_bg.png',
+  psychic:  'assets/ice_bg.png',
+  fairy:    'assets/ice_bg.png',
+  ghost:    'assets/ice_bg.png',
+  dragon:   'assets/ice_bg.png',
+};
+function getBattleBg(type) {
+  return BATTLE_BACKGROUNDS[type] || 'assets/neutral_bg.png';
+}
+function setBattleBg(type, isBoss = false) {
+  const src = getBattleBg(type);
+  const selector = isBoss ? '#screen-boss .battle-bg-img' : '#screen-battle .battle-bg-img';
+  const img = document.querySelector(selector);
+  if (!img) return;
+  img.style.opacity = '1';   // clear any onerror-applied opacity:0
+  img.onerror = () => { img.style.opacity = '0'; };  // re-arm for real failures
+  img.src = src;
+}
+
 // ─── SHOP ITEMS CATALOGUE ─────────────────────────────────────────────────────
 const SHOP_ITEMS = [
   // ── Consumables ──────────────────────────────────────────────────────────
@@ -3010,6 +3040,7 @@ const BattleEngine = {
     active.backSpriteUrl = backSprite;
 
     hideLoading();
+    setBattleBg(oppType, false);
     this._initBattle(active, opp, false);
   },
 
@@ -3699,6 +3730,9 @@ const BossEngine = {
     }
     hideLoading();
 
+    // Set background based on first opponent's type
+    const firstOppType = this.oppTeam[0]?.type || 'normal';
+    setBattleBg(firstOppType, true);
     showScreen('boss');
 
     const trainerSpriteWrap = document.querySelector('.trainer-sprite-wrap');
