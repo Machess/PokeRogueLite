@@ -1869,6 +1869,98 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background-size: 20px 20px;
 }
 
+/* ── Pokémon picker step ── */
+.training-poke-picker {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-direction: column;
+  align-items: center; gap: .6rem;
+  width: 100%; padding: 0 1rem;
+}
+.training-poke-grid {
+  display: flex; flex-wrap: wrap;
+  gap: .8rem; justify-content: center;
+  width: 100%;
+}
+.training-poke-card {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-lg);
+  padding: .7rem .5rem .5rem;
+  width: 88px; text-align: center;
+  cursor: pointer;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+  position: relative;
+}
+.training-poke-card:hover {
+  transform: translateY(-4px) scale(1.04);
+  border-color: var(--col-yellow);
+  box-shadow: 0 6px 20px rgba(0,0,0,.5), 0 0 12px rgba(255,215,0,.3);
+}
+.training-poke-card img {
+  width: 64px; height: 64px;
+  image-rendering: pixelated;
+  display: block; margin: 0 auto .3rem;
+}
+.training-poke-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .35rem; color: var(--col-text);
+  margin-bottom: .15rem;
+}
+.training-poke-level {
+  font-size: .5rem; color: var(--col-text-dim);
+  margin-bottom: .3rem;
+}
+.training-poke-hp-bar-wrap {
+  width: 100%; height: 4px;
+  background: rgba(255,255,255,.12);
+  border-radius: 2px; overflow: hidden;
+  margin-bottom: .25rem;
+}
+.training-poke-hp-bar { height: 100%; border-radius: 2px; }
+.training-poke-deck-count {
+  font-size: .42rem; color: var(--col-yellow);
+}
+.training-poke-badge {
+  position: absolute; top: -6px; right: -6px;
+  background: var(--col-yellow); color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .26rem; padding: .15em .3em;
+  border-radius: 3px;
+}
+.training-poke-active {
+  border-color: var(--col-yellow);
+  box-shadow: 0 0 10px rgba(255,215,0,.25);
+}
+
+/* ── Card panel wrapper ── */
+.training-card-panel {
+  display: flex; flex-direction: column;
+  align-items: center; gap: .4rem;
+  width: 100%;
+}
+
+/* ── Who row (shows chosen Pokémon above tabs) ── */
+.training-who-row {
+  display: flex; align-items: center; gap: .6rem;
+  background: rgba(255,255,255,.05);
+  border: 1px solid var(--col-border);
+  border-radius: var(--r-md);
+  padding: .35rem .7rem;
+  z-index: var(--z-content);
+}
+.training-who-sprite {
+  width: 36px; height: 36px;
+  image-rendering: pixelated;
+}
+.training-who-name {
+  font-size: .55rem; color: var(--col-text-dim);
+}
+.training-who-name span {
+  color: var(--col-yellow);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+}
+
 .training-cards-grid {
   display: flex;
   flex-wrap: wrap;

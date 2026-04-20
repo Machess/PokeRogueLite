@@ -5413,19 +5413,82 @@ const PokedexEngine = {
 // ─── TRAINING ENGINE ─────────────────────────────────────────────────────────
 
 const TrainingEngine = {
-  selected: [],
-  mode: 'upgrade', // 'upgrade' | 'remove'
+  selected:  [],
+  mode:      'upgrade', // 'upgrade' | 'remove'
+  _trainingPokeIdx: null, // which pokémon's deck we're upgrading
 
   start(node) {
-    this.selected = [];
-    this.mode = 'upgrade';
-    this._upgradeJustDone = false;
+    this.selected          = [];
+    this.mode              = 'upgrade';
+    this._upgradeJustDone  = false;
+    this._trainingPokeIdx  = GameState.activePokemonIndex; // default
+
     showScreen('training');
+    this._showPicker();
+  },
+
+  // ── Step 1: Pokémon picker ────────────────────────────────────────────────
+  _showPicker() {
+    document.getElementById('training-poke-picker').style.display = '';
+    document.getElementById('training-card-panel').style.display  = 'none';
+
+    const grid = document.getElementById('training-poke-grid');
+    grid.innerHTML = '';
+
+    GameState.party.forEach((p, i) => {
+      if (p.hp <= 0) return; // skip fainted
+
+      const deck  = p.deck || (i === GameState.activePokemonIndex ? GameState.deck : null);
+      if (!deck)  return; // no deck to upgrade
+
+      const isActive  = i === GameState.activePokemonIndex;
+      const card = document.createElement('div');
+      card.className  = 'training-poke-card' + (isActive ? ' training-poke-active' : '');
+
+      const hpPct = Math.round((p.hp / p.maxHp) * 100);
+      card.innerHTML  = `
+        <img src="${p.spriteUrl}" alt="${p.name}"
+             onerror="this.src='assets/sprites/${p.id}.png'" />
+        <div class="training-poke-name">${p.name}</div>
+        <div class="training-poke-level">Lv.${p.level}</div>
+        <div class="training-poke-hp-bar-wrap">
+          <div class="training-poke-hp-bar" style="width:${hpPct}%;background:${hpColor(p.hp,p.maxHp)}"></div>
+        </div>
+        <div class="training-poke-deck-count">${deck.length} cards</div>
+        ${isActive ? '<div class="training-poke-badge">Active</div>' : ''}
+      `;
+      card.onclick = () => this._startWithPokemon(i);
+      grid.appendChild(card);
+    });
+  },
+
+  // ── Step 2: Load chosen Pokémon's deck and show cards ─────────────────────
+  _startWithPokemon(partyIdx) {
+    this._trainingPokeIdx = partyIdx;
+
+    // Swap active deck to selected Pokémon's deck
+    const poke = GameState.party[partyIdx];
+    GameState.deck = poke.deck || GameState.deck;
+
+    document.getElementById('training-poke-picker').style.display = 'none';
+    document.getElementById('training-card-panel').style.display  = '';
+
+    // Show who we're training
+    const whoRow = document.getElementById('training-who-row');
+    whoRow.innerHTML = `
+      <img src="${poke.spriteUrl}" alt="${poke.name}"
+           onerror="this.src='assets/sprites/${poke.id}.png'"
+           class="training-who-sprite" />
+      <div class="training-who-name">Training: <span>${poke.name}</span></div>
+    `;
+
+    this.selected = [];
+    this.mode     = 'upgrade';
     this._render();
   },
 
   setMode(m) {
-    this.mode = m;
+    this.mode     = m;
     this.selected = [];
     this._render();
   },
@@ -5434,24 +5497,21 @@ const TrainingEngine = {
     const grid = document.getElementById('training-cards-grid');
     grid.innerHTML = '';
 
-    // Tab header
     document.getElementById('training-mode-upgrade').classList.toggle('active-tab', this.mode === 'upgrade');
     document.getElementById('training-mode-remove').classList.toggle('active-tab',  this.mode === 'remove');
 
     const subtitle = document.getElementById('training-subtitle');
-    if (this.mode === 'upgrade') {
-      subtitle.textContent = 'Select 2 cards to power up (+25% damage)';
-    } else {
-      subtitle.textContent = 'Select 1 card to permanently remove from your deck';
-    }
+    subtitle.textContent = this.mode === 'upgrade'
+      ? 'Select 2 cards to power up (+25% damage)'
+      : 'Select 1 card to permanently remove from your deck';
 
     GameState.deck.forEach((card, i) => {
-      const div = document.createElement('div');
-      const isSelected       = this.selected.includes(i);
-      const justUpgraded     = this._upgradeJustDone && isSelected;
+      const div          = document.createElement('div');
+      const isSelected   = this.selected.includes(i);
+      const justUpgraded = this._upgradeJustDone && isSelected;
       div.className = 'training-card'
-        + (isSelected    ? ' selected'       : '')
-        + (justUpgraded  ? ' just-upgraded'  : '');
+        + (isSelected   ? ' selected'      : '')
+        + (justUpgraded ? ' just-upgraded' : '');
       div.dataset.type = card.type;
       div.style.borderTopColor = `var(--col-type-${card.type}, var(--col-type-normal))`;
       div.innerHTML = `
@@ -5469,7 +5529,7 @@ const TrainingEngine = {
     const maxSel = this.mode === 'upgrade' ? 2 : 1;
     document.getElementById('selected-count').textContent = `${this.selected.length} / ${maxSel} selected`;
     document.getElementById('btn-improve').textContent = this.mode === 'upgrade' ? '⚡ Upgrade Selected' : '🗑 Remove Card';
-    document.getElementById('btn-improve').disabled = this.selected.length !== maxSel;
+    document.getElementById('btn-improve').disabled    = this.selected.length !== maxSel;
   },
 
   toggleSelect(idx) {
@@ -5492,14 +5552,18 @@ const TrainingEngine = {
         card.improved = (card.improved || 0) + 1;
         if (card.power > 0) card.power = Math.round(card.power * 1.25);
       });
+
+      // Persist improvements back onto the Pokémon's own deck
+      const poke = GameState.party[this._trainingPokeIdx];
+      if (poke && poke.deck) {
+        poke.deck = [...GameState.deck];
+      }
       GameState.improvementMap = {};
       GameState.deck.forEach((c, i) => { if (c.improved) GameState.improvementMap[i] = c.improved; });
       saveGame();
 
-      // Award a level for completing training
       const evolutions = levelUpParty('training');
 
-      // Stay on screen — re-render so the player sees the improved badges
       this._upgradeJustDone = true;
       this._render();
       const btn = document.getElementById('btn-improve');
@@ -5525,14 +5589,15 @@ const TrainingEngine = {
         return;
       }
       const removed = GameState.deck.splice(this.selected[0], 1)[0];
-      const active = GameState.party[GameState.activePokemonIndex];
-      if (active && active.deck && active.deck !== GameState.deck) {
-        const ri = active.deck.findIndex(c => c.name === removed.name);
-        if (ri >= 0) active.deck.splice(ri, 1);
+      // Also remove from Pokémon's own deck
+      const poke = GameState.party[this._trainingPokeIdx];
+      if (poke && poke.deck) {
+        const ri = poke.deck.findIndex(c => c.name === removed.name);
+        if (ri >= 0) poke.deck.splice(ri, 1);
       }
       saveGame();
       MapEngine.completeNode(GameState.currentNodeIndex);
-      showModal('Card Removed!', `${removed.name} has been removed from your deck.`, () => MapEngine.show());
+      showModal('Card Removed!', `${removed.name} has been removed from ${poke?.name ?? 'your'}'s deck.`, () => MapEngine.show());
     }
   },
 
@@ -5942,6 +6007,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Training screen ──
   document.getElementById('btn-improve').addEventListener('click', () => TrainingEngine.improve());
   document.getElementById('btn-training-skip').addEventListener('click', () => TrainingEngine.skip());
+  document.getElementById('btn-training-pick-skip').addEventListener('click', () => TrainingEngine._startWithPokemon(GameState.activePokemonIndex));
   document.getElementById('training-mode-upgrade').addEventListener('click', () => TrainingEngine.setMode('upgrade'));
   document.getElementById('training-mode-remove').addEventListener('click', () => TrainingEngine.setMode('remove'));
 

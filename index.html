@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=8" />
+  <link rel="stylesheet" href="style.css?v=9" />
 </head>
 <body>
 
@@ -604,16 +604,29 @@
 <div id="screen-training" class="screen">
   <div class="training-bg"><div class="training-bg-pattern"></div></div>
   <h1 class="screen-title">⚡ Training Grounds</h1>
-  <div class="training-tabs">
-    <button class="training-tab active-tab" id="training-mode-upgrade">⬆ Upgrade</button>
-    <button class="training-tab" id="training-mode-remove">🗑 Remove</button>
+
+  <!-- Step 1: Pokémon picker (shown first, hidden once chosen) -->
+  <div id="training-poke-picker" class="training-poke-picker">
+    <p class="screen-sub">Choose which Pokémon to train</p>
+    <div class="training-poke-grid" id="training-poke-grid"></div>
+    <button class="btn-pixel btn-secondary" id="btn-training-pick-skip"
+            style="margin-top:.8rem">Skip ▶</button>
   </div>
-  <p class="screen-sub" id="training-subtitle">Select 2 cards to power up (+25% damage)</p>
-  <div class="training-cards-grid" id="training-cards-grid"></div>
-  <div class="training-footer">
-    <div class="selected-count" id="selected-count">0 / 2 selected</div>
-    <button class="btn-pixel btn-primary" id="btn-improve" disabled>⚡ Upgrade Selected</button>
-    <button class="btn-pixel btn-secondary" id="btn-training-skip">Skip</button>
+
+  <!-- Step 2: Card upgrade (hidden until Pokémon chosen) -->
+  <div id="training-card-panel" class="training-card-panel" style="display:none">
+    <div class="training-who-row" id="training-who-row"></div>
+    <div class="training-tabs">
+      <button class="training-tab active-tab" id="training-mode-upgrade">⬆ Upgrade</button>
+      <button class="training-tab" id="training-mode-remove">🗑 Remove</button>
+    </div>
+    <p class="screen-sub" id="training-subtitle">Select 2 cards to power up (+25% damage)</p>
+    <div class="training-cards-grid" id="training-cards-grid"></div>
+    <div class="training-footer">
+      <div class="selected-count" id="selected-count">0 / 2 selected</div>
+      <button class="btn-pixel btn-primary" id="btn-improve" disabled>⚡ Upgrade Selected</button>
+      <button class="btn-pixel btn-secondary" id="btn-training-skip">Skip</button>
+    </div>
   </div>
 </div>
 
@@ -768,6 +781,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=9"></script>
+<script src="app.js?v=10"></script>
 </body>
 </html>
