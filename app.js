@@ -2415,6 +2415,7 @@ const Game = {
         _isNewProfile: true,  // flag so confirmStarter creates the profile
       };
       showScreen('register');
+      RegistrationEngine.init();
       return;
     }
 
@@ -2448,6 +2449,7 @@ const Game = {
       nodesSinceRocket: 0, _lastRocketCheckAt: 0,
     };
     showScreen('register');
+    RegistrationEngine.init();
   },
 
   continueGame() {
@@ -6245,6 +6247,12 @@ document.addEventListener('DOMContentLoaded', () => {
   RegistrationEngine.init();
   document.getElementById('btn-name-confirm').addEventListener('click', () => RegistrationEngine.confirmName());
   document.getElementById('btn-age-confirm').addEventListener('click',  () => RegistrationEngine.confirmAge());
+  document.getElementById('btn-register-back').addEventListener('click', () => {
+    GameState = null;
+    activeProfile = null;
+    try { sessionStorage.removeItem('pokerogue_active_profile'); } catch(e) {}
+    ProfileEngine.show();
+  });
   document.getElementById('trainer-name-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') RegistrationEngine.confirmName();
   });
