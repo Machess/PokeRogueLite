@@ -4237,13 +4237,10 @@ const BossEngine = {
     }
   },
 
-  _log(msg) {
-    // BossEngine delegates logging to BattleEngine's unified system
-    // BattleEngine.isBoss is true during boss battles so it targets the right elements
-    BattleEngine._logSystem.call({ isBoss: true }, msg);
-  },
-  _logPlayer(html) { BattleEngine._logPlayer.call({ isBoss: true }, html); },
-  _logEnemy(html)  { BattleEngine._logEnemy.call({ isBoss: true }, html); },
+  _log(msg)       { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${msg}</span>`); },
+  _logPlayer(html){ BattleEngine._writeLog.call({ isBoss: true }, 'player', html); },
+  _logEnemy(html) { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  html); },
+  _logSystem(html){ BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${html}</span>`); },
 
   playCard(idx) {
     const st   = this.bState;
@@ -4260,10 +4257,11 @@ const BossEngine = {
     st.energy -= cost;
     BattleEngine._applyCardEffect.call({
       state: st, isBoss: true,
-      _log:          (m)    => this._log(m),
-      _logPlayer:    (html) => this._logPlayer(html),
-      _logEnemy:     (html) => this._logEnemy(html),
-      _logSystem:    (html) => this._log(html),
+      _writeLog:     (panel, html) => BattleEngine._writeLog.call({ isBoss: true }, panel, html),
+      _log:          (m)    => BattleEngine._writeLog.call({ isBoss: true }, 'enemy', `<span class="log-sys">${m}</span>`),
+      _logPlayer:    (html) => BattleEngine._writeLog.call({ isBoss: true }, 'player', html),
+      _logEnemy:     (html) => BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  html),
+      _logSystem:    (html) => BattleEngine._writeLog.call({ isBoss: true }, 'enemy', `<span class="log-sys">${html}</span>`),
       _render:       ()     => this._render(),
       _checkDefeated:()     => false,
       _dealHand:     (n)    => BattleEngine._dealHand.call({ state: st }, n),
@@ -4298,10 +4296,11 @@ const BossEngine = {
 
     BattleEngine._oppAttack.call({
       state: st, isBoss: true,
-      _log:       (m)    => this._log(m),
-      _logPlayer: (html) => this._logPlayer(html),
-      _logEnemy:  (html) => this._logEnemy(html),
-      _logSystem: (html) => this._log(html),
+      _writeLog:  (panel, html) => BattleEngine._writeLog.call({ isBoss: true }, panel, html),
+      _log:       (m)    => BattleEngine._writeLog.call({ isBoss: true }, 'enemy', `<span class="log-sys">${m}</span>`),
+      _logPlayer: (html) => BattleEngine._writeLog.call({ isBoss: true }, 'player', html),
+      _logEnemy:  (html) => BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  html),
+      _logSystem: (html) => BattleEngine._writeLog.call({ isBoss: true }, 'enemy', `<span class="log-sys">${html}</span>`),
       _render:    ()     => this._render(),
     });
 
