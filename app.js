@@ -3376,12 +3376,13 @@ const BattleEngine = {
   },
 
   _initBattle(playerPoke, oppPoke, isBoss) {
-    this.isBoss = isBoss;
+    this.isBoss             = isBoss;
     this._focusSashUsed     = false;
     this._chargeBonus       = 0;
     this._futureSightDmg    = 0;
     this._dragonDanceBonus  = 0;
     this._itemUsedThisTurn  = false;
+    this._battleOver        = false;
     const activeDeck = playerPoke.deck || GameState.deck;
     this.state = {
       player: { ...playerPoke },
@@ -3588,6 +3589,7 @@ const BattleEngine = {
   },
 
   playCard(handIndex) {
+    if (this._battleOver) return;
     const st   = this.state;
     const card = st.hand[handIndex];
     const cost = card.cost ?? 1;
@@ -3747,6 +3749,7 @@ const BattleEngine = {
   },
 
   endTurn() {
+    if (this._battleOver) return;
     const st = this.state;
 
     // ── End Turn warning — no energy spent ───────────────────────────────
@@ -3914,6 +3917,7 @@ const BattleEngine = {
     const st = this.state;
 
     if (st.opp.hp <= 0) {
+      this._battleOver = true;
       this._log(`${st.opp.name} fainted! You win!`);
       setTimeout(() => this._victory(), 1200);
       return true;
@@ -3960,6 +3964,7 @@ const BattleEngine = {
           });
         }, 1000);
       } else {
+        this._battleOver = true;
         setTimeout(() => this._defeat(), 1200);
       }
       return true;
@@ -6306,7 +6311,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Battle screen ──
   document.getElementById('btn-end-turn').addEventListener('click', () => BattleEngine.endTurn());
   document.getElementById('btn-use-item').addEventListener('click', () => {
-    if (BattleEngine._itemUsedThisTurn) return;
+    if (BattleEngine._battleOver || BattleEngine._itemUsedThisTurn) return;
     ItemEngine.renderItemPicker(false, (itemId) => {
       const result = ItemEngine.usePotion(BattleEngine.state, false);
       if (result) {
@@ -6331,7 +6336,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-boss-end-turn').addEventListener('click', () => BossEngine.endTurn());
   document.getElementById('btn-boss-use-item').addEventListener('click', () => {
-    if (BattleEngine._itemUsedThisTurn) return;
+    if (BattleEngine._battleOver || BattleEngine._itemUsedThisTurn) return;
     ItemEngine.renderItemPicker(true, (itemId) => {
       const result = ItemEngine.usePotion(BossEngine.bState, true);
       if (result) {
