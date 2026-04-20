@@ -1187,6 +1187,18 @@ function getTypeMultiplier(attackType, defendType) {
   return TYPE_CHART[attackType]?.[defendType] ?? 1;
 }
 
+// ─── BATTLE LOG FORMATTING HELPERS ───────────────────────────────────────────
+// Wrap numbers and labels in coloured spans for the 2-panel battle log.
+
+function logDmgDealt(n)  { return `<span class="log-dmg-dealt">${n}</span>`; }
+function logDmgTaken(n)  { return `<span class="log-dmg-taken">${n}</span>`; }
+function logHeal(n)      { return `<span class="log-heal">${n}</span>`; }
+function logEff(mult) {
+  if (mult >= 2)   return ` <span class="log-eff-super">Super effective!</span>`;
+  if (mult <= 0.5) return ` <span class="log-eff-weak">Not very effective…</span>`;
+  return '';
+}
+
 function typeEffectivenessLabel(mult) {
   if (mult === 0)   return { text: 'No effect!',    color: '#888' };
   if (mult >= 2)    return { text: 'Super effective!', color: '#FFD700' };
@@ -3405,7 +3417,7 @@ const BattleEngine = {
     this._dealHand(5);
     this._render();
     showScreen('battle');
-    this._log(`A wild ${oppPoke.name} appeared!`);
+    this._logSystem(`A wild <b>${oppPoke.name}</b> appeared!`);
   },
 
   _dealHand(n) {
@@ -3574,19 +3586,37 @@ const BattleEngine = {
     }
   },
 
-  _log(msg) {
-    // Shift lines down: line1→line2→line3, new message→line1
-    const l1 = document.getElementById('log-inner');
-    const l2 = document.getElementById('log-inner-2');
-    const l3 = document.getElementById('log-inner-3');
-    if (l3) l3.textContent = l2 ? l2.textContent : '';
-    if (l2) l2.textContent = l1 ? l1.textContent : '';
-    if (l1) {
-      l1.textContent = msg;
-      l1.style.opacity = '0';
-      requestAnimationFrame(() => { l1.style.transition = 'opacity .18s'; l1.style.opacity = '1'; });
+  // ── Logging helpers ─────────────────────────────────────────────────────────
+  // Each helper targets the correct panel and formats numbers with colour spans.
+  _logPlayer(html) { this._writeLog('player', html); },
+  _logEnemy(html)  { this._writeLog('enemy',  html); },
+  _logSystem(html) {
+    // System messages flash briefly on the enemy row then fade — no permanent slot
+    this._writeLog('enemy', `<span class="log-sys">${html}</span>`);
+  },
+
+  _writeLog(panel, html) {
+    const isBoss  = this.isBoss;
+    const msgId   = isBoss
+      ? (panel === 'player' ? 'boss-log-player-msg' : 'boss-log-enemy-msg')
+      : (panel === 'player' ? 'log-player-msg'      : 'log-enemy-msg');
+    const rowId   = isBoss
+      ? (panel === 'player' ? 'boss-log-player'     : 'boss-log-enemy')
+      : (panel === 'player' ? 'log-player'          : 'log-enemy');
+    const msgEl = document.getElementById(msgId);
+    const rowEl = document.getElementById(rowId);
+    if (!msgEl) return;
+    msgEl.innerHTML = html;
+    // Flash animation so the update is noticed even if text is similar
+    if (rowEl) {
+      rowEl.classList.remove('log-flash');
+      void rowEl.offsetWidth;
+      rowEl.classList.add('log-flash');
     }
   },
+
+  // Legacy _log kept for any callers that haven't been updated — routes to system
+  _log(msg) { this._logSystem(msg); },
 
   playCard(handIndex) {
     if (this._battleOver) return;
@@ -3650,100 +3680,99 @@ const BattleEngine = {
 
       // Shell Bell — heal on dealing damage
       const bellMsg = ItemEngine.checkShellBell(st, this);
-      if (bellMsg) setTimeout(() => this._log(bellMsg), 300);
+      if (bellMsg) setTimeout(() => this._logPlayer(bellMsg), 300);
 
-      const effLabel = typeEffectivenessLabel(mult);
-      let logMsg = crit
-        ? `${card.name}! Critical hit! ${dmg} dmg!`
-        : `${card.name}! ${dmg} dmg to ${st.opp.name}!`;
-      if (effLabel) logMsg += ` ${effLabel.text}`;
-      this._log(logMsg);
+      const effStr = logEff(mult);
+      let logHtml = crit
+        ? `${card.icon || ''} <b>${card.name}!</b> Critical hit! ${logDmgDealt(dmg)} dmg!${effStr}`
+        : `${card.icon || ''} <b>${card.name}!</b> ${logDmgDealt(dmg)} dmg!${effStr}`;
+      this._logPlayer(logHtml);
     } else if (dmg === 0 && card.power > 0) {
-      this._log(`${card.name} had no effect on ${st.opp.name}!`);
+      this._logPlayer(`${card.icon || ''} <b>${card.name}</b> had no effect!`);
     }
 
     switch (card.special) {
       case 'heal_10':       st.player.hp = Math.min(st.player.maxHp, st.player.hp + 10);
-                            this._log(`${card.name}! Healed 10 HP!`); break;
+                            this._logPlayer(`${card.name}! Healed 10 HP!`); break;
       case 'mega_drain':    st.player.hp = Math.min(st.player.maxHp, st.player.hp + 20);
-                            this._log(`${card.name}! Dealt damage + healed 20 HP!`); break;
+                            this._logPlayer(`${card.name}! Dealt damage + healed 20 HP!`); break;
       case 'roost':         st.player.hp = Math.min(st.player.maxHp, st.player.hp + 35);
-                            this._log(`${card.name}! Healed 35 HP!`); break;
+                            this._logPlayer(`${card.name}! Healed 35 HP!`); break;
       case 'heal_25_draw':  st.player.hp = Math.min(st.player.maxHp, st.player.hp + 35);
                             this._dealHand(1);
-                            this._log(`${card.name}! Healed 35 HP + drew a card!`); break;
-      case 'draw_1':        this._dealHand(1); this._log(`${card.name}! Drew a card!`); break;
+                            this._logPlayer(`${card.name}! Healed 35 HP + drew a card!`); break;
+      case 'draw_1':        this._dealHand(1); this._logPlayer(`${card.name}! Drew a card!`); break;
       case 'growl_draw':    st.oppAtkDebuff += 10; this._dealHand(1);
-                            this._log(`${card.name}! Opp ATK fell + drew a card!`); break;
+                            this._logPlayer(`${card.name}! Opp ATK fell + drew a card!`); break;
       case 'leer_free':     st.oppAtkDebuff += 5;
-                            this._log(`${card.name}! Opp DEF fell!`); break;
+                            this._logPlayer(`${card.name}! Opp DEF fell!`); break;
       case 'string_shot':   st.oppSkipped = false; st.oppAtkDebuff += 5; this._dealHand(1);
-                            this._log(`${card.name}! Opp slowed + drew a card!`); break;
-      case 'metronome':     this._dealHand(2); this._log(`${card.name}! Drew 2 cards!`); break;
+                            this._logPlayer(`${card.name}! Opp slowed + drew a card!`); break;
+      case 'metronome':     this._dealHand(2); this._logPlayer(`${card.name}! Drew 2 cards!`); break;
       case 'shield_draw':   st.shield += 45; this._dealHand(1);
-                            this._log(`Shell Armor! Blocked 45 dmg + drew a card!`); break;
-      case 'shield_35':     st.shield += 30; this._log(`${card.name}! Blocked 30 dmg next hit!`); break;
-      case 'iron_defense':  st.shield += 50; this._log(`${card.name}! Blocked 50 dmg next hit!`); break;
-      case 'debuff_atk':    st.oppAtkDebuff += 10; this._log(`${st.opp.name}'s ATK fell!`); break;
-      case 'debuff_acc':    st.oppAtkDebuff += 8;  this._log(`${st.opp.name}'s accuracy fell!`); break;
-      case 'debuff_def':    if(Math.random()<.35){ st.oppAtkDebuff += 5; this._log(`${st.opp.name}'s DEF fell!`); } break;
-      case 'skip_opp':      st.oppSkipped = true; this._log(`${st.opp.name} fell asleep!`); break;
-      case 'slow_opp':      st.oppSkipped = true; this._log(`${st.opp.name} is slowed!`); break;
-      case 'burn_chance':   if (Math.random()<.15){ addStatus(st,'opp','burn'); this._log(`${st.opp.name} is burned!`); } break;
-      case 'burn':          addStatus(st,'opp','burn'); this._log(`${st.opp.name} is burning!`); break;
-      case 'paralyse':      addStatus(st,'opp','para'); this._log(`${st.opp.name} is paralysed!`); break;
-      case 'para_chance':   if(Math.random()<.2){ addStatus(st,'opp','para'); this._log(`${st.opp.name} is paralysed!`); } break;
-      case 'poison':        addStatus(st,'opp','poison'); this._log(`${st.opp.name} is poisoned!`); break;
-      case 'leech':         st.leechStacks++; st.leechTurns = 3; this._log(`Leech Seed latched!`); break;
-      case 'flinch':        if(Math.random()<.25){ st.oppSkipped = true; this._log(`${st.opp.name} flinched!`); } break;
-      case 'rain':          st.rainTurns = 3; this._log(`It started to rain!`); break;
+                            this._logPlayer(`Shell Armor! Blocked 45 dmg + drew a card!`); break;
+      case 'shield_35':     st.shield += 30; this._logPlayer(`${card.name}! Blocked 30 dmg next hit!`); break;
+      case 'iron_defense':  st.shield += 50; this._logPlayer(`${card.name}! Blocked 50 dmg next hit!`); break;
+      case 'debuff_atk':    st.oppAtkDebuff += 10; this._logPlayer(`${st.opp.name}'s ATK fell!`); break;
+      case 'debuff_acc':    st.oppAtkDebuff += 8;  this._logPlayer(`${st.opp.name}'s accuracy fell!`); break;
+      case 'debuff_def':    if(Math.random()<.35){ st.oppAtkDebuff += 5; this._logPlayer(`${st.opp.name}'s DEF fell!`); } break;
+      case 'skip_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} fell asleep!`); break;
+      case 'slow_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} is slowed!`); break;
+      case 'burn_chance':   if (Math.random()<.15){ addStatus(st,'opp','burn'); this._logPlayer(`${st.opp.name} is burned!`); } break;
+      case 'burn':          addStatus(st,'opp','burn'); this._logPlayer(`${st.opp.name} is burning!`); break;
+      case 'paralyse':      addStatus(st,'opp','para'); this._logPlayer(`${st.opp.name} is paralysed!`); break;
+      case 'para_chance':   if(Math.random()<.2){ addStatus(st,'opp','para'); this._logPlayer(`${st.opp.name} is paralysed!`); } break;
+      case 'poison':        addStatus(st,'opp','poison'); this._logPlayer(`${st.opp.name} is poisoned!`); break;
+      case 'leech':         st.leechStacks++; st.leechTurns = 3; this._logPlayer(`Leech Seed latched!`); break;
+      case 'flinch':        if(Math.random()<.25){ st.oppSkipped = true; this._logPlayer(`${st.opp.name} flinched!`); } break;
+      case 'rain':          st.rainTurns = 3; this._logPlayer(`It started to rain!`); break;
       case 'recoil_15':     st.player.hp = Math.max(1, st.player.hp - 15);
-                            this._log(`${card.name}! Recoil 15 HP!`); break;
+                            this._logPlayer(`${card.name}! Recoil 15 HP!`); break;
       case 'close_combat':  st.player.hp = Math.max(1, st.player.hp - 25);
-                            this._log(`${card.name}! Recoil 25 HP!`); break;
+                            this._logPlayer(`${card.name}! Recoil 25 HP!`); break;
       case 'overheat':      st.player.hp = Math.max(1, st.player.hp - 25);
-                            this._log(`${card.name}! Recoil 25 HP!`); break;
+                            this._logPlayer(`${card.name}! Recoil 25 HP!`); break;
       case 'discharge':     st.player.hp = Math.max(1, st.player.hp - 15);
-                            this._log(`${card.name}! 15 self damage!`); break;
+                            this._logPlayer(`${card.name}! 15 self damage!`); break;
       case 'always_crit':   break; // handled in crit block above
       case 'high_crit':     break;
       case 'flame_charge':  st.bonusEnergy = (st.bonusEnergy || 0) + 1;
-                            this._log(`${card.name}! +1 energy next turn!`); break;
+                            this._logPlayer(`${card.name}! +1 energy next turn!`); break;
       case 'agility':       st.energy = Math.min(3, st.energy + 1); this._dealHand(1);
-                            this._log(`Agility! +1 energy + drew a card!`); break;
+                            this._logPlayer(`Agility! +1 energy + drew a card!`); break;
       case 'charge':        this._chargeBonus = 0.5;
-                            this._log(`Charged up! Next electric move +50%!`); break;
+                            this._logPlayer(`Charged up! Next electric move +50%!`); break;
       case 'bonus_action':  st.energy = Math.min(3, st.energy + 1);
-                            this._log(`Gained +1 energy!`); break;
+                            this._logPlayer(`Gained +1 energy!`); break;
       case 'psyshock':      // pierces shield — already dealt as normal dmg ignoring shield
-                            this._log(`${card.name}! Pierced the shield!`); break;
+                            this._logPlayer(`${card.name}! Pierced the shield!`); break;
       case 'calm_mind':     this._chargeBonus = 0.3;
-                            this._log(`${card.name}! Next move +30% dmg!`); break;
+                            this._logPlayer(`${card.name}! Next move +30% dmg!`); break;
       case 'future_sight':  this._futureSightDmg = 70;
-                            this._log(`${card.name}! Attack incoming next turn!`); break;
+                            this._logPlayer(`${card.name}! Attack incoming next turn!`); break;
       case 'stealth_rock':  st.stealthRock = 3;
-                            this._log(`Stealth Rock floats in the air!`); break;
+                            this._logPlayer(`Stealth Rock floats in the air!`); break;
       case 'hail':          st.hailTurns = 3;
-                            this._log(`Hail started! Opp takes 12/turn!`); break;
-      case 'venoshock':     if(hasStatus(st,'opp','poison')){ st.opp.hp = Math.max(0, st.opp.hp - dmg); this._log(`Venoshock doubled on poisoned target!`); } break;
-      case 'night_shade':   { const nsDmg = st.opp.level || 10; st.opp.hp = Math.max(0, st.opp.hp - nsDmg); this._log(`${card.name}! ${nsDmg} dmg!`); } break;
+                            this._logPlayer(`Hail started! Opp takes 12/turn!`); break;
+      case 'venoshock':     if(hasStatus(st,'opp','poison')){ st.opp.hp = Math.max(0, st.opp.hp - dmg); this._logPlayer(`Venoshock doubled on poisoned target!`); } break;
+      case 'night_shade':   { const nsDmg = st.opp.level || 10; st.opp.hp = Math.max(0, st.opp.hp - nsDmg); this._logPlayer(`${card.name}! ${nsDmg} dmg!`); } break;
       case 'curse':         st.opp.curseTurns = 2; st.player.hp = Math.max(1, st.player.hp - 10);
-                            this._log(`${card.name}! Opp cursed, you paid 10 HP!`); break;
+                            this._logPlayer(`${card.name}! Opp cursed, you paid 10 HP!`); break;
       case 'dragon_dance':  this._dragonDanceBonus = (this._dragonDanceBonus || 0) + 0.2;
-                            this._log(`${card.name}! Attack +20% this battle!`); break;
+                            this._logPlayer(`${card.name}! Attack +20% this battle!`); break;
       case 'taunt':         st.oppTauntTurns = 2;
-                            this._log(`${card.name}! Opp can only use damaging moves!`); break;
+                            this._logPlayer(`${card.name}! Opp can only use damaging moves!`); break;
       case 'misty_terrain': st.statusEffects.player = [];
-                            this._log(`${card.name}! All status effects cleared!`); break;
+                            this._logPlayer(`${card.name}! All status effects cleared!`); break;
       case 'focus_punch':   // handled in damage section — miss if hit same turn
                             break;
       case 'spore':         st.oppSkipped = true; this._dealHand(1);
-                            this._log(`Spore! Opp fell asleep + drew a card!`); break;
+                            this._logPlayer(`Spore! Opp fell asleep + drew a card!`); break;
     }
 
     // Oran Berry mid-battle check after taking/dealing damage
     const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player', this.isBoss);
-    if (berryMsg) setTimeout(() => this._log(berryMsg), 500);
+    if (berryMsg) setTimeout(() => this._logPlayer(berryMsg), 500);
 
     this._render();
   },
@@ -3779,14 +3808,14 @@ const BattleEngine = {
     if (!st.oppSkipped) {
       this._oppAttack();
     } else {
-      this._log(`${st.opp.name} couldn't move!`);
+      this._logEnemy(`${st.opp.name} couldn't move!`);
       st.oppSkipped = false;
     }
 
     // Future Sight delayed damage
     if (this._futureSightDmg > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - this._futureSightDmg);
-      this._log(`Future Sight strikes for ${this._futureSightDmg} dmg!`);
+      this._logPlayer(`Future Sight strikes for ${logDmgDealt(this._futureSightDmg)} dmg!`);
       this._futureSightDmg = 0;
     }
 
@@ -3794,21 +3823,21 @@ const BattleEngine = {
     if (st.stealthRock > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - 15);
       st.stealthRock--;
-      this._log(`Stealth Rock chip! 15 dmg.`);
+      this._logPlayer(`Stealth Rock chip! ${logDmgDealt(15)} dmg`);
     }
 
     // Hail chip damage
     if (st.hailTurns > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - 12);
       st.hailTurns--;
-      this._log(`Hail chips ${st.opp.name} for 12!`);
+      this._logPlayer(`Hail chips ${st.opp.name} for ${logDmgDealt(12)}!`);
     }
 
     // Curse damage
     if (st.opp.curseTurns > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - 20);
       st.opp.curseTurns--;
-      this._log(`Curse drains ${st.opp.name} for 20!`);
+      this._logPlayer(`Curse drains ${st.opp.name} for ${logDmgDealt(20)}!`);
     }
 
     // Status ticks
@@ -3816,11 +3845,11 @@ const BattleEngine = {
       if (hasStatus(st, 'opp', s)) {
         const dmg = s === 'burn' ? 10 : 15;
         st.opp.hp = Math.max(0, st.opp.hp - dmg);
-        this._log(`${st.opp.name} is hurt by ${s}! (${dmg})`);
+        this._logPlayer(`${st.opp.name} is hurt by ${s}! (${logDmgDealt(dmg)})`);
       }
     });
-    if (hasStatus(st, 'player', 'burn'))   { st.player.hp = Math.max(0, st.player.hp - 10);  this._log(`${st.player.name} is burned! (-10)`); }
-    if (hasStatus(st, 'player', 'poison')) { st.player.hp = Math.max(0, st.player.hp - 15);  this._log(`${st.player.name} is hurt by poison! (-15)`); }
+    if (hasStatus(st, 'player', 'burn'))   { st.player.hp = Math.max(0, st.player.hp - 10);  this._logEnemy(`${st.player.name} is burned! (${logDmgTaken(10)} HP)`); }
+    if (hasStatus(st, 'player', 'poison')) { st.player.hp = Math.max(0, st.player.hp - 15);  this._logEnemy(`${st.player.name} is hurt by poison! (${logDmgTaken(15)} HP)`); }
 
     // Leech
     if (st.leechTurns > 0) {
@@ -3828,7 +3857,7 @@ const BattleEngine = {
       st.opp.hp    = Math.max(0, st.opp.hp - drain);
       st.player.hp = Math.min(st.player.maxHp, st.player.hp + Math.floor(drain/2));
       st.leechTurns--;
-      this._log(`Leech Seed drained ${drain} HP from ${st.opp.name}!`);
+      this._logPlayer(`Leech Seed drained ${logDmgDealt(drain)} HP from ${st.opp.name}!`);
     }
 
     // Weather countdowns
@@ -3851,17 +3880,17 @@ const BattleEngine = {
 
     // Leftovers
     const leftoversMsg = ItemEngine.checkLeftovers(st);
-    if (leftoversMsg) this._log(leftoversMsg);
+    if (leftoversMsg) this._logPlayer(leftoversMsg);
 
     this._dealHand(5);
     this._render();
-    this._log(`Your turn! ${st.energy} energy.`);
+    // 'Your turn' message removed — energy orbs show state
   },
 
   _oppAttack() {
     const st = this.state;
     if (hasStatus(st, 'opp', 'para') && Math.random() < .4) {
-      this._log(`${st.opp.name} is paralysed and can't move!`);
+      this._logEnemy(`${st.opp.name} is paralysed and can't move!`);
       return;
     }
 
@@ -3896,20 +3925,20 @@ const BattleEngine = {
       st.player.hp = Math.max(0, st.player.hp - blocked);
       applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
 
-      const effLabel = typeEffectivenessLabel(mult);
-      let logMsg = `${st.opp.name} used ${move.name}! ${blocked} dmg!`;
-      if (st.shield > 0)    logMsg += ' (shield blocked some)';
-      if (effLabel)         logMsg += ` ${effLabel.text}`;
-      this._log(logMsg);
+      const effStr = logEff(mult);
+      let logHtml = `<b>${st.opp.name}</b> used ${move.name}! ${logDmgTaken(blocked)} dmg!`;
+      if (st.shield > 0) logHtml += ' <span class="log-shield">(shield)</span>';
+      logHtml += effStr;
+      this._logEnemy(logHtml);
 
       // Oran Berry — check after taking damage
       const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player', this.isBoss);
-      if (berryMsg) setTimeout(() => this._log(berryMsg), 400);
+      if (berryMsg) setTimeout(() => this._logPlayer(berryMsg), 400);
     } else if (move.power > 0) {
       applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
-      this._log(`${st.opp.name} used ${move.name}! Blocked by shield!`);
+      this._logEnemy(`<b>${st.opp.name}</b> used ${move.name}! <span class="log-shield">Blocked!</span>`);
     } else {
-      this._log(`${st.opp.name} used ${move.name}!`);
+      this._logEnemy(`<b>${st.opp.name}</b> used ${move.name}!`);
     }
   },
 
@@ -3918,7 +3947,7 @@ const BattleEngine = {
 
     if (st.opp.hp <= 0) {
       this._battleOver = true;
-      this._log(`${st.opp.name} fainted! You win!`);
+      this._logSystem(`⭐ ${st.opp.name} fainted! You win!`);
       setTimeout(() => this._victory(), 1200);
       return true;
     }
@@ -3927,7 +3956,7 @@ const BattleEngine = {
 
       // Focus Sash — survive with 1 HP
       if (ItemEngine.checkFocusSash(st, 'player', this)) {
-        this._log(`🎗 Focus Sash! ${st.player.name} held on with 1 HP!`);
+        this._logPlayer(`🎗 Focus Sash! ${st.player.name} held on with 1 HP!`);
         this._render();
         return false;
       }
@@ -3935,13 +3964,13 @@ const BattleEngine = {
       // Revive Potion — prevent faint
       if (ItemEngine.checkRevive(activeIdx)) {
         st.player.hp = GameState.party[activeIdx].hp; // sync restored HP
-        this._log(`🧪 Revive Potion! ${st.player.name} was revived!`);
+        this._logPlayer(`🧪 Revive Potion! ${st.player.name} was revived!`);
         this._render();
         return false;
       }
 
       GameState.party[activeIdx].hp = 0;
-      this._log(`${st.player.name} fainted!`);
+      this._logSystem(`💔 ${st.player.name} fainted!`);
       const next = GameState.party.findIndex((p, i) => i !== activeIdx && p.hp > 0);
       if (next >= 0) {
         setTimeout(() => {
@@ -3954,7 +3983,7 @@ const BattleEngine = {
           st.discardPile = [];
           st.player = { ...p };
           this._dealHand(5);
-          this._log(`Go, ${p.name}!`);
+          this._logSystem(`Go, ${p.name}!`);
           this._render();
           fetchPoke(p.id).then(d => {
             const back = d.sprites?.back_default || d.sprites?.front_default || p.spriteUrl;
@@ -4006,7 +4035,7 @@ const BattleEngine = {
   switchPokemon(idx) {
     const st = this.state;
     if (st.energy < 2) {
-      this._log(`Not enough energy to switch! (costs 2)`);
+      this._logSystem(`Not enough energy to switch!`);
       return;
     }
     GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
@@ -4027,7 +4056,7 @@ const BattleEngine = {
       this._render();
     });
     this._dealHand(5);
-    this._log(`Go, ${newPoke.name}! (2 energy used)`);
+    this._logSystem(`Go, ${newPoke.name}!`);
     this._render();
   },
 };
@@ -4123,7 +4152,7 @@ const BossEngine = {
     };
     BattleEngine._dealHand.call({ state: this.bState }, 5);
     this._render();
-    this._log(`${this.bossData.name} sent out ${opp.name}!`);
+    this._logEnemy(`${this.bossData.name} sends ${opp.name}!`);
     // Fetch back sprite for player (non-blocking)
     if (!player.backSpriteUrl) {
       fetchPoke(player.id).then(d => {
@@ -4209,17 +4238,12 @@ const BossEngine = {
   },
 
   _log(msg) {
-    const l1 = document.getElementById('boss-log-inner');
-    const l2 = document.getElementById('boss-log-inner-2');
-    const l3 = document.getElementById('boss-log-inner-3');
-    if (l3) l3.textContent = l2 ? l2.textContent : '';
-    if (l2) l2.textContent = l1 ? l1.textContent : '';
-    if (l1) {
-      l1.textContent = msg;
-      l1.style.opacity = '0';
-      requestAnimationFrame(() => { l1.style.transition = 'opacity .18s'; l1.style.opacity = '1'; });
-    }
+    // BossEngine delegates logging to BattleEngine's unified system
+    // BattleEngine.isBoss is true during boss battles so it targets the right elements
+    BattleEngine._logSystem.call({ isBoss: true }, msg);
   },
+  _logPlayer(html) { BattleEngine._logPlayer.call({ isBoss: true }, html); },
+  _logEnemy(html)  { BattleEngine._logEnemy.call({ isBoss: true }, html); },
 
   playCard(idx) {
     const st   = this.bState;
@@ -4280,18 +4304,18 @@ const BossEngine = {
       if (hasStatus(st, 'opp', s)) {
         const dmg = s === 'burn' ? 10 : 15;
         st.opp.hp = Math.max(0, st.opp.hp - dmg);
-        this._log(`${st.opp.name} is hurt by ${s}! (${dmg})`);
+        this._logPlayer(`${st.opp.name} is hurt by ${s}! (${logDmgDealt(dmg)})`);
       }
     });
-    if (hasStatus(st, 'player', 'burn'))   { st.player.hp = Math.max(0, st.player.hp - 10); this._log(`${st.player.name} is burned! (-10)`); }
-    if (hasStatus(st, 'player', 'poison')) { st.player.hp = Math.max(0, st.player.hp - 15); this._log(`${st.player.name} is poisoned! (-15)`); }
+    if (hasStatus(st, 'player', 'burn'))   { st.player.hp = Math.max(0, st.player.hp - 10); this._logEnemy(`${st.player.name} is burned! (${logDmgTaken(10)} HP)`); }
+    if (hasStatus(st, 'player', 'poison')) { st.player.hp = Math.max(0, st.player.hp - 15); this._logEnemy(`${st.player.name} is poisoned! (${logDmgTaken(15)} HP)`); }
 
     if (st.leechTurns > 0) {
       const drain = 15 * st.leechStacks;
       st.opp.hp    = Math.max(0, st.opp.hp - drain);
       st.player.hp = Math.min(st.player.maxHp, st.player.hp + Math.floor(drain/2));
       st.leechTurns--;
-      this._log(`Leech Seed drained ${drain} HP!`);
+      this._logPlayer(`Leech Seed drained ${logDmgDealt(drain)} HP!`);
     }
     if (st.rainTurns > 0)  st.rainTurns--;
     if (st.hailTurns > 0)  { st.opp.hp = Math.max(0, st.opp.hp - 12); st.hailTurns--; }
@@ -4308,12 +4332,12 @@ const BossEngine = {
 
     BattleEngine._dealHand.call({ state: st }, 5);
     this._render();
-    this._log(`Your turn! ${st.energy} energy.`);
+    // 'Your turn' message removed — energy orbs show state
   },
 
   switchPokemon(idx) {
     const st = this.bState;
-    if (st.energy < 2) { this._log(`Not enough energy to switch! (costs 2)`); return; }
+    if (st.energy < 2) { this._logSystem(`Not enough energy to switch!`); return; }
     GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
     GameState.activePokemonIndex = idx;
     const newPoke = GameState.party[idx];
@@ -4332,7 +4356,7 @@ const BossEngine = {
       GameState.party[idx].backSpriteUrl = back;
       this._render();
     });
-    this._log(`Go, ${newPoke.name}! (2 energy used)`);
+    this._logSystem(`Go, ${newPoke.name}!`);
     this._render();
   },
 
@@ -4383,7 +4407,7 @@ const BossEngine = {
         }
         return true;
       }
-      this._log(`${this.bossData.name} sent out ${this.oppTeam[this.oppIdx].name}!`);
+      this._logEnemy(`${this.bossData.name} sends ${this.oppTeam[this.oppIdx].name}!`);
       st.opp = { ...this.oppTeam[this.oppIdx] };
       this._render();
       return false;
@@ -4401,7 +4425,7 @@ const BossEngine = {
         st.discardPile = [];
         st.player = { ...p };
         BattleEngine._dealHand.call({ state: st }, 3);
-        this._log(`Go, ${p.name}!`);
+        this._logSystem(`Go, ${p.name}!`);
         this._render();
         // Fetch back sprite non-blocking
         if (!p.backSpriteUrl) {
@@ -5232,7 +5256,7 @@ const ItemEngine = {
       if (berries[0].count <= 0)
         GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
       this.renderBagBar();
-      const msg = `🍊 Oran Berry! ${st[who].name} healed 20 HP!`;
+      const msg = `🍊 Oran Berry! ${st[who].name} healed ${logHeal(20)} HP!`;
       this.showBattleToast(msg, isBoss);
       return msg;
     }
@@ -5259,7 +5283,7 @@ const ItemEngine = {
     saveGame();
 
     const icon = item.id === 'super_potion' ? '💉' : '💊';
-    const msg  = `${icon} ${item.id === 'super_potion' ? 'Super Potion' : 'Potion'}! ${st.player.name} healed ${actual} HP!`;
+    const msg  = `${icon} ${item.id === 'super_potion' ? 'Super Potion' : 'Potion'}! ${st.player.name} healed ${logHeal(actual)} HP!`;
     this.showBattleToast(msg, isBoss);
     return { healed: actual, msg };
   },
@@ -5352,7 +5376,7 @@ const ItemEngine = {
     if (!poke?.heldItem || poke.heldItem.id !== 'shell_bell') return null;
     const heal = 5;
     st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
-    return `🔔 Shell Bell! ${st.player.name} healed ${heal} HP!`;
+    return `🔔 Shell Bell! ${st.player.name} healed ${logHeal(heal)} HP!`;
   },
 
   // ── Leftovers ────────────────────────────────────────────────────────────
@@ -5361,7 +5385,7 @@ const ItemEngine = {
     if (!poke?.heldItem || poke.heldItem.id !== 'leftovers') return null;
     const heal = 5;
     st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
-    return `🍖 Leftovers! ${st.player.name} healed ${heal} HP!`;
+    return `🍖 Leftovers! ${st.player.name} healed ${logHeal(heal)} HP!`;
   },
 
   // ── Type booster held items ──────────────────────────────────────────────

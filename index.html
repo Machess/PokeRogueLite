@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=12" />
+  <link rel="stylesheet" href="style.css?v=13" />
 </head>
 <body>
 
@@ -343,11 +343,16 @@
     </div>
   </div>
 
-  <!-- Battle log — 3 lines, most recent first -->
+  <!-- Battle log — 2-panel: player action top, enemy response bottom -->
   <div class="battle-log" id="battle-log">
-    <div class="log-line log-line-1" id="log-inner">Battle starts!</div>
-    <div class="log-line log-line-2" id="log-inner-2"></div>
-    <div class="log-line log-line-3" id="log-inner-3"></div>
+    <div class="log-row log-row-player" id="log-player">
+      <span class="log-who">YOU</span>
+      <span class="log-msg" id="log-player-msg">— —</span>
+    </div>
+    <div class="log-row log-row-enemy" id="log-enemy">
+      <span class="log-who">FOE</span>
+      <span class="log-msg" id="log-enemy-msg">— —</span>
+    </div>
   </div>
 
   <!-- Berry / item notification toast -->
@@ -441,9 +446,14 @@
     </div>
 
     <div class="battle-log" id="boss-battle-log">
-      <div class="log-line log-line-1" id="boss-log-inner">Boss battle!</div>
-      <div class="log-line log-line-2" id="boss-log-inner-2"></div>
-      <div class="log-line log-line-3" id="boss-log-inner-3"></div>
+      <div class="log-row log-row-player" id="boss-log-player">
+        <span class="log-who">YOU</span>
+        <span class="log-msg" id="boss-log-player-msg">— —</span>
+      </div>
+      <div class="log-row log-row-enemy" id="boss-log-enemy">
+        <span class="log-who">FOE</span>
+        <span class="log-msg" id="boss-log-enemy-msg">— —</span>
+      </div>
     </div>
 
     <div class="battle-item-toast" id="boss-battle-item-toast"></div>
@@ -814,6 +824,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=14"></script>
+<script src="app.js?v=16"></script>
 </body>
 </html>

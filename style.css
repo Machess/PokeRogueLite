@@ -1171,17 +1171,17 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* Battle log */
 .battle-log {
   position: absolute;
-  bottom: 27%;
+  bottom: 28%;
   left: 50%;
   transform: translateX(-50%);
-  width: min(420px, 70vw);
-  background: rgba(10,10,26,.88);
+  width: min(500px, 92vw);
+  background: rgba(8,8,22,.92);
   border: 2px solid var(--col-border);
   border-radius: var(--r-md);
-  padding: .5rem .8rem;
+  padding: .6rem .9rem;
   z-index: var(--z-ui);
-  backdrop-filter: blur(6px);
-  text-align: center;
+  backdrop-filter: blur(8px);
+  overflow: hidden;
 }
 .log-inner {
   font-size: .8rem;
@@ -3452,21 +3452,67 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .battle-log {
   display: flex;
   flex-direction: column;
-  gap: .1rem;
+  gap: .3rem;
 }
-.log-line {
-  font-size: .52rem;
-  color: var(--col-text);
-  text-align: center;
-  min-height: 1.1em;
-  transition: opacity .18s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+
+/* ── Two-panel log rows ── */
+.log-row {
+  display: flex;
+  align-items: baseline;
+  gap: .45rem;
+  min-height: 1.4em;
+  padding: .18rem .1rem;
+  border-radius: 4px;
+  transition: background .15s;
 }
-.log-line-1 { opacity: 1;   font-weight: 700; }
-.log-line-2 { opacity: 0.55; font-weight: 400; font-size: .44rem; }
-.log-line-3 { opacity: 0.28; font-weight: 400; font-size: .38rem; }
+.log-row-player {
+  border-left: 3px solid rgba(255,255,255,.6);
+  padding-left: .4rem;
+}
+.log-row-enemy {
+  border-left: 3px solid rgba(255,80,80,.7);
+  padding-left: .4rem;
+}
+
+/* Flash animation when a row updates */
+.log-flash {
+  animation: log-row-flash .35s ease-out;
+}
+@keyframes log-row-flash {
+  0%   { background: rgba(255,255,255,.12); }
+  100% { background: transparent; }
+}
+
+/* WHO label */
+.log-who {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem;
+  letter-spacing: .05em;
+  flex-shrink: 0;
+  opacity: .7;
+}
+.log-row-player .log-who { color: rgba(255,255,255,.8); }
+.log-row-enemy  .log-who { color: rgba(255,120,120,.9); }
+
+/* Message text */
+.log-msg {
+  font-size: .6rem;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+.log-row-player .log-msg { color: #ffffff; }
+.log-row-enemy  .log-msg { color: #ff8888; }
+
+/* Rich-text number spans */
+.log-dmg-dealt  { color: #FFD700; font-weight: 800; }
+.log-dmg-taken  { color: #FF6B6B; font-weight: 800; }
+.log-heal       { color: #6FCF97; font-weight: 800; }
+.log-eff-super  { color: #FFD700; font-size: .52rem; }
+.log-eff-weak   { color: #aaaaaa; font-size: .52rem; }
+.log-shield     { color: #56A0E0; font-size: .52rem; }
+.log-sys        { color: var(--col-yellow); font-size: .54rem; }
 
 /* ═══════════════════════════════════════════
    CATCH SCREEN — ENVIRONMENT BACKDROPS
