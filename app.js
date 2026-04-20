@@ -2140,7 +2140,13 @@ const Game = {
       completedNodes: [],
       highWaterRow: -1,
       unlockedPikachu: unlocks.pikachu,
-      stats: { battlesWon: 0, pokemonCaught: 0 },
+      stats: {
+        battlesWon:         0,  // wild battles won (current map — legacy)
+        pokemonCaught:      0,  // cumulative across all maps
+        totalBattlesWon:    0,  // cumulative wild + rocket battles
+        totalBossesBeaten:  0,  // cumulative gym bosses
+        totalNodesCompleted:0,  // cumulative nodes across all maps
+      },
       gold: 0,
       items: [],
       masterBallUsed: false,
@@ -2171,6 +2177,11 @@ const Game = {
     // Backfill new counter fields for saves that predate them
     if (!GameState.nodesSinceRocket)    GameState.nodesSinceRocket    = 0;
     if (!GameState._lastRocketCheckAt)  GameState._lastRocketCheckAt  = 0;
+    if (!GameState.stats) GameState.stats = {};
+    if (!GameState.stats.totalBattlesWon)     GameState.stats.totalBattlesWon     = GameState.stats.battlesWon || 0;
+    if (!GameState.stats.totalBossesBeaten)   GameState.stats.totalBossesBeaten   = GameState.bossesDefeated  || 0;
+    if (!GameState.stats.totalNodesCompleted) GameState.stats.totalNodesCompleted = GameState.completedNodes?.length || 0;
+    if (!GameState.stats.pokemonCaught)       GameState.stats.pokemonCaught       = 0;
     MapEngine.show();
   },
 
@@ -2985,6 +2996,9 @@ const MapEngine = {
   completeNode(nodeIdx) {
     if (!GameState.completedNodes.includes(nodeIdx)) {
       GameState.completedNodes.push(nodeIdx);
+      // Cumulative node counter — never resets between maps
+      if (!GameState.stats) GameState.stats = {};
+      GameState.stats.totalNodesCompleted = (GameState.stats.totalNodesCompleted || 0) + 1;
     }
     const node = GameState.map.find(n => n.idx === nodeIdx);
     if (node) {
@@ -2993,7 +3007,6 @@ const MapEngine = {
         const child = GameState.map[li];
         if (child) { child.unlocked = true; child.revealed = true; }
       });
-      // Track furthest row visited for progress bar
       if ((node.row ?? 0) > (GameState.highWaterRow ?? -1)) {
         GameState.highWaterRow = node.row;
       }
@@ -3638,8 +3651,9 @@ const BattleEngine = {
 
   _victory() {
     GameState.party[GameState.activePokemonIndex].hp = this.state.player.hp;
-    if (!GameState.stats) GameState.stats = { battlesWon: 0, pokemonCaught: 0 };
-    GameState.stats.battlesWon = (GameState.stats.battlesWon || 0) + 1;
+    if (!GameState.stats) GameState.stats = {};
+    GameState.stats.battlesWon          = (GameState.stats.battlesWon       || 0) + 1;
+    GameState.stats.totalBattlesWon     = (GameState.stats.totalBattlesWon  || 0) + 1;
     const activePoke = GameState.party[GameState.activePokemonIndex];
     activePoke.battlesWon = (activePoke.battlesWon || 0) + 1;
 
@@ -4012,6 +4026,8 @@ const BossEngine = {
         if (this._isRocket) {
           // Rocket battle win — card reward + gold, no badge
           this._isRocket = false;
+          if (!GameState.stats) GameState.stats = {};
+          GameState.stats.totalBattlesWon = (GameState.stats.totalBattlesWon || 0) + 1;
           const earned = Math.floor(20 + Math.random() * 30);
           GameState.gold = (GameState.gold || 0) + earned;
           setTimeout(() => {
@@ -4029,6 +4045,9 @@ const BossEngine = {
           }, 800);
         } else {
           // Normal gym boss win
+          if (!GameState.stats) GameState.stats = {};
+          GameState.stats.totalBattlesWon  = (GameState.stats.totalBattlesWon  || 0) + 1;
+          GameState.stats.totalBossesBeaten = (GameState.stats.totalBossesBeaten || 0) + 1;
           setTimeout(() => {
             const isFinalBoss = GameState.bossesDefeated >= 7;
             const modalMsg = isFinalBoss
@@ -4313,17 +4332,17 @@ const GameOver = {
       party[0] || null
     );
 
-    // Populate stats
+    // Populate stats — use cumulative fields that persist across maps
     document.getElementById('gameover-defeated-by').textContent =
       `Defeated by ${defeatedBy}`;
     document.getElementById('go-battles-won').textContent =
-      stats.battlesWon || 0;
+      stats.totalBattlesWon    || stats.battlesWon   || 0;
     document.getElementById('go-caught').textContent =
-      (party.filter(p => !p.isStarter).length);
+      stats.pokemonCaught      || 0;
     document.getElementById('go-nodes').textContent =
-      GameState.completedNodes?.length || 0;
+      stats.totalNodesCompleted || GameState.completedNodes?.length || 0;
     document.getElementById('go-bosses').textContent =
-      GameState.bossesDefeated || 0;
+      stats.totalBossesBeaten  || GameState.bossesDefeated || 0;
 
     // Favourite Pokémon card
     const favEl = document.getElementById('gameover-fav');
@@ -5658,11 +5677,15 @@ const VictoryEngine = {
     const stats = GameState.stats || {};
     const party = GameState.party || [];
 
-    // Stats
-    document.getElementById('vic-battles-won').textContent = stats.battlesWon || 0;
-    document.getElementById('vic-caught').textContent      = party.filter(p => !p.isStarter).length;
-    document.getElementById('vic-nodes').textContent       = GameState.completedNodes?.length || 0;
-    document.getElementById('vic-bosses').textContent      = '3';
+    // Use cumulative stats — these never reset between maps
+    document.getElementById('vic-battles-won').textContent =
+      stats.totalBattlesWon    || stats.battlesWon   || 0;
+    document.getElementById('vic-caught').textContent      =
+      stats.pokemonCaught      || 0;
+    document.getElementById('vic-nodes').textContent       =
+      stats.totalNodesCompleted || GameState.completedNodes?.length || 0;
+    document.getElementById('vic-bosses').textContent      =
+      stats.totalBossesBeaten  || GameState.bossesDefeated || 0;
 
     // Favourite — most battlesWon
     const fav = party.reduce((best, p) =>
