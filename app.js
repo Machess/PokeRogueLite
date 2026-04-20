@@ -4260,10 +4260,13 @@ const BossEngine = {
     st.energy -= cost;
     BattleEngine._applyCardEffect.call({
       state: st, isBoss: true,
-      _log:          (m) => this._log(m),
-      _render:       ()  => this._render(),
-      _checkDefeated:()  => false,
-      _dealHand:     (n) => BattleEngine._dealHand.call({ state: st }, n),
+      _log:          (m)    => this._log(m),
+      _logPlayer:    (html) => this._logPlayer(html),
+      _logEnemy:     (html) => this._logEnemy(html),
+      _logSystem:    (html) => this._log(html),
+      _render:       ()     => this._render(),
+      _checkDefeated:()     => false,
+      _dealHand:     (n)    => BattleEngine._dealHand.call({ state: st }, n),
       _chargeBonus:  0, _futureSightDmg: 0, _dragonDanceBonus: 0,
     }, card);
     this._checkDefeated();
@@ -4295,8 +4298,11 @@ const BossEngine = {
 
     BattleEngine._oppAttack.call({
       state: st, isBoss: true,
-      _log:    (m) => this._log(m),
-      _render: ()  => this._render(),
+      _log:       (m)    => this._log(m),
+      _logPlayer: (html) => this._logPlayer(html),
+      _logEnemy:  (html) => this._logEnemy(html),
+      _logSystem: (html) => this._log(html),
+      _render:    ()     => this._render(),
     });
 
     // Status ticks
