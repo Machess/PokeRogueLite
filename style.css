@@ -1051,48 +1051,38 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ── Pokémon sprite areas ─────────────────────────────────────────────────
-   Background image = top 50% of screen height.
-   Oval measurements (all backgrounds consistent):
-     Opponent oval bottom = 49% of img height = 24.5% of screen height
-     Player oval top      = 50% of img height = 25.0% of screen height
+   Background image = top 50vh of screen.
+   Oval positions (pixel-measured, consistent across all 5 backgrounds):
+     Opponent oval bottom = 49% of image height = 24.5vh from top
+     Player oval top      = 50% of image height = 25.0vh from top
 
-   We anchor each sprite's BOTTOM edge to its oval edge.
-   "bottom from top" = screen_height - position_from_bottom
-     Opponent sprite bottom at 24.5vh  →  bottom: calc(100vh - 24.5vh) = bottom: 75.5vh
-     Player sprite bottom at 25.0vh    →  bottom: calc(100vh - 25.0vh) = bottom: 75.0vh
+   OPPONENT column layout: HUD (top) → gap → sprite (bottom)
+     HUD ~75px + gap 4px + sprite 120px = 199px total
+     area top = 24.5vh - 199px  → sprite bottom lands exactly at oval bottom (24.5vh)
 
-   But that stacks them at nearly the same height. In the classic Pokémon layout:
-     - Opponent is in the TOP HALF of the screen (upper right)
-     - Player is in the BOTTOM HALF (lower left, above controls)
-
-   The ovals in the image span exactly top-half / bottom-half of the image.
-   The image covers the top 50% of the screen, so:
-     - Opponent oval: top 25% of screen
-     - Player oval:   25–50% of screen (lower portion of image)
-
-   Opponent: position from top, sprite bottom touches oval bottom (24.5% screen)
-   Player:   position from top, sprite bottom sits just above the card area (~48% screen)
+   PLAYER column-reverse layout: sprite (bottom) → gap → HUD (top)
+     sprite bottom = element bottom edge
+     element bottom = 25vh from top = 75vh from bottom
+     → bottom: 75vh  → Squirtle feet land on player oval top (25vh)
    ────────────────────────────────────────────────────────────────────── */
 .battle-opponent-area {
   position: absolute;
-  /* Opponent HUD: top-right corner */
-  top: 2%;
+  top: calc(20vh - 199px);
   right: 3%;
   display: flex;
-  flex-direction: column;    /* HUD above, sprite below */
+  flex-direction: column;
   align-items: flex-end;
-  gap: .3rem;
+  gap: 4px;
   z-index: var(--z-content);
 }
 .battle-player-area {
   position: absolute;
-  /* Player: lower-left, sprite bottom sits on player oval */
-  bottom: 52%;               /* just above the card controls zone */
+  bottom: 56.5vh;
   left: 3%;
   display: flex;
-  flex-direction: column-reverse;  /* sprite on bottom, HUD above */
+  flex-direction: column-reverse;
   align-items: flex-start;
-  gap: .3rem;
+  gap: 4px;
   z-index: var(--z-content);
 }
 
