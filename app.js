@@ -693,17 +693,140 @@ function goldForBoss() {
 }
 
 // ─── POKEDEX PERSISTENCE ──────────────────────────────────────────────────────
-const POKEDEX_KEY = 'pokerogue_pokedex_v1';
+const POKEDEX_KEY  = 'pokerogue_pokedex_v1';   // legacy — suffixed per-profile below
+const PROFILES_KEY = 'pokerogue_profiles_v1';   // index of all profiles (metadata only)
+const MAX_PROFILES = 3;
 
-function loadPokedex() {
+// ── Active profile (in-memory, also backed by sessionStorage) ─────────────────
+let activeProfile = null;  // profile key string e.g. 'alice' or 'alice_1718000000'
+
+function setActiveProfile(key) {
+  activeProfile = key;
+  try { sessionStorage.setItem('pokerogue_active_profile', key); } catch(e) {}
+}
+function getActiveProfile() {
+  if (activeProfile) return activeProfile;
+  try { return sessionStorage.getItem('pokerogue_active_profile') || null; } catch(e) { return null; }
+}
+
+// ── Per-profile key builders ───────────────────────────────────────────────────
+function saveKey(p)    { return `pokerogue_save_v1_${p}`; }
+function unlockKey(p)  { return `pokerogue_unlock_v1_${p}`; }
+function pokedexKey(p) { return `pokerogue_pokedex_v1_${p}`; }
+
+// ── Save / load run ───────────────────────────────────────────────────────────
+function saveGame() {
+  const p = getActiveProfile();
+  if (!p) return;
+  try { localStorage.setItem(saveKey(p), JSON.stringify(GameState)); } catch(e) {}
+  _updateProfileMeta(p);
+}
+function loadGame() {
+  const p = getActiveProfile();
+  if (!p) return null;
   try {
-    const d = localStorage.getItem(POKEDEX_KEY);
+    const d = localStorage.getItem(saveKey(p));
+    return d ? JSON.parse(d) : null;
+  } catch(e) { return null; }
+}
+function deleteSave() {
+  const p = getActiveProfile();
+  if (!p) return;
+  try { localStorage.removeItem(saveKey(p)); } catch(e) {}
+  _updateProfileMeta(p);
+}
+
+// ── Unlocks ───────────────────────────────────────────────────────────────────
+function loadUnlocks() {
+  const p = getActiveProfile();
+  if (!p) return { pikachu: false };
+  try {
+    const d = localStorage.getItem(unlockKey(p));
+    return d ? JSON.parse(d) : { pikachu: false };
+  } catch(e) { return { pikachu: false }; }
+}
+function saveUnlocks(unlocks) {
+  const p = getActiveProfile();
+  if (!p) return;
+  try { localStorage.setItem(unlockKey(p), JSON.stringify(unlocks)); } catch(e) {}
+}
+
+// ── Pokédex ───────────────────────────────────────────────────────────────────
+function loadPokedex() {
+  const p = getActiveProfile();
+  if (!p) return {};
+  try {
+    const d = localStorage.getItem(pokedexKey(p));
     return d ? JSON.parse(d) : {};
   } catch(e) { return {}; }
 }
 function savePokedex(dex) {
-  try { localStorage.setItem(POKEDEX_KEY, JSON.stringify(dex)); } catch(e) {}
+  const p = getActiveProfile();
+  if (!p) return;
+  try { localStorage.setItem(pokedexKey(p), JSON.stringify(dex)); } catch(e) {}
 }
+
+// ── Profiles index ────────────────────────────────────────────────────────────
+function loadProfiles() {
+  try {
+    const d = localStorage.getItem(PROFILES_KEY);
+    return d ? JSON.parse(d) : [];
+  } catch(e) { return []; }
+}
+function saveProfiles(profiles) {
+  try { localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles)); } catch(e) {}
+}
+
+// Update the metadata card for a profile (called after save/delete)
+function _updateProfileMeta(profileKey) {
+  const profiles = loadProfiles();
+  const idx = profiles.findIndex(p => p.key === profileKey);
+  if (idx < 0) return;
+  const meta = profiles[idx];
+  meta.lastSaved = Date.now();
+  if (GameState) {
+    meta.bossesDefeated = GameState.bossesDefeated || 0;
+    meta.starterId      = GameState.starterId || null;
+    // Store starter sprite URL from party if available
+    const starter = GameState.party?.find(p => p.isStarter);
+    if (starter?.spriteUrl) meta.starterSprite = starter.spriteUrl;
+    meta.hasActiveSave  = true;
+  }
+  saveProfiles(profiles);
+}
+
+// Create a new profile entry
+function createProfile(name) {
+  const profiles = loadProfiles();
+  if (profiles.length >= MAX_PROFILES) return null;
+  // Build a unique key: lowercase name + timestamp suffix if collision
+  let key = name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 12) || 'trainer';
+  if (profiles.find(p => p.key === key)) key += '_' + Date.now().toString().slice(-6);
+  const meta = {
+    key, name,
+    starterId:      null,
+    starterSprite:  '',
+    bossesDefeated: 0,
+    hasActiveSave:  false,
+    lastSaved:      Date.now(),
+  };
+  profiles.push(meta);
+  saveProfiles(profiles);
+  return meta;
+}
+
+function deleteProfile(profileKey) {
+  try { localStorage.removeItem(saveKey(profileKey)); }   catch(e) {}
+  try { localStorage.removeItem(unlockKey(profileKey)); } catch(e) {}
+  try { localStorage.removeItem(pokedexKey(profileKey)); }catch(e) {}
+  const profiles = loadProfiles().filter(p => p.key !== profileKey);
+  saveProfiles(profiles);
+  if (getActiveProfile() === profileKey) {
+    activeProfile = null;
+    try { sessionStorage.removeItem('pokerogue_active_profile'); } catch(e) {}
+  }
+}
+
 function registerPokedex(id, name, spriteUrl, caught = false) {
   const dex = loadPokedex();
   if (!dex[id] || (caught && !dex[id].caught)) {
@@ -712,32 +835,7 @@ function registerPokedex(id, name, spriteUrl, caught = false) {
   }
 }
 
-// ─── SAVE / LOAD ──────────────────────────────────────────────────────────────
 
-const SAVE_KEY        = 'pokerogue_save_v1';
-const UNLOCK_KEY      = 'pokerogue_unlocks_v1';
-
-function saveGame() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(GameState)); } catch(e) {}
-}
-function loadGame() {
-  try {
-    const d = localStorage.getItem(SAVE_KEY);
-    return d ? JSON.parse(d) : null;
-  } catch(e) { return null; }
-}
-function deleteSave() { localStorage.removeItem(SAVE_KEY); }
-
-// Unlocks persist independently of individual runs
-function loadUnlocks() {
-  try {
-    const d = localStorage.getItem(UNLOCK_KEY);
-    return d ? JSON.parse(d) : { pikachu: false };
-  } catch(e) { return { pikachu: false }; }
-}
-function saveUnlocks(unlocks) {
-  try { localStorage.setItem(UNLOCK_KEY, JSON.stringify(unlocks)); } catch(e) {}
-}
 
 // ─── GAME STATE ───────────────────────────────────────────────────────────────
 
@@ -2121,40 +2219,233 @@ async function runEvolutions(evolutions, onDone) {
 
 // ─── GAME CONTROLLER ─────────────────────────────────────────────────────────
 
+// ─── PROFILE ENGINE ──────────────────────────────────────────────────────────
+
+const ProfileEngine = {
+
+  // ── Open profile screen ───────────────────────────────────────────────────
+  show(fromStart = true) {
+    this._fromStart = fromStart;
+    showScreen('profiles');
+    this._render();
+  },
+
+  _render() {
+    const profiles = loadProfiles();
+    const grid = document.getElementById('profiles-grid');
+    grid.innerHTML = '';
+    const active = getActiveProfile();
+
+    profiles.forEach(meta => {
+      const isActive = meta.key === active;
+      const card = document.createElement('div');
+      card.className = 'profile-card' + (isActive ? ' profile-card-active' : '');
+
+      const badgeBar = meta.hasActiveSave
+        ? `<div class="profile-badge-bar">
+            ${Array(8).fill(0).map((_,i) =>
+              `<div class="profile-badge-pip${i < meta.bossesDefeated ? ' earned' : ''}"></div>`
+            ).join('')}
+           </div>`
+        : `<div class="profile-no-save">No save</div>`;
+
+      const typeClass = meta.starterId
+        ? (['','grass','grass','grass','fire','fire','fire',
+            'water','water','water','electric'][meta.starterId] || 'normal')
+        : 'normal';
+
+      card.innerHTML = `
+        ${isActive ? '<div class="profile-active-badge">✓ Active</div>' : ''}
+        <div class="profile-sprite-wrap">
+          <img src="${meta.starterSprite || ''}" alt=""
+               onerror="this.style.display='none'"
+               class="profile-starter-sprite type-bg-${typeClass}" />
+          ${!meta.starterSprite ? `<div class="profile-sprite-placeholder">?</div>` : ''}
+        </div>
+        <div class="profile-name">${meta.name}</div>
+        ${badgeBar}
+        <div class="profile-last-saved">${this._timeAgo(meta.lastSaved)}</div>
+        <div class="profile-actions">
+          <button class="btn-pixel btn-primary profile-play-btn"
+                  data-key="${meta.key}">▶ Play</button>
+          <button class="btn-pixel btn-danger profile-delete-btn"
+                  data-key="${meta.key}">🗑</button>
+        </div>
+      `;
+
+      card.querySelector('.profile-play-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._selectProfile(meta.key);
+      });
+      card.querySelector('.profile-delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._confirmDelete(meta);
+      });
+
+      grid.appendChild(card);
+    });
+
+    // Add "New Profile" slot if under limit
+    if (profiles.length < MAX_PROFILES) {
+      const addCard = document.createElement('div');
+      addCard.className = 'profile-card profile-card-add';
+      addCard.innerHTML = `
+        <div class="profile-add-icon">+</div>
+        <div class="profile-add-label">New Profile</div>
+      `;
+      addCard.addEventListener('click', () => this._newProfile());
+      grid.appendChild(addCard);
+    }
+
+    // Back button — only show if there's at least one profile (can't go back with nothing)
+    const backBtn = document.getElementById('btn-profiles-back');
+    if (backBtn) backBtn.style.display = profiles.length > 0 ? '' : 'none';
+  },
+
+  _selectProfile(key) {
+    setActiveProfile(key);
+    ProfileEngine._updateStartScreen();
+    showScreen('start');
+  },
+
+  _newProfile() {
+    // Go to register — after registration, createProfile() is called with the name
+    // Set a flag so Game.startNew knows this is a fresh profile creation
+    activeProfile = null;
+    try { sessionStorage.removeItem('pokerogue_active_profile'); } catch(e) {}
+    Game.startNew(true); // true = profile creation mode
+  },
+
+  _confirmDelete(meta) {
+    showModal(
+      `Delete ${meta.name}?`,
+      `This removes all saves, Pokédex entries and unlocks for ${meta.name}. Cannot be undone.`,
+      () => {
+        deleteProfile(meta.key);
+        // If deleted profile was active, clear and re-render
+        this._updateStartScreen();
+        this._render();
+      }
+    );
+  },
+
+  // ── Update the start screen banner + button states ────────────────────────
+  _updateStartScreen() {
+    const profiles   = loadProfiles();
+    const activeKey  = getActiveProfile();
+    const meta       = profiles.find(p => p.key === activeKey);
+
+    const banner     = document.getElementById('active-profile-banner');
+    const nudge      = document.getElementById('no-profile-nudge');
+    const newBtn     = document.getElementById('btn-new-game');
+    const contBtn    = document.getElementById('btn-continue-game');
+    const dexBtn     = document.getElementById('btn-open-pokedex');
+
+    if (!meta) {
+      // No active profile — disable game buttons, show nudge
+      if (banner) banner.style.display = 'none';
+      if (nudge)  nudge.style.display  = '';
+      if (newBtn)  { newBtn.disabled  = true; }
+      if (contBtn) { contBtn.disabled = true; contBtn.textContent = '◈ Continue'; }
+      if (dexBtn)  { dexBtn.disabled  = true; }
+      return;
+    }
+
+    // Profile active — show banner
+    if (nudge)  nudge.style.display  = 'none';
+    if (banner) {
+      banner.style.display = '';
+      const nameEl   = document.getElementById('apb-name');
+      const detailEl = document.getElementById('apb-detail');
+      const spriteEl = document.getElementById('apb-sprite');
+      if (nameEl)   nameEl.textContent   = meta.name;
+      if (spriteEl) { spriteEl.src = meta.starterSprite || ''; spriteEl.style.display = meta.starterSprite ? '' : 'none'; }
+      if (detailEl) {
+        if (meta.hasActiveSave) {
+          detailEl.textContent = `${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`;
+        } else {
+          detailEl.textContent = 'No active run';
+        }
+      }
+    }
+
+    // Enable/disable buttons
+    if (newBtn)  newBtn.disabled  = false;
+    if (dexBtn)  dexBtn.disabled  = false;
+    if (contBtn) {
+      const hasSave = meta.hasActiveSave;
+      contBtn.disabled    = !hasSave;
+      contBtn.textContent = hasSave
+        ? `◈ Continue · ${meta.bossesDefeated}/8`
+        : '◈ No Save';
+    }
+  },
+
+  _timeAgo(ts) {
+    if (!ts) return '';
+    const diff = Date.now() - ts;
+    const mins  = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days  = Math.floor(diff / 86400000);
+    if (mins  < 2)   return 'just now';
+    if (mins  < 60)  return `${mins}m ago`;
+    if (hours < 24)  return `${hours}h ago`;
+    return `${days}d ago`;
+  },
+};
+
 const Game = {
 
-  async startNew() {
+  async startNew(isNewProfile = false) {
+    // If no active profile yet (new profile creation), just go to register.
+    // The profile is created inside confirmStarter after the name is known.
+    if (isNewProfile || !getActiveProfile()) {
+      // Clear any stale state
+      GameState = {
+        starterId: null, starterType: null, evolutionStage: 0,
+        bossesDefeated: 0, party: [], activePokemonIndex: 0,
+        deck: [], improvementMap: {}, map: null,
+        currentNodeIndex: null, completedNodes: [], highWaterRow: -1,
+        unlockedPikachu: false,
+        stats: { battlesWon: 0, pokemonCaught: 0, totalBattlesWon: 0,
+                 totalBossesBeaten: 0, totalNodesCompleted: 0 },
+        gold: 0, items: [], masterBallUsed: false,
+        trainerName: '', trainerAge: 10, difficultyTier: 2,
+        nodesSinceRocket: 0, _lastRocketCheckAt: 0,
+        _isNewProfile: true,  // flag so confirmStarter creates the profile
+      };
+      showScreen('register');
+      return;
+    }
+
+    // Active profile exists — confirm overwrite if there's an in-progress run
+    const profiles = loadProfiles();
+    const meta = profiles.find(p => p.key === getActiveProfile());
+    if (meta?.hasActiveSave) {
+      showModal(
+        '▶ New Run?',
+        `Start a fresh run as ${meta.name}?\nYour current run (${meta.bossesDefeated}/8 badges) will be lost.`,
+        () => this._doStartNew()
+      );
+    } else {
+      this._doStartNew();
+    }
+  },
+
+  _doStartNew() {
     deleteSave();
     const unlocks = loadUnlocks();
     GameState = {
-      starterId: null,
-      starterType: null,
-      evolutionStage: 0,
-      bossesDefeated: 0,
-      party: [],
-      activePokemonIndex: 0,
-      deck: [],
-      improvementMap: {},
-      map: null,
-      currentNodeIndex: null,
-      completedNodes: [],
-      highWaterRow: -1,
+      starterId: null, starterType: null, evolutionStage: 0,
+      bossesDefeated: 0, party: [], activePokemonIndex: 0,
+      deck: [], improvementMap: {}, map: null,
+      currentNodeIndex: null, completedNodes: [], highWaterRow: -1,
       unlockedPikachu: unlocks.pikachu,
-      stats: {
-        battlesWon:         0,  // wild battles won (current map — legacy)
-        pokemonCaught:      0,  // cumulative across all maps
-        totalBattlesWon:    0,  // cumulative wild + rocket battles
-        totalBossesBeaten:  0,  // cumulative gym bosses
-        totalNodesCompleted:0,  // cumulative nodes across all maps
-      },
-      gold: 0,
-      items: [],
-      masterBallUsed: false,
-      trainerName: '',
-      trainerAge: 10,
-      difficultyTier: 2,       // 1=Rookie(6-7), 2=Rising(8-9), 3=Expert(10-12)
-      nodesSinceRocket:    0,   // nodes completed since last Rocket event
-      _lastRocketCheckAt:  0,   // completedNodes.length at last check
+      stats: { battlesWon: 0, pokemonCaught: 0, totalBattlesWon: 0,
+               totalBossesBeaten: 0, totalNodesCompleted: 0 },
+      gold: 0, items: [], masterBallUsed: false,
+      trainerName: '', trainerAge: 10, difficultyTier: 2,
+      nodesSinceRocket: 0, _lastRocketCheckAt: 0,
     };
     showScreen('register');
   },
@@ -2232,32 +2523,52 @@ const Game = {
 
   async confirmStarter(s) {
     showLoading();
-    // Special confirm cry for Pikachu
     if (s.id === 25) SoundEngine.playPikachu2();
-    const data = await fetchPoke(s.id);
+    const data   = await fetchPoke(s.id);
     const sprite = getSpriteUrl(data);
     const pokemon = makePokemon(s.id, 5, sprite, s.name, s.type, true);
     const starterDeck = buildDeck(s.type, {});
-    pokemon.deck = starterDeck;            // starter carries its own deck
-    GameState.starterId      = s.id;
-    GameState.starterType    = s.type;
-    GameState.party          = [pokemon];
-    GameState.activePokemonIndex = 0;
-    GameState.deck           = starterDeck; // active deck mirrors active pokemon
-    GameState.improvementMap = {};
-    GameState.map               = generateMap();
-    GameState.completedNodes    = [];
-    GameState.bossesDefeated    = 0;
-    GameState.evolutionStage    = 0;
-    GameState.nodesSinceRocket  = 0;
-    GameState._lastRocketCheckAt = 0;
+    pokemon.deck = starterDeck;
+
+    // If this is a brand-new profile, create it now that we have a name
+    if (GameState._isNewProfile) {
+      delete GameState._isNewProfile;
+      const meta = createProfile(GameState.trainerName || 'Trainer');
+      if (meta) {
+        setActiveProfile(meta.key);
+        // Load unlocks for the new (empty) profile
+        const unlocks = loadUnlocks();
+        GameState.unlockedPikachu = unlocks.pikachu || false;
+      }
+    }
+
+    GameState.starterId           = s.id;
+    GameState.starterType         = s.type;
+    GameState.party               = [pokemon];
+    GameState.activePokemonIndex  = 0;
+    GameState.deck                = starterDeck;
+    GameState.improvementMap      = {};
+    GameState.map                 = generateMap();
+    GameState.completedNodes      = [];
+    GameState.bossesDefeated      = 0;
+    GameState.evolutionStage      = 0;
+    GameState.nodesSinceRocket    = 0;
+    GameState._lastRocketCheckAt  = 0;
     hideLoading();
+    saveGame();   // first save — also updates profile meta with starterId
     MapEngine.show();
   },
 
   returnToStart() {
     deleteSave();
+    const p = getActiveProfile();
+    if (p) {
+      const profiles = loadProfiles();
+      const meta = profiles.find(pr => pr.key === p);
+      if (meta) { meta.hasActiveSave = false; saveProfiles(profiles); }
+    }
     GameState = null;
+    ProfileEngine._updateStartScreen();
     showScreen('start');
   },
 
@@ -2265,16 +2576,21 @@ const Game = {
     SoundEngine.stopSFX();
     saveGame();
     GameState = null;
+    ProfileEngine._updateStartScreen();
     showScreen('start');
   },
 
   resetAll() {
-    // Wipe every persistence key — run save, unlocks, Pokédex
-    localStorage.removeItem(SAVE_KEY);
-    localStorage.removeItem(UNLOCK_KEY);
-    localStorage.removeItem(POKEDEX_KEY);
+    const profiles = loadProfiles();
+    profiles.forEach(pr => {
+      try { localStorage.removeItem(saveKey(pr.key)); }    catch(e) {}
+      try { localStorage.removeItem(unlockKey(pr.key)); }  catch(e) {}
+      try { localStorage.removeItem(pokedexKey(pr.key)); } catch(e) {}
+    });
+    try { localStorage.removeItem(PROFILES_KEY); }              catch(e) {}
+    try { sessionStorage.removeItem('pokerogue_active_profile'); } catch(e) {}
+    activeProfile = null;
     GameState = null;
-    // Reload page so all in-memory state is also cleared cleanly
     window.location.reload();
   },
 
@@ -5964,10 +6280,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-new-game').addEventListener('click', () => Game.startNew());
   document.getElementById('btn-continue-game').addEventListener('click', () => Game.continueGame());
   document.getElementById('btn-open-pokedex').addEventListener('click', () => PokedexEngine.show());
+  document.getElementById('btn-select-profile').addEventListener('click', () => ProfileEngine.show());
+  document.getElementById('btn-switch-profile').addEventListener('click', () => ProfileEngine.show());
+  document.getElementById('btn-profiles-back').addEventListener('click', () => {
+    ProfileEngine._updateStartScreen();
+    showScreen('start');
+  });
   document.getElementById('btn-reset-all').addEventListener('click', () => {
     showModal(
       '⚠ Reset All Data?',
-      'This will wipe your Pokédex, Pikachu unlock, and all saved progress. This cannot be undone.',
+      'This will wipe ALL profiles, Pokédex entries, unlocks and saved progress. Cannot be undone.',
       () => Game.resetAll()
     );
     document.getElementById('modal-ok').textContent = 'Yes, reset everything';
@@ -6048,5 +6370,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Modal ──
   document.getElementById('modal-ok').addEventListener('click', () => closeModal());
 
-  showScreen('start');
+  // Restore active profile from session, then update start screen
+  const _storedProfile = getActiveProfile();
+  const _allProfiles   = loadProfiles();
+  if (_storedProfile && _allProfiles.find(p => p.key === _storedProfile)) {
+    // Valid profile from last session — restore silently
+    setActiveProfile(_storedProfile);
+    ProfileEngine._updateStartScreen();
+    showScreen('start');
+  } else if (_allProfiles.length === 0) {
+    // No profiles at all — show profile screen immediately so user creates one
+    showScreen('profiles');
+    ProfileEngine._render();
+  } else {
+    // Profiles exist but none active — show profile picker
+    showScreen('profiles');
+    ProfileEngine._render();
+  }
 });

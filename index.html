@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=9" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
 
@@ -23,21 +23,50 @@
     </div>
     <div class="start-ground"></div>
   </div>
-  <!-- Asset slot: replace src with your trainer artwork -->
   <img class="start-trainer" src="assets/trainer_stand.png" alt="Trainer"
        onerror="this.style.display='none'" />
   <div class="start-logo">
     <div class="logo-sub">A Roguelite Card Adventure</div>
     <div class="logo-main">PokéTrials</div>
   </div>
-  <div class="start-menu">
-    <button class="btn-pixel btn-primary" id="btn-new-game">▶ New Game</button>
-    <button class="btn-pixel btn-secondary" id="btn-continue-game">◈ Continue</button>
-    <button class="btn-pixel btn-secondary" id="btn-open-pokedex">📖 Pokédex</button>
+
+  <!-- Active profile banner — always visible when a profile is selected -->
+  <div class="active-profile-banner" id="active-profile-banner" style="display:none">
+    <div class="apb-left">
+      <img class="apb-sprite" id="apb-sprite" src="" alt="" onerror="this.style.display='none'" />
+      <div class="apb-info">
+        <div class="apb-name" id="apb-name">—</div>
+        <div class="apb-detail" id="apb-detail">No save</div>
+      </div>
+    </div>
+    <button class="btn-pixel apb-switch-btn" id="btn-switch-profile">Switch ▶</button>
+  </div>
+
+  <!-- No-profile nudge — shown when no profile exists yet -->
+  <div class="no-profile-nudge" id="no-profile-nudge" style="display:none">
+    <div class="npn-text">Who's playing?</div>
+  </div>
+
+  <div class="start-menu" id="start-menu">
+    <button class="btn-pixel btn-primary"   id="btn-new-game"      disabled>▶ New Game</button>
+    <button class="btn-pixel btn-secondary" id="btn-continue-game" disabled>◈ Continue</button>
+    <button class="btn-pixel btn-secondary" id="btn-open-pokedex"  disabled>📖 Pokédex</button>
+    <button class="btn-pixel btn-secondary" id="btn-select-profile">👤 Select Profile</button>
   </div>
   <div class="start-footer">Catch · Battle · Evolve</div>
   <button class="btn-reset-all" id="btn-reset-all" title="Wipe all saved data and start fresh">⚠ Reset All Data</button>
   <button class="mute-btn start-mute-btn" id="btn-mute-start" title="Toggle music">🔊</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: PROFILE SELECTION
+═══════════════════════════════════════════ -->
+<div id="screen-profiles" class="screen">
+  <div class="profiles-bg"></div>
+  <h1 class="screen-title profiles-title">👤 Who's Playing?</h1>
+  <div class="profiles-grid" id="profiles-grid"></div>
+  <button class="btn-pixel btn-secondary profiles-back-btn" id="btn-profiles-back"
+          style="margin-top:1rem">◀ Back</button>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -781,6 +810,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=10"></script>
+<script src="app.js?v=13"></script>
 </body>
 </html>

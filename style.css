@@ -4144,3 +4144,566 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   0%,100% { box-shadow: 0 0 18px rgba(255,215,0,.5), 0 4px 14px rgba(0,0,0,.4); }
   50%      { box-shadow: 0 0 36px rgba(255,215,0,.9), 0 4px 20px rgba(0,0,0,.5); }
 }
+
+/* ═══════════════════════════════════════════
+   ACTIVE PROFILE BANNER (start screen)
+═══════════════════════════════════════════ */
+.active-profile-banner {
+  position: relative; z-index: var(--z-content);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .8rem;
+  background: rgba(0,0,0,.55);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: .5rem .8rem .5rem .6rem;
+  width: 100%; max-width: 300px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 16px rgba(255,215,0,.2);
+}
+.apb-left {
+  display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0;
+}
+.apb-sprite {
+  width: 44px; height: 44px;
+  object-fit: contain; image-rendering: pixelated;
+  flex-shrink: 0;
+}
+.apb-info { flex: 1; min-width: 0; }
+.apb-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .48rem; color: var(--col-yellow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.apb-detail {
+  font-size: .55rem; color: var(--col-text-dim);
+  margin-top: .2rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.apb-switch-btn {
+  font-size: .32rem !important; padding: .4em .6em !important;
+  flex-shrink: 0;
+}
+
+/* Nudge when no profile exists */
+.no-profile-nudge {
+  position: relative; z-index: var(--z-content);
+}
+.npn-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: rgba(255,255,255,.7);
+  animation: float 2s ease-in-out infinite;
+}
+
+/* Disabled start menu buttons */
+.start-menu .btn-pixel:disabled {
+  opacity: .35; cursor: not-allowed;
+  filter: grayscale(.6);
+}
+
+/* ═══════════════════════════════════════════
+   PROFILE SELECTION SCREEN
+═══════════════════════════════════════════ */
+#screen-profiles {
+  background: linear-gradient(135deg, #0a0a18, #1a1a32, #0a0a18);
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-top: 1rem;
+}
+.profiles-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 20%, #1a2a4a 0%, #050510 70%);
+}
+.profiles-title {
+  position: relative; z-index: var(--z-content);
+  font-size: .9rem !important;
+  margin-bottom: .8rem;
+}
+
+.profiles-grid {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-wrap: wrap;
+  gap: .9rem; justify-content: center;
+  padding: 0 1rem 1rem;
+  width: 100%;
+}
+
+/* Profile card */
+.profile-card {
+  background: var(--col-surface);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-lg);
+  padding: .9rem .8rem .7rem;
+  width: 150px; min-width: 140px;
+  text-align: center;
+  position: relative;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+  flex-shrink: 0;
+}
+.profile-card:hover { transform: translateY(-3px); }
+
+.profile-card-active {
+  border-color: var(--col-yellow);
+  box-shadow: 0 0 18px rgba(255,215,0,.3);
+}
+
+.profile-active-badge {
+  position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  background: var(--col-yellow); color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem; padding: .2em .5em;
+  border-radius: 3px; white-space: nowrap;
+}
+
+.profile-sprite-wrap {
+  width: 72px; height: 72px;
+  margin: 0 auto .4rem;
+  display: flex; align-items: center; justify-content: center;
+}
+.profile-starter-sprite {
+  width: 72px; height: 72px;
+  object-fit: contain; image-rendering: pixelated;
+}
+.profile-sprite-placeholder {
+  font-size: 2.5rem; color: var(--col-text-dim);
+  line-height: 1;
+}
+
+.profile-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem; color: var(--col-yellow);
+  margin-bottom: .4rem;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.profile-badge-bar {
+  display: flex; gap: 2px; justify-content: center;
+  margin-bottom: .3rem;
+}
+.profile-badge-pip {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.2);
+  transition: background .2s;
+}
+.profile-badge-pip.earned {
+  background: var(--col-yellow);
+  box-shadow: 0 0 4px rgba(255,215,0,.5);
+}
+
+.profile-no-save {
+  font-size: .45rem; color: var(--col-text-dim);
+  margin-bottom: .3rem;
+}
+
+.profile-last-saved {
+  font-size: .4rem; color: var(--col-text-dim);
+  margin-bottom: .5rem;
+}
+
+.profile-actions {
+  display: flex; gap: .4rem; justify-content: center;
+}
+.profile-play-btn {
+  font-size: .35rem !important; padding: .45em .7em !important;
+  flex: 1;
+}
+.profile-delete-btn {
+  font-size: .5rem !important; padding: .35em .55em !important;
+  background: rgba(200,30,30,.3) !important;
+  border-color: rgba(200,30,30,.6) !important;
+  color: #ff8888 !important;
+}
+.profile-delete-btn:hover {
+  background: rgba(200,30,30,.6) !important;
+}
+
+/* Add profile card */
+.profile-card-add {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  cursor: pointer;
+  border-style: dashed;
+  border-color: rgba(255,255,255,.25);
+  background: rgba(255,255,255,.03);
+  min-height: 180px;
+  gap: .5rem;
+}
+.profile-card-add:hover {
+  border-color: var(--col-yellow);
+  background: rgba(255,215,0,.06);
+}
+.profile-add-icon {
+  font-size: 2.5rem; color: rgba(255,255,255,.4);
+  line-height: 1;
+  transition: color .15s;
+}
+.profile-card-add:hover .profile-add-icon { color: var(--col-yellow); }
+.profile-add-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: rgba(255,255,255,.4);
+}
+.profile-card-add:hover .profile-add-label { color: var(--col-yellow); }
+
+.profiles-back-btn { font-size: .42rem !important; }
+
+/* ═══════════════════════════════════════════
+   PROFILE SYSTEM
+═══════════════════════════════════════════ */
+
+/* ── Active profile banner on start screen ── */
+.active-profile-banner {
+  position: relative; z-index: var(--z-content);
+  display: flex; align-items: center; justify-content: space-between;
+  background: rgba(0,0,0,.55);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: .5rem .8rem;
+  width: 100%; max-width: 300px;
+  gap: .6rem;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 12px rgba(255,215,0,.2);
+}
+.apb-left {
+  display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0;
+}
+.apb-sprite {
+  width: 44px; height: 44px;
+  image-rendering: pixelated; object-fit: contain; flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
+}
+.apb-info { min-width: 0; }
+.apb-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .48rem; color: var(--col-yellow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.apb-detail {
+  font-size: .52rem; color: var(--col-text-dim);
+  margin-top: .15rem; white-space: nowrap;
+}
+.apb-switch-btn {
+  font-size: .35rem !important;
+  padding: .4em .7em !important;
+  flex-shrink: 0;
+  background: rgba(255,215,0,.12) !important;
+  border-color: var(--col-yellow) !important;
+  color: var(--col-yellow) !important;
+}
+
+/* No-profile nudge */
+.no-profile-nudge {
+  position: relative; z-index: var(--z-content);
+}
+.npn-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: rgba(255,255,255,.7);
+  animation: pulse-dim 1.8s ease-in-out infinite;
+}
+@keyframes pulse-dim {
+  0%,100% { opacity: .7; }
+  50%      { opacity: 1; }
+}
+
+/* Disabled start menu buttons */
+.start-menu .btn-pixel:disabled {
+  opacity: .35; cursor: not-allowed; filter: grayscale(.5);
+}
+
+/* ── Profile selection screen ── */
+#screen-profiles {
+  background: linear-gradient(135deg, #0a0a1a, #1a1040, #0a0a1a);
+  justify-content: flex-start;
+  padding-top: 1rem;
+  gap: .8rem;
+}
+.profiles-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 20%, rgba(100,60,200,.15) 0%, transparent 70%);
+}
+.profiles-title {
+  position: relative; z-index: var(--z-content);
+  font-size: .8rem !important;
+}
+.profiles-grid {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-wrap: wrap;
+  gap: .9rem; justify-content: center;
+  padding: 0 1rem;
+  width: 100%;
+}
+.profiles-back-btn {
+  position: relative; z-index: var(--z-content);
+  font-size: .4rem !important;
+}
+
+/* ── Profile card ── */
+.profile-card {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-lg);
+  padding: 1rem .8rem .7rem;
+  width: 140px;
+  display: flex; flex-direction: column; align-items: center; gap: .4rem;
+  position: relative;
+  transition: transform .15s, border-color .15s, box-shadow .15s;
+  cursor: default;
+}
+.profile-card-active {
+  border-color: var(--col-yellow);
+  box-shadow: 0 0 16px rgba(255,215,0,.3);
+}
+.profile-active-badge {
+  position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  background: var(--col-yellow); color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem; padding: .2em .5em;
+  border-radius: 3px; white-space: nowrap;
+}
+
+/* Sprite area */
+.profile-sprite-wrap {
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.profile-starter-sprite {
+  width: 72px; height: 72px;
+  object-fit: contain; image-rendering: pixelated;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.5));
+}
+.profile-sprite-placeholder {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.8rem; color: var(--col-text-dim);
+  opacity: .5;
+}
+
+/* Name */
+.profile-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .45rem; color: var(--col-text);
+  text-align: center;
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* Badge progress bar */
+.profile-badge-bar {
+  display: flex; gap: 3px;
+}
+.profile-badge-pip {
+  width: 12px; height: 12px; border-radius: 50%;
+  background: rgba(255,255,255,.12);
+  border: 1px solid rgba(255,255,255,.2);
+  transition: background .2s;
+}
+.profile-badge-pip.earned {
+  background: var(--col-yellow);
+  box-shadow: 0 0 4px rgba(255,215,0,.5);
+}
+.profile-no-save {
+  font-size: .45rem; color: var(--col-text-dim);
+}
+
+/* Last saved timestamp */
+.profile-last-saved {
+  font-size: .42rem; color: var(--col-text-dim);
+}
+
+/* Action buttons */
+.profile-actions {
+  display: flex; gap: .4rem; margin-top: .2rem;
+}
+.profile-play-btn {
+  font-size: .36rem !important; padding: .45em .7em !important;
+}
+.profile-delete-btn {
+  font-size: .36rem !important; padding: .45em .5em !important;
+  background: rgba(180,20,20,.3) !important;
+  border-color: var(--col-red) !important;
+  color: var(--col-red) !important;
+}
+.profile-delete-btn:hover { background: rgba(180,20,20,.6) !important; }
+
+/* Add new profile card */
+.profile-card-add {
+  border-style: dashed; border-color: rgba(255,255,255,.2);
+  cursor: pointer; opacity: .75;
+  justify-content: center;
+  transition: opacity .15s, border-color .15s;
+  min-height: 180px;
+}
+.profile-card-add:hover {
+  opacity: 1; border-color: var(--col-yellow);
+  box-shadow: 0 0 10px rgba(255,215,0,.2);
+}
+.profile-add-icon {
+  font-size: 2.5rem; color: rgba(255,255,255,.5); line-height: 1;
+}
+.profile-add-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: var(--col-text-dim); text-align: center;
+}
+
+/* ═══════════════════════════════════════════
+   ACTIVE PROFILE BANNER (start screen)
+═══════════════════════════════════════════ */
+.active-profile-banner {
+  position: relative; z-index: var(--z-content);
+  display: flex; align-items: center; justify-content: space-between;
+  gap: .8rem;
+  background: rgba(0,0,0,.55);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: .5rem .8rem;
+  width: 88%; max-width: 320px;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 0 16px rgba(255,215,0,.2), 0 4px 12px rgba(0,0,0,.5);
+}
+.apb-left {
+  display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0;
+}
+.apb-sprite {
+  width: 40px; height: 40px;
+  object-fit: contain; image-rendering: pixelated; flex-shrink: 0;
+}
+.apb-info { min-width: 0; }
+.apb-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .45rem; color: var(--col-yellow);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.apb-detail {
+  font-size: .55rem; color: var(--col-text-dim);
+  margin-top: .15rem;
+}
+.apb-switch-btn {
+  font-size: .32rem !important; padding: .4em .7em !important;
+  flex-shrink: 0;
+  border-color: var(--col-yellow) !important;
+  color: var(--col-yellow) !important;
+  background: rgba(60,50,0,.6) !important;
+}
+
+/* No-profile nudge */
+.no-profile-nudge {
+  position: relative; z-index: var(--z-content);
+}
+.npn-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: rgba(255,255,255,.7);
+  animation: float 2s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   PROFILE SELECTION SCREEN
+═══════════════════════════════════════════ */
+#screen-profiles {
+  background: linear-gradient(135deg, #0a0a1a, #151530, #0a0a1a);
+  justify-content: flex-start; padding-top: 1.2rem;
+}
+.profiles-bg {
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 30%, #1a1a3a 0%, #000 70%);
+}
+.profiles-title {
+  position: relative; z-index: var(--z-content);
+  margin-bottom: .8rem;
+}
+.profiles-grid {
+  position: relative; z-index: var(--z-content);
+  display: flex; flex-wrap: wrap;
+  gap: .9rem; justify-content: center;
+  padding: 0 1rem; width: 100%;
+}
+
+/* ── Profile card ── */
+.profile-card {
+  background: var(--col-card);
+  border: 2px solid var(--col-border);
+  border-radius: var(--r-lg);
+  padding: .9rem .7rem .7rem;
+  width: 140px; text-align: center;
+  position: relative;
+  transition: transform .15s, border-color .2s, box-shadow .2s;
+  display: flex; flex-direction: column; align-items: center; gap: .35rem;
+}
+.profile-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(0,0,0,.5);
+}
+.profile-card-active {
+  border-color: var(--col-yellow);
+  box-shadow: 0 0 14px rgba(255,215,0,.35), 0 4px 16px rgba(0,0,0,.5);
+}
+.profile-active-badge {
+  position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  background: var(--col-yellow); color: #000;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem; padding: .2em .5em;
+  border-radius: 3px; white-space: nowrap;
+}
+.profile-sprite-wrap {
+  width: 72px; height: 72px;
+  display: flex; align-items: center; justify-content: center;
+}
+.profile-starter-sprite {
+  width: 72px; height: 72px;
+  object-fit: contain; image-rendering: pixelated;
+}
+.profile-sprite-placeholder {
+  font-size: 2rem; color: var(--col-text-dim);
+}
+.profile-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem; color: var(--col-yellow);
+  max-width: 120px; overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.profile-badge-bar {
+  display: flex; gap: 2px; justify-content: center;
+}
+.profile-badge-pip {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.2);
+}
+.profile-badge-pip.earned {
+  background: var(--col-yellow);
+  box-shadow: 0 0 4px rgba(255,215,0,.5);
+}
+.profile-no-save {
+  font-size: .45rem; color: var(--col-text-dim);
+}
+.profile-last-saved {
+  font-size: .42rem; color: var(--col-text-dim);
+}
+.profile-actions {
+  display: flex; gap: .4rem; margin-top: .15rem;
+}
+.profile-play-btn {
+  font-size: .32rem !important; padding: .4em .7em !important;
+}
+.profile-delete-btn {
+  font-size: .32rem !important; padding: .4em .5em !important;
+  background: rgba(180,20,20,.4) !important;
+  border-color: var(--col-red) !important;
+  color: #ffaaaa !important;
+}
+
+/* ── Add profile card ── */
+.profile-card-add {
+  cursor: pointer;
+  border-style: dashed;
+  opacity: .75;
+  justify-content: center;
+  min-height: 160px;
+}
+.profile-card-add:hover { opacity: 1; border-color: var(--col-yellow); }
+.profile-add-icon {
+  font-size: 2.5rem; color: var(--col-text-dim); line-height: 1;
+}
+.profile-add-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .35rem; color: var(--col-text-dim);
+}
+
+.profiles-back-btn { font-size: .42rem !important; }
