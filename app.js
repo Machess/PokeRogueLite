@@ -1008,9 +1008,9 @@ function generateMap(bossIndex) {
   prevRow.forEach(p => p.links.push(bossNode.idx));
 
   // ── Inject special mini-game nodes ───────────────────────────────────────
-  // After defeating Brock (bi===0), guarantee one cooking node in row 0.
-  // Replace one of the first-row nodes with cooking so it's always reachable.
-  if (bi === 0) {
+  // After defeating Brock (bi>=1), guarantee one cooking node in row 0.
+  // bi===0 is the very first map (before any boss) — no cooking there.
+  if (bi >= 1) {
     const cookIdx = Math.floor(Math.random() * firstRow.length);
     firstRow[cookIdx].type = 'cooking';
   }
@@ -2745,13 +2745,26 @@ const Game = {
 
     saveGame();
 
-    if (evolutions.length > 0) {
-      // Evolution triggered by boss-win leveling
-      runEvolutions(evolutions, () => {
+    const showBadgeModal = () => {
+      if (evolutions.length > 0) {
+        runEvolutions(evolutions, () => {
+          showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
+        });
+      } else {
         showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
-      });
+      }
+    };
+
+    // After beating Brock (defeated===1) show his joining narrative first
+    if (defeated === 1) {
+      const name = GameState.trainerName || 'Trainer';
+      showModal(
+        '🧑‍🍳 Brock wants to join!',
+        `That was an incredible battle, ${name}. Your Pokémon have real heart — I haven't seen that kind of bond in a long time.\n\nI can't just let you walk out of here. My team and I would like to travel with you for a while. At least until you reach the next gym.\n\nAnd don't worry — I'll cook for your Pokémon every chance we get. A well-fed team is a strong team!`,
+        () => showBadgeModal()
+      );
     } else {
-      showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
+      showBadgeModal();
     }
   },
 
@@ -6254,38 +6267,104 @@ function _cookingQuote(outcome) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// Generate a fresh recipe — 3 slots, each with a random ingredient and a quantity math problem
+// Generate a fresh recipe — 3 slots, each with a unique ingredient and a
+// cooking-themed math question. The arithmetic is identical to the Rocket
+// challenge tiers but the story wrapper is entirely kitchen-flavoured.
 function _generateRecipe(tier) {
-  // Pick 3 unique ingredients
   const shuffled = [...COOKING_INGREDIENTS].sort(() => Math.random() - 0.5);
   const chosen   = shuffled.slice(0, 3);
 
   return chosen.map(ing => {
-    const challenge = generateMathChallenge(tier);
-    // Override the question to be cooking-themed
-    const qty = challenge.correct;
-    let question;
+    let correct, question, coins = null;
+
     if (tier === 1) {
-      const a = Math.floor(qty / 2) || 1;
-      const b = qty - a;
-      question = `${a} + ${b} = ?`;
-      challenge.question = question;
-      challenge.coins    = { a, b, op: '+' };
+      // Tier 1 (age 6-7): simple addition, visual ingredient emoji as counters
+      const a = 1 + Math.floor(Math.random() * 4);   // 1–4
+      const b = 1 + Math.floor(Math.random() * 4);   // 1–4
+      correct  = a + b;
+      question = `Brock used ${a} ${ing.name} yesterday and needs ${b} more today. How many total?`;
+      coins    = { a, b, op: '+', icon: ing.icon };
     } else if (tier === 2) {
-      question = challenge.question;
+      // Tier 2 (age 8-9): multiplication — portions and servings
+      const type = Math.random() < 0.5 ? 'mult' : 'add';
+      if (type === 'mult') {
+        const poke = 2 + Math.floor(Math.random() * 4);   // 2–5 Pokémon
+        const each = 2 + Math.floor(Math.random() * 5);   // 2–6 each
+        correct  = poke * each;
+        question = `${poke} Pokémon each need ${each} pieces of ${ing.name}. How many total?`;
+      } else {
+        const batch1 = 5  + Math.floor(Math.random() * 10);
+        const batch2 = 3  + Math.floor(Math.random() * 8);
+        correct  = batch1 + batch2;
+        question = `Brock made ${batch1} portions this morning and ${batch2} more after training. Total ${ing.name}?`;
+      }
     } else {
-      question = challenge.question;
+      // Tier 3 (age 10-12): division — recipe scaling and splitting
+      const type = Math.random() < 0.5 ? 'div' : 'half';
+      if (type === 'div') {
+        const portions = 2 + Math.floor(Math.random() * 5);  // 2–6
+        correct   = 3 + Math.floor(Math.random() * 6);        // 3–8 per portion
+        const total = portions * correct;
+        question  = `The recipe makes ${total} pieces of ${ing.name} split equally into ${portions} bowls. How many per bowl?`;
+      } else {
+        // Halving a recipe
+        const full = (4 + Math.floor(Math.random() * 8)) * 2;  // even number 8–24
+        correct   = full / 2;
+        question  = `The full recipe needs ${full} ${ing.name}. Brock is making half today. How many does he need?`;
+      }
     }
-    return { ...ing, qty, challenge };
+
+    // Generate 3 wrong answers close to correct
+    const wrongs = new Set();
+    while (wrongs.size < 3) {
+      const delta = 1 + Math.floor(Math.random() * 4);
+      const w = Math.random() < 0.5 ? correct + delta : Math.max(1, correct - delta);
+      if (w !== correct) wrongs.add(w);
+    }
+    const choices = shuffle([correct, ...wrongs]);
+
+    return { ...ing, qty: correct, challenge: { question, correct, choices, coins } };
   });
 }
 
+const BROCK_COOKING_SCRIPTS = [
+  [
+    { name:'Brock', img:'assets/brock.png',
+      text:'${name}! Perfect timing — my Pokémon and I were just about to eat. Come on in.' },
+    { name:'Brock', img:'assets/brock.png',
+      text:'I\'ve been cooking for my brothers since I was small. Ten of them! So feeding a Pokémon team? Easy.' },
+    { name:'Brock', img:'assets/brock.png',
+      text:'But the recipe has to be exact — right ingredients, right amounts, right order. My Geodude won\'t touch it otherwise.' },
+  ],
+  [
+    { name:'Brock', img:'assets/brock.png',
+      text:'Ah, ${name}! Your team looks tired. Good food fixes that faster than a Potion.' },
+    { name:'Brock', img:'assets/brock.png',
+      text:'I\'ve got a new recipe today. The key is paying close attention to the amounts — too much salt and even Onix pulls a face.' },
+  ],
+  [
+    { name:'Brock', img:'assets/brock.png',
+      text:'${name}! The secret to strong Pokémon isn\'t just battles. It\'s good food, good rest, and good company.' },
+    { name:'Brock', img:'assets/brock.png',
+      text:'This dish has kept my Geodude going through six gym challenges in a row. Watch carefully now.' },
+  ],
+  [
+    { name:'Brock', img:'assets/brock.png',
+      text:'Back already, ${name}? Good. A trainer who feeds their team well is a trainer who wins.' },
+    { name:'Brock', img:'assets/brock.png',
+      text:'I change the recipe every time — keeps things interesting. Ready to follow along?' },
+  ],
+];
+
 const CookingEngine = {
-  _recipe:   [],   // array of { id, icon, name, qty, challenge }
-  _slots:    [],   // player's placed slots: [{ ingredient, qty } | null, null, null]
-  _selected: null, // id of ingredient currently picked up
-  _mathSlot: null, // which slot (0-2) is currently awaiting math confirmation
+  _recipe:   [],
+  _slots:    [],
+  _selected: null,
+  _mathSlot: null,
   _node:     null,
+  _isActive: false,   // flag so btn-start-boss-battle routes here
+  _script:   [],
+  _lineIdx:  0,
 
   start(node) {
     this._node     = node;
@@ -6293,13 +6372,85 @@ const CookingEngine = {
     this._slots    = [null, null, null];
     this._selected = null;
     this._mathSlot = null;
-    showScreen('cooking');
-    this._render();
+    this._isActive = true;
+    this._script   = BROCK_COOKING_SCRIPTS[
+      Math.floor(Math.random() * BROCK_COOKING_SCRIPTS.length)
+    ];
+    this._lineIdx  = 0;
+
+    // Show the boss screen in intro-only mode (same as Rocket encounter)
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    // Relabel the final action button
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = "Let's Cook! ▶";
+
+    this._showLine(0);
   },
 
-  _render() {
-    const name = GameState.trainerName || 'Trainer';
+  _showLine(idx) {
+    const line   = this._script[idx];
+    const name   = GameState.trainerName || 'Trainer';
+    const text   = line.text.replace(/\$\{name\}/g, name);
+    const isLast = idx === this._script.length - 1;
 
+    // Portrait
+    const wrap = document.getElementById('trainer-sprite-wrap');
+    const img  = document.getElementById('boss-trainer-sprite');
+    if (img) {
+      img.src = line.img;
+      img.onerror = () => { wrap.innerHTML = `<div style="font-size:4rem">🧑‍🍳</div>`; };
+    }
+    const nameEl  = document.getElementById('dialogue-name');
+    const textEl  = document.getElementById('dialogue-text');
+    const nextBtn = document.getElementById('btn-dialogue-next');
+    const startBtn= document.getElementById('btn-start-boss-battle');
+
+    nameEl.textContent = line.name;
+    textEl.textContent = '';
+    if (nextBtn)  nextBtn.style.display  = 'none';
+    if (startBtn) startBtn.style.display = 'none';
+
+    // Typewriter
+    let ci = 0;
+    const interval = setInterval(() => {
+      textEl.textContent += text[ci++];
+      if (ci >= text.length) {
+        clearInterval(interval);
+        if (isLast) {
+          if (startBtn) startBtn.style.display = '';
+        } else {
+          if (nextBtn) nextBtn.style.display = '';
+        }
+      }
+    }, 28);
+
+    this._lineIdx = idx;
+  },
+
+  advanceDialogue() {
+    const next = this._lineIdx + 1;
+    if (next < this._script.length) this._showLine(next);
+  },
+
+  // Called when player taps "Let's Cook! ▶"
+  startGame() {
+    this._isActive = false;
+    // Reset the start button label for future boss/rocket encounters
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = 'Battle! ▶';
+
+    document.getElementById('trainer-intro').style.display    = 'none';
+    showScreen('cooking');
+    this._renderGame();
+  },
+
+  _renderGame() {
     // Recipe display
     const recipeEl = document.getElementById('cooking-recipe');
     recipeEl.innerHTML = this._recipe.map((r, i) => `
@@ -6311,14 +6462,12 @@ const CookingEngine = {
       </div>
     `).join('');
 
-    // Player drop-zones
+    // Drop zones
     const zonesEl = document.getElementById('cooking-zones');
     zonesEl.innerHTML = this._slots.map((slot, i) => {
       const filled = slot !== null;
-      const correct = filled && slot.id === this._recipe[i].id;
       return `
-        <div class="cooking-zone ${filled ? 'cooking-zone-filled' : 'cooking-zone-empty'}
-                    ${filled && !this._mathSlot !== null ? (correct ? '' : '') : ''}"
+        <div class="cooking-zone ${filled ? 'cooking-zone-filled' : 'cooking-zone-empty'}"
              data-zone="${i}">
           ${filled
             ? `<div class="cz-icon">${slot.icon}</div>
@@ -6331,7 +6480,6 @@ const CookingEngine = {
       `;
     }).join('');
 
-    // Bind zone clicks
     document.querySelectorAll('.cooking-zone').forEach(el => {
       el.addEventListener('click', () => {
         const z = parseInt(el.dataset.zone);
@@ -6341,9 +6489,8 @@ const CookingEngine = {
     document.querySelectorAll('.cooking-remove-btn').forEach(el => {
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        const z = parseInt(el.dataset.zone);
-        this._slots[z] = null;
-        this._render();
+        this._slots[parseInt(el.dataset.zone)] = null;
+        this._renderGame();
       });
     });
 
@@ -6364,43 +6511,34 @@ const CookingEngine = {
     document.querySelectorAll('.pantry-item').forEach(el => {
       el.addEventListener('click', () => {
         const id = el.dataset.ing;
-        if (this._selected === id) { this._selected = null; }
-        else                        { this._selected = id; }
-        this._render();
+        this._selected = (this._selected === id) ? null : id;
+        this._renderGame();
       });
     });
 
     // Submit button
-    const submitBtn = document.getElementById('cooking-submit');
+    const submitBtn = document.getElementById('btn-cooking-submit');
     const allFilled = this._slots.every(s => s !== null);
-    submitBtn.disabled = !allFilled;
-    submitBtn.textContent = allFilled ? "🍽️ Serve it up!" : "Fill all 3 slots first";
+    submitBtn.disabled    = !allFilled;
+    submitBtn.textContent = allFilled ? '🍽️ Serve it up!' : 'Fill all 3 slots first';
   },
 
   _placeIngredient(zoneIdx) {
     const ing = COOKING_INGREDIENTS.find(i => i.id === this._selected);
     if (!ing) return;
     this._selected = null;
-
-    // Show math question for the quantity of the recipe's ingredient for this slot
     this._mathSlot = zoneIdx;
     this._showMathModal(ing, zoneIdx);
   },
 
   _showMathModal(ing, zoneIdx) {
-    const recipeSlot = this._recipe[zoneIdx];
-    const ch         = recipeSlot.challenge;
-    const tier       = GameState.difficultyTier || 2;
-
+    const ch      = this._recipe[zoneIdx].challenge;
+    const tier    = GameState.difficultyTier || 2;
     const overlay = document.getElementById('cooking-math-overlay');
-    const qEl     = document.getElementById('cooking-math-question');
-    const qtyEl   = document.getElementById('cooking-math-qty-hint');
-    const btnArea = document.getElementById('cooking-math-answers');
 
-    qEl.textContent  = `How many ${ing.name} does the recipe need?`;
-    qtyEl.textContent = ch.question;
+    document.getElementById('cooking-math-question').textContent = `How many ${ing.name} does the recipe need?`;
+    document.getElementById('cooking-math-qty-hint').textContent  = ch.question;
 
-    // Visual coin aid for tier 1
     const coinVis = document.getElementById('cooking-math-coins');
     if (tier === 1 && ch.coins) {
       const { a, b, op } = ch.coins;
@@ -6412,28 +6550,19 @@ const CookingEngine = {
       coinVis.style.display = 'none';
     }
 
-    // Answer buttons
+    const btnArea = document.getElementById('cooking-math-answers');
     btnArea.innerHTML = '';
     ch.choices.forEach(val => {
       const btn = document.createElement('button');
       btn.className   = 'btn-pixel btn-secondary cooking-math-btn';
       btn.textContent = val;
       btn.onclick = () => {
-        if (val === ch.correct) {
-          // Correct — place ingredient with right quantity
-          this._slots[zoneIdx] = { ...ing, qty: val };
-          overlay.style.display = 'none';
-          this._mathSlot = null;
-          this._render();
-        } else {
-          // Wrong — still place it but with wrong qty (will fail check)
+        this._slots[zoneIdx] = { ...ing, qty: val };
+        if (val !== ch.correct) {
           btn.classList.add('math-wrong');
-          setTimeout(() => {
-            this._slots[zoneIdx] = { ...ing, qty: val };
-            overlay.style.display = 'none';
-            this._mathSlot = null;
-            this._render();
-          }, 700);
+          setTimeout(() => { overlay.style.display = 'none'; this._mathSlot = null; this._renderGame(); }, 700);
+        } else {
+          overlay.style.display = 'none'; this._mathSlot = null; this._renderGame();
         }
       };
       btnArea.appendChild(btn);
@@ -6443,28 +6572,23 @@ const CookingEngine = {
   },
 
   submit() {
-    // Score each slot
     let correctSlots = 0;
     this._slots.forEach((slot, i) => {
-      if (!slot) return;
-      const r = this._recipe[i];
-      if (slot.id === r.id && slot.qty === r.qty) correctSlots++;
+      if (slot && slot.id === this._recipe[i].id && slot.qty === this._recipe[i].qty) correctSlots++;
     });
 
-    const party   = GameState.party.filter(p => p.hp > 0);
+    const party = GameState.party.filter(p => p.hp > 0);
     let outcome, headline, detail;
 
     if (correctSlots === 3) {
       outcome  = 'perfect';
       headline = '🍽️ Perfect Meal!';
-      // Heal 25% max HP + set shield buff for next battle
       party.forEach(p => { p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.25)); });
       GameState.cookingShield = 30;
       detail = `All Pokémon healed 25% HP!\nAll Pokémon have a 30 dmg shield for the next battle!`;
     } else if (correctSlots > 0) {
       outcome  = 'partial';
       headline = '🍱 Partially Right';
-      // Only correctly-placed slots' Pokémon benefit
       const benefitCount = Math.min(correctSlots, party.length);
       for (let i = 0; i < benefitCount; i++) {
         party[i].hp = Math.min(party[i].maxHp, party[i].hp + Math.floor(party[i].maxHp * 0.15));
@@ -6473,14 +6597,12 @@ const CookingEngine = {
     } else {
       outcome  = 'wrong';
       headline = '😬 That Didn\'t Taste Great...';
-      // Each living Pokémon loses 10% current HP (can't KO)
       party.forEach(p => { p.hp = Math.max(1, p.hp - Math.floor(p.hp * 0.10)); });
-      detail = `All Pokémon lost 10% HP due to hunger!`;
+      detail = 'All Pokémon lost 10% HP due to hunger!';
     }
 
     saveGame();
-
-    const quote = _cookingQuote(outcome);
+    const quote   = _cookingQuote(outcome);
     const fullMsg = `${detail}\n\n"${quote}" — Brock`;
 
     showModal(headline, fullMsg, () => {
@@ -6860,15 +6982,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Boss screen ──
   document.getElementById('btn-start-boss-battle').addEventListener('click', () => {
-    // Route to RocketBattleEngine if it's a Rocket battle, otherwise BossEngine
-    if (BossEngine._isRocket) {
+    if (CookingEngine._isActive) {
+      CookingEngine.startGame();
+    } else if (BossEngine._isRocket) {
       RocketBattleEngine.startBattle();
     } else {
       BossEngine.startBattle();
     }
   });
   document.getElementById('btn-dialogue-next').addEventListener('click', () => {
-    RocketBattleEngine.advanceDialogue();
+    if (CookingEngine._isActive) {
+      CookingEngine.advanceDialogue();
+    } else {
+      RocketBattleEngine.advanceDialogue();
+    }
   });
   document.getElementById('btn-boss-end-turn').addEventListener('click', () => BossEngine.endTurn());
   document.getElementById('btn-boss-use-item').addEventListener('click', () => {
