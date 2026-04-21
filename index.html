@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=13" />
+  <link rel="stylesheet" href="style.css?v=15" />
 </head>
 <body>
 
@@ -692,6 +692,50 @@
 </div>
 
 <!-- ═══════════════════════════════════════════
+     SCREEN: BROCK'S KITCHEN (COOKING MINI-GAME)
+═══════════════════════════════════════════ -->
+<div id="screen-cooking" class="screen">
+  <div class="cooking-bg"></div>
+
+  <!-- Header -->
+  <div class="cooking-header">
+    <img src="assets/brock.png" alt="Brock" class="cooking-portrait"
+         onerror="this.style.display='none'" />
+    <div class="cooking-header-text">
+      <div class="cooking-title">🍳 Brock's Kitchen</div>
+      <div class="cooking-subtitle">Copy the recipe exactly to feed your Pokémon!</div>
+    </div>
+  </div>
+
+  <!-- Recipe card -->
+  <div class="cooking-section-label">📋 Today's Recipe</div>
+  <div class="cooking-recipe" id="cooking-recipe"></div>
+
+  <!-- Player drop zones -->
+  <div class="cooking-section-label">🥄 Your preparation — place in order</div>
+  <div class="cooking-zones" id="cooking-zones"></div>
+
+  <!-- Pantry -->
+  <div class="cooking-section-label">🧺 Pantry — tap to select</div>
+  <div class="cooking-pantry" id="cooking-pantry"></div>
+
+  <!-- Submit -->
+  <button class="btn-pixel btn-primary cooking-submit-btn" id="btn-cooking-submit" disabled>
+    Fill all 3 slots first
+  </button>
+
+  <!-- Math overlay — shown when placing an ingredient -->
+  <div class="cooking-math-overlay" id="cooking-math-overlay" style="display:none">
+    <div class="cooking-math-card">
+      <div class="cooking-math-title" id="cooking-math-question">How many do you need?</div>
+      <div class="cooking-math-qty" id="cooking-math-qty-hint"></div>
+      <div class="cooking-math-coins" id="cooking-math-coins" style="display:none"></div>
+      <div class="cooking-math-answers" id="cooking-math-answers"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
      SCREEN: EVOLVE
 ═══════════════════════════════════════════ -->
 <div id="screen-evolve" class="screen">
@@ -824,6 +868,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=16"></script>
+<script src="app.js?v=21"></script>
 </body>
 </html>

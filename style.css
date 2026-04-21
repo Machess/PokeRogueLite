@@ -4831,3 +4831,204 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   color: #6FCF97;
   background: rgba(60,180,100,.2);
 }
+
+/* ═══════════════════════════════════════════
+   BROCK'S COOKING MINI-GAME
+═══════════════════════════════════════════ */
+#screen-cooking {
+  background: linear-gradient(160deg, #2d1a0e 0%, #4a2c10 40%, #3a1f08 100%);
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding-bottom: 2rem;
+}
+.cooking-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse at 20% 80%, rgba(255,140,0,.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(255,200,80,.06) 0%, transparent 50%);
+}
+
+/* Header */
+.cooking-header {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; gap: .8rem;
+  padding: .8rem 1rem .4rem;
+  width: 100%; box-sizing: border-box;
+}
+.cooking-portrait {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,200,80,.4);
+  object-fit: cover;
+  flex-shrink: 0;
+  image-rendering: pixelated;
+}
+.cooking-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .65rem; color: var(--col-yellow);
+}
+.cooking-subtitle {
+  font-size: .55rem; color: var(--col-text-dim); margin-top: .2rem;
+}
+.cooking-section-label {
+  position: relative; z-index: 1;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: rgba(255,200,80,.7);
+  padding: .5rem 1rem .2rem;
+  letter-spacing: .05em;
+  width: 100%; box-sizing: border-box;
+}
+
+/* Recipe card */
+.cooking-recipe {
+  position: relative; z-index: 1;
+  display: flex; gap: .5rem; justify-content: center;
+  padding: .3rem 1rem;
+  flex-wrap: wrap;
+}
+.recipe-slot {
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,200,80,.3);
+  border-radius: var(--r-md);
+  padding: .5rem .6rem;
+  text-align: center; min-width: 72px;
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+}
+.recipe-slot-num {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem; color: var(--col-yellow); opacity: .7;
+}
+.recipe-ingredient-icon { font-size: 1.6rem; line-height: 1; }
+.recipe-ingredient-name {
+  font-size: .42rem; color: var(--col-text);
+}
+.recipe-qty {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: #6FCF97;
+}
+
+/* Drop zones */
+.cooking-zones {
+  position: relative; z-index: 1;
+  display: flex; gap: .5rem; justify-content: center;
+  padding: .3rem 1rem;
+}
+.cooking-zone {
+  width: 90px; min-height: 90px;
+  border-radius: var(--r-md);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: .2rem; cursor: pointer;
+  position: relative; transition: border-color .15s, transform .15s;
+}
+.cooking-zone-empty {
+  border: 2px dashed rgba(255,255,255,.25);
+  background: rgba(255,255,255,.04);
+}
+.cooking-zone-empty:hover {
+  border-color: rgba(255,200,80,.6);
+  transform: scale(1.03);
+}
+.cooking-zone-filled {
+  border: 2px solid rgba(255,200,80,.5);
+  background: rgba(255,200,80,.08);
+}
+.cz-empty-label {
+  font-size: .38rem; color: rgba(255,255,255,.3);
+  font-family: 'Press Start 2P', monospace;
+}
+.cz-icon  { font-size: 1.6rem; line-height: 1; }
+.cz-name  { font-size: .4rem;  color: var(--col-text); }
+.cz-qty   { font-family: 'Press Start 2P', monospace; font-size: .35rem; color: #6FCF97; }
+.cooking-remove-btn {
+  position: absolute; top: 3px; right: 4px;
+  background: rgba(200,50,50,.6); border: none; color: #fff;
+  font-size: .5rem; border-radius: 3px; cursor: pointer;
+  padding: 0 .25rem; line-height: 1.4;
+}
+
+/* Pantry */
+.cooking-pantry {
+  position: relative; z-index: 1;
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  justify-content: center;
+  padding: .3rem 1rem;
+}
+.pantry-item {
+  background: rgba(255,255,255,.07);
+  border: 2px solid rgba(255,255,255,.2);
+  border-radius: var(--r-md);
+  padding: .4rem .6rem;
+  display: flex; flex-direction: column;
+  align-items: center; gap: .1rem;
+  cursor: pointer; min-width: 60px;
+  transition: border-color .12s, transform .12s, background .12s;
+}
+.pantry-item:hover {
+  border-color: rgba(255,200,80,.6);
+  transform: translateY(-2px);
+}
+.pantry-selected {
+  border-color: var(--col-yellow) !important;
+  background: rgba(255,200,80,.15) !important;
+  transform: translateY(-3px) scale(1.05);
+}
+.pantry-used {
+  opacity: .35; pointer-events: none;
+}
+.pantry-icon { font-size: 1.4rem; line-height: 1; }
+.pantry-name { font-size: .38rem; color: var(--col-text-dim); }
+
+/* Submit button */
+.cooking-submit-btn {
+  position: relative; z-index: 1;
+  margin: .8rem auto 0;
+  font-size: .45rem !important;
+  padding: .7em 1.6em !important;
+  display: block;
+}
+.cooking-submit-btn:disabled {
+  opacity: .45; cursor: not-allowed;
+}
+
+/* Math overlay */
+.cooking-math-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.75);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.cooking-math-card {
+  background: var(--col-surface);
+  border: 2px solid var(--col-yellow);
+  border-radius: var(--r-lg);
+  padding: 1.2rem 1.4rem;
+  width: min(320px, 88vw);
+  display: flex; flex-direction: column;
+  align-items: center; gap: .6rem;
+  box-shadow: 0 0 30px rgba(255,215,0,.2);
+}
+.cooking-math-title {
+  font-size: .55rem; color: var(--col-text); text-align: center;
+}
+.cooking-math-qty {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .7rem; color: var(--col-yellow);
+  text-align: center;
+}
+.cooking-math-coins {
+  display: flex; align-items: center; gap: .4rem;
+  font-size: 1.1rem; flex-wrap: wrap; justify-content: center;
+}
+.cooking-math-answers {
+  display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center;
+}
+.cooking-math-btn {
+  font-size: .5rem !important; padding: .5em .9em !important;
+  min-width: 52px;
+}
+.math-wrong {
+  background: rgba(200,50,50,.5) !important;
+  border-color: var(--col-red) !important;
+  animation: shake .3s ease;
+}
