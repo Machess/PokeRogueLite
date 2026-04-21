@@ -10,18 +10,20 @@
 const POKEAPI = 'https://pokeapi.co/api/v2';
 
 const STARTERS = [
-  { id: 1,  name: 'Bulbasaur',  type: 'grass',    evolutions: [1,2,3] },
-  { id: 4,  name: 'Charmander', type: 'fire',     evolutions: [4,5,6] },
-  { id: 7,  name: 'Squirtle',   type: 'water',    evolutions: [7,8,9] },
-  { id: 25, name: 'Pikachu',    type: 'electric', evolutions: [25,26,26], locked: true },
+  { id: 1,   name: 'Bulbasaur',  type: 'grass',    evolutions: [1,2,3] },
+  { id: 4,   name: 'Charmander', type: 'fire',     evolutions: [4,5,6] },
+  { id: 7,   name: 'Squirtle',   type: 'water',    evolutions: [7,8,9] },
+  { id: 25,  name: 'Pikachu',    type: 'electric', evolutions: [25,26,26], locked: true },
+  { id: 133, name: 'Eevee',      type: 'normal',   evolutions: [133],      locked: true, eeveeStarter: true },
 ];
 
 // Level thresholds that trigger starter evolution
 const EVOLUTION_LEVELS = {
-  1:  { stage2: 16, stage3: 32 },
-  4:  { stage2: 16, stage3: 36 },
-  7:  { stage2: 16, stage3: 36 },
-  25: { stage2: 22 },
+  1:   { stage2: 16, stage3: 32 },
+  4:   { stage2: 16, stage3: 36 },
+  7:   { stage2: 16, stage3: 36 },
+  25:  { stage2: 22 },
+  133: {},   // Eevee — stone-only evolution, no level thresholds
 };
 
 // Warm narrative lines shown on the evolve screen — (trainerName, newPokeName, prevPokeName)
@@ -40,6 +42,12 @@ const EVOLVE_NARRATIVES = {
   },
   25: {
     2: (n, next, prev) => `${n}, Pikachu absolutely loves travelling with you! It has been getting stronger with every adventure. It is not evolving — it just wants to stay exactly as it is, but even more powerful!`,
+  },
+  // Eevee — stone evolutions. Stage key = stone type for lookup.
+  133: {
+    fire:     (n, next, prev) => `${n}, you held out the Fire Stone and ${prev} felt something stir deep inside. The warmth of every battle you've won together — the courage you showed when things were hard — it all blazed up at once. ${prev} has chosen its path. Watch closely...`,
+    water:    (n, next, prev) => `${n}, as the Water Stone glowed in your hand, ${prev} closed its eyes. It thought of every time you stayed calm under pressure, every time you kept going when others would have stopped. The stone recognised something in ${prev} — something clear and deep. Here it comes...`,
+    electric: (n, next, prev) => `${n}, the Thunder Stone crackled the moment ${prev} touched it. All that quick thinking, all those snap decisions in battle — ${prev} has been watching and learning. The energy that's been building between you both has finally found a way out. Get ready...`,
   },
 };
 
@@ -381,6 +389,19 @@ const CARD_TEMPLATES = {
     { id:'volt_tackle',  name:'Volt Tackle',  icon:'⚡', type:'electric',power:75, cost:2, effect:'20 recoil. One use only.', special: 'recoil_15', exhaust: true },
     { id:'thunder',      name:'Thunder',      icon:'🌪️', type:'electric',power:100,cost:3, effect:'35% paralyse. One use only.', special: 'para_chance', exhaust: true },
   ],
+  // ── Eevee starting deck — flexible normal-type ───────────────────────────
+  eevee: [
+    { id:'tackle',       name:'Tackle',       icon:'💥', type:'normal',  power:38, cost:1, effect:'',                         special: null },
+    { id:'quick_attack', name:'Quick Attack', icon:'💨', type:'normal',  power:25, cost:0, effect:'Free! Draw 1',             special: 'draw_1' },
+    { id:'growl',        name:'Growl',        icon:'🗣️', type:'normal',  power:0,  cost:0, effect:'Opp ATK -10, draw 1',     special: 'growl_draw' },
+    { id:'sand_attack',  name:'Sand Attack',  icon:'🏜️', type:'normal',  power:0,  cost:1, effect:'Opp accuracy -25%',       special: 'debuff_acc' },
+    { id:'headbutt',     name:'Headbutt',     icon:'💫', type:'normal',  power:48, cost:1, effect:'',                         special: null },
+    { id:'last_resort',  name:'Last Resort',  icon:'🌟', type:'normal',  power:65, cost:2, effect:'High crit rate',           special: 'high_crit' },
+    { id:'baton_pass',   name:'Baton Pass',   icon:'🎽', type:'normal',  power:0,  cost:1, effect:'+1 energy + draw 2',       special: 'agility' },
+    { id:'swift',        name:'Swift',        icon:'✨', type:'normal',  power:45, cost:1, effect:'Never misses',             special: null },
+    { id:'covet',        name:'Covet',        icon:'💝', type:'normal',  power:30, cost:1, effect:'Heal 10 HP',               special: 'heal_10' },
+    { id:'hyper_voice',  name:'Hyper Voice',  icon:'📣', type:'normal',  power:90, cost:3, effect:'One use only.',            special: null, exhaust: true },
+  ],
 };
 
 // Standard cards for caught Pokémon — 5 cards, varied utility
@@ -664,6 +685,25 @@ const SHOP_ITEMS = [
     id: 'leftovers',      name: 'Leftovers',          icon: '🍖', category: 'held',
     description: 'Holder heals 5 HP at the start of every turn.',
     price: 30, maxStack: 1, trigger: 'held',
+  },
+  // ── Evolution Stones (Eevee only) ────────────────────────────────────────
+  {
+    id: 'fire_stone',    name: 'Fire Stone',    icon: '🔥', category: 'stone',
+    description: 'Evolves Eevee into Flareon. Fire-type. Cannot be undone.',
+    price: 35, maxStack: 1, unique: true,
+    stoneTarget: { id: 136, type: 'fire', name: 'Flareon' },
+  },
+  {
+    id: 'water_stone',   name: 'Water Stone',   icon: '💧', category: 'stone',
+    description: 'Evolves Eevee into Vaporeon. Water-type. Cannot be undone.',
+    price: 35, maxStack: 1, unique: true,
+    stoneTarget: { id: 134, type: 'water', name: 'Vaporeon' },
+  },
+  {
+    id: 'thunder_stone', name: 'Thunder Stone', icon: '⚡', category: 'stone',
+    description: 'Evolves Eevee into Jolteon. Electric-type. Cannot be undone.',
+    price: 35, maxStack: 1, unique: true,
+    stoneTarget: { id: 135, type: 'electric', name: 'Jolteon' },
   },
 ];
 
@@ -2454,6 +2494,7 @@ const Game = {
       deck: [], improvementMap: {}, map: null,
       currentNodeIndex: null, completedNodes: [], highWaterRow: -1,
       unlockedPikachu: unlocks.pikachu,
+      unlockedEevee: unlocks.eevee || false,
       stats: { battlesWon: 0, pokemonCaught: 0, totalBattlesWon: 0,
                totalBossesBeaten: 0, totalNodesCompleted: 0 },
       gold: 0, items: [], masterBallUsed: false,
@@ -2498,25 +2539,54 @@ const Game = {
     const grid = document.getElementById('starter-grid');
     grid.innerHTML = '';
 
+    // Load unlock progress for Eevee hint
+    const unlocks    = loadUnlocks();
+    const completedWith = unlocks.completedWith || [];
+    const BASE_NAMES = ['bulbasaur','charmander','squirtle'];
+    const eeveeProgress = BASE_NAMES.map(n => ({
+      name: n, icon: n==='bulbasaur'?'🌿':n==='charmander'?'🔥':'💧',
+      done: completedWith.includes(n),
+    }));
+
     for (const s of STARTERS) {
-      const data = await fetchPoke(s.id).catch(() => null);
+      const data   = await fetchPoke(s.id).catch(() => null);
       const sprite = data ? getSpriteUrl(data) : '';
-      const locked = s.locked && !GameState.unlockedPikachu;
+
+      // Determine lock state per starter type
+      let locked = false;
+      if (s.id === 25)  locked = !GameState.unlockedPikachu;
+      if (s.id === 133) locked = !GameState.unlockedEevee && !unlocks.eevee;
 
       const card = document.createElement('div');
       card.className = 'starter-card';
-      card.dataset.id = s.id;
+      card.dataset.id   = s.id;
       card.dataset.type = s.type;
+
+      // Build lock overlay — Eevee gets a progress indicator
+      let lockHtml = '';
+      if (locked && s.id === 133) {
+        const pips = eeveeProgress.map(p =>
+          `<span class="eevee-prog-pip${p.done ? ' done' : ''}">${p.icon}${p.done ? '✓' : '✗'}</span>`
+        ).join('');
+        lockHtml = `<div class="starter-locked">
+          <div class="starter-locked-icon">🔒</div>
+          <div class="starter-locked-text">Complete all 3 starters!</div>
+          <div class="eevee-progress">${pips}</div>
+        </div>`;
+      } else if (locked) {
+        lockHtml = `<div class="starter-locked">
+          <div class="starter-locked-icon">🔒</div>
+          <div class="starter-locked-text">Complete game<br>to unlock!</div>
+        </div>`;
+      }
+
       card.innerHTML = `
         <img class="starter-sprite" src="${sprite}" alt="${s.name}"
              onerror="this.src='assets/sprites/${s.id}.png'" />
         <div class="starter-name">${s.name}</div>
         <div class="starter-type-badge type-${s.type}">${s.type}</div>
         <div class="starter-desc">${StarterDescs[s.name]||''}</div>
-        ${locked ? `<div class="starter-locked">
-          <div class="starter-locked-icon">🔒</div>
-          <div class="starter-locked-text">Complete game<br>to unlock!</div>
-        </div>` : ''}
+        ${lockHtml}
       `;
       if (!locked) {
         card.addEventListener('mouseenter', () => SoundEngine.playStarterCry(s.id));
@@ -2541,7 +2611,9 @@ const Game = {
     const data   = await fetchPoke(s.id);
     const sprite = getSpriteUrl(data);
     const pokemon = makePokemon(s.id, 5, sprite, s.name, s.type, true);
-    const starterDeck = buildDeck(s.type, {});
+    // Eevee uses its own flexible deck template, not the generic 'normal' type
+    const deckType = s.eeveeStarter ? 'eevee' : s.type;
+    const starterDeck = buildDeck(deckType, {});
     pokemon.deck = starterDeck;
 
     // If this is a brand-new profile, create it now that we have a name
@@ -2553,6 +2625,7 @@ const Game = {
         // Load unlocks for the new (empty) profile
         const unlocks = loadUnlocks();
         GameState.unlockedPikachu = unlocks.pikachu || false;
+        GameState.unlockedEevee   = unlocks.eevee   || false;
       }
     }
 
@@ -2615,8 +2688,25 @@ const Game = {
 
     // ── Won all 8 gyms → Victory ──────────────────────────────────────────
     if (defeated >= 8) {
+      // Track which starter completed this run
+      const unlocks = loadUnlocks();
+      unlocks.pikachu = true;
+      const starterObj = STARTERS.find(s => s.id === GameState.starterId);
+      const starterName = starterObj?.name?.toLowerCase() || '';
+      if (starterName && !['pikachu','eevee'].includes(starterName)) {
+        if (!unlocks.completedWith) unlocks.completedWith = [];
+        if (!unlocks.completedWith.includes(starterName)) {
+          unlocks.completedWith.push(starterName);
+        }
+      }
+      // Unlock Eevee when all 3 base starters have completed a run
+      const BASE = ['bulbasaur','charmander','squirtle'];
+      if (BASE.every(n => unlocks.completedWith?.includes(n))) {
+        unlocks.eevee = true;
+      }
+      saveUnlocks(unlocks);
       GameState.unlockedPikachu = true;
-      saveUnlocks({ pikachu: true });
+      GameState.unlockedEevee   = unlocks.eevee || false;
       saveGame();
       VictoryEngine.show();
       return;
@@ -5206,10 +5296,35 @@ const ItemEngine = {
     });
     consumables.forEach(item => {
       if (item.id === 'lure') return;
+      const def = SHOP_ITEMS.find(s => s.id === item.id);
+      const isStone = def?.category === 'stone';
+      // Only show Use button for stones, and only if Eevee hasn't evolved yet
+      const showUse = isStone && !GameState.eeveeEvolution;
+
       const pill = document.createElement('div');
-      pill.className = 'bag-pill';
-      pill.innerHTML = `<span class="bag-pill-icon">${item.icon}</span><span class="bag-pill-count">${item.count > 1 ? '×' + item.count : ''}</span>`;
-      pill.title = `${item.name} — ${item.description || ''}`;
+      pill.className = 'bag-pill' + (isStone ? ' bag-pill-stone' : '');
+      pill.innerHTML = `
+        <span class="bag-pill-icon">${item.icon || def?.icon || '📦'}</span>
+        <span class="bag-pill-label">${isStone ? (def?.name || item.id) : ''}</span>
+        ${showUse
+          ? `<button class="btn-pixel bag-stone-use-btn" data-stone="${item.id}">Use</button>`
+          : (item.count > 1 ? `<span class="bag-pill-count">×${item.count}</span>` : '')
+        }
+      `;
+      pill.title = def ? `${def.name} — ${def.description}` : item.id;
+
+      if (showUse) {
+        pill.querySelector('.bag-stone-use-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
+          const target = def.stoneTarget;
+          showModal(
+            `${def.icon} Use ${def.name}?`,
+            `Eevee will evolve into ${target.name} (${target.type}-type) right now.\n\nYour deck will be rebuilt. This cannot be undone.`,
+            () => stoneEvolve(item.id)
+          );
+        });
+      }
+
       bar.appendChild(pill);
     });
   },
@@ -5551,7 +5666,69 @@ const CardReward = {
   },
 };
 
-// ─── SHOP ENGINE ─────────────────────────────────────────────────────────────
+// ─── STONE EVOLUTION ─────────────────────────────────────────────────────────
+// Called from the map bag bar when the player taps [Use] on a stone.
+// Only ever reachable from the map screen — not battle, not shop.
+
+async function stoneEvolve(stoneId) {
+  const stoneDef = SHOP_ITEMS.find(i => i.id === stoneId);
+  if (!stoneDef?.stoneTarget) return;
+  const { id: targetId, type: targetType, name: targetName } = stoneDef.stoneTarget;
+
+  showLoading();
+  const afterData = await fetchPoke(targetId).catch(() => null);
+  hideLoading();
+  if (!afterData) {
+    showModal('Connection Error', 'Could not load Pokémon data. Check your connection.', () => {});
+    return;
+  }
+
+  const trainerName = GameState.trainerName || 'Trainer';
+  const starter = GameState.party.find(p => p.isStarter);
+  const prevName = starter?.name || 'Eevee';
+
+  // Narrative from EVOLVE_NARRATIVES[133][stoneType]
+  const narrativeFn = EVOLVE_NARRATIVES[133]?.[targetType];
+  const narrative = narrativeFn
+    ? narrativeFn(trainerName, targetName, prevName)
+    : `${prevName} is evolving into ${targetName}!`;
+
+  // Remove stone from bag before evolving
+  ItemEngine.useItem(stoneId);
+
+  // Lock evolution — set immediately so nothing can trigger it twice
+  GameState.eeveeEvolution = targetType;
+
+  // Update the starter party member
+  if (starter) {
+    starter.id            = targetId;
+    starter.name          = targetName;
+    starter.type          = targetType;
+    starter.spriteUrl     = getSpriteUrl(afterData);
+    starter.backSpriteUrl = null;
+    starter.maxHp        += 20;
+    starter.hp            = starter.maxHp;
+    // Rebuild deck for the new type — fresh, no improvements carried over
+    const newDeck    = buildDeck(targetType, {});
+    starter.deck     = newDeck;
+    GameState.deck   = newDeck;
+    GameState.improvementMap = {};
+  }
+
+  // Update GameState type references
+  GameState.starterType    = targetType;
+  GameState.evolutionStage = 1;  // stone counts as stage 2 (final for Eevee-line)
+
+  saveGame();
+
+  // Show the evolve screen — same cinematic as level evolutions
+  showScreen('evolve');
+  await EvolveEngine.run(133, targetId, narrative, null);
+  // Continue pressed — return to map
+  MapEngine.show();
+}
+
+
 
 const ShopEngine = {
   start(node) {
@@ -5564,11 +5741,23 @@ const ShopEngine = {
     const grid = document.getElementById('shop-items-grid');
     grid.innerHTML = '';
 
+    const isEevee   = GameState.starterId === 133;
+    const hasEvolved = !!GameState.eeveeEvolution;
+
     // Split into sections
     const sections = [
-      { label: '🎒 Consumables & Balls', items: SHOP_ITEMS.filter(i => i.category !== 'held') },
-      { label: '🏅 Held Items', items: SHOP_ITEMS.filter(i => i.category === 'held') },
+      { label: '🎒 Consumables & Balls', items: SHOP_ITEMS.filter(i => i.category !== 'held' && i.category !== 'stone') },
+      { label: '🏅 Held Items',          items: SHOP_ITEMS.filter(i => i.category === 'held') },
     ];
+
+    // Stone section — only when Eevee is starter and not yet evolved
+    if (isEevee && !hasEvolved) {
+      sections.push({
+        label: '💎 Evolution Stones',
+        items: SHOP_ITEMS.filter(i => i.category === 'stone'),
+        isStone: true,
+      });
+    }
 
     sections.forEach(section => {
       const header = document.createElement('div');
@@ -5577,9 +5766,8 @@ const ShopEngine = {
       grid.appendChild(header);
 
       section.items.forEach(item => {
-        const owned   = (GameState.items || []).find(i => i.id === item.id);
-        const count   = owned ? owned.count : 0;
-        // Also count how many party members hold this item
+        const owned    = (GameState.items || []).find(i => i.id === item.id);
+        const count    = owned ? owned.count : 0;
         const equipped = GameState.party.filter(p => p.heldItem?.id === item.id).length;
         const maxed    = count >= item.maxStack;
         const isUnique = item.unique && (count > 0 || (item.id === 'master_ball' && GameState.masterBallUsed));
@@ -5588,10 +5776,25 @@ const ShopEngine = {
 
         const div = document.createElement('div');
         div.className = 'shop-item' + (disabled ? ' shop-item-disabled' : '');
+
+        // Stone items get a preview of the target Pokémon
+        let stonePreviewHtml = '';
+        if (section.isStone && item.stoneTarget) {
+          stonePreviewHtml = `
+            <div class="stone-preview">
+              <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.stoneTarget.id}.png"
+                   class="stone-preview-sprite" alt="${item.stoneTarget.name}"
+                   onerror="this.style.display='none'" />
+              <span class="stone-preview-name">→ ${item.stoneTarget.name}</span>
+              <span class="stone-preview-type type-${item.stoneTarget.type}">${item.stoneTarget.type}</span>
+            </div>`;
+        }
+
         div.innerHTML = `
           <div class="shop-item-icon">${item.icon}</div>
           <div class="shop-item-name">${item.name}</div>
           <div class="shop-item-desc">${item.description}</div>
+          ${stonePreviewHtml}
           <div class="shop-item-footer">
             <span class="shop-item-price">💰${item.price}g</span>
             ${count > 0 ? `<span class="shop-item-owned">bag ×${count}</span>` : ''}
@@ -5615,14 +5818,30 @@ const ShopEngine = {
     const item = SHOP_ITEMS.find(i => i.id === id);
     if (!item) return;
     if ((GameState.gold || 0) < item.price) return;
+
+    // Stone items need a confirmation modal — permanent choice, map-only use
+    if (item.category === 'stone') {
+      const target = item.stoneTarget;
+      showModal(
+        `${item.icon} Use ${item.name}?`,
+        `Eevee will become ${target.name} (${target.type}-type). Your deck will change completely.\n\nYou can use the stone from the bag on the map screen. This cannot be undone.`,
+        () => {
+          GameState.gold -= item.price;
+          ItemEngine.addItem(id);
+          SoundEngine.playFanfare();
+          saveGame();
+          this._render();
+        }
+      );
+      return;
+    }
+
     GameState.gold -= item.price;
 
     if (item.category === 'held') {
-      // Auto-equip to active Pokémon; if it already holds something, add to bag instead
       const active = GameState.party[GameState.activePokemonIndex];
       if (active && !active.heldItem) {
         active.heldItem = { ...item };
-        // Don't add to bag — directly equipped
       } else {
         ItemEngine.addItem(id);
         showModal('Item Stored', `${item.icon} ${item.name} added to your bag. Open Party to equip it.`, () => {});
@@ -5632,7 +5851,6 @@ const ShopEngine = {
     }
 
     if (id === 'master_ball') GameState.masterBallUsed = true;
-    // Activate lure flag immediately when purchased
     if (id === 'lure') GameState.lureActive = true;
     SoundEngine.playFanfare();
     saveGame();

@@ -4753,3 +4753,81 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 .profiles-back-btn { font-size: .42rem !important; }
+
+/* ═══════════════════════════════════════════
+   EVOLUTION STONES
+═══════════════════════════════════════════ */
+
+/* Stone preview inside shop card */
+.stone-preview {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  background: rgba(255,255,255,.06);
+  border-radius: var(--r-sm);
+  padding: .25rem .5rem;
+  margin: .25rem 0;
+}
+.stone-preview-sprite {
+  width: 36px; height: 36px;
+  image-rendering: pixelated;
+  object-fit: contain;
+}
+.stone-preview-name {
+  font-size: .52rem;
+  color: var(--col-yellow);
+  font-weight: 700;
+  flex: 1;
+}
+.stone-preview-type {
+  font-size: .38rem;
+  padding: .15em .5em;
+  border-radius: 3px;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+}
+
+/* Stone bag pill in map header */
+.bag-pill-stone {
+  background: rgba(255,215,0,.15) !important;
+  border: 1px solid rgba(255,215,0,.4) !important;
+  display: flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .15rem .45rem !important;
+}
+.bag-pill-stone .bag-pill-label {
+  font-size: .38rem;
+  color: var(--col-yellow);
+}
+.bag-stone-use-btn {
+  font-size: .32rem !important;
+  padding: .2em .5em !important;
+  background: var(--col-yellow) !important;
+  color: #000 !important;
+  border-color: var(--col-yellow-dk) !important;
+  margin-left: .1rem;
+}
+.bag-stone-use-btn:hover {
+  background: var(--col-yellow-dk) !important;
+}
+
+/* Eevee progress pips on starter select */
+.eevee-progress {
+  display: flex;
+  gap: .25rem;
+  justify-content: center;
+  margin-top: .3rem;
+  flex-wrap: wrap;
+}
+.eevee-prog-pip {
+  font-size: .38rem;
+  color: rgba(255,255,255,.4);
+  background: rgba(0,0,0,.3);
+  border-radius: 3px;
+  padding: .1em .35em;
+}
+.eevee-prog-pip.done {
+  color: #6FCF97;
+  background: rgba(60,180,100,.2);
+}
