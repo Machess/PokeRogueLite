@@ -5032,3 +5032,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-color: var(--col-red) !important;
   animation: shake .3s ease;
 }
+
+/* Recipe quantity — hidden until math is solved */
+.recipe-qty-hidden {
+  color: rgba(255,255,255,.3);
+  letter-spacing: .1em;
+}
+.recipe-slot-revealed {
+  border-color: rgba(111,207,151,.5);
+  background: rgba(111,207,151,.08);
+}

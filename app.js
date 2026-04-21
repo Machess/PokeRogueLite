@@ -6382,6 +6382,10 @@ const CookingEngine = {
     showScreen('boss');
     BossEngine._isRocket = false;
 
+    // Blank the battle background — Brock's kitchen is not a battle arena
+    const bgImg = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgImg) { bgImg.src = ''; bgImg.style.opacity = '0'; }
+
     document.getElementById('trainer-intro').style.display    = 'flex';
     document.getElementById('boss-battle-area').style.display = 'none';
     document.getElementById('boss-party-bar').innerHTML       = '';
@@ -6451,16 +6455,21 @@ const CookingEngine = {
   },
 
   _renderGame() {
-    // Recipe display
+    // Recipe display — show ingredient + order only, NOT quantity.
+    // The quantity is revealed when the player solves the math question per slot.
     const recipeEl = document.getElementById('cooking-recipe');
-    recipeEl.innerHTML = this._recipe.map((r, i) => `
-      <div class="recipe-slot">
-        <div class="recipe-slot-num">${i + 1}</div>
-        <div class="recipe-ingredient-icon">${r.icon}</div>
-        <div class="recipe-ingredient-name">${r.name}</div>
-        <div class="recipe-qty">× ${r.qty}</div>
-      </div>
-    `).join('');
+    recipeEl.innerHTML = this._recipe.map((r, i) => {
+      const slotFilled = this._slots[i] !== null;
+      // Once the player has answered the math for this slot, reveal the actual qty
+      return `
+        <div class="recipe-slot ${slotFilled ? 'recipe-slot-revealed' : ''}">
+          <div class="recipe-slot-num">${i + 1}</div>
+          <div class="recipe-ingredient-icon">${r.icon}</div>
+          <div class="recipe-ingredient-name">${r.name}</div>
+          <div class="recipe-qty ${slotFilled ? '' : 'recipe-qty-hidden'}">× ${slotFilled ? this._slots[i].qty : '?'}</div>
+        </div>
+      `;
+    }).join('');
 
     // Drop zones
     const zonesEl = document.getElementById('cooking-zones');
