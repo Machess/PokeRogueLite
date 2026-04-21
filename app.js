@@ -2782,6 +2782,14 @@ const Game = {
         `That was an incredible battle, ${name}. Your Pokémon have real heart — I haven't seen that kind of bond in a long time.\n\nI can't just let you walk out of here. My team and I would like to travel with you for a while. At least until you reach the next gym.\n\nAnd don't worry — I'll cook for your Pokémon every chance we get. A well-fed team is a strong team!`,
         () => showBadgeModal()
       );
+    // After beating Misty (defeated===2) show her joining narrative first
+    } else if (defeated === 2) {
+      const name = GameState.trainerName || 'Trainer';
+      showModal(
+        '🎣 Misty wants to join!',
+        `Okay, okay — you beat me fair and square, ${name}. I'll admit it. Your Pokémon were something else.\n\nBut don't get smug about it! I'm coming with you. Someone needs to keep an eye on you, and frankly the route ahead has some incredible water Pokémon I want to study.\n\nI'll test your type knowledge whenever I can. A trainer who doesn't know their matchups is a trainer who loses — and I won't have that on my watch.`,
+        () => showBadgeModal()
+      );
     } else {
       showBadgeModal();
     }
