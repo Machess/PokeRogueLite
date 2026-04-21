@@ -603,106 +603,106 @@ const SHOP_ITEMS = [
   {
     id: 'oran_berry',     name: 'Oran Berry',      icon: '🍊', category: 'consumable',
     description: 'Auto-heals 10 HP when a Pokémon drops below 50% health.',
-    price: 8, maxStack: 3, trigger: 'passive',
+    price: 12, maxStack: 3, trigger: 'passive',
   },
   {
     id: 'revive_potion',  name: 'Revive Potion',   icon: '🧪', category: 'consumable',
     description: 'Saves a Pokémon from fainting, restoring 30% HP instead.',
-    price: 15, maxStack: 2, trigger: 'on_faint',
+    price: 25, maxStack: 2, trigger: 'on_faint',
   },
   {
     id: 'potion',         name: 'Potion',           icon: '💊', category: 'consumable',
     description: 'Heals 30 HP to one Pokémon right now.',
-    price: 10, maxStack: 3, trigger: 'use',
+    price: 15, maxStack: 3, trigger: 'use',
   },
   {
     id: 'super_potion',   name: 'Super Potion',     icon: '💉', category: 'consumable',
     description: 'Heals 60 HP to one Pokémon right now.',
-    price: 20, maxStack: 2, trigger: 'use',
+    price: 30, maxStack: 2, trigger: 'use',
   },
   {
     id: 'ultra_ball',     name: 'Ultra Ball',       icon: '🟡', category: 'ball',
     description: '+50% catch rate for Uncommon and Rare Pokémon.',
-    price: 12, maxStack: 3, trigger: 'catch',
+    price: 20, maxStack: 3, trigger: 'catch',
   },
   {
     id: 'master_ball',    name: 'Master Ball',      icon: '🟣', category: 'ball',
     description: '100% catch rate. Only one per run!',
-    price: 50, maxStack: 1, trigger: 'catch', unique: true,
+    price: 80, maxStack: 1, trigger: 'catch', unique: true,
   },
   {
     id: 'repel',          name: 'Repel',             icon: '🚫', category: 'consumable',
     description: 'Next Catch node: only Uncommon or Rare Pokémon appear.',
-    price: 10, maxStack: 2, trigger: 'catch_modifier',
+    price: 18, maxStack: 2, trigger: 'catch_modifier',
   },
   {
     id: 'lure',           name: 'Lure',              icon: '🎣', category: 'consumable',
     description: 'Increases Rare encounter chance for the rest of this map.',
-    price: 20, maxStack: 1, trigger: 'lure_modifier',
+    price: 30, maxStack: 1, trigger: 'lure_modifier',
   },
   // ── Held Items (equipped to a Pokémon) ───────────────────────────────────
   {
     id: 'shell_bell',     name: 'Shell Bell',        icon: '🔔', category: 'held',
     description: 'Holder heals 5 HP whenever they deal damage.',
-    price: 25, maxStack: 1, trigger: 'held',
+    price: 40, maxStack: 1, trigger: 'held',
   },
   {
     id: 'lucky_egg',      name: 'Lucky Egg',         icon: '🥚', category: 'held',
     description: 'Holder gains +2 levels per battle instead of +1.',
-    price: 30, maxStack: 1, trigger: 'held',
+    price: 50, maxStack: 1, trigger: 'held',
   },
   {
     id: 'amulet_coin',    name: 'Amulet Coin',       icon: '🪙', category: 'held',
     description: 'Holder doubles gold earned from battles.',
-    price: 35, maxStack: 1, trigger: 'held',
+    price: 55, maxStack: 1, trigger: 'held',
   },
   {
     id: 'focus_sash',     name: 'Focus Sash',        icon: '🎗', category: 'held',
     description: 'Holder survives one KO hit with 1 HP. One use per battle.',
-    price: 40, maxStack: 1, trigger: 'held',
+    price: 60, maxStack: 1, trigger: 'held',
   },
   {
     id: 'charcoal',       name: 'Charcoal',          icon: '🪵', category: 'held',
     description: 'Boosts Fire-type moves by 20%.',
-    price: 20, maxStack: 1, trigger: 'held',
+    price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'mystic_water',   name: 'Mystic Water',      icon: '💦', category: 'held',
     description: 'Boosts Water-type moves by 20%.',
-    price: 20, maxStack: 1, trigger: 'held',
+    price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'miracle_seed',   name: 'Miracle Seed',      icon: '🌱', category: 'held',
     description: 'Boosts Grass-type moves by 20%.',
-    price: 20, maxStack: 1, trigger: 'held',
+    price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'magnet',         name: 'Magnet',             icon: '🧲', category: 'held',
     description: 'Boosts Electric-type moves by 20%.',
-    price: 20, maxStack: 1, trigger: 'held',
+    price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'leftovers',      name: 'Leftovers',          icon: '🍖', category: 'held',
     description: 'Holder heals 5 HP at the start of every turn.',
-    price: 30, maxStack: 1, trigger: 'held',
+    price: 45, maxStack: 1, trigger: 'held',
   },
   // ── Evolution Stones (Eevee only) ────────────────────────────────────────
   {
     id: 'fire_stone',    name: 'Fire Stone',    icon: '🔥', category: 'stone',
     description: 'Evolves Eevee into Flareon. Fire-type. Cannot be undone.',
-    price: 35, maxStack: 1, unique: true,
+    price: 50, maxStack: 1, unique: true,
     stoneTarget: { id: 136, type: 'fire', name: 'Flareon' },
   },
   {
     id: 'water_stone',   name: 'Water Stone',   icon: '💧', category: 'stone',
     description: 'Evolves Eevee into Vaporeon. Water-type. Cannot be undone.',
-    price: 35, maxStack: 1, unique: true,
+    price: 50, maxStack: 1, unique: true,
     stoneTarget: { id: 134, type: 'water', name: 'Vaporeon' },
   },
   {
     id: 'thunder_stone', name: 'Thunder Stone', icon: '⚡', category: 'stone',
     description: 'Evolves Eevee into Jolteon. Electric-type. Cannot be undone.',
-    price: 35, maxStack: 1, unique: true,
+    price: 50, maxStack: 1, unique: true,
     stoneTarget: { id: 135, type: 'electric', name: 'Jolteon' },
   },
 ];
@@ -719,6 +719,16 @@ const GOLD_TABLE = [
   { wildMin: 26, wildMax: 38, bossBonus: 50 },  // Blaine
   { wildMin: 30, wildMax: 45, bossBonus: 60 },  // Giovanni
 ];
+
+// ── Shop price scaling ────────────────────────────────────────────────────────
+// Base prices in SHOP_ITEMS stay fixed. At runtime, prices scale up with progress
+// so items feel exclusive late-game and are genuinely affordable early.
+// Scale factor: 1.0 at boss 0 → 2.0 at boss 7 (linear, rounded to nearest 5)
+function getScaledPrice(basePrice) {
+  const bosses = Math.min(GameState?.bossesDefeated || 0, 7);
+  const factor = 1 + (bosses / 7) * 1.0;   // 1.0× early → 2.0× late
+  return Math.ceil((basePrice * factor) / 5) * 5; // round up to nearest 5g
+}
 
 function goldForWildBattle() {
   const t      = GOLD_TABLE[Math.min(GameState.bossesDefeated, GOLD_TABLE.length - 1)];
@@ -1064,6 +1074,7 @@ const SoundEngine = {
     'training':  'pallet_town_theme.mp3',
     'shop':      'pallet_town_theme.mp3',
     'evolve':    'pallet_town_theme.mp3',
+    'cooking':   'pallet_town_theme.mp3',
     'victory':   'poke_intro.mp3',
     'gameover':  null,
   },
@@ -5820,7 +5831,8 @@ const ShopEngine = {
         const equipped = GameState.party.filter(p => p.heldItem?.id === item.id).length;
         const maxed    = count >= item.maxStack;
         const isUnique = item.unique && (count > 0 || (item.id === 'master_ball' && GameState.masterBallUsed));
-        const cantAfford = (GameState.gold || 0) < item.price;
+        const scaledPrice = getScaledPrice(item.price);
+        const cantAfford = (GameState.gold || 0) < scaledPrice;
         const disabled = maxed || isUnique || cantAfford;
 
         const div = document.createElement('div');
@@ -5845,7 +5857,7 @@ const ShopEngine = {
           <div class="shop-item-desc">${item.description}</div>
           ${stonePreviewHtml}
           <div class="shop-item-footer">
-            <span class="shop-item-price">💰${item.price}g</span>
+            <span class="shop-item-price">💰${scaledPrice}g</span>
             ${count > 0 ? `<span class="shop-item-owned">bag ×${count}</span>` : ''}
             ${equipped > 0 ? `<span class="shop-item-owned">held ×${equipped}</span>` : ''}
             <button class="btn-pixel btn-small btn-primary shop-buy-btn"
@@ -5866,7 +5878,8 @@ const ShopEngine = {
   buy(id) {
     const item = SHOP_ITEMS.find(i => i.id === id);
     if (!item) return;
-    if ((GameState.gold || 0) < item.price) return;
+    const scaledPrice = getScaledPrice(item.price);
+    if ((GameState.gold || 0) < scaledPrice) return;
 
     // Stone items need a confirmation modal — permanent choice, map-only use
     if (item.category === 'stone') {
@@ -5875,7 +5888,7 @@ const ShopEngine = {
         `${item.icon} Use ${item.name}?`,
         `Eevee will become ${target.name} (${target.type}-type). Your deck will change completely.\n\nYou can use the stone from the bag on the map screen. This cannot be undone.`,
         () => {
-          GameState.gold -= item.price;
+          GameState.gold -= scaledPrice;
           ItemEngine.addItem(id);
           SoundEngine.playFanfare();
           saveGame();
@@ -5885,7 +5898,7 @@ const ShopEngine = {
       return;
     }
 
-    GameState.gold -= item.price;
+    GameState.gold -= scaledPrice;
 
     if (item.category === 'held') {
       const active = GameState.party[GameState.activePokemonIndex];
@@ -6614,7 +6627,9 @@ const CookingEngine = {
       headline = '🍽️ Perfect Meal!';
       party.forEach(p => { p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.25)); });
       GameState.cookingShield = 30;
-      detail = `All Pokémon healed 25% HP!\nAll Pokémon have a 30 dmg shield for the next battle!`;
+      const goldPerfect = 10 + (GameState.bossesDefeated || 0) * 3;
+      GameState.gold = (GameState.gold || 0) + goldPerfect;
+      detail = `All Pokémon healed 25% HP! Shield for next battle!\n+${goldPerfect}💰 from Brock!`;
     } else if (correctSlots > 0) {
       outcome  = 'partial';
       headline = '🍱 Partially Right';
@@ -6622,7 +6637,9 @@ const CookingEngine = {
       for (let i = 0; i < benefitCount; i++) {
         party[i].hp = Math.min(party[i].maxHp, party[i].hp + Math.floor(party[i].maxHp * 0.15));
       }
-      detail = `${correctSlots}/3 slots correct.\n${benefitCount} Pokémon healed a little.`;
+      const goldPartial = 5 + (GameState.bossesDefeated || 0) * 1;
+      GameState.gold = (GameState.gold || 0) + goldPartial;
+      detail = `${correctSlots}/3 slots correct. ${benefitCount} Pokémon healed a little.\n+${goldPartial}💰 from Brock.`;
     } else {
       outcome  = 'wrong';
       headline = '😬 That Didn\'t Taste Great...';
@@ -7254,6 +7271,8 @@ const FishingEngine = {
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     document.getElementById('trainer-intro').style.display = 'none';
+    // Override challenge screen's Rocket music — fishing uses battle music
+    SoundEngine.playBGM('opening.mp3');
     this._showClueStage();
   },
 
@@ -7410,15 +7429,18 @@ const FishingEngine = {
       // Apply buff
       const buffType = chosenType;
       GameState.fishingBuff = { type: buffType, mult: 1.3 };
+      const goldReward = 8 + (GameState.bossesDefeated || 0) * 2;
+      GameState.gold = (GameState.gold || 0) + goldReward;
       saveGame();
       resultEl.className = 'challenge-result result-correct';
       resultEl.innerHTML =
         `✅ <strong>Correct, ${name}!</strong><br>` +
         `${p.explanation}<br>` +
         `<em>"${p.mistyFluff_right}"</em><br>` +
-        `<span class="fishing-buff-notice">🎣 ${TYPE_ICONS[buffType]} ${buffType.charAt(0).toUpperCase()+buffType.slice(1)}-type moves deal <strong>+30% damage</strong> in your next battle!</span>`;
+        `<span class="fishing-buff-notice">🎣 ${TYPE_ICONS[buffType]} ${buffType.charAt(0).toUpperCase()+buffType.slice(1)}-type moves deal <strong>+30% damage</strong> in your next battle! +${goldReward}💰</span>`;
       SoundEngine.playFanfare();
     } else {
+      saveGame();
       resultEl.className = 'challenge-result result-wrong';
       resultEl.innerHTML =
         `❌ <strong>The answer is: ${p.correctTypes[0]}</strong><br>` +
