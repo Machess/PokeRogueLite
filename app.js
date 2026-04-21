@@ -1119,7 +1119,7 @@ const SoundEngine = {
   },
 
   playStarterCry(starterId) {
-    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3' };
+    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3', 133: 'eevee.mp3' };
     const file = cryMap[starterId];
     if (file) this.playSFXDebounced(file, 0.8);
   },
@@ -2607,7 +2607,8 @@ const Game = {
 
   async confirmStarter(s) {
     showLoading();
-    if (s.id === 25) SoundEngine.playPikachu2();
+    if (s.id === 25)  SoundEngine.playPikachu2();
+    if (s.id === 133) SoundEngine.playStarterCry(133);
     const data   = await fetchPoke(s.id);
     const sprite = getSpriteUrl(data);
     const pokemon = makePokemon(s.id, 5, sprite, s.name, s.type, true);
