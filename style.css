@@ -5042,3 +5042,160 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-color: rgba(111,207,151,.5);
   background: rgba(111,207,151,.08);
 }
+
+/* ═══════════════════════════════════════════
+   MISTY'S MAZE MINI-GAME
+   To remove: delete this entire CSS block
+═══════════════════════════════════════════ */
+#screen-maze {
+  background: linear-gradient(160deg, #0a1628 0%, #0d2340 50%, #0a1628 100%);
+  justify-content: flex-start;
+  align-items: center;
+  gap: .4rem;
+  padding: .6rem .4rem 1rem;
+  overflow: hidden;
+}
+.maze-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background: radial-gradient(ellipse at 50% 30%, rgba(42,117,187,.12) 0%, transparent 60%);
+}
+.maze-header {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  width: 100%; padding: 0 .5rem; box-sizing: border-box;
+}
+.maze-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: var(--col-yellow);
+}
+.maze-lives {
+  font-size: .9rem; letter-spacing: .1rem;
+}
+.maze-hint {
+  position: relative; z-index: 1;
+  font-size: .45rem; color: var(--col-text-dim);
+}
+
+/* Maze grid */
+.maze-grid {
+  position: relative; z-index: 1;
+  display: grid;
+  gap: 1px;
+  border: 2px solid rgba(42,117,187,.4);
+  border-radius: 4px;
+  overflow: hidden;
+  max-width: min(340px, 88vw);
+  width: min(340px, 88vw);
+  aspect-ratio: 1;
+  background: #050d1a;
+}
+.maze-cell {
+  display: flex; align-items: center; justify-content: center;
+  font-size: .7rem; line-height: 1;
+  user-select: none;
+  aspect-ratio: 1;
+}
+.maze-wall  { background: #0d2a4a; }
+.maze-floor { background: #0e1e35; }
+.maze-exit  { background: rgba(255,215,0,.15); animation: maze-exit-pulse 1.2s ease-in-out infinite; }
+.maze-misty { background: rgba(86,160,224,.2); }
+.maze-bug   { background: rgba(200,50,50,.15); }
+
+@keyframes maze-exit-pulse {
+  0%,100% { background: rgba(255,215,0,.12); }
+  50%      { background: rgba(255,215,0,.28); }
+}
+.maze-hit {
+  animation: maze-hit-flash .4s ease;
+}
+@keyframes maze-hit-flash {
+  0%,100% { opacity: 1; }
+  25%,75% { opacity: .3; }
+  50%     { opacity: .7; }
+}
+
+/* D-pad */
+.maze-dpad {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+  margin-top: .3rem;
+}
+.dpad-row {
+  display: flex; justify-content: center; gap: .2rem;
+}
+.dpad-mid { align-items: center; gap: .2rem; }
+.dpad-centre { width: 48px; height: 48px; }
+.dpad-btn {
+  width: 52px; height: 52px;
+  background: rgba(42,117,187,.25);
+  border: 2px solid rgba(42,117,187,.5);
+  border-radius: var(--r-md);
+  color: #fff; font-size: 1.1rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: background .1s, transform .1s;
+  -webkit-tap-highlight-color: transparent;
+}
+.dpad-btn:active {
+  background: rgba(42,117,187,.55);
+  transform: scale(.92);
+}
+
+/* ═══════════════════════════════════════════
+   FISHING MINI-GAME — speech bubbles + reveal
+═══════════════════════════════════════════ */
+.fishing-clue-area {
+  display: flex; flex-direction: column; gap: .5rem;
+  margin: .4rem 0; max-height: 180px; overflow-y: auto;
+  scrollbar-width: thin;
+}
+.fishing-bubble {
+  background: rgba(42,117,187,.18);
+  border: 1px solid rgba(42,117,187,.4);
+  border-radius: var(--r-md);
+  padding: .45rem .65rem;
+  font-size: .56rem; color: var(--col-text);
+  line-height: 1.55;
+  position: relative;
+}
+.fishing-bubble::before {
+  content: '💬';
+  margin-right: .3rem; font-size: .6rem;
+}
+.fishing-bubble-typing { opacity: .85; }
+.fishing-bubble-shown  { opacity: 1; }
+.fishing-summary {
+  background: rgba(255,215,0,.08);
+  border: 1px solid rgba(255,215,0,.3);
+  border-radius: var(--r-md);
+  padding: .5rem .7rem;
+  font-size: .56rem; color: var(--col-text); line-height: 1.6;
+  font-style: italic; margin-top: .3rem;
+}
+.fishing-next-btn {
+  align-self: flex-end; font-size: .4rem !important;
+  padding: .4em .8em !important; margin-top: .2rem;
+}
+.fishing-type-btn {
+  display: flex; align-items: center; gap: .3rem;
+  font-size: .48rem !important; padding: .5em .8em !important;
+}
+.fishing-buff-notice {
+  display: block; margin-top: .4rem;
+  font-size: .5rem; color: var(--col-yellow);
+  background: rgba(255,215,0,.1); border-radius: var(--r-sm);
+  padding: .3rem .5rem;
+}
+/* Pokémon reveal */
+.fishing-reveal {
+  display: flex !important;
+  flex-direction: row; align-items: center; gap: .6rem;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: var(--r-md); padding: .45rem .7rem;
+  margin: .4rem 0;
+}
+.fishing-reveal-sprite {
+  width: 56px; height: 56px;
+  image-rendering: pixelated; object-fit: contain;
+}
+#jessie-word.fishing-reveal { font-size: .65rem; color: var(--col-yellow); font-weight: 700; }
