@@ -7314,7 +7314,8 @@ const FishingEngine = {
     qEl.textContent   = '';
 
     showScreen('challenge');
-    SoundEngine.playBGM('pallet_town_theme.mp3'); // override Rocket music — fishing uses town theme like Brock
+    document.getElementById('screen-challenge').classList.add('fishing-active');
+    SoundEngine.playBGM('pallet_town_theme.mp3');
     this._renderCurrentClue();
   },
 
@@ -7496,6 +7497,7 @@ const FishingEngine = {
   // ── Continue button — complete node and go back to map ───────────────────
   finish() {
     this._isActive = false;
+    document.getElementById('screen-challenge').classList.remove('fishing-active');
     document.getElementById('challenge-continue-btn').textContent = 'Continue ▶';
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
