@@ -1068,24 +1068,23 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ── Pokémon sprite areas ─────────────────────────────────────────────────
-   Background image = top 50vh of screen, rendered at 100vw × 50vh.
-   Platform positions measured directly from screenshot (ground_rock_bg):
-
-   PLAYER platform (bottom-left):
-     Surface top = 56.5vh from top of screen
-     H-centre    = 25.3vw from left
-     Sprite (140px) bottom lands at 56.5vh
-     column-reverse stack → bottom: 100vh - 56.5vh = 43.5vh
+   Platform positions measured from full 769×1028px battle screenshot:
 
    OPPONENT platform (upper-right):
-     Surface top = 35.4vh from top of screen
-     H-centre    = 66.6vw from left
-     Full stack: HUD (~75px) + gap (4px) + sprite (120px) = 199px
-     → top: calc(35.4vh - 199px)
+     Flat surface top = 23.2vh from top of screen
+     H-centre = 66.6vw from left
+     Stack (HUD 75px + gap 4px + sprite 120px = 199px)
+     → top: calc(23.2vh - 199px)
+
+   PLAYER platform (bottom-left):
+     Flat surface top = 28.2vh from top of screen
+     H-centre = 25.3vw from left
+     Sprite (140px) bottom lands at 28.2vh
+     → bottom: 71.8vh  (= 100 - 28.2)
    ────────────────────────────────────────────────────────────────────── */
 .battle-opponent-area {
   position: absolute;
-  top: calc(35.4vh - 199px);
+  top: calc(23.2vh - 199px);
   left: calc(66.6vw - 60px);
   display: flex;
   flex-direction: column;
@@ -1095,7 +1094,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .battle-player-area {
   position: absolute;
-  bottom: 43.5vh;
+  bottom: 71.8vh;
   left: calc(25.3vw - 70px);
   display: flex;
   flex-direction: column-reverse;
