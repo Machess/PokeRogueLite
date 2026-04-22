@@ -1029,6 +1029,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   object-fit: fill;   /* stretch to fill exactly — no crop, all ovals visible */
   min-height: 180px;
   image-rendering: pixelated;
+  transition: opacity .3s ease;
+}
+/* During boss trainer intro: full-portrait cover so gym background fills the screen */
+.boss-intro-mode .battle-bg-img {
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
 }
 .battle-bg-overlay {
   position: absolute; inset: 0;
@@ -1043,9 +1050,19 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .boss-overlay {
   background: linear-gradient(
     180deg,
-    rgba(60,0,0,.15) 0%,
-    rgba(0,0,0,.15) 45%,
-    rgba(10,10,26,.82) 68%,
+    rgba(60,0,0,.10)  0%,
+    rgba(0,0,0,.10)   40%,
+    rgba(10,10,26,.80) 65%,
+    rgba(10,10,26,.97) 100%
+  );
+}
+/* During intro: darken bottom half more so dialogue box text is always readable */
+.boss-intro-mode .boss-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.15)   0%,
+    rgba(0,0,0,.20)   35%,
+    rgba(10,10,26,.78) 58%,
     rgba(10,10,26,.97) 100%
   );
 }

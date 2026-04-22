@@ -4222,7 +4222,50 @@ const BattleEngine = {
   },
 };
 
-// ─── BOSS ENGINE ─────────────────────────────────────────────────────────────
+// ─── BOSS INTRO BACKGROUNDS ──────────────────────────────────────────────────
+// Full-portrait backgrounds shown during trainer introduction only.
+// Naming: assets/bg_N_boss.png  (N = bossIndex 0-12)
+// If the file doesn't exist the GYM_FALLBACKS gradient is used instead.
+const BOSS_INTRO_BACKGROUNDS = [
+  'assets/bg_0_boss.png',   // Brock
+  'assets/bg_1_boss.png',   // Misty
+  'assets/bg_2_boss.png',   // Lt. Surge
+  'assets/bg_3_boss.png',   // Erika
+  'assets/bg_4_boss.png',   // Koga
+  'assets/bg_5_boss.png',   // Sabrina
+  'assets/bg_6_boss.png',   // Blaine
+  'assets/bg_7_boss.png',   // Giovanni
+  'assets/bg_8_boss.png',   // Lorelei
+  'assets/bg_9_boss.png',   // Bruno
+  'assets/bg_10_boss.png',  // Agatha
+  'assets/bg_11_boss.png',  // Lance
+  'assets/bg_12_boss.png',  // Blue
+];
+
+function setBossIntroBg(bossIdx) {
+  const src      = BOSS_INTRO_BACKGROUNDS[Math.min(bossIdx, BOSS_INTRO_BACKGROUNDS.length - 1)];
+  const fallback = GYM_FALLBACKS[Math.min(bossIdx, GYM_FALLBACKS.length - 1)];
+  const bgEl     = document.querySelector('#screen-boss .battle-bg');
+  const imgEl    = document.querySelector('#screen-boss .battle-bg-img');
+  if (!bgEl || !imgEl) return;
+
+  // Enter intro mode — full-portrait cover image
+  bgEl.classList.add('boss-intro-mode');
+  bgEl.style.background = fallback;   // fallback gradient on the container
+
+  imgEl.style.opacity = '0';          // hide until loaded
+  imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+  imgEl.onerror = () => { imgEl.style.opacity = '0'; /* keep fallback gradient */ };
+  imgEl.src = src;
+}
+
+function clearBossIntroBg(firstOppType) {
+  const bgEl = document.querySelector('#screen-boss .battle-bg');
+  if (bgEl) bgEl.classList.remove('boss-intro-mode');
+  // Restore the type-based battle background for the actual fight
+  setBattleBg(firstOppType, true);
+}
+
 
 const BossEngine = {
   bossData: null,
@@ -4257,9 +4300,10 @@ const BossEngine = {
     }
     hideLoading();
 
-    // Set background based on first opponent's type
+    // Show gym-specific intro background (full portrait) during trainer dialogue
     const firstOppType = this.oppTeam[0]?.type || 'normal';
-    setBattleBg(firstOppType, true);
+    this._firstOppType = firstOppType;   // stored so startBattle can restore it
+    setBossIntroBg(bossIdx);
     showScreen('boss');
 
     const trainerSpriteWrap = document.querySelector('.trainer-sprite-wrap');
@@ -4289,6 +4333,8 @@ const BossEngine = {
   startBattle() {
     document.getElementById('trainer-intro').style.display   = 'none';
     document.getElementById('boss-battle-area').style.display = 'block';
+    // Swap from full-portrait intro bg to type-based battle bg
+    clearBossIntroBg(this._firstOppType || 'normal');
     this._loadNextOpp();
   },
 
