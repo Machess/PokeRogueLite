@@ -1068,24 +1068,25 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ── Pokémon sprite areas ─────────────────────────────────────────────────
-   Background image = top 50vh of screen.
-   Oval positions (pixel-measured, consistent across all 5 backgrounds):
-     Opponent oval bottom = 49% of image height = 24.5vh from top
-     Player oval top      = 50% of image height = 25.0vh from top
+   Background image = top 50vh of screen, rendered at 100vw × 50vh.
+   Platform positions measured directly from screenshot (ground_rock_bg):
 
-   OPPONENT column layout: HUD (top) → gap → sprite (bottom)
-     HUD ~75px + gap 4px + sprite 120px = 199px total
-     area top = 24.5vh - 199px  → sprite bottom lands exactly at oval bottom (24.5vh)
+   PLAYER platform (bottom-left):
+     Surface top = 56.5vh from top of screen
+     H-centre    = 25.3vw from left
+     Sprite (140px) bottom lands at 56.5vh
+     column-reverse stack → bottom: 100vh - 56.5vh = 43.5vh
 
-   PLAYER column-reverse layout: sprite (bottom) → gap → HUD (top)
-     sprite bottom = element bottom edge
-     element bottom = 25vh from top = 75vh from bottom
-     → bottom: 75vh  → Squirtle feet land on player oval top (25vh)
+   OPPONENT platform (upper-right):
+     Surface top = 35.4vh from top of screen
+     H-centre    = 66.6vw from left
+     Full stack: HUD (~75px) + gap (4px) + sprite (120px) = 199px
+     → top: calc(35.4vh - 199px)
    ────────────────────────────────────────────────────────────────────── */
 .battle-opponent-area {
   position: absolute;
-  top: calc(20vh - 199px);
-  right: 3%;
+  top: calc(35.4vh - 199px);
+  left: calc(66.6vw - 60px);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -1094,8 +1095,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .battle-player-area {
   position: absolute;
-  bottom: 56.5vh;
-  left: 3%;
+  bottom: 43.5vh;
+  left: calc(25.3vw - 70px);
   display: flex;
   flex-direction: column-reverse;
   align-items: flex-start;

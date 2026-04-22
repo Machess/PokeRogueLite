@@ -569,20 +569,24 @@ const WILD_POOL = {
 
 // ── Battle background selection by opponent type ──────────────────────────
 const BATTLE_BACKGROUNDS = {
-  water:    'assets/water_bg.png',
-  ice:      'assets/water_bg.png',
-  grass:    'assets/grass_bg.png',
-  bug:      'assets/grass_bg.png',
   normal:   'assets/grass_bg.png',
-  flying:   'assets/grass_bg.png',
-  rock:     'assets/ground_rock_bg.png',
-  ground:   'assets/ground_rock_bg.png',
+  fire:     'assets/fire_bg.png',
+  water:    'assets/water_bg.png',
+  grass:    'assets/grass_bg.png',
+  electric: 'assets/electric_bg.png',
+  ice:      'assets/water_bg.png',
   fighting: 'assets/ground_rock_bg.png',
-  steel:    'assets/ground_rock_bg.png',
+  poison:   'assets/poison_bg.png',
+  ground:   'assets/ground_rock_bg.png',
+  flying:   'assets/grass_bg.png',
   psychic:  'assets/ice_bg.png',
+  bug:      'assets/grass_bg.png',
+  rock:     'assets/ground_rock_bg.png',
+  ghost:    'assets/dark_bg.png',
+  dragon:   'assets/ground_rock_bg.png',
+  dark:     'assets/dark_bg.png',
+  steel:    'assets/electric_bg.png',
   fairy:    'assets/ice_bg.png',
-  ghost:    'assets/ice_bg.png',
-  dragon:   'assets/ice_bg.png',
 };
 function getBattleBg(type) {
   return BATTLE_BACKGROUNDS[type] || 'assets/neutral_bg.png';
