@@ -5299,3 +5299,111 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .65rem; color: #4fc3e8; font-weight: 700;
 }
 
+
+/* ═══════════════════════════════════════════
+   TEAM ROCKET CHARACTER CHALLENGE BACKGROUNDS
+   Scoped per character — base Rocket styles
+   untouched when no class is present.
+═══════════════════════════════════════════ */
+
+/* ── Meowth — warm gold coin treasure room ── */
+#screen-challenge.meowth-active {
+  background: linear-gradient(160deg, #1a1000 0%, #2a1a00 50%, #1a1000 100%);
+}
+#screen-challenge.meowth-active .challenge-bg {
+  background-image: url('assets/challenge_meowth_bg.png');
+  background-size: cover;
+  background-position: center top;
+}
+#screen-challenge.meowth-active .challenge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.15)   0%,
+    rgba(0,0,0,.35)   40%,
+    rgba(10,6,0,.88)  70%,
+    rgba(10,6,0,.97)  100%
+  );
+}
+#screen-challenge.meowth-active .challenge-header {
+  border-color: rgba(255,200,40,.45);
+}
+#screen-challenge.meowth-active .challenge-badge {
+  color: #ffd700;
+}
+#screen-challenge.meowth-active .challenge-question {
+  border-color: rgba(255,200,40,.35);
+  color: #ffd700;
+}
+#screen-challenge.meowth-active .challenge-answer-btn:hover:not(:disabled) {
+  border-color: #ffd700;
+  background: rgba(255,200,40,.12);
+}
+
+/* ── Jessie — warm pink theatrical dressing room ── */
+#screen-challenge.jessie-active {
+  background: linear-gradient(160deg, #1a0818 0%, #280c22 50%, #1a0818 100%);
+}
+#screen-challenge.jessie-active .challenge-bg {
+  background-image: url('assets/challenge_jessie_bg.png');
+  background-size: cover;
+  background-position: center top;
+}
+#screen-challenge.jessie-active .challenge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.15)    0%,
+    rgba(0,0,0,.35)    40%,
+    rgba(15,4,18,.88)  70%,
+    rgba(15,4,18,.97)  100%
+  );
+}
+#screen-challenge.jessie-active .challenge-header {
+  border-color: rgba(220,80,160,.45);
+}
+#screen-challenge.jessie-active .challenge-badge {
+  color: #ff80c8;
+}
+#screen-challenge.jessie-active .challenge-question {
+  border-color: rgba(220,80,160,.35);
+  color: #ff80c8;
+}
+#screen-challenge.jessie-active .challenge-answer-btn:hover:not(:disabled) {
+  border-color: #ff80c8;
+  background: rgba(220,80,160,.12);
+}
+
+/* ── James — warm green aristocratic study ── */
+#screen-challenge.james-active {
+  background: linear-gradient(160deg, #061008 0%, #0c1c0e 50%, #061008 100%);
+}
+#screen-challenge.james-active .challenge-bg {
+  background-image: url('assets/challenge_james_bg.png');
+  background-size: cover;
+  background-position: center top;
+}
+#screen-challenge.james-active .challenge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.15)   0%,
+    rgba(0,0,0,.35)   40%,
+    rgba(4,10,4,.88)  70%,
+    rgba(4,10,4,.97)  100%
+  );
+}
+#screen-challenge.james-active .challenge-header {
+  border-color: rgba(80,160,80,.45);
+}
+#screen-challenge.james-active .challenge-badge {
+  color: #80cc80;
+}
+#screen-challenge.james-active .challenge-question {
+  border-color: rgba(80,160,80,.35);
+  color: #80cc80;
+}
+#screen-challenge.james-active .challenge-answer-btn:hover:not(:disabled) {
+  border-color: #80cc80;
+  background: rgba(80,160,80,.12);
+}

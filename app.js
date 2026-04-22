@@ -2119,6 +2119,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.add('meowth-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
@@ -2155,6 +2156,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.add('jessie-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
@@ -2186,10 +2188,13 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.add('james-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
   finish() {
+    const sc = document.getElementById('screen-challenge');
+    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active');
     showScreen('map');
     MapEngine.renderParty();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
@@ -4735,13 +4740,22 @@ const MysteryEngine = {
 };
 
 // ─── ROCKET BATTLE ENGINE ────────────────────────────────────────────────────
+// Rocket-specific backgrounds — intro (full portrait) + 3 battle variants (wide landscape)
+const ROCKET_INTRO_BG   = 'assets/rocket_intro_bg.png';
+const ROCKET_BATTLE_BGS = [
+  'assets/rocket_battle_bg_1.png',
+  'assets/rocket_battle_bg_2.png',
+  'assets/rocket_battle_bg_3.png',
+];
+
 const RocketBattleEngine = {
-  _script:   [],
-  _lineIdx:  0,
-  _oppTeam:  [],
-  _oppIdx:   0,
-  bState:    null,
-  bossData:  null,  // mirrors BossEngine interface so _checkDefeated etc. work
+  _script:    [],
+  _lineIdx:   0,
+  _oppTeam:   [],
+  _oppIdx:    0,
+  _battleBg:  null,   // chosen battle bg, set in start() used in startBattle()
+  bState:     null,
+  bossData:   null,
 
   async start(node) {
     showLoading();
@@ -4771,31 +4785,40 @@ const RocketBattleEngine = {
         const sprite = getSpriteUrl(d, true) || '';
         this._oppTeam.push(makePokemon(id, rocketLvl, sprite, pName, pType));
       } catch(e) {
-        // API failure — create a fallback Pokémon so the team is never empty
         console.warn(`fetchPoke failed for id ${id}:`, e);
         this._oppTeam.push(makePokemon(id, rocketLvl, '', `Pokémon #${id}`, 'poison'));
       }
     }
 
-    // Safety: if all fetches failed, use bare stubs
     if (this._oppTeam.length === 0) {
       this._oppTeam = teamIds.map(id =>
         makePokemon(id, rocketLvl, '', `Pokémon #${id}`, 'poison')
       );
     }
 
-    // ── Pick a random dialogue script ─────────────────────────────────────────
+    // Pick a random battle bg now so it's consistent for the whole encounter
+    this._battleBg = ROCKET_BATTLE_BGS[Math.floor(Math.random() * ROCKET_BATTLE_BGS.length)];
+
     this._script  = ROCKET_SCRIPTS[Math.floor(Math.random() * ROCKET_SCRIPTS.length)];
     this._lineIdx = 0;
-
-    // bossData stub so BossEngine._checkDefeated-style logic works
     this.bossData = { name: 'Team Rocket' };
 
     hideLoading();
     showScreen('boss');
-    BossEngine._isRocket = true;  // set NOW so button handler routes correctly
+    BossEngine._isRocket = true;
 
-    // Show boss-party-bar for Rocket team
+    // ── Set full-portrait intro background ───────────────────────────────────
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl && imgEl) {
+      bgEl.classList.add('boss-intro-mode');
+      bgEl.style.background = 'linear-gradient(180deg,#1a0808 0%,#2a1010 100%)';
+      imgEl.style.opacity = '0';
+      imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = ROCKET_INTRO_BG;
+    }
+
     document.getElementById('boss-party-bar').innerHTML =
       this._oppTeam.map((_,i) => `<div class="boss-poke-pip" id="boss-pip-${i}"></div>`).join('');
 
@@ -4872,6 +4895,16 @@ const RocketBattleEngine = {
   startBattle() {
     document.getElementById('trainer-intro').style.display    = 'none';
     document.getElementById('boss-battle-area').style.display = 'block';
+
+    // Swap from full-portrait intro bg to the chosen wide battle bg
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl && imgEl) {
+      bgEl.classList.remove('boss-intro-mode');
+      imgEl.style.opacity = '1';
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = this._battleBg;
+    }
 
     BossEngine.bossData = this.bossData;
     BossEngine.oppTeam  = this._oppTeam;
