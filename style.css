@@ -1068,7 +1068,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ── Pokémon sprite areas ─────────────────────────────────────────────────
-   Platform positions measured from full 769×1028px battle screenshot:
+   Platform positions measured from full 785×1031px battle screenshot:
 
    OPPONENT platform (upper-right):
      Flat surface top = 23.2vh from top of screen
@@ -1077,10 +1077,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
      → top: calc(23.2vh - 199px)
 
    PLAYER platform (bottom-left):
-     Flat surface top = 28.2vh from top of screen
-     H-centre = 25.3vw from left
-     Sprite (140px) bottom lands at 28.2vh
-     → bottom: 71.8vh  (= 100 - 28.2)
+     Red reference line drawn at y=372px = 36.1vh
+     Sprite feet should land at 36.1vh
+     → bottom: 63.9vh  (= 100 - 36.1)
    ────────────────────────────────────────────────────────────────────── */
 .battle-opponent-area {
   position: absolute;
@@ -1094,7 +1093,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .battle-player-area {
   position: absolute;
-  bottom: 71.8vh;
+  bottom: 63.9vh;
   left: calc(25.3vw - 70px);
   display: flex;
   flex-direction: column-reverse;
