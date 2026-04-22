@@ -1063,7 +1063,7 @@ const SoundEngine = {
   _bgmMap: {
     'register':  'pallet_town_theme.mp3',
     'intro':     'pallet_town_theme.mp3',
-    'challenge': 'teamrocket_battle.mp3',
+    // 'challenge' is intentionally absent — each engine sets its own track explicitly
     'start':     'poke_intro.mp3',
     'starter':   'pallet_town_theme.mp3',
     'map':       'pallet_town_theme.mp3',
@@ -2115,6 +2115,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
   // ── JESSIE ────────────────────────────────────────────────────────────────
@@ -2150,6 +2151,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
   // ── JAMES ─────────────────────────────────────────────────────────────────
@@ -2180,6 +2182,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
   finish() {
@@ -7279,8 +7282,6 @@ const FishingEngine = {
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     document.getElementById('trainer-intro').style.display = 'none';
-    // Override challenge screen's Rocket music — fishing uses battle music
-    SoundEngine.playBGM('opening.mp3');
     this._showClueStage();
   },
 
@@ -7313,6 +7314,7 @@ const FishingEngine = {
     qEl.textContent   = '';
 
     showScreen('challenge');
+    SoundEngine.playBGM('pallet_town_theme.mp3'); // override Rocket music — fishing uses town theme like Brock
     this._renderCurrentClue();
   },
 
