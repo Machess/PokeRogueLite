@@ -1072,15 +1072,16 @@ const SoundEngine = {
     'starter':   'pallet_town_theme.mp3',
     'map':       'pallet_town_theme.mp3',
     'battle':    'opening.mp3',
-    'boss':      'pokemon_gym.mp3',
+    'boss':      'gym_battle.mp3',
     'heal':      'pokemon_center.mp3',
     'catch':     'pallet_town_theme.mp3',
     'training':  'pallet_town_theme.mp3',
-    'shop':      'pallet_town_theme.mp3',
+    'shop':      'shop.mp3',
     'evolve':    'pallet_town_theme.mp3',
     'cooking':   'pallet_town_theme.mp3',
     'victory':   'poke_intro.mp3',
     'gameover':  null,
+    'pokedex':   'pokedex.mp3',
   },
 
   // Immediately silence the current BGM — no async fade that causes overlap
