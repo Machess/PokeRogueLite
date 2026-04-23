@@ -2194,7 +2194,7 @@ const TeamRocketChallenge = {
 
   finish() {
     const sc = document.getElementById('screen-challenge');
-    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active');
+    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active');
     showScreen('map');
     MapEngine.renderParty();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
@@ -4727,15 +4727,275 @@ const ROCKET_SCRIPTS = [
 ];
 
 // ─── MYSTERY ENGINE ───────────────────────────────────────────────────────────
+// ─── LT. SURGE ELECTRIC QUIZ ENGINE ──────────────────────────────────────────
+
+const SURGE_INTROS = [
+  `${'{name}'}! Drop and give me three rounds of type matchups. In my unit, a soldier who gets this wrong doesn't get back up. MOVE IT.`,
+  `Listen up, ${'{name}'}! Surge here. We're running a battlefield assessment. Three scenarios. No guessing. GO.`,
+  `At ease, ${'{name}'}. Just kidding — STAND AT ATTENTION. Three type matchup drills. Fast and accurate. That's an order.`,
+];
+
+// Generate a scenario: pick random attacker/defender types, ask the player to classify
+function _generateSurgeScenario(usedPairs) {
+  const allTypes = Object.keys(TYPE_CHART);
+  const defenders = [...allTypes, 'normal', 'fire', 'water', 'grass', 'electric'];
+  let attacker, defender, mult;
+  let attempts = 0;
+  do {
+    attacker = allTypes[Math.floor(Math.random() * allTypes.length)];
+    defender = defenders[Math.floor(Math.random() * defenders.length)];
+    mult     = getTypeMultiplier(attacker, defender);
+    attempts++;
+  } while (usedPairs.has(`${attacker}-${defender}`) && attempts < 30);
+  usedPairs.add(`${attacker}-${defender}`);
+
+  let correct, wrongOptions;
+  if (mult >= 2) {
+    correct      = 'Super effective!';
+    wrongOptions = ['Not very effective…', 'No effect!', 'Normal damage'];
+  } else if (mult === 0) {
+    correct      = 'No effect!';
+    wrongOptions = ['Super effective!', 'Not very effective…', 'Normal damage'];
+  } else if (mult < 1) {
+    correct      = 'Not very effective…';
+    wrongOptions = ['Super effective!', 'No effect!', 'Normal damage'];
+  } else {
+    correct      = 'Normal damage';
+    wrongOptions = ['Super effective!', 'Not very effective…', 'No effect!'];
+  }
+
+  // Shuffle wrong options and take 3, then shuffle all 4 choices
+  const choices = shuffle([correct, ...wrongOptions.slice(0, 3)]);
+  const typeIcon = TYPE_ICONS[attacker] || '';
+  const defIcon  = TYPE_ICONS[defender] || '';
+  return {
+    attacker, defender, mult, correct, choices,
+    question: `⚡ ${typeIcon} ${attacker.toUpperCase()} move vs ${defIcon} ${defender.toUpperCase()} type — what happens?`,
+    explanation: mult >= 2
+      ? `${attacker} is super effective against ${defender}! ${mult === 4 ? 'It\'s DOUBLY effective!' : ''}`
+      : mult === 0
+        ? `${attacker} has NO effect on ${defender} — completely immune!`
+        : mult < 1
+          ? `${attacker} is not very effective against ${defender} — resisted!`
+          : `${attacker} deals normal damage to ${defender} — neutral matchup.`,
+  };
+}
+
+const SurgeEngine = {
+  _isActive:   false,
+  _answered:   false,
+  _node:       null,
+  _round:      0,       // 0-2
+  _score:      0,
+  _scenarios:  [],
+  _usedPairs:  null,
+
+  start(node) {
+    this._node     = node;
+    this._isActive = true;
+    this._answered = false;
+    this._round    = 0;
+    this._score    = 0;
+    this._usedPairs = new Set();
+    this._scenarios = [
+      _generateSurgeScenario(this._usedPairs),
+      _generateSurgeScenario(this._usedPairs),
+      _generateSurgeScenario(this._usedPairs),
+    ];
+
+    // Boss-screen intro with Surge portrait + gym background
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl && imgEl) {
+      bgEl.classList.add('boss-intro-mode');
+      bgEl.style.background = GYM_FALLBACKS[2]; // Surge fallback
+      imgEl.style.opacity = '0';
+      imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = 'assets/bg_2_boss.png';
+    }
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/ltsurge.png';
+    document.getElementById('dialogue-name').textContent = 'Lt. Surge';
+    document.getElementById('dialogue-text').textContent = '';
+
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.style.display = 'none';
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const name = GameState.trainerName || 'Trainer';
+    const intro = SURGE_INTROS[Math.floor(Math.random() * SURGE_INTROS.length)]
+      .replace('{name}', name);
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += intro[ci++];
+      if (ci >= intro.length) {
+        clearInterval(iv);
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Begin Drill! ⚡'; }
+      }
+    }, 22);
+  },
+
+  startGame() {
+    this._isActive = false;
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = 'Battle! ▶';
+    // Clear intro bg
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    document.getElementById('trainer-intro').style.display = 'none';
+    this._showRound();
+  },
+
+  _showRound() {
+    const sc = this._scenarios[this._round];
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = 'assets/ltsurge.png'; img.style.display = ''; }
+    document.getElementById('challenge-badge').textContent   = `⚡ Surge's Type Drill — Round ${this._round + 1}/3`;
+    document.getElementById('challenge-intro').textContent   = `Score: ${this._score}/${this._round} correct`;
+    document.getElementById('challenge-coin-visual').style.display  = 'none';
+    document.getElementById('jessie-word-display').style.display    = 'none';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-question').textContent       = sc.question;
+
+    const btnArea = document.getElementById('challenge-answer-btns');
+    btnArea.innerHTML = '';
+    sc.choices.forEach(val => {
+      const b = document.createElement('button');
+      b.className   = 'challenge-answer-btn';
+      b.textContent = val;
+      b.addEventListener('click', () => this._answer(val));
+      btnArea.appendChild(b);
+    });
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove('jessie-active','james-active','meowth-active','fishing-active');
+    document.getElementById('screen-challenge').classList.add('surge-active');
+    SoundEngine.playBGM('teamrocket_battle.mp3');
+  },
+
+  _answer(chosen) {
+    const sc       = this._scenarios[this._round];
+    const isRight  = chosen === sc.correct;
+    if (isRight) this._score++;
+
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (b.textContent === sc.correct) b.classList.add('answer-correct');
+      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
+    });
+
+    const resultEl = document.getElementById('challenge-result');
+    const surge    = isRight
+      ? ['OUTSTANDING! That\'s textbook.', 'CORRECT! You\'ve been studying.', 'AFFIRMATIVE! Move to the next.']
+      : ['WRONG! Hit the books, soldier!', 'NEGATIVE! Unacceptable.', 'INCORRECT! Drop and give me twenty!'];
+    const quote = surge[Math.floor(Math.random() * surge.length)];
+
+    resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
+    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${sc.correct}</strong><br>${sc.explanation}<br><em>"${quote}" — Lt. Surge</em>`;
+    resultEl.style.display = 'block';
+
+    const isLast = this._round === 2;
+    const btn    = document.getElementById('challenge-continue-btn');
+    btn.textContent   = isLast ? 'Debrief ▶' : 'Next Round ▶';
+    btn.style.display = 'block';
+
+    if (isLast) this._answered = true;
+    this._round++;
+  },
+
+  // Called by challenge-continue-btn when not last round
+  nextRound() {
+    if (this._answered) {
+      this._finish();
+    } else {
+      this._showRound();
+    }
+  },
+
+  _finish() {
+    document.getElementById('screen-challenge').classList.remove('surge-active');
+    const score = this._score;
+    const party = GameState.party.filter(p => p.hp > 0);
+
+    let headline, detail, quote;
+    if (score === 3) {
+      const evos = levelUpParty('surge');
+      headline = '⚡ Perfect Score!';
+      detail   = 'All Pokémon gained +1 level!';
+      quote    = 'Perfect. You may just survive out there. DISMISSED.';
+      saveGame();
+      if (evos.length > 0) {
+        runEvolutions(evos, () => showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }));
+      } else {
+        showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+      }
+    } else if (score >= 1) {
+      const evos = levelUpParty('surge');
+      headline = `⚡ ${score}/3 Correct`;
+      detail   = 'Active Pokémon gained +1 level.';
+      quote    = score === 2
+        ? 'Two out of three. Not bad. Study the weak spot.' 
+        : 'One out of three. Barely passing. Hit the training room.';
+      saveGame();
+      if (evos.length > 0) {
+        runEvolutions(evos, () => showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }));
+      } else {
+        showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+      }
+    } else {
+      headline = '⚡ 0/3 — FAIL';
+      detail   = 'No reward. Study your type chart, soldier.';
+      quote    = 'Zero out of three. I\'ve seen Magikarp with better battle sense. DISMISSED.';
+      saveGame();
+      showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+    }
+  },
+
+  finish() {
+    // Called directly if somehow reached without _answered
+    this._answered = false;
+    document.getElementById('screen-challenge').classList.remove('surge-active');
+    MapEngine.completeNode(GameState.currentNodeIndex);
+    MapEngine.show();
+  },
+};
+
 const MysteryEngine = {
   start(node) {
-    // 60% rare catch, 40% Rocket battle
-    if (Math.random() < 0.60) {
-      // Rare catch — override the node type perception, use rare pool
-      CatchEngine.start(node, 'rare');
-    } else {
-      RocketBattleEngine.start(node);
+    const beaten = GameState.bossesDefeated || 0;
+
+    // Build weighted pool based on progress
+    // Base: rare catch (weight 3) + Rocket battle (weight 2)
+    // Surge quiz unlocks at bi >= 3 (weight 1 each)
+    const pool = [
+      { weight: 3, fn: () => CatchEngine.start(node, 'rare') },
+      { weight: 2, fn: () => RocketBattleEngine.start(node) },
+    ];
+    if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
+
+    // Weighted random pick
+    const total  = pool.reduce((s, e) => s + e.weight, 0);
+    let roll     = Math.random() * total;
+    for (const entry of pool) {
+      roll -= entry.weight;
+      if (roll <= 0) { entry.fn(); return; }
     }
+    pool[0].fn(); // fallback
   },
 };
 
@@ -7904,9 +8164,17 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-tut-next').addEventListener('click',  () => TutorialEngine.next());
   document.getElementById('btn-tut-skip').addEventListener('click',  () => TutorialEngine.skip());
 
-  // ── Meowth / Fishing challenge ──
+  // ── Meowth / Fishing / Surge challenge ──
   document.getElementById('challenge-continue-btn').addEventListener('click', () => {
-    if (FishingEngine._answered) { FishingEngine.finish(); } else { MeowthChallenge.finish(); }
+    if (SurgeEngine._answered) {
+      SurgeEngine._finish();
+    } else if (SurgeEngine._round > 0 && SurgeEngine._round <= 3) {
+      SurgeEngine.nextRound();
+    } else if (FishingEngine._answered) {
+      FishingEngine.finish();
+    } else {
+      MeowthChallenge.finish();
+    }
   });
 
   // ── Map screen ──
@@ -7966,6 +8234,8 @@ document.addEventListener('DOMContentLoaded', () => {
       CookingEngine.startGame();
     } else if (FishingEngine._isActive) {
       FishingEngine.startGame();
+    } else if (SurgeEngine._isActive) {
+      SurgeEngine.startGame();
     } else if (MazeEngine._isActive) {      // ── MAZE MINI-GAME
       MazeEngine.startGame();               // ── MAZE MINI-GAME
     } else if (BossEngine._isRocket) {
