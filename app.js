@@ -5604,17 +5604,17 @@ const BLAINE_RIDDLES = [
   },
   {
     clues: [
-      'I am found near hot springs and geothermal vents.',
-      'My body temperature is always over 1,000 degrees Fahrenheit.',
-      'I look like a rock — until I open my mouth.',
+      'I nest inside active volcanoes. The flames there are nothing to me.',
+      'When I flap my wings, the air itself ignites. I leave scorched trails across the sky.',
+      'I am said to bring early spring when I fly north — my flames melt even the deepest snow.',
     ],
-    summary: 'Found near hot springs, body over 1,000°F, looks like a rock until it opens its mouth.',
-    answer: 'Slugma',
-    wrong:  ['Geodude', 'Magcargo', 'Graveler'],
-    poke_id: 218,
-    explanation: 'Slugma\'s body is magma — if it stops moving its body cools and hardens!',
-    blaine_right: 'Slugma! You spotted a molten Pokémon hiding in plain sight. Impressive deduction!',
-    blaine_wrong: 'Slugma! A living lava flow that looks like a rock. "Opens its mouth" — magma pours out!',
+    summary: 'Nests in volcanoes, wings ignite the air, scorches the sky, brings spring by melting snow.',
+    answer: 'Moltres',
+    wrong:  ['Charizard', 'Ninetales', 'Arcanine'],
+    poke_id: 146,
+    explanation: 'Moltres is one of the three legendary birds — a Fire/Flying type said to signal the arrival of spring!',
+    blaine_right: 'Moltres! The Flame Pokémon! One of the three great legendaries. You have an exceptional mind!',
+    blaine_wrong: 'Moltres! "Brings spring by melting snow" — that\'s the legendary bird. A truly iconic Pokémon!',
   },
   {
     clues: [
