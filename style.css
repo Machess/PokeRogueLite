@@ -5556,3 +5556,56 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-left-color: rgba(180,80,240,.7) !important;
   background: rgba(80,20,120,.12) !important;
 }
+
+/* ═══════════════════════════════════════════
+   BLAINE RIDDLE — volcanic orange-red theme
+═══════════════════════════════════════════ */
+#screen-challenge.blaine-active {
+  background: linear-gradient(160deg, #120400 0%, #220800 50%, #120400 100%);
+}
+#screen-challenge.blaine-active .challenge-bg {
+  background-image: url('assets/bg_6_boss.png');
+  background-size: cover;
+  background-position: center top;
+}
+#screen-challenge.blaine-active .challenge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.18)    0%,
+    rgba(0,0,0,.40)    40%,
+    rgba(16,4,0,.90)   70%,
+    rgba(16,4,0,.97)   100%
+  );
+}
+#screen-challenge.blaine-active .challenge-header {
+  border-color: rgba(220,90,20,.45);
+}
+#screen-challenge.blaine-active .challenge-badge {
+  color: #f06020;
+}
+#screen-challenge.blaine-active .challenge-question {
+  border-color: rgba(220,90,20,.35);
+  color: #f06020;
+}
+#screen-challenge.blaine-active .challenge-answer-btn:hover:not(:disabled) {
+  border-color: #f06020;
+  background: rgba(220,90,20,.12);
+}
+.blaine-bubble {
+  border-color: rgba(220,90,20,.45) !important;
+  background: rgba(100,30,0,.18) !important;
+}
+.blaine-summary {
+  border-color: rgba(220,90,20,.5) !important;
+  border-left-color: rgba(255,120,30,.7) !important;
+  background: rgba(100,30,0,.12) !important;
+}
+.blaine-pun {
+  margin-top: .5rem;
+  font-size: .48rem;
+  color: #f09060;
+  font-style: italic;
+  border-top: 1px solid rgba(220,90,20,.3);
+  padding-top: .4rem;
+}

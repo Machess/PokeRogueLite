@@ -2194,7 +2194,7 @@ const TeamRocketChallenge = {
 
   finish() {
     const sc = document.getElementById('screen-challenge');
-    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active', 'erika-active', 'koga-active');
+    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active', 'erika-active', 'koga-active', 'blaine-active');
     showScreen('map');
     MapEngine.renderParty();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
@@ -5540,6 +5540,380 @@ const KogaEngine = {
   },
 };
 
+// ─── BLAINE RIDDLE ENGINE ────────────────────────────────────────────────────
+
+const BLAINE_INTROS = [
+  `HA! ${'{name}'}! I hope you brought your thinking cap — and some ointment for the burn! Three riddles. Guess the Pokémon. Get it wrong and you'll feel the heat!`,
+  `${'{name}'}! A true trainer doesn't just battle — they KNOW their Pokémon! Answer my riddles and prove it. Or don't. My Arcanine finds failure amusing.`,
+  `Fwa ha ha! ${'{name}'}! Science, riddles, and Pokémon — the three great loves of my life! Let's see if you share at least one of them!`,
+];
+
+const BLAINE_PUNS = [
+  'That\'s HOT — you really know your stuff! I\'m not just saying that because I run a volcano gym.',
+  'Impressive! You\'re really fired up today! Unlike my last challenger, who was just... lukewarm.',
+  'You\'ve got a burning passion for Pokémon knowledge! I can appreciate that — professionally speaking.',
+  'You\'ve truly put the FUN in... wait, that doesn\'t work. But great answer anyway!',
+  'Blaine is... quite impressed! Don\'t tell anyone, I have a reputation to maintain.',
+  'Hot hot hot! Three for three! You might just be smarter than my Rapidash. Maybe.',
+];
+
+// Each riddle: 3 clues describing a Pokémon (habitat/diet/appearance — never the type),
+// the answer, and 3 wrong options that are plausible but incorrect.
+const BLAINE_RIDDLES = [
+  {
+    clues: [
+      'I sleep inside volcanoes. The heat is like a warm blanket to me.',
+      'My shell can withstand temperatures that would melt steel.',
+      'I spray boiling water from the holes in my rocky hide.',
+    ],
+    summary: 'Sleeps in volcanoes, shell resists extreme heat, sprays boiling water from rocky hide.',
+    answer: 'Magmar',
+    wrong:  ['Geodude', 'Rapidash', 'Rhydon'],
+    poke_id: 126,
+    explanation: 'Magmar lives near volcanic areas and breathes fire that burns at over 2,000°F!',
+    blaine_right: 'CORRECT! Magmar — the Spitfire Pokémon. A personal favourite. Burns bright!',
+    blaine_wrong: 'Magmar! It lives IN volcanoes. Fire-type through and through. Sear that into your memory!',
+  },
+  {
+    clues: [
+      'I can swim faster than any boat — 150 miles per hour in water.',
+      'My shell is made of small hexagonal stones cemented together naturally.',
+      'I shoot water jets so powerful they can pierce steel.',
+    ],
+    summary: 'Swims at 150mph, hexagonal stone shell, water jets that pierce steel.',
+    answer: 'Blastoise',
+    wrong:  ['Slowbro', 'Cloyster', 'Lapras'],
+    poke_id: 9,
+    explanation: 'Blastoise\'s shell has two water cannons that can punch through reinforced steel!',
+    blaine_right: 'The Shellfish Pokémon! Blastoise! My fire would struggle against it — don\'t tell anyone.',
+    blaine_wrong: 'Blastoise! Steel-piercing water cannons. The clue was in "hexagonal stones". Classic!',
+  },
+  {
+    clues: [
+      'I can run at 150 miles per hour with a rider on my back.',
+      'My mane ignites when I reach full speed. I leave a trail of fire behind me.',
+      'I have never been observed standing still. Even in sleep, I pace.',
+    ],
+    summary: 'Runs at 150mph with a rider, mane ignites at full speed, never stands still even sleeping.',
+    answer: 'Rapidash',
+    wrong:  ['Ponyta', 'Arcanine', 'Tauros'],
+    poke_id: 78,
+    explanation: 'Rapidash\'s flaming mane ignites when it gallops — and it reaches top speed in just 10 steps!',
+    blaine_right: 'RAPIDASH! My prized partner. Fastest Pokémon I\'ve ever trained. Good eye!',
+    blaine_wrong: 'Rapidash! "Never stands still" was the key. It\'s been clocked at 150mph flat out!',
+  },
+  {
+    clues: [
+      'I am found near hot springs and geothermal vents.',
+      'My body temperature is always over 1,000 degrees Fahrenheit.',
+      'I look like a rock — until I open my mouth.',
+    ],
+    summary: 'Found near hot springs, body over 1,000°F, looks like a rock until it opens its mouth.',
+    answer: 'Slugma',
+    wrong:  ['Geodude', 'Magcargo', 'Graveler'],
+    poke_id: 218,
+    explanation: 'Slugma\'s body is magma — if it stops moving its body cools and hardens!',
+    blaine_right: 'Slugma! You spotted a molten Pokémon hiding in plain sight. Impressive deduction!',
+    blaine_wrong: 'Slugma! A living lava flow that looks like a rock. "Opens its mouth" — magma pours out!',
+  },
+  {
+    clues: [
+      'I was discovered in the Andes mountains, 10,000 years ago according to fossils.',
+      'My eyes can see ultraviolet light invisible to humans.',
+      'I can survive at altitudes where there is almost no oxygen.',
+    ],
+    summary: 'Ancient Andean fossil, sees ultraviolet light, survives in near-zero oxygen altitudes.',
+    answer: 'Aerodactyl',
+    wrong:  ['Articuno', 'Pidgeot', 'Fearow'],
+    poke_id: 142,
+    explanation: 'Aerodactyl was revived from Old Amber — a prehistoric Pokémon that ruled the ancient skies!',
+    blaine_right: 'AERODACTYL! Revived from a fossil I helped restore! Science triumphs again!',
+    blaine_wrong: 'Aerodactyl! The fossil clue was the giveaway — it\'s an ancient restored Pokémon!',
+  },
+  {
+    clues: [
+      'I live at the bottom of the sea, sometimes for 10,000 years.',
+      'I carry a living coral reef on my back that houses other Pokémon.',
+      'My movements are so slow, algae grow over my shell.',
+    ],
+    summary: 'Lives on the seafloor for millennia, carries a coral reef on its shell, moves so slowly algae grow on it.',
+    answer: 'Slowbro',
+    wrong:  ['Lapras', 'Cloyster', 'Dewgong'],
+    poke_id: 80,
+    explanation: 'A Shellder bit Slowpoke\'s tail and the combination created Slowbro — it\'s been drifting the seafloor ever since!',
+    blaine_right: 'Slowbro! Surprisingly hard to identify given how slowly it thinks. Much like some trainers I know!',
+    blaine_wrong: 'Slowbro! Algae growing on a moving creature — that\'s the signature of something VERY slow.',
+  },
+  {
+    clues: [
+      'My cry sounds like a crackling fire and can be heard for miles.',
+      'I guard my territory by releasing intensely bright flashes of light.',
+      'I am so rare that some scientists consider me a legend.',
+    ],
+    summary: 'Cry sounds like crackling fire, guards with blinding light flashes, extremely rare — considered legendary by some.',
+    answer: 'Arcanine',
+    wrong:  ['Ninetales', 'Flareon', 'Growlithe'],
+    poke_id: 59,
+    explanation: 'Arcanine is called the "Legendary Pokémon" — it was once thought to be a legendary creature!',
+    blaine_right: 'Arcanine! The LEGENDARY Pokémon! One of the finest Fire-types in existence. You have taste!',
+    blaine_wrong: 'Arcanine! "Some consider it a legend" — that\'s literal. Arcanine\'s species is Legendary Pokémon!',
+  },
+  {
+    clues: [
+      'I shed my skin every year. The shed skin smells strongly of herbs.',
+      'I move so silently that prey never hears me coming.',
+      'My markings change pattern to match my surroundings perfectly.',
+    ],
+    summary: 'Sheds herbal-smelling skin annually, moves in complete silence, adaptive camouflage markings.',
+    answer: 'Arbok',
+    wrong:  ['Ekans', 'Seviper', 'Ditto'],
+    poke_id: 24,
+    explanation: 'Arbok\'s belly pattern is said to be so terrifying it can paralyse prey with fear!',
+    blaine_right: 'Arbok! The Cobra Pokémon. Silent, adaptive, and herb-scented. An unusual combination!',
+    blaine_wrong: 'Arbok! The herbal shed skin is the key — it\'s a documented fact in my research notes!',
+  },
+];
+
+const BlaineEngine = {
+  _isActive:  false,
+  _answered:  false,
+  _node:      null,
+  _clueIdx:   0,
+  _riddle:    null,
+  _usedIdxs:  null,
+
+  start(node) {
+    this._node     = node;
+    this._isActive = true;
+    this._answered = false;
+    this._clueIdx  = 0;
+    this._usedIdxs = this._usedIdxs || new Set();
+
+    // Pick unused riddle
+    const available = BLAINE_RIDDLES.map((_,i) => i).filter(i => !this._usedIdxs.has(i));
+    if (available.length === 0) this._usedIdxs.clear();
+    const pool = available.length > 0 ? available : BLAINE_RIDDLES.map((_,i) => i);
+    const idx  = pool[Math.floor(Math.random() * pool.length)];
+    this._usedIdxs.add(idx);
+    this._riddle = BLAINE_RIDDLES[idx];
+
+    // Boss-screen intro
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl && imgEl) {
+      bgEl.classList.add('boss-intro-mode');
+      bgEl.style.background = GYM_FALLBACKS[6];
+      imgEl.style.opacity = '0';
+      imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = 'assets/bg_6_boss.png';
+    }
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/blaine.png';
+    document.getElementById('dialogue-name').textContent = 'Blaine';
+    document.getElementById('dialogue-text').textContent = '';
+
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.style.display = 'none';
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const name  = GameState.trainerName || 'Trainer';
+    const intro = BLAINE_INTROS[Math.floor(Math.random() * BLAINE_INTROS.length)]
+      .replace('{name}', name);
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += intro[ci++];
+      if (ci >= intro.length) {
+        clearInterval(iv);
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Riddle me this! 🔥'; }
+      }
+    }, 24);
+  },
+
+  startGame() {
+    this._isActive = false;
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = 'Battle! ▶';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    document.getElementById('trainer-intro').style.display = 'none';
+    this._showClues();
+  },
+
+  _showClues() {
+    const r = this._riddle;
+
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = 'assets/blaine.png'; img.style.display = ''; }
+    document.getElementById('challenge-badge').textContent   = '🔥 Blaine\'s Pokémon Riddle';
+    document.getElementById('challenge-intro').textContent   = 'Who am I describing?';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
+    document.getElementById('challenge-question').textContent       = '';
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('jessie-word-display').style.display    = 'none';
+
+    const clueArea = document.getElementById('challenge-coin-visual');
+    clueArea.style.display = 'block';
+    clueArea.className     = 'fishing-clue-area blaine-clue-area';
+    clueArea.innerHTML     = '';
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(
+      'jessie-active','james-active','meowth-active','surge-active','erika-active','koga-active','fishing-active');
+    document.getElementById('screen-challenge').classList.add('blaine-active');
+    SoundEngine.playBGM('pallet_town_theme.mp3');
+
+    this._clueIdx = 0;
+    this._revealNextClue();
+  },
+
+  _revealNextClue() {
+    const r        = this._riddle;
+    const clueArea = document.getElementById('challenge-coin-visual');
+    const btnArea  = document.getElementById('challenge-answer-btns');
+
+    if (this._clueIdx < r.clues.length) {
+      const bubble = document.createElement('div');
+      // First clue gets a 🔥 prefix flavour
+      bubble.className = 'fishing-bubble fishing-bubble-typing blaine-bubble';
+      clueArea.appendChild(bubble);
+
+      const text = `Clue ${this._clueIdx + 1}: ${r.clues[this._clueIdx]}`;
+      let ci = 0;
+      const iv = setInterval(() => {
+        bubble.textContent += text[ci++];
+        if (ci >= text.length) {
+          clearInterval(iv);
+          bubble.className = 'fishing-bubble fishing-bubble-shown blaine-bubble';
+          this._clueIdx++;
+
+          if (this._clueIdx < r.clues.length) {
+            btnArea.innerHTML = '';
+            const nb = document.createElement('button');
+            nb.className   = 'btn-pixel btn-secondary fishing-next-btn';
+            nb.textContent = 'Next clue ▶';
+            nb.onclick = () => { btnArea.innerHTML = ''; this._revealNextClue(); };
+            btnArea.appendChild(nb);
+          } else {
+            // All clues shown — summary then question
+            const summary = document.createElement('div');
+            summary.className   = 'fishing-summary blaine-summary';
+            summary.textContent = r.summary;
+            clueArea.appendChild(summary);
+            this._showQuestion();
+          }
+        }
+      }, 28);
+    } else {
+      this._showQuestion();
+    }
+  },
+
+  _showQuestion() {
+    const r       = this._riddle;
+    const qEl     = document.getElementById('challenge-question');
+    qEl.textContent   = '🔥 Which Pokémon am I describing?';
+    qEl.style.display = '';
+
+    const choices = shuffle([r.answer, ...r.wrong]);
+    const btnArea = document.getElementById('challenge-answer-btns');
+    btnArea.innerHTML = '';
+    choices.forEach(val => {
+      const b = document.createElement('button');
+      b.className   = 'challenge-answer-btn';
+      b.textContent = val;
+      b.addEventListener('click', () => this._answer(val));
+      btnArea.appendChild(b);
+    });
+  },
+
+  _answer(chosen) {
+    if (this._answered) return;
+    this._answered = true;
+
+    const r       = this._riddle;
+    const isRight = chosen === r.answer;
+
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (b.textContent === r.answer) b.classList.add('answer-correct');
+      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
+    });
+
+    // Reveal Pokémon sprite
+    const revEl = document.getElementById('jessie-word-display');
+    revEl.style.display = 'flex';
+    revEl.className     = 'fishing-reveal';
+    const wordEl = document.getElementById('jessie-word');
+    const typeEl = document.getElementById('jessie-word-type');
+    wordEl.textContent = '...';
+    typeEl.textContent = '';
+    fetchPoke(r.poke_id).then(data => {
+      const name      = capitalize(data.name);
+      const sprite    = data.sprites?.front_default || getSpriteUrl(data);
+      const types     = (data.types || []).map(t => t.type.name);
+      wordEl.innerHTML = `<img src="${sprite}" alt="${name}" class="fishing-reveal-sprite"
+        onerror="this.style.display='none'" /> ${name}`;
+      typeEl.innerHTML = types.map(t =>
+        `<span class="hud-type-badge type-${t}">${t}</span>`).join(' ');
+    }).catch(() => { wordEl.textContent = r.answer; });
+
+    const resultEl = document.getElementById('challenge-result');
+    const pun = BLAINE_PUNS[Math.floor(Math.random() * BLAINE_PUNS.length)];
+    resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
+    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${r.answer}</strong><br>${r.explanation}<br>` +
+      `<em>"${isRight ? r.blaine_right : r.blaine_wrong}" — Blaine</em>` +
+      (isRight ? `<div class="blaine-pun">"${pun}"</div>` : '');
+    resultEl.style.display = 'block';
+
+    document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';
+    document.getElementById('challenge-continue-btn').style.display = 'block';
+  },
+
+  finish() {
+    document.getElementById('screen-challenge').classList.remove('blaine-active');
+    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
+    document.getElementById('jessie-word-display').style.display = 'none';
+    document.getElementById('jessie-word-display').className = 'jessie-word-display';
+
+    const isRight     = !!document.querySelector('.answer-correct');
+    const goldReward  = isRight
+      ? 40 + (GameState.bossesDefeated || 0) * 5
+      : 10;
+    GameState.gold = (GameState.gold || 0) + goldReward;
+
+    const pun = BLAINE_PUNS[Math.floor(Math.random() * BLAINE_PUNS.length)];
+    saveGame();
+
+    if (isRight) {
+      SoundEngine.playFanfare();
+      showModal(
+        '🔥 Correct!',
+        `+${goldReward}💰 gold reward!\n\n"${pun}" — Blaine`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+      );
+    } else {
+      showModal(
+        '🔥 Not quite!',
+        `+${goldReward}💰 for trying — Blaine appreciates the effort.\n\n"${this._riddle?.blaine_wrong || 'Study harder!'}" — Blaine`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+      );
+    }
+
+    this._answered = false;
+  },
+};
+
 const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;
@@ -5551,6 +5925,7 @@ const MysteryEngine = {
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
     if (beaten >= 4) pool.push({ weight: 2, fn: () => ErikaEngine.start(node) });
     if (beaten >= 5) pool.push({ weight: 2, fn: () => KogaEngine.start(node) });
+    if (beaten >= 7) pool.push({ weight: 2, fn: () => BlaineEngine.start(node) });
 
     const total = pool.reduce((s, e) => s + e.weight, 0);
     let roll    = Math.random() * total;
@@ -8727,7 +9102,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-tut-next').addEventListener('click',  () => TutorialEngine.next());
   document.getElementById('btn-tut-skip').addEventListener('click',  () => TutorialEngine.skip());
 
-  // ── Meowth / Fishing / Surge / Erika / Koga challenge ──
+  // ── Meowth / Fishing / Surge / Erika / Koga / Blaine challenge ──
   document.getElementById('challenge-continue-btn').addEventListener('click', () => {
     if (SurgeEngine._answered) {
       SurgeEngine._finish();
@@ -8739,6 +9114,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ErikaEngine.nextRound();
     } else if (KogaEngine._answered) {
       KogaEngine.finish();
+    } else if (BlaineEngine._answered) {
+      BlaineEngine.finish();
     } else if (FishingEngine._answered) {
       FishingEngine.finish();
     } else {
@@ -8809,6 +9186,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ErikaEngine.startGame();
     } else if (KogaEngine._isActive) {
       KogaEngine.startGame();
+    } else if (BlaineEngine._isActive) {
+      BlaineEngine.startGame();
     } else if (MazeEngine._isActive) {      // ── MAZE MINI-GAME
       MazeEngine.startGame();               // ── MAZE MINI-GAME
     } else if (BossEngine._isRocket) {
