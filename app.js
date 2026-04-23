@@ -1074,7 +1074,7 @@ const SoundEngine = {
     'battle':    'opening.mp3',
     'boss':      'gym_battle.mp3',
     'heal':      'pokemon_center.mp3',
-    'catch':     'pallet_town_theme.mp3',
+    'catch':     'catch.mp3',
     'training':  'training.mp3',
     'shop':      'shop.mp3',
     'evolve':    'pallet_town_theme.mp3',
@@ -6425,6 +6425,12 @@ const CatchEngine = {
           rarityBadge.textContent  = rarity;
           rarityBadge.className    = `catch-rarity-badge catch-rarity-${rarity.includes('Rare') ? 'rare' : rarity === 'Uncommon' ? 'uncommon' : 'common'} catch-badge-slide`;
           rarityBadge.style.display = '';
+          // Already-caught badge — show if this species is in the Pokédex already
+          const dexBadge = document.getElementById('catch-dex-badge');
+          if (dexBadge) {
+            const alreadyCaught = !!loadPokedex()[data.id]?.caught;
+            dexBadge.style.display = alreadyCaught ? '' : 'none';
+          }
           // Show controls after name fully revealed
           setTimeout(() => {
             document.getElementById('catch-controls').style.display = 'flex';
@@ -6452,11 +6458,15 @@ const CatchEngine = {
     }
     balls.forEach(b => {
       if (!b.pbi && !ItemEngine.hasItem(b.itemId)) return;
+      const count = b.itemId
+        ? ((GameState.items || []).find(i => i.id === b.itemId)?.count || 0)
+        : null;
+      const countTag = count !== null ? ` <span class="ball-count-tag">×${count}</span>` : '';
       const btn = document.createElement('button');
       btn.className = 'ball-select-btn' + (this._selectedBall === b.id ? ' ball-selected' : '');
       btn.innerHTML = b.pbi
         ? `<span class="pokeball-icon" style="width:20px;height:20px"><span class="pbi-top"></span><span class="pbi-mid"></span><span class="pbi-bot"></span><span class="pbi-btn"></span></span> ${b.label}`
-        : `${b.icon} ${b.label}`;
+        : `${b.icon} ${b.label}${countTag}`;
       btn.onclick = () => {
         this._selectedBall = b.id;
         this._renderBallSelector();
