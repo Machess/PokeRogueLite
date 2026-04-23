@@ -3283,6 +3283,46 @@ const MapEngine = {
   },
 
   // ── Set gym background image ─────────────────────────────────────────────
+  // ── Vertical gym tracker ─────────────────────────────────────────────────
+  _renderGymTracker(bi, available) {
+    const TOTAL_STEPS = 10;
+    const done        = Math.max(0, GameState.highWaterRow ?? 0);
+    const isBoss      = available?.[0]?.type === 'boss';
+    const boss        = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
+
+    // Label
+    const labelEl = document.getElementById('gym-tracker-label');
+    if (labelEl) {
+      labelEl.textContent = isBoss ? '⚔️' : `${done}/${TOTAL_STEPS}`;
+    }
+
+    // Portrait
+    const portEl = document.getElementById('gym-tracker-portrait');
+    if (portEl && boss?.image) {
+      portEl.src = `assets/${boss.image}`;
+      portEl.style.display = '';
+    }
+
+    // Pips — rebuild only when count changes (perf)
+    const pipsEl = document.getElementById('gym-tracker-pips');
+    if (!pipsEl) return;
+
+    // Always rebuild so classes stay in sync
+    pipsEl.innerHTML = '';
+    for (let i = 0; i < TOTAL_STEPS; i++) {
+      const pip = document.createElement('div');
+      if (i < done) {
+        pip.className = 'gym-pip gym-pip-done';
+      } else if (i === done && !isBoss) {
+        pip.className = 'gym-pip gym-pip-current';
+      } else {
+        pip.className = 'gym-pip gym-pip-empty';
+      }
+      pipsEl.appendChild(pip);
+    }
+  },
+
+  // ── Apply map background ─────────────────────────────────────────────────
   _applyBackground(bi) {
     const bgEl = document.getElementById('nav-bg');
     if (!bgEl) return;
@@ -3381,15 +3421,8 @@ const MapEngine = {
         return (order[a.lane] ?? 1) - (order[b.lane] ?? 1);
       });
 
-    // ── Progress: count completed steps (one per row visited) ─────────────
-    const TOTAL_STEPS  = 10;
-    const doneSteps    = GameState.highWaterRow ?? 0;
-    const pct          = Math.round((doneSteps / TOTAL_STEPS) * 100);
-    document.getElementById('nav-progress-bar').style.width = pct + '%';
-    document.getElementById('nav-progress-label').textContent =
-      doneSteps === 0        ? 'Begin your journey!'    :
-      available[0]?.type === 'boss' ? '⚔ Boss approaching!' :
-      `Step ${doneSteps} of ${TOTAL_STEPS}`;
+    // ── Gym tracker (vertical left bar) ───────────────────────────────────
+    this._renderGymTracker(bi, available);
 
     // ── Build choice arrows ────────────────────────────────────────────────
     const choicesEl = document.getElementById('nav-choices');
