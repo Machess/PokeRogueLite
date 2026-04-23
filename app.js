@@ -2194,7 +2194,7 @@ const TeamRocketChallenge = {
 
   finish() {
     const sc = document.getElementById('screen-challenge');
-    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active');
+    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active', 'erika-active');
     showScreen('map');
     MapEngine.renderParty();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
@@ -4880,7 +4880,7 @@ const SurgeEngine = {
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove('jessie-active','james-active','meowth-active','fishing-active');
     document.getElementById('screen-challenge').classList.add('surge-active');
-    SoundEngine.playBGM('teamrocket_battle.mp3');
+    SoundEngine.playBGM('pallet_town_theme.mp3');
   },
 
   _answer(chosen) {
@@ -4975,27 +4975,267 @@ const SurgeEngine = {
   },
 };
 
+// ─── ERIKA HERB SORTING ENGINE ───────────────────────────────────────────────
+
+const ERIKA_INTROS = [
+  `Oh my, ${'{name}'}... you startled me. I was tending to the garden. Before you rush off, let me test your knowledge of herbs and berries. A true trainer cares for their Pokémon properly.`,
+  `${'{name}'}. Sit with me a moment. These berries won't sort themselves, and neither will your understanding of them. Let's see what you know.`,
+  `Hmm... a trainer who can't tell a Sitrus Berry from a Pecha Berry has no business handling Pokémon. I'll be gentle. Identify these herbs for me, please.`,
+];
+
+// Each herb/berry has: icon, name, category ('heal'|'cure'|'poison'), description, and explanation
+const ERIKA_HERBS = [
+  { icon:'🍊', name:'Oran Berry',    cat:'heal',   desc:'Small, round, orange. Smells faintly sweet.',           explain:'Oran Berries restore HP — Pokémon eat them when hurt.' },
+  { icon:'🫐', name:'Sitrus Berry',  cat:'heal',   desc:'Larger than most berries. Deep blue, slightly tart.',   explain:'Sitrus Berries restore a good amount of HP when eaten.' },
+  { icon:'🌸', name:'Pecha Berry',   cat:'cure',   desc:'Soft pink. Extraordinarily sweet. Almost too sweet.',   explain:'Pecha Berries cure poison — the sweetness neutralises toxins.' },
+  { icon:'🟡', name:'Chesto Berry',  cat:'cure',   desc:'Crisp and waxy. Yellow with a firm texture.',           explain:'Chesto Berries cure sleep — they jolt a Pokémon awake.' },
+  { icon:'🍋', name:'Rawst Berry',   cat:'cure',   desc:'Bitter and tangy. Leaves a cool sensation.',            explain:'Rawst Berries cure burn — the cool juice soothes scorched skin.' },
+  { icon:'🍇', name:'Persim Berry',  cat:'cure',   desc:'Deep purple clusters. Sweet but disorienting to smell.',explain:'Persim Berries cure confusion — they sharpen the mind.' },
+  { icon:'🌿', name:'Poison Barb',   cat:'poison', desc:'Sharp and dark green. The tip glistens with liquid.',   explain:'Poison Barb is toxic — it poisons Pokémon that touch it.' },
+  { icon:'🍄', name:'Toxic Mushroom',cat:'poison', desc:'Pale spotted cap. Smells earthy but wrong somehow.',    explain:'Toxic Mushrooms are dangerous — never feed these to Pokémon!' },
+  { icon:'🌑', name:'Dark Spore',    cat:'poison', desc:'Fine black powder. Drifts in the air. Avoid breathing.',explain:'Dark Spores cause poisoning on contact — very hazardous.' },
+  { icon:'🍎', name:'Leppa Berry',   cat:'heal',   desc:'Firm and red. Gives off a faint energising warmth.',    explain:'Leppa Berries restore a move\'s PP — they replenish energy.' },
+  { icon:'🟠', name:'Lum Berry',     cat:'cure',   desc:'Bright orange. Smells medicinal, almost clinical.',     explain:'Lum Berries cure any status condition — very versatile!' },
+  { icon:'🌺', name:'Stun Spore',    cat:'poison', desc:'Orange powder on a pale flower. Smells like rust.',     explain:'Stun Spore paralyses Pokémon — keep well away from healthy ones!' },
+];
+
+function _generateErikaRound(usedNames) {
+  // Pick one from each category — heal, cure, poison
+  const heals   = ERIKA_HERBS.filter(h => h.cat === 'heal'   && !usedNames.has(h.name));
+  const cures   = ERIKA_HERBS.filter(h => h.cat === 'cure'   && !usedNames.has(h.name));
+  const poisons = ERIKA_HERBS.filter(h => h.cat === 'poison' && !usedNames.has(h.name));
+
+  // If any category runs out, reset that category's used tracking
+  if (!heals.length)   ERIKA_HERBS.filter(h => h.cat === 'heal').forEach(h => usedNames.delete(h.name));
+  if (!cures.length)   ERIKA_HERBS.filter(h => h.cat === 'cure').forEach(h => usedNames.delete(h.name));
+  if (!poisons.length) ERIKA_HERBS.filter(h => h.cat === 'poison').forEach(h => usedNames.delete(h.name));
+
+  const heal   = heals[Math.floor(Math.random()   * heals.length)]   || ERIKA_HERBS.find(h => h.cat === 'heal');
+  const cure   = cures[Math.floor(Math.random()   * cures.length)]   || ERIKA_HERBS.find(h => h.cat === 'cure');
+  const poison = poisons[Math.floor(Math.random() * poisons.length)] || ERIKA_HERBS.find(h => h.cat === 'poison');
+
+  [heal, cure, poison].forEach(h => usedNames.add(h.name));
+
+  // Question: pick one herb at random, ask the player what it does
+  const subject = [heal, cure, poison][Math.floor(Math.random() * 3)];
+  const allChoices = ['Heals HP', 'Cures a status condition', 'Is poisonous — dangerous!'];
+  const correctChoice = subject.cat === 'heal'   ? 'Heals HP'
+                      : subject.cat === 'cure'   ? 'Cures a status condition'
+                      :                            'Is poisonous — dangerous!';
+  const choices = shuffle([...allChoices]);
+
+  return { subject, correctChoice, choices };
+}
+
+const ErikaEngine = {
+  _isActive:  false,
+  _answered:  false,
+  _node:      null,
+  _round:     0,
+  _score:     0,
+  _usedNames: null,
+  _rounds:    [],
+
+  start(node) {
+    this._node      = node;
+    this._isActive  = true;
+    this._answered  = false;
+    this._round     = 0;
+    this._score     = 0;
+    this._usedNames = new Set();
+    this._rounds    = [
+      _generateErikaRound(this._usedNames),
+      _generateErikaRound(this._usedNames),
+      _generateErikaRound(this._usedNames),
+    ];
+
+    // Boss-screen intro with Erika portrait + gym background
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl && imgEl) {
+      bgEl.classList.add('boss-intro-mode');
+      bgEl.style.background = GYM_FALLBACKS[3]; // Erika green fallback
+      imgEl.style.opacity = '0';
+      imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = 'assets/bg_3_boss.png';
+    }
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/erika.png';
+    document.getElementById('dialogue-name').textContent = 'Erika';
+    document.getElementById('dialogue-text').textContent = '';
+
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.style.display = 'none';
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const name  = GameState.trainerName || 'Trainer';
+    const intro = ERIKA_INTROS[Math.floor(Math.random() * ERIKA_INTROS.length)]
+      .replace('{name}', name);
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += intro[ci++];
+      if (ci >= intro.length) {
+        clearInterval(iv);
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Begin Sorting 🌿'; }
+      }
+    }, 28);
+  },
+
+  startGame() {
+    this._isActive = false;
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = 'Battle! ▶';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    document.getElementById('trainer-intro').style.display = 'none';
+    this._showRound();
+  },
+
+  _showRound() {
+    const rd  = this._rounds[this._round];
+    const h   = rd.subject;
+
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = 'assets/erika.png'; img.style.display = ''; }
+    document.getElementById('challenge-badge').textContent   = `🌿 Erika's Herb Garden — Round ${this._round + 1}/3`;
+    document.getElementById('challenge-intro').textContent   = `Score: ${this._score}/${this._round}`;
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+
+    // Show herb in the coin-visual slot as a big display
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'erika-herb-display';
+    cv.innerHTML     = `
+      <div class="erika-herb-icon">${h.icon}</div>
+      <div class="erika-herb-name">${h.name}</div>
+      <div class="erika-herb-desc">"${h.desc}"</div>`;
+
+    document.getElementById('jessie-word-display').style.display = 'none';
+    document.getElementById('challenge-question').textContent    = `What does ${h.name} do to a Pokémon?`;
+
+    const btnArea = document.getElementById('challenge-answer-btns');
+    btnArea.innerHTML = '';
+    rd.choices.forEach(val => {
+      const b = document.createElement('button');
+      b.className   = 'challenge-answer-btn';
+      b.textContent = val;
+      b.addEventListener('click', () => this._answer(val));
+      btnArea.appendChild(b);
+    });
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(
+      'jessie-active','james-active','meowth-active','surge-active','fishing-active');
+    document.getElementById('screen-challenge').classList.add('erika-active');
+    SoundEngine.playBGM('pallet_town_theme.mp3');
+  },
+
+  _answer(chosen) {
+    const rd      = this._rounds[this._round];
+    const isRight = chosen === rd.correctChoice;
+    if (isRight) this._score++;
+
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (b.textContent === rd.correctChoice) b.classList.add('answer-correct');
+      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
+    });
+
+    const quotes = isRight
+      ? ['Wonderful. You have a gardener\'s instinct.', 'Correct. Even the gentlest berry has a purpose.', 'Yes — that\'s exactly right. Well done.']
+      : ['Oh dear... not quite. Let me explain.', 'I\'m afraid that\'s wrong. Don\'t worry — now you know.', 'Hmm. Close, but mistaken. Remember this for next time.'];
+    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+
+    const resultEl = document.getElementById('challenge-result');
+    resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
+    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${rd.correctChoice}</strong><br>${rd.subject.explain}<br><em>"${quote}" — Erika</em>`;
+    resultEl.style.display = 'block';
+
+    const isLast = this._round === 2;
+    const btn    = document.getElementById('challenge-continue-btn');
+    btn.textContent   = isLast ? 'Return to path 🌸' : 'Next herb ▶';
+    btn.style.display = 'block';
+
+    if (isLast) this._answered = true;
+    this._round++;
+  },
+
+  nextRound() {
+    if (this._answered) { this._finish(); } else { this._showRound(); }
+  },
+
+  _finish() {
+    document.getElementById('screen-challenge').classList.remove('erika-active');
+    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
+
+    const score = this._score;
+    let headline, detail, quote;
+
+    if (score >= 2) {
+      // Full HP restore for one party member (lead)
+      const lead = GameState.party.find(p => p.hp > 0);
+      if (lead) lead.hp = lead.maxHp;
+      headline = '🌸 Herb Knowledge!';
+      detail   = `${lead?.name || 'Your Pokémon'} was fully healed!`;
+      quote    = score === 3
+        ? 'Excellent. Your Pokémon are in good hands.'
+        : 'Two out of three. Good enough. Here — take this for your partner.';
+    } else if (score === 1) {
+      const lead = GameState.party.find(p => p.hp > 0);
+      if (lead) lead.hp = Math.min(lead.maxHp, lead.hp + Math.floor(lead.maxHp * 0.3));
+      headline = '🌿 Partial Knowledge';
+      detail   = 'Lead Pokémon healed 30% HP.';
+      quote    = 'One out of three. A little knowledge is better than none. Study more.';
+    } else {
+      headline = '🍄 Oh My...';
+      detail   = 'No reward. Erika sighs gently.';
+      quote    = 'Zero. Please be careful around real herbs, dear. For your Pokémon\'s sake.';
+    }
+
+    saveGame();
+    showModal(headline, `${detail}\n\n"${quote}" — Erika`, () => {
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+    });
+  },
+
+  finish() {
+    this._answered = false;
+    document.getElementById('screen-challenge').classList.remove('erika-active');
+    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
+    MapEngine.completeNode(GameState.currentNodeIndex);
+    MapEngine.show();
+  },
+};
+
 const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;
 
-    // Build weighted pool based on progress
-    // Base: rare catch (weight 3) + Rocket battle (weight 2)
-    // Surge quiz unlocks at bi >= 3 (weight 1 each)
     const pool = [
       { weight: 3, fn: () => CatchEngine.start(node, 'rare') },
       { weight: 2, fn: () => RocketBattleEngine.start(node) },
     ];
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
+    if (beaten >= 4) pool.push({ weight: 2, fn: () => ErikaEngine.start(node) });
 
-    // Weighted random pick
-    const total  = pool.reduce((s, e) => s + e.weight, 0);
-    let roll     = Math.random() * total;
+    const total = pool.reduce((s, e) => s + e.weight, 0);
+    let roll    = Math.random() * total;
     for (const entry of pool) {
       roll -= entry.weight;
       if (roll <= 0) { entry.fn(); return; }
     }
-    pool[0].fn(); // fallback
+    pool[0].fn();
   },
 };
 
@@ -8164,12 +8404,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-tut-next').addEventListener('click',  () => TutorialEngine.next());
   document.getElementById('btn-tut-skip').addEventListener('click',  () => TutorialEngine.skip());
 
-  // ── Meowth / Fishing / Surge challenge ──
+  // ── Meowth / Fishing / Surge / Erika challenge ──
   document.getElementById('challenge-continue-btn').addEventListener('click', () => {
     if (SurgeEngine._answered) {
       SurgeEngine._finish();
     } else if (SurgeEngine._round > 0 && SurgeEngine._round <= 3) {
       SurgeEngine.nextRound();
+    } else if (ErikaEngine._answered) {
+      ErikaEngine._finish();
+    } else if (ErikaEngine._round > 0 && ErikaEngine._round <= 3) {
+      ErikaEngine.nextRound();
     } else if (FishingEngine._answered) {
       FishingEngine.finish();
     } else {
@@ -8236,6 +8480,8 @@ document.addEventListener('DOMContentLoaded', () => {
       FishingEngine.startGame();
     } else if (SurgeEngine._isActive) {
       SurgeEngine.startGame();
+    } else if (ErikaEngine._isActive) {
+      ErikaEngine.startGame();
     } else if (MazeEngine._isActive) {      // ── MAZE MINI-GAME
       MazeEngine.startGame();               // ── MAZE MINI-GAME
     } else if (BossEngine._isRocket) {
