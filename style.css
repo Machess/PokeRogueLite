@@ -962,22 +962,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   50%     { background: rgba(255,215,0,.75); box-shadow: 0 0 14px rgba(255,215,0,.7); }
 }
 
-.gym-tracker-portrait-wrap {
-  width: 36px; height: 36px;
-  border-radius: 50%;
-  border: 2px solid var(--col-yellow);
-  overflow: hidden;
-  background: rgba(0,0,0,.6);
-  flex-shrink: 0;
-  box-shadow: 0 0 10px rgba(255,215,0,.35);
-}
-
-.gym-tracker-portrait {
-  width: 100%; height: 100%;
-  object-fit: cover;
-  image-rendering: pixelated;
-}
-
 /* ── Old canvas / node button CSS (kept for future use, hidden) ── */
 .map-canvas-wrap { display: none; }
 #map-canvas      { display: none; }

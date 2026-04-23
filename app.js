@@ -3309,19 +3309,11 @@ const MapEngine = {
     const TOTAL_STEPS = 10;
     const done        = Math.max(0, GameState.highWaterRow ?? 0);
     const isBoss      = available?.[0]?.type === 'boss';
-    const boss        = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
 
     // Label
     const labelEl = document.getElementById('gym-tracker-label');
     if (labelEl) {
       labelEl.textContent = isBoss ? '⚔️' : `${done}/${TOTAL_STEPS}`;
-    }
-
-    // Portrait
-    const portEl = document.getElementById('gym-tracker-portrait');
-    if (portEl && boss?.image) {
-      portEl.src = `assets/${boss.image}`;
-      portEl.style.display = '';
     }
 
     // Pips — rebuild only when count changes (perf)
