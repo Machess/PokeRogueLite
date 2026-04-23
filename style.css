@@ -2387,23 +2387,42 @@ button:disabled { opacity: .45; cursor: not-allowed; }
    SHOP SCREEN
 ═══════════════════════════════════════════ */
 #screen-shop {
-  background: linear-gradient(135deg, #0a1a0a, #1a2e10);
+  background: linear-gradient(160deg, #0e1008 0%, #1c1a08 50%, #0e1008 100%);
   justify-content: flex-start;
 }
 .shop-bg {
   position: absolute; inset: 0;
-  background: radial-gradient(ellipse at 50% 30%, rgba(50,150,50,.1) 0%, transparent 60%);
+  background-image: url('assets/bg_shop.png');
+  background-size: cover;
+  background-position: center top;
+}
+.shop-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.12)    0%,
+    rgba(0,0,0,.30)    30%,
+    rgba(8,7,2,.82)    55%,
+    rgba(8,7,2,.96)    100%
+  );
 }
 .shop-header {
   position: relative; z-index: var(--z-content);
   display: flex; align-items: center; justify-content: space-between;
-  width: 100%; padding: .8rem 1rem .4rem;
-  border-bottom: 2px solid var(--col-border);
+  width: 100%; padding: .8rem 1rem .6rem;
+  border-bottom: 2px solid rgba(255,210,80,.25);
+  background: rgba(8,6,0,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   flex-shrink: 0;
 }
 .shop-gold-display {
   font-family: 'Press Start 2P', monospace;
   font-size: .6rem; color: var(--col-yellow);
+  background: rgba(0,0,0,.4);
+  padding: .3em .6em;
+  border-radius: var(--r-sm);
+  border: 1px solid rgba(255,210,80,.3);
 }
 .shop-items-grid {
   position: relative; z-index: var(--z-content);
@@ -2416,15 +2435,20 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   width: 100%;
 }
 .shop-item {
-  background: var(--col-card);
-  border: 2px solid var(--col-border);
+  background: rgba(14,18,10,.88);
+  border: 2px solid rgba(80,120,60,.5);
   border-radius: var(--r-lg);
   padding: .8rem;
   display: flex; flex-direction: column; gap: .4rem;
-  transition: border-color .15s;
+  transition: border-color .15s, background .15s;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
-.shop-item:not(.shop-item-disabled):hover { border-color: var(--col-green); }
-.shop-item-disabled { opacity: .5; }
+.shop-item:not(.shop-item-disabled):hover {
+  border-color: rgba(255,200,60,.7);
+  background: rgba(20,24,12,.92);
+}
+.shop-item-disabled { opacity: .45; }
 .shop-item-icon { font-size: 1.8rem; text-align: center; }
 .shop-item-name {
   font-family: 'Press Start 2P', monospace;
@@ -2440,11 +2464,25 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-family: 'Press Start 2P', monospace;
   font-size: .45rem; color: var(--col-green-lt);
 }
+.shop-section-header {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: rgba(255,210,80,.85);
+  padding: .4rem .2rem .2rem;
+  letter-spacing: .08em;
+  grid-column: 1 / -1;
+  border-bottom: 1px solid rgba(255,210,80,.2);
+  margin-bottom: .1rem;
+}
 .shop-buy-btn { margin-left: auto; font-size: .42rem !important; padding: .4em .7em !important; }
 .shop-footer {
   position: relative; z-index: var(--z-content);
   padding: .8rem; display: flex; justify-content: center;
-  border-top: 2px solid var(--col-border); flex-shrink: 0;
+  border-top: 2px solid rgba(255,210,80,.2);
+  background: rgba(8,6,0,.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════
