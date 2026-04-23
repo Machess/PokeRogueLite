@@ -1909,17 +1909,19 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .training-bg {
   position: absolute; inset: 0;
-  overflow: hidden;
+  background-image: url('assets/bg_training.png');
+  background-size: cover;
+  background-position: center top;
 }
-.training-bg-pattern {
-  position: absolute; inset: 0;
-  background-image:
-    repeating-linear-gradient(
-      45deg,
-      rgba(255,215,0,.03) 0, rgba(255,215,0,.03) 1px,
-      transparent 0, transparent 50%
-    );
-  background-size: 20px 20px;
+.training-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.15)    0%,
+    rgba(0,0,0,.38)    35%,
+    rgba(10,8,2,.88)   60%,
+    rgba(10,8,2,.97)   100%
+  );
 }
 
 /* ── Pokémon picker step ── */

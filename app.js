@@ -1075,7 +1075,7 @@ const SoundEngine = {
     'boss':      'gym_battle.mp3',
     'heal':      'pokemon_center.mp3',
     'catch':     'pallet_town_theme.mp3',
-    'training':  'pallet_town_theme.mp3',
+    'training':  'training.mp3',
     'shop':      'shop.mp3',
     'evolve':    'pallet_town_theme.mp3',
     'cooking':   'pallet_town_theme.mp3',
