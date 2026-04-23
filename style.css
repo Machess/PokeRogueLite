@@ -5509,3 +5509,50 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   text-align: center;
   line-height: 1.5;
 }
+
+/* ═══════════════════════════════════════════
+   KOGA ANTIDOTE DEDUCTION — deep purple ninja theme
+═══════════════════════════════════════════ */
+#screen-challenge.koga-active {
+  background: linear-gradient(160deg, #080412 0%, #100820 50%, #080412 100%);
+}
+#screen-challenge.koga-active .challenge-bg {
+  background-image: url('assets/bg_4_boss.png');
+  background-size: cover;
+  background-position: center top;
+}
+#screen-challenge.koga-active .challenge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.20)    0%,
+    rgba(0,0,0,.42)    40%,
+    rgba(8,4,16,.90)   70%,
+    rgba(8,4,16,.97)   100%
+  );
+}
+#screen-challenge.koga-active .challenge-header {
+  border-color: rgba(140,60,200,.45);
+}
+#screen-challenge.koga-active .challenge-badge {
+  color: #c080f0;
+}
+#screen-challenge.koga-active .challenge-question {
+  border-color: rgba(140,60,200,.35);
+  color: #c080f0;
+}
+#screen-challenge.koga-active .challenge-answer-btn:hover:not(:disabled) {
+  border-color: #c080f0;
+  background: rgba(140,60,200,.12);
+}
+
+/* Koga-tinted clue bubbles */
+.koga-bubble {
+  border-color: rgba(140,60,200,.45) !important;
+  background: rgba(80,20,120,.18) !important;
+}
+.koga-summary {
+  border-color: rgba(140,60,200,.5) !important;
+  border-left-color: rgba(180,80,240,.7) !important;
+  background: rgba(80,20,120,.12) !important;
+}

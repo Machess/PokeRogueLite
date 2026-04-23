@@ -2194,7 +2194,7 @@ const TeamRocketChallenge = {
 
   finish() {
     const sc = document.getElementById('screen-challenge');
-    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active', 'erika-active');
+    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active', 'erika-active', 'koga-active');
     showScreen('map');
     MapEngine.renderParty();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
@@ -5218,6 +5218,328 @@ const ErikaEngine = {
   },
 };
 
+// ─── KOGA POISON ANTIDOTE ENGINE ─────────────────────────────────────────────
+
+const KOGA_INTROS = [
+  `${'{name}'}. You walk into my domain without hesitation. Either very brave or very foolish. I shall test which. A ninja knows every poison — and every cure.`,
+  `Hmm. ${'{name}'}. You survived this far. Now tell me... do you know the difference between a slow poison and a fast one? We shall find out.`,
+  `Stand still, ${'{name}'}. My Pokémon have been poisoned in training. Three cases. You will identify the correct antidote for each. Fail and learn. Succeed and prosper.`,
+];
+
+// Each puzzle: clues describe the poisoning symptoms, answer is the correct antidote
+// correctAntidote must appear in choices[]. Educational: player learns what cures what.
+const KOGA_PUZZLES = [
+  {
+    clues: [
+      'The Pokémon\'s skin has turned a faint purple. It moves sluggishly.',
+      'There is a sweet but acrid smell — almost like burnt sugar.',
+      'Its HP drains slowly each passing moment. Classic venomous sting.',
+    ],
+    summary: 'Purple tint, sweet-acrid smell, slow HP drain. A standard venom — the most common form of poisoning.',
+    question: '☠️ Which antidote cures this poison?',
+    correctAntidote: 'Antidote',
+    choices: ['Antidote', 'Burn Heal', 'Awakening', 'Ice Pack'],
+    explanation: 'An Antidote neutralises standard poison — it is always the first remedy a trained ninja reaches for.',
+    koga_right: 'Correct. Swift and precise. A true shinobi.',
+    koga_wrong: 'An Antidote. Standard venom, standard cure. Remember this.',
+  },
+  {
+    clues: [
+      'The Pokémon is shivering despite the warmth. Its eyes are unfocused.',
+      'There is no smell — this poison is odourless. The most deceptive kind.',
+      'Multiple symptoms at once: poison, confusion, and lethargy.',
+    ],
+    summary: 'Shivering, unfocused eyes, odourless, multiple simultaneous conditions. A compound poison requiring a versatile cure.',
+    question: '☠️ Multiple conditions at once. What cures all of them?',
+    correctAntidote: 'Full Heal',
+    choices: ['Antidote', 'Full Heal', 'Pecha Berry', 'Awakening'],
+    explanation: 'Full Heal cures all status conditions at once — essential when a compound poison strikes multiple systems.',
+    koga_right: 'Precisely. When facing compound poisons, the Full Heal is the only reliable answer.',
+    koga_wrong: 'A Full Heal. It erases all status conditions simultaneously. Never forget its value.',
+  },
+  {
+    clues: [
+      'The Pokémon\'s tongue is discoloured — deep pink, almost red.',
+      'It keeps licking something sweet from the air. The poison is sugar-based.',
+      'The Pokémon is calm but clearly weakened. HP fades slowly.',
+    ],
+    summary: 'Deep pink tongue, reacts to sweetness in the air, calm disposition but draining HP. A berry-soluble venom.',
+    question: '☠️ A sugar-based poison. Which berry antidote works here?',
+    correctAntidote: 'Pecha Berry',
+    choices: ['Oran Berry', 'Pecha Berry', 'Rawst Berry', 'Chesto Berry'],
+    explanation: 'Pecha Berries dissolve sugar-based toxins — their intense sweetness overwhelms and neutralises the venom.',
+    koga_right: 'The Pecha Berry. Its sweetness is its weapon against sweet poisons. Well deduced.',
+    koga_wrong: 'Pecha Berry. Sweet poisons are neutralised by sweeter cures. Study this.',
+  },
+  {
+    clues: [
+      'The Pokémon smells faintly of the forest floor — damp earth and moss.',
+      'Its movements are erratic. The venom affects coordination, not HP.',
+      'The eyes dart rapidly. This is a psychoactive compound, not a physical toxin.',
+    ],
+    summary: 'Earthy smell, erratic movement, no HP drain, darting eyes. A psychoactive compound affecting the mind, not the body.',
+    question: '☠️ A mind-affecting poison with no HP drain. What cures it?',
+    correctAntidote: 'Lum Berry',
+    choices: ['Antidote', 'Paralyze Heal', 'Lum Berry', 'Full Restore'],
+    explanation: 'Lum Berries cure any single status condition including psychoactive compounds — they reset the nervous system.',
+    koga_right: 'The Lum Berry. It resets all conditions. A ninja always carries one.',
+    koga_wrong: 'Lum Berry. It cures any status condition. When in doubt, reach for the Lum.',
+  },
+  {
+    clues: [
+      'The Pokémon collapsed suddenly mid-battle. It was fine moments ago.',
+      'There is a sharp chemical smell — almost like lightning in the air.',
+      'Its muscles are rigid. It cannot move at all, though it is still conscious.',
+    ],
+    summary: 'Sudden collapse, sharp electric smell, rigid muscles, fully conscious but immobile. Paralysis from a contact toxin.',
+    question: '☠️ Rigid muscles, fully conscious, cannot move. What cures this?',
+    correctAntidote: 'Paralyze Heal',
+    choices: ['Antidote', 'Full Heal', 'Paralyze Heal', 'Pecha Berry'],
+    explanation: 'Paralyze Heal dissolves the muscle-locking compound — the electric smell is a sign of a paralytic contact toxin.',
+    koga_right: 'Paralyze Heal. You read the symptoms correctly. That is the mark of a trained mind.',
+    koga_wrong: 'Paralyze Heal. Rigid muscles and electric smell — classic paralytic toxin. Remember the signs.',
+  },
+  {
+    clues: [
+      'The Pokémon\'s scales have dulled to grey. It moves, but reluctantly.',
+      'It flinches from light — photosensitivity. A common side effect of deep toxins.',
+      'The HP drains quickly. Faster than standard poison. This is a bad toxin.',
+    ],
+    summary: 'Grey scales, photosensitivity, fast HP drain. This is a deep toxin — standard Badly Poisoned status.',
+    question: '☠️ Fast HP drain and photosensitivity. This is badly poisoned. Cure it.',
+    correctAntidote: 'Full Heal',
+    choices: ['Antidote', 'Full Heal', 'Lum Berry', 'Pecha Berry'],
+    explanation: 'Badly poisoned (fast drain) requires Full Heal or Lum Berry — Antidote alone only cures standard poison.',
+    koga_right: 'Correct. Standard Antidote fails against deep toxins. Full Heal succeeds. Excellent.',
+    koga_wrong: 'Full Heal — or Lum Berry. Standard Antidote cannot handle deeply embedded toxins.',
+  },
+];
+
+const KogaEngine = {
+  _isActive:  false,
+  _answered:  false,
+  _node:      null,
+  _clueIdx:   0,
+  _puzzle:    null,
+  _usedIdxs:  null,
+
+  start(node) {
+    this._node     = node;
+    this._isActive = true;
+    this._answered = false;
+    this._clueIdx  = 0;
+    this._usedIdxs = this._usedIdxs || new Set();
+
+    // Pick a puzzle not recently used
+    const available = KOGA_PUZZLES
+      .map((p, i) => i)
+      .filter(i => !this._usedIdxs.has(i));
+    if (available.length === 0) this._usedIdxs.clear();
+    const pool = available.length > 0
+      ? available
+      : KOGA_PUZZLES.map((_, i) => i);
+    const idx = pool[Math.floor(Math.random() * pool.length)];
+    this._usedIdxs.add(idx);
+    this._puzzle = KOGA_PUZZLES[idx];
+
+    // Boss-screen intro
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl && imgEl) {
+      bgEl.classList.add('boss-intro-mode');
+      bgEl.style.background = GYM_FALLBACKS[4];
+      imgEl.style.opacity = '0';
+      imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = 'assets/bg_4_boss.png';
+    }
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/koga.png';
+    document.getElementById('dialogue-name').textContent = 'Koga';
+    document.getElementById('dialogue-text').textContent = '';
+
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.style.display = 'none';
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const name  = GameState.trainerName || 'Trainer';
+    const intro = KOGA_INTROS[Math.floor(Math.random() * KOGA_INTROS.length)]
+      .replace('{name}', name);
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += intro[ci++];
+      if (ci >= intro.length) {
+        clearInterval(iv);
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Begin Deduction ☠️'; }
+      }
+    }, 26);
+  },
+
+  startGame() {
+    this._isActive = false;
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = 'Battle! ▶';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    document.getElementById('trainer-intro').style.display = 'none';
+    this._showClues();
+  },
+
+  _showClues() {
+    const p = this._puzzle;
+
+    // Challenge screen header
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = 'assets/koga.png'; img.style.display = ''; }
+    document.getElementById('challenge-badge').textContent   = '☠️ Koga\'s Antidote Deduction';
+    document.getElementById('challenge-intro').textContent   = 'Read every clue carefully before choosing.';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
+    document.getElementById('challenge-question').textContent       = '';
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('jessie-word-display').style.display    = 'none';
+
+    // Clue bubble area — reuse fishing-clue-area pattern
+    const clueArea = document.getElementById('challenge-coin-visual');
+    clueArea.style.display = 'block';
+    clueArea.className     = 'fishing-clue-area koga-clue-area';
+    clueArea.innerHTML     = '';
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(
+      'jessie-active','james-active','meowth-active','surge-active','erika-active','fishing-active');
+    document.getElementById('screen-challenge').classList.add('koga-active');
+    SoundEngine.playBGM('pallet_town_theme.mp3');
+
+    this._clueIdx = 0;
+    this._revealNextClue();
+  },
+
+  _revealNextClue() {
+    const p        = this._puzzle;
+    const clueArea = document.getElementById('challenge-coin-visual');
+    const btnArea  = document.getElementById('challenge-answer-btns');
+    const qEl      = document.getElementById('challenge-question');
+
+    if (this._clueIdx < p.clues.length) {
+      const bubble = document.createElement('div');
+      bubble.className = 'fishing-bubble fishing-bubble-typing koga-bubble';
+      clueArea.appendChild(bubble);
+
+      const text = p.clues[this._clueIdx];
+      let ci = 0;
+      const iv = setInterval(() => {
+        bubble.textContent += text[ci++];
+        if (ci >= text.length) {
+          clearInterval(iv);
+          bubble.className = 'fishing-bubble fishing-bubble-shown koga-bubble';
+          this._clueIdx++;
+
+          if (this._clueIdx < p.clues.length) {
+            btnArea.innerHTML = '';
+            const nb = document.createElement('button');
+            nb.className = 'btn-pixel btn-secondary fishing-next-btn';
+            nb.textContent = 'Next clue ▶';
+            nb.onclick = () => { btnArea.innerHTML = ''; this._revealNextClue(); };
+            btnArea.appendChild(nb);
+          } else {
+            // All clues shown — show summary then question
+            const summary = document.createElement('div');
+            summary.className = 'fishing-summary koga-summary';
+            summary.textContent = p.summary;
+            clueArea.appendChild(summary);
+            this._showQuestion();
+          }
+        }
+      }, 30);
+
+    } else {
+      this._showQuestion();
+    }
+  },
+
+  _showQuestion() {
+    const p    = this._puzzle;
+    const qEl  = document.getElementById('challenge-question');
+    qEl.textContent   = p.question;
+    qEl.style.display = '';
+
+    const btnArea = document.getElementById('challenge-answer-btns');
+    btnArea.innerHTML = '';
+    const choices = shuffle([...p.choices]);
+    choices.forEach(val => {
+      const b = document.createElement('button');
+      b.className   = 'challenge-answer-btn';
+      b.textContent = val;
+      b.addEventListener('click', () => this._answer(val));
+      btnArea.appendChild(b);
+    });
+  },
+
+  _answer(chosen) {
+    if (this._answered) return;
+    this._answered = true;
+
+    const p       = this._puzzle;
+    const isRight = chosen === p.correctAntidote;
+    const name    = GameState.trainerName || 'Trainer';
+
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (b.textContent === p.correctAntidote) b.classList.add('answer-correct');
+      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
+    });
+
+    const resultEl = document.getElementById('challenge-result');
+    resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
+    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${p.correctAntidote}</strong><br>${p.explanation}<br><em>"${isRight ? p.koga_right : p.koga_wrong}" — Koga</em>`;
+    resultEl.style.display = 'block';
+
+    document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';
+    document.getElementById('challenge-continue-btn').style.display = 'block';
+  },
+
+  finish() {
+    document.getElementById('screen-challenge').classList.remove('koga-active');
+    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
+
+    const isRight = this._puzzle && document.querySelector('.answer-correct') !== null;
+    const party   = GameState.party.filter(p => p.hp > 0);
+
+    if (isRight) {
+      // Cure all status effects + restore 15% HP to all living party members
+      party.forEach(p => {
+        p.statusEffects = [];
+        p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.15));
+      });
+      saveGame();
+      showModal(
+        '☠️ Antidote Mastered!',
+        `All Pokémon status conditions cured!\nAll Pokémon healed 15% HP.\n\n"${this._puzzle.koga_right}" — Koga`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+      );
+    } else {
+      saveGame();
+      showModal(
+        '☠️ Study Harder.',
+        `No reward — but the knowledge is yours now.\n\n"${this._puzzle.koga_wrong}" — Koga`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+      );
+    }
+
+    this._answered = false;
+  },
+};
+
 const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;
@@ -5228,6 +5550,7 @@ const MysteryEngine = {
     ];
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
     if (beaten >= 4) pool.push({ weight: 2, fn: () => ErikaEngine.start(node) });
+    if (beaten >= 5) pool.push({ weight: 2, fn: () => KogaEngine.start(node) });
 
     const total = pool.reduce((s, e) => s + e.weight, 0);
     let roll    = Math.random() * total;
@@ -8404,7 +8727,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-tut-next').addEventListener('click',  () => TutorialEngine.next());
   document.getElementById('btn-tut-skip').addEventListener('click',  () => TutorialEngine.skip());
 
-  // ── Meowth / Fishing / Surge / Erika challenge ──
+  // ── Meowth / Fishing / Surge / Erika / Koga challenge ──
   document.getElementById('challenge-continue-btn').addEventListener('click', () => {
     if (SurgeEngine._answered) {
       SurgeEngine._finish();
@@ -8414,6 +8737,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ErikaEngine._finish();
     } else if (ErikaEngine._round > 0 && ErikaEngine._round <= 3) {
       ErikaEngine.nextRound();
+    } else if (KogaEngine._answered) {
+      KogaEngine.finish();
     } else if (FishingEngine._answered) {
       FishingEngine.finish();
     } else {
@@ -8482,6 +8807,8 @@ document.addEventListener('DOMContentLoaded', () => {
       SurgeEngine.startGame();
     } else if (ErikaEngine._isActive) {
       ErikaEngine.startGame();
+    } else if (KogaEngine._isActive) {
+      KogaEngine.startGame();
     } else if (MazeEngine._isActive) {      // ── MAZE MINI-GAME
       MazeEngine.startGame();               // ── MAZE MINI-GAME
     } else if (BossEngine._isRocket) {
