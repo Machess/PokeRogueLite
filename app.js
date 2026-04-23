@@ -2219,6 +2219,8 @@ function levelUpParty(source) {
 
   GameState.party.forEach((p, i) => {
     if (p.hp <= 0) return;
+    // Apply ALL level increments BEFORE the evolution check so Lucky Egg
+    // level-ups through a threshold are caught in the same call.
     p.level++;
     if (p.heldItem?.id === 'lucky_egg') p.level++;
     p.maxHp += 8;
@@ -2233,7 +2235,8 @@ function levelUpParty(source) {
     if (!starter) return;
     const thresholds = EVOLUTION_LEVELS[starterId];
     if (!thresholds) return;
-    const stage      = GameState.evolutionStage;
+    // Treat null/undefined evolutionStage as 0 so old saves recover automatically
+    const stage = GameState.evolutionStage ?? 0;
 
     if (stage === 0 && thresholds.stage2 && p.level >= thresholds.stage2) {
       evolutions.push({ partyIdx: i, stage: 2,
@@ -2567,6 +2570,23 @@ const Game = {
     if (!GameState.stats.totalBossesBeaten)   GameState.stats.totalBossesBeaten   = GameState.bossesDefeated  || 0;
     if (!GameState.stats.totalNodesCompleted) GameState.stats.totalNodesCompleted = GameState.completedNodes?.length || 0;
     if (!GameState.stats.pokemonCaught)       GameState.stats.pokemonCaught       = 0;
+
+    // Backfill evolutionStage — infer from the starter's actual current Pokémon ID.
+    // This repairs saves where evolutionStage was undefined, null, or out of sync.
+    // We look at p.id against the starter's evolutions array — the ID never lies.
+    if (GameState.evolutionStage == null) {
+      const sid     = Number(GameState.starterId);
+      const starter = STARTERS.find(s => s.id === sid);
+      const poke    = (GameState.party || []).find(p => p.isStarter);
+      if (starter && poke) {
+        const evos = starter.evolutions; // e.g. [1,2,3] for Bulbasaur
+        if (poke.id === evos[2])      GameState.evolutionStage = 2;
+        else if (poke.id === evos[1]) GameState.evolutionStage = 1;
+        else                          GameState.evolutionStage = 0;
+      } else {
+        GameState.evolutionStage = 0;
+      }
+    }
     MapEngine.show();
   },
 
@@ -3381,6 +3401,42 @@ const MapEngine = {
     const boss = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     document.getElementById('map-meta').textContent =
       `💰 ${GameState.gold || 0}g  |  ⚔ ${boss?.name ?? 'Boss'} (${GameState.bossesDefeated}/8)  |  Party: ${GameState.party.length}/6`;
+
+    // ── Catch-all evolution repair ───────────────────────────────────────────
+    // If the starter's level has passed a threshold but evolutionStage is behind
+    // (e.g. from a corrupted/old save or a Lucky Egg edge case), fire the
+    // evolution now. Guard flag prevents re-entry if renderParty is called
+    // again before the evolve screen resolves.
+    if (this._evoCheckPending) return;
+    const sid       = Number(GameState.starterId);
+    const starter   = STARTERS.find(s => s.id === sid);
+    const thresholds = EVOLUTION_LEVELS[sid];
+    const poke      = (GameState.party || []).find(p => p.isStarter && p.hp > 0);
+    if (!starter || !thresholds || !poke) return;
+
+    const stage = GameState.evolutionStage ?? 0;
+
+    let missedEvo = null;
+    if (stage === 0 && thresholds.stage2 && poke.level >= thresholds.stage2) {
+      // Starter should have evolved to stage 2 already
+      missedEvo = { partyIdx: GameState.party.indexOf(poke), stage: 2,
+        beforeId: starter.evolutions[0], afterId: starter.evolutions[1] };
+      GameState.evolutionStage = 1;
+    } else if (stage === 1 && thresholds.stage3 && poke.level >= thresholds.stage3) {
+      // Starter should have evolved to stage 3 already
+      missedEvo = { partyIdx: GameState.party.indexOf(poke), stage: 3,
+        beforeId: starter.evolutions[1], afterId: starter.evolutions[2] };
+      GameState.evolutionStage = 2;
+    }
+
+    if (missedEvo) {
+      this._evoCheckPending = true;
+      saveGame();
+      runEvolutions([missedEvo], () => {
+        this._evoCheckPending = false;
+        this.show(); // re-render map after evolution completes
+      });
+    }
   },
 
   // ── Main navigation renderer ─────────────────────────────────────────────
