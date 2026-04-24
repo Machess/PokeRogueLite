@@ -3384,9 +3384,8 @@ const MapEngine = {
       el.appendChild(d);
     });
     const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
-    const boss = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     document.getElementById('map-meta').textContent =
-      `💰 ${GameState.gold || 0}g  |  ⚔ ${boss?.name ?? 'Boss'} (${GameState.bossesDefeated}/8)  |  Party: ${GameState.party.length}/6`;
+      `💰 ${GameState.gold || 0}g  |  Party: ${GameState.party.length}/6`;
 
     // ── Catch-all evolution repair ───────────────────────────────────────────
     // If the starter's level has passed a threshold but evolutionStage is behind
