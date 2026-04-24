@@ -3383,13 +3383,6 @@ const MapEngine = {
       d.addEventListener('click', () => PartyOverview.open());
       el.appendChild(d);
     });
-    if (GameState.party.length > 0) {
-      const hint = document.createElement('div');
-      hint.className = 'map-party-manage-hint';
-      hint.textContent = '⚙';
-      hint.addEventListener('click', () => PartyOverview.open());
-      el.appendChild(hint);
-    }
     const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
     const boss = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
     document.getElementById('map-meta').textContent =
