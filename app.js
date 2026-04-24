@@ -4428,6 +4428,10 @@ const BossEngine = {
       console.error('BossEngine._loadNextOpp: missing opp or player', { opp, player, oppIdx: this.oppIdx, team: this.oppTeam });
       return;
     }
+    // Clear wild-battle flags that bleed across opponents if not reset here
+    BattleEngine._battleOver       = false;
+    BattleEngine._itemUsedThisTurn = false;
+    this._isOver                   = false;
     const activeDeck = player.deck || GameState.deck;
     this.bState = {
       player: { ...player },
@@ -4620,6 +4624,8 @@ const BossEngine = {
 
     if (this._checkDefeated()) return;
 
+    // Reset per-turn flags for the new player turn — mirrors BattleEngine._startPlayerTurn
+    BattleEngine._itemUsedThisTurn = false;
     st.energy = 3 + (st.bonusEnergy || 0);
     st.bonusEnergy = 0;
     if (st.energy > 5) st.energy = 5;
@@ -4661,7 +4667,8 @@ const BossEngine = {
       this.oppTeam[this.oppIdx].hp = 0;
       this.oppIdx++;
       if (this.oppIdx >= this.oppTeam.length) {
-        // All opponents defeated
+        // All opponents defeated — mark boss battle as over
+        this._isOver = true;
         GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
         MapEngine.completeNode(GameState.currentNodeIndex);
 
@@ -4704,6 +4711,10 @@ const BossEngine = {
       }
       this._logEnemy(`${this.bossData.name} sends ${this.oppTeam[this.oppIdx].name}!`);
       st.opp = { ...this.oppTeam[this.oppIdx] };
+      // Reset per-turn and battle-over flags for the new opponent
+      BattleEngine._battleOver       = false;
+      BattleEngine._itemUsedThisTurn = false;
+      this._isOver                   = false;
       this._render();
       return false;
     }
@@ -4732,6 +4743,7 @@ const BossEngine = {
           });
         }
       } else {
+        this._isOver = true;
         deleteSave();
         GameOver.show(this.bossData.name);
         return true;
@@ -9291,7 +9303,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.getElementById('btn-boss-end-turn').addEventListener('click', () => BossEngine.endTurn());
   document.getElementById('btn-boss-use-item').addEventListener('click', () => {
-    if (BattleEngine._battleOver || BattleEngine._itemUsedThisTurn) return;
+    if (BossEngine._isOver || BattleEngine._itemUsedThisTurn) return;
     ItemEngine.renderItemPicker(true, (itemId) => {
       const result = ItemEngine.usePotion(BossEngine.bState, true);
       if (result) {
