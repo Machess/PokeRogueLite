@@ -5729,3 +5729,30 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .btn-flee {
   margin-top: 1.8rem;
 }
+
+/* ═══════════════════════════════════════════
+   CATCH NODE RARITY GLOWS
+   Applied to nav-arrow buttons before visiting.
+   Common = no glow. Uncommon = blue. Rare = purple. Legendary = gold pulse.
+═══════════════════════════════════════════ */
+.nav-arrow-catch-uncommon {
+  border-color: #4aafdf !important;
+  box-shadow: 0 0 16px rgba(80,180,255,.5), 0 4px 14px rgba(0,0,0,.4) !important;
+}
+.nav-arrow-catch-uncommon .nav-arrow-label { color: #7acfff !important; }
+
+.nav-arrow-catch-rare {
+  border-color: #a060e0 !important;
+  box-shadow: 0 0 20px rgba(160,80,240,.55), 0 4px 14px rgba(0,0,0,.4) !important;
+}
+.nav-arrow-catch-rare .nav-arrow-label { color: #c090ff !important; }
+
+.nav-arrow-catch-legendary {
+  border-color: var(--col-yellow) !important;
+  box-shadow: 0 0 28px rgba(255,215,0,.7), 0 4px 18px rgba(0,0,0,.5) !important;
+  animation: lure-pulse 1.4s ease-in-out infinite;
+}
+.nav-arrow-catch-legendary .nav-arrow-label {
+  color: var(--col-yellow) !important;
+  font-weight: 800;
+}

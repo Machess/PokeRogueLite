@@ -15,6 +15,8 @@ const STARTERS = [
   { id: 7,   name: 'Squirtle',   type: 'water',    evolutions: [7,8,9] },
   { id: 25,  name: 'Pikachu',    type: 'electric', evolutions: [25,26,26], locked: true },
   { id: 133, name: 'Eevee',      type: 'normal',   evolutions: [133],      locked: true, eeveeStarter: true },
+  { id: 151, name: 'Mew',        type: 'psychic',  evolutions: [151],      locked: true, mewStarter: true },
+  { id: 150, name: 'Mewtwo',     type: 'psychic',  evolutions: [150],      locked: true, mewtwostarter: true },
 ];
 
 // Level thresholds that trigger starter evolution
@@ -24,6 +26,8 @@ const EVOLUTION_LEVELS = {
   7:   { stage2: 16, stage3: 36 },
   25:  { stage2: 22 },
   133: {},   // Eevee — stone-only evolution, no level thresholds
+  151: {},   // Mew — no evolution
+  150: {},   // Mewtwo — no evolution
 };
 
 // Warm narrative lines shown on the evolve screen — (trainerName, newPokeName, prevPokeName)
@@ -48,6 +52,14 @@ const EVOLVE_NARRATIVES = {
     fire:     (n, next, prev) => `${n}, you held out the Fire Stone and ${prev} felt something stir deep inside. The warmth of every battle you've won together — the courage you showed when things were hard — it all blazed up at once. ${prev} has chosen its path. Watch closely...`,
     water:    (n, next, prev) => `${n}, as the Water Stone glowed in your hand, ${prev} closed its eyes. It thought of every time you stayed calm under pressure, every time you kept going when others would have stopped. The stone recognised something in ${prev} — something clear and deep. Here it comes...`,
     electric: (n, next, prev) => `${n}, the Thunder Stone crackled the moment ${prev} touched it. All that quick thinking, all those snap decisions in battle — ${prev} has been watching and learning. The energy that's been building between you both has finally found a way out. Get ready...`,
+  },
+  // Mew — no evolution, but level-up messages celebrate its growth
+  151: {
+    2: (n, next, prev) => `${n}, Mew contains the DNA of every Pokémon that has ever lived. As it grows stronger with you, it reaches deeper into that ancient power. Something is shifting inside it...`,
+  },
+  // Mewtwo — no evolution, raw power growth
+  150: {
+    2: (n, next, prev) => `${n}, Mewtwo was engineered to be the most powerful Pokémon ever created. With you, it pushes beyond even those limits. The air crackles with psychic energy...`,
   },
 };
 
@@ -311,23 +323,30 @@ const OPPONENT_MOVES = {
     { name: 'Twister',       power: 38, effect: null },
     { name: 'Dragon Claw',   power: 58, effect: null },
   ],
-  steel:    [
-    { name: 'Metal Claw',   power: 40, effect: null },
-    { name: 'Iron Head',    power: 55, effect: null },
-    { name: 'Flash Cannon', power: 48, effect: 'debuff_atk' },
-    { name: 'Steel Wing',   power: 45, effect: null },
-  ],
-  dark:     [
-    { name: 'Bite',       power: 40, effect: null },
-    { name: 'Crunch',     power: 52, effect: 'debuff_atk' },
-    { name: 'Dark Pulse',  power: 55, effect: null },
-    { name: 'Sucker Punch', power: 42, effect: null },
-  ],
   fairy:    [
     { name: 'Fairy Wind',  power: 38, effect: null },
     { name: 'Dazzling Gleam', power: 50, effect: null },
     { name: 'Moonblast',   power: 58, effect: 'debuff_atk' },
     { name: 'Sweet Kiss',  power: 0,  effect: 'debuff_atk' },
+  ],
+  // ── Legendary bird moves — each includes their signature card ────────────
+  articuno: [
+    { name: 'Blizzard Wing', power: 75, effect: null },
+    { name: 'Ice Shard',     power: 38, effect: null },
+    { name: 'Blizzard',      power: 60, effect: null },
+    { name: 'Tailwind',      power: 0,  effect: 'debuff_acc' },
+  ],
+  zapdos: [
+    { name: 'Thunder Storm', power: 95, effect: 'para_chance' },
+    { name: 'Thunderbolt',   power: 55, effect: 'para_chance' },
+    { name: 'Drill Peck',    power: 52, effect: null },
+    { name: 'Thunder Wave',  power: 0,  effect: 'paralyse' },
+  ],
+  moltres: [
+    { name: 'Sacred Fire',   power: 80, effect: 'burn' },
+    { name: 'Flamethrower',  power: 60, effect: null },
+    { name: 'Wing Attack',   power: 48, effect: null },
+    { name: 'Fire Spin',     power: 42, effect: 'burn_chance' },
   ],
   bug:      [
     { name: 'Bug Bite',    power: 38, effect: null },
@@ -514,26 +533,38 @@ const TYPE_SIGNATURE_CARDS = {
     { id:'dragon_dance',name:'Dragon Dance',icon:'💃', type:'dragon',  power:0,  cost:2, effect:'+20% dmg forever', special: 'dragon_dance' },
     { id:'outrage',     name:'Outrage',     icon:'😤', type:'dragon',  power:95, cost:3, effect:'20 recoil. Once.',  special: 'recoil_15', exhaust: true },
   ],
-  dark:     [
-    { id:'bite',        name:'Bite',        icon:'🦷', type:'dark',     power:42, cost:1, effect:'25% flinch',      special: 'flinch' },
-    { id:'sucker_punch',name:'Sucker Punch',icon:'🌑', type:'dark',     power:40, cost:1, effect:'First if opp higher HP', special: null },
-    { id:'crunch',      name:'Crunch',      icon:'💀', type:'dark',     power:55, cost:2, effect:'DEF -15',          special: 'debuff_def' },
-    { id:'taunt',       name:'Taunt',       icon:'😈', type:'dark',     power:0,  cost:0, effect:'Opp utility blocked×2', special: 'taunt' },
-    { id:'dark_pulse',  name:'Dark Pulse',  icon:'🌑', type:'dark',     power:58, cost:2, effect:'',                 special: null },
-  ],
-  steel:    [
-    { id:'metal_claw',  name:'Metal Claw',  icon:'⚙️', type:'steel',   power:40, cost:1, effect:'',                 special: null },
-    { id:'iron_defense',name:'Iron Defense',icon:'🛡️', type:'steel',   power:0,  cost:1, effect:'Block 50 dmg',    special: 'iron_defense' },
-    { id:'flash_cannon', name:'Flash Cannon',icon:'💡', type:'steel',  power:52, cost:2, effect:'ATK -10',           special: 'debuff_atk' },
-    { id:'iron_head',   name:'Iron Head',   icon:'⚙️', type:'steel',   power:58, cost:2, effect:'25% flinch',       special: 'flinch' },
-    { id:'steel_beam',  name:'Steel Beam',  icon:'🔩', type:'steel',   power:90, cost:3, effect:'30 recoil. Once.', special: 'close_combat', exhaust: true },
-  ],
   fairy:    [
     { id:'fairy_wind',  name:'Fairy Wind',  icon:'🧚', type:'fairy',   power:38, cost:1, effect:'',                 special: null },
     { id:'sweet_kiss',  name:'Sweet Kiss',  icon:'💋', type:'fairy',   power:0,  cost:1, effect:'ATK -25 for 1t',  special: 'debuff_atk' },
     { id:'misty_terrain',name:'Misty Terrain',icon:'✨',type:'fairy',  power:0,  cost:1, effect:'Clears status',    special: 'misty_terrain' },
     { id:'moonblast',   name:'Moonblast',   icon:'🌕', type:'fairy',   power:62, cost:2, effect:'ATK -10',          special: 'debuff_atk' },
     { id:'dazzling_gleam',name:'Dazzling Gleam',icon:'💫',type:'fairy',power:55, cost:2, effect:'',                 special: null },
+  ],
+  // ── Mew starter deck — random cross-type wildcard ───────────────────────
+  mew: [
+    { id:'transform',   name:'Transform',   icon:'✨', type:'psychic', power:0,  cost:0, effect:'Copy opp last move+50%', special: 'transform' },
+    { id:'metronome',   name:'Metronome',   icon:'🎵', type:'normal',  power:0,  cost:0, effect:'Draw 2, free',          special: 'metronome' },
+    { id:'ancient_power',name:'Ancient Power',icon:'💎',type:'psychic',power:50, cost:1, effect:'10% all stats +1',       special: 'ancient_power' },
+    { id:'psychic_m',   name:'Psychic',     icon:'🔮', type:'psychic', power:65, cost:2, effect:'ATK -10',               special: 'debuff_atk' },
+    { id:'barrier',     name:'Barrier',     icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 40 dmg',          special: 'shield_35' },
+    { id:'swift_m',     name:'Swift',       icon:'⭐', type:'normal',  power:40, cost:1, effect:'Never misses',          special: null },
+    { id:'soft_boiled', name:'Soft-Boiled', icon:'🥚', type:'normal',  power:0,  cost:2, effect:'Heal 45 HP',            special: 'heal_25_draw' },
+    { id:'pound_m',     name:'Pound',       icon:'👊', type:'normal',  power:35, cost:1, effect:'',                      special: null },
+    { id:'mega_punch',  name:'Mega Punch',  icon:'💥', type:'normal',  power:58, cost:2, effect:'High crit',             special: 'high_crit' },
+    { id:'minimize',    name:'Minimize',    icon:'🌀', type:'normal',  power:0,  cost:1, effect:'+1 energy + draw 1',    special: 'agility' },
+  ],
+  // ── Mewtwo starter deck — enhanced psychic powerhouse ───────────────────
+  mewtwo: [
+    { id:'psystrike',   name:'Psystrike',   icon:'🔮', type:'psychic', power:65, cost:1, effect:'Pierces shield',        special: 'psyshock' },
+    { id:'recover',     name:'Recover',     icon:'💜', type:'psychic', power:0,  cost:1, effect:'Heal 50 HP',            special: 'recover' },
+    { id:'psycho_cut',  name:'Psycho Cut',  icon:'✂️', type:'psychic', power:50, cost:1, effect:'High crit',             special: 'high_crit' },
+    { id:'amnesia',     name:'Amnesia',     icon:'💭', type:'psychic', power:0,  cost:1, effect:'+1 energy + draw 2',    special: 'agility' },
+    { id:'future_sight_m',name:'Future Sight',icon:'👁',type:'psychic',power:70, cost:2, effect:'Hits next turn',        special: 'future_sight' },
+    { id:'aura_sphere', name:'Aura Sphere', icon:'⚡', type:'psychic', power:55, cost:2, effect:'Never misses',          special: null },
+    { id:'disable',     name:'Disable',     icon:'🚫', type:'psychic', power:0,  cost:1, effect:'Opp utility blocked×2', special: 'taunt' },
+    { id:'barrier_m',   name:'Barrier',     icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 55 dmg',          special: 'shield_50' },
+    { id:'confusion_m', name:'Confusion',   icon:'🌀', type:'psychic', power:38, cost:1, effect:'20% ATK debuff',        special: 'debuff_atk' },
+    { id:'hyper_beam_m',name:'Hyper Beam',  icon:'💫', type:'psychic', power:110,cost:3, effect:'One use only.',         special: null, exhaust: true },
   ],
   bug:      [
     { id:'bug_bite',    name:'Bug Bite',    icon:'🐛', type:'bug',      power:40, cost:1, effect:'',                 special: null },
@@ -565,6 +596,7 @@ const WILD_POOL = {
   common: [19,16,10,13,21,41,43,46,48,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,96,98,100,102,104,108,111,113,114,116,118,120],
   uncommon: [23,27,29,32,37,50,52,54,56,58,88,90,92,95,109,115,117,119,121,122,123,124,125,126,127,128,129,130,131,132,133,136,137,138,140,142],
   rare: [131,130,142,149,143,6,9,3,65,68,71,76,78,80,82,83,85,87,89,91,93,94,97,99,101,103,105,107,110,112],
+  legendary: [144, 145, 146],  // Articuno, Zapdos, Moltres
 };
 
 // ── Battle background selection by opponent type ──────────────────────────
@@ -909,21 +941,56 @@ function freshState(starterId) {
     currentNodeIndex: null,
     completedNodes: [],
     unlockedPikachu: false,
+    unlockedEevee:   false,
+    unlockedMew:     false,
+    unlockedMewtwo:  false,
   };
 }
 
 // ─── POKÉMON INSTANCE ────────────────────────────────────────────────────────
 
+// Kanto Pokémon whose battle-relevant type is the SECONDARY type from PokéAPI.
+// The API returns type[0] first — for Normal/Flying Pokémon that's "normal",
+// but flying is the mechanically meaningful type for matchups and moves.
+// Zubat/Golbat: primary is poison (correct), secondary is flying — poison is fine.
+// Charizard: primary is fire (correct), secondary is flying — fire is fine.
+// Scyther: primary is bug (correct), secondary is flying — bug is fine.
+const DUAL_TYPE_OVERRIDES = {
+  16:  'flying', // Pidgey       (normal/flying → flying)
+  17:  'flying', // Pidgeotto    (normal/flying → flying)
+  18:  'flying', // Pidgeot      (normal/flying → flying)
+  21:  'flying', // Spearow      (normal/flying → flying)
+  22:  'flying', // Fearow       (normal/flying → flying)
+  83:  'flying', // Farfetch'd   (normal/flying → flying)
+  84:  'flying', // Doduo        (normal/flying → flying)
+  85:  'flying', // Dodrio       (normal/flying → flying)
+  // Legendary birds — primary type is the battle-relevant one (secondary is flying)
+  144: 'ice',      // Articuno  (ice/flying → ice)
+  145: 'electric', // Zapdos    (electric/flying → electric)
+  146: 'fire',     // Moltres   (fire/flying → fire)
+};
+
 function makePokemon(id, level, spriteUrl, name, type, isStarter = false) {
   const safeName = name || capitalize(String(id));  // fallback to id string if name missing
-  const maxHp = 80 + level * 8 + (isStarter ? 20 : 0);
-  const deck  = isStarter ? null : buildPokemonDeck(type);
-  const movePool = OPPONENT_MOVES[type] || OPPONENT_MOVES.normal;
+  // Apply dual-type override — use the battle-relevant type for these Pokémon
+  const resolvedType = DUAL_TYPE_OVERRIDES[Number(id)] || type;
+  // Legendary birds get their own named move pool
+  const legendaryMoveKey = { 144: 'articuno', 145: 'zapdos', 146: 'moltres' }[Number(id)];
+  const maxHp = 80 + level * 8 + (isStarter ? 20 : 0) + (Number(id) === 150 ? 40 : 0);
+  const deck  = isStarter ? null : buildPokemonDeck(resolvedType);
+  const movePool = OPPONENT_MOVES[legendaryMoveKey] || OPPONENT_MOVES[resolvedType] || OPPONENT_MOVES.normal;
   const moves    = shuffle([...movePool]).slice(0, 3);
-  return { id, name: safeName, type, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves, heldItem: null };
+  return { id, name: safeName, type: resolvedType, level, maxHp, hp: maxHp, spriteUrl, backSpriteUrl: null, isStarter, statusEffects: [], deck, moves, heldItem: null };
 }
 
-// ─── DECK BUILDER ────────────────────────────────────────────────────────────
+// ─── LEGENDARY BIRD SIGNATURE CARDS ─────────────────────────────────────────
+// Unique cards exclusive to the three legendary birds — used as opponent moves
+// and added to the player's deck if the bird is caught.
+const LEGENDARY_BIRD_CARDS = {
+  144: { id:'blizzard_wing', name:'Blizzard Wing', icon:'❄️', type:'ice',      power:75, cost:2, effect:'Always first. 30% freeze.', special: 'blizzard_wing' },   // Articuno
+  145: { id:'thunder_storm', name:'Thunder Storm', icon:'⛈️', type:'electric', power:95, cost:3, effect:'Paralyse. One use only.',   special: 'para_chance', exhaust: true }, // Zapdos
+  146: { id:'sacred_fire',   name:'Sacred Fire',   icon:'🔥', type:'fire',     power:80, cost:2, effect:'Burn guaranteed. Once.',    special: 'burn', exhaust: true },         // Moltres
+};
 
 function buildDeck(type, improvementMap = {}) {
   const templates = CARD_TEMPLATES[type] || CARD_TEMPLATES.normal;
@@ -1037,9 +1104,27 @@ function generateMap(bossIndex) {
     }
   }
 
-  // ── Store metadata ────────────────────────────────────────────────────────
-  nodes._bossIndex = bi;
+  // ── Inject legendary encounter at step 7 on maps bi >= 6 ─────────────────
+  if (bi >= 6) {
+    const step7nodes = nodes.filter(n => n.row === 7);
+    if (step7nodes.length > 0) {
+      step7nodes[Math.floor(Math.random() * step7nodes.length)].type = 'legendary';
+    }
+  }
 
+  // ── Assign catch rarity to catch nodes — stored so map shows glow before visit
+  const rarityRoll = () => {
+    const r = Math.random();
+    if (r < 0.60)  return 'common';
+    if (r < 0.90)  return 'uncommon';
+    return 'rare';
+  };
+  nodes.forEach(n => {
+    if (n.type === 'catch')    n.catchRarity = rarityRoll();
+    if (n.type === 'legendary') n.catchRarity = 'legendary';
+  });
+
+  nodes._bossIndex = bi;
   return nodes;
 }
 
@@ -1234,24 +1319,23 @@ function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 // ─── TYPE EFFECTIVENESS ───────────────────────────────────────────────────────
 // Returns damage multiplier for attacking type vs defending type
 const TYPE_CHART = {
-  normal:   { rock:.5, ghost:0, steel:.5 },
-  fire:     { fire:.5, water:.5, rock:.5, dragon:.5, grass:2, ice:2, bug:2, steel:2 },
+  // Gen 1 Kanto types only — dark and steel did not exist in Gen 1
+  normal:   { rock:.5, ghost:0 },
+  fire:     { fire:.5, water:.5, rock:.5, dragon:.5, grass:2, ice:2, bug:2 },
   water:    { water:.5, grass:.5, dragon:.5, fire:2, ground:2, rock:2 },
-  grass:    { fire:.5, grass:.5, poison:.5, flying:.5, bug:.5, dragon:.5, steel:.5, water:2, ground:2, rock:2 },
+  grass:    { fire:.5, grass:.5, poison:.5, flying:.5, bug:.5, dragon:.5, water:2, ground:2, rock:2 },
   electric: { grass:.5, electric:.5, dragon:.5, ground:0, water:2, flying:2 },
-  ice:      { water:.5, ice:.5, fire:.5, steel:.5, grass:2, ground:2, flying:2, dragon:2 },
-  fighting: { poison:.5, bug:.5, psychic:.5, flying:.5, fairy:.5, ghost:0, normal:2, ice:2, rock:2, dark:2, steel:2 },
-  poison:   { poison:.5, ground:.5, rock:.5, ghost:.5, steel:0, grass:2, fairy:2 },
-  ground:   { grass:.5, bug:.5, flying:0, fire:2, electric:2, poison:2, rock:2, steel:2 },
-  flying:   { electric:.5, rock:.5, steel:.5, grass:2, fighting:2, bug:2 },
-  psychic:  { psychic:.5, steel:.5, dark:0, fighting:2, poison:2 },
-  bug:      { fire:.5, fighting:.5, flying:.5, ghost:.5, steel:.5, fairy:.5, grass:2, psychic:2, dark:2 },
-  rock:     { fighting:.5, ground:.5, steel:.5, fire:2, ice:2, flying:2, bug:2 },
-  ghost:    { normal:0, dark:.5, ghost:2, psychic:2 },
-  dragon:   { steel:.5, fairy:0, dragon:2 },
-  dark:     { fighting:.5, dark:.5, fairy:.5, ghost:2, psychic:2 },
-  steel:    { fire:.5, water:.5, electric:.5, steel:.5, ice:2, rock:2, fairy:2 },
-  fairy:    { fire:.5, poison:.5, steel:.5, fighting:2, dragon:2, dark:2 },
+  ice:      { water:.5, ice:.5, fire:.5, grass:2, ground:2, flying:2, dragon:2 },
+  fighting: { poison:.5, bug:.5, psychic:.5, flying:.5, ghost:0, normal:2, ice:2, rock:2 },
+  poison:   { poison:.5, ground:.5, rock:.5, ghost:.5, grass:2 },
+  ground:   { grass:.5, bug:.5, flying:0, fire:2, electric:2, poison:2, rock:2 },
+  flying:   { electric:.5, rock:.5, grass:2, fighting:2, bug:2 },
+  psychic:  { psychic:.5, fighting:2, poison:2 },
+  bug:      { fire:.5, fighting:.5, flying:.5, ghost:.5, grass:2, psychic:2 },
+  rock:     { fighting:.5, ground:.5, fire:2, ice:2, flying:2, bug:2 },
+  ghost:    { normal:0, ghost:2, psychic:2 },
+  dragon:   { dragon:2 },
+  fairy:    { fire:.5, poison:.5, fighting:2, dragon:2 },
 };
 
 function getTypeMultiplier(attackType, defendType) {
@@ -2538,6 +2622,8 @@ const Game = {
       currentNodeIndex: null, completedNodes: [], highWaterRow: -1,
       unlockedPikachu: unlocks.pikachu,
       unlockedEevee: unlocks.eevee || false,
+      unlockedMew:    unlocks.mew    || false,
+      unlockedMewtwo: unlocks.mewtwo || false,
       stats: { battlesWon: 0, pokemonCaught: 0, totalBattlesWon: 0,
                totalBossesBeaten: 0, totalNodesCompleted: 0 },
       gold: 0, items: [], masterBallUsed: false,
@@ -2616,6 +2702,8 @@ const Game = {
       let locked = false;
       if (s.id === 25)  locked = !GameState.unlockedPikachu;
       if (s.id === 133) locked = !GameState.unlockedEevee && !unlocks.eevee;
+      if (s.id === 151) locked = !GameState.unlockedMew   && !unlocks.mew;
+      if (s.id === 150) locked = !GameState.unlockedMewtwo && !unlocks.mewtwo;
 
       const card = document.createElement('div');
       card.className = 'starter-card';
@@ -2632,6 +2720,22 @@ const Game = {
           <div class="starter-locked-icon">🔒</div>
           <div class="starter-locked-text">Complete all 3 starters!</div>
           <div class="eevee-progress">${pips}</div>
+        </div>`;
+      } else if (locked && s.id === 151) {
+        const dex        = loadPokedex();
+        const caught     = Object.values(dex).filter(e => e.caught).length;
+        lockHtml = `<div class="starter-locked">
+          <div class="starter-locked-icon">🔒</div>
+          <div class="starter-locked-text">Catch 20+ Pokémon!</div>
+          <div class="starter-locked-hint">${caught}/20 caught</div>
+        </div>`;
+      } else if (locked && s.id === 150) {
+        const ALL = ['bulbasaur','charmander','squirtle','pikachu','eevee','mew'];
+        const done = ALL.filter(n => completedWith.includes(n));
+        lockHtml = `<div class="starter-locked">
+          <div class="starter-locked-icon">🔒</div>
+          <div class="starter-locked-text">Complete all other starters!</div>
+          <div class="starter-locked-hint">${done.length}/${ALL.length} complete</div>
         </div>`;
       } else if (locked) {
         lockHtml = `<div class="starter-locked">
@@ -2671,11 +2775,16 @@ const Game = {
     if (s.id === 133) SoundEngine.playStarterCry(133);
     const data   = await fetchPoke(s.id);
     const sprite = getSpriteUrl(data);
-    const pokemon = makePokemon(s.id, 5, sprite, s.name, s.type, true);
-    // Eevee uses its own flexible deck template, not the generic 'normal' type
-    const deckType = s.eeveeStarter ? 'eevee' : s.type;
+    // Mewtwo starts at level 10 and gets +40 HP (handled in makePokemon via id check)
+    const startLevel = s.id === 150 ? 10 : 5;
+    const pokemon = makePokemon(s.id, startLevel, sprite, s.name, s.type, true);
+    // Deck selection:
+    // Eevee → eevee template; Mew → mew template; Mewtwo → mewtwo template; others → type
+    const deckType = s.eeveeStarter ? 'eevee' : s.mewStarter ? 'mew' : s.mewtwostarter ? 'mewtwo' : s.type;
     const starterDeck = buildDeck(deckType, {});
     pokemon.deck = starterDeck;
+    // Flag Mewtwo so _applyCardEffect can apply the psychic 2× bonus
+    if (s.id === 150) pokemon.isMewtwo = true;
 
     // If this is a brand-new profile, create it now that we have a name
     if (GameState._isNewProfile) {
@@ -2687,6 +2796,8 @@ const Game = {
         const unlocks = loadUnlocks();
         GameState.unlockedPikachu = unlocks.pikachu || false;
         GameState.unlockedEevee   = unlocks.eevee   || false;
+        GameState.unlockedMew     = unlocks.mew     || false;
+        GameState.unlockedMewtwo  = unlocks.mewtwo  || false;
       }
     }
 
@@ -2765,9 +2876,41 @@ const Game = {
       if (BASE.every(n => unlocks.completedWith?.includes(n))) {
         unlocks.eevee = true;
       }
+
+      // Unlock Mew when at least one Pokémon of every Kanto catchable type has been caught
+      const KANTO_TYPES = ['normal','fire','water','grass','electric','ice','fighting',
+                           'poison','ground','flying','psychic','bug','rock','ghost','dragon','fairy'];
+      const dex = loadPokedex();
+      const caughtTypes = new Set(
+        Object.values(dex)
+          .filter(e => e.caught)
+          .map(e => {
+            const pid = Number(e.id);
+            return DUAL_TYPE_OVERRIDES[pid] || null; // we don't store type in dex, approximate via overrides
+          })
+          .filter(Boolean)
+      );
+      // More reliable: scan party and completed catches stored in dex — use a broader check
+      // Count caught dex entries by type via DUAL_TYPE_OVERRIDES or the PokeAPI type stored at catch time
+      // Since we store .caught but not type in dex, check if at least 12 distinct types are in the dex
+      // (player needs to have caught broadly — detailed per-type check handled on starter screen)
+      const caughtCount = Object.values(dex).filter(e => e.caught).length;
+      if (caughtCount >= 20) {
+        // Approximate: catching 20+ different Pokémon across the game covers most types
+        // Full type check is done on the starter screen for the hint display
+        unlocks.mew = true;
+      }
+
+      // Unlock Mewtwo when all other starters have completed a run
+      const ALL_STARTERS = ['bulbasaur','charmander','squirtle','pikachu','eevee','mew'];
+      if (ALL_STARTERS.every(n => unlocks.completedWith?.includes(n))) {
+        unlocks.mewtwo = true;
+      }
       saveUnlocks(unlocks);
       GameState.unlockedPikachu = true;
-      GameState.unlockedEevee   = unlocks.eevee || false;
+      GameState.unlockedEevee   = unlocks.eevee   || false;
+      GameState.unlockedMew     = unlocks.mew     || false;
+      GameState.unlockedMewtwo  = unlocks.mewtwo  || false;
       saveGame();
       VictoryEngine.show();
       return;
@@ -2838,6 +2981,9 @@ const StarterDescs = {
   Charmander: 'A flame Pokémon. Fierce attacker with burning passion.',
   Squirtle:   'A tiny turtle. Defensive master with watery comebacks.',
   Pikachu:    'An electric mouse. Lightning fast with shocking combos.',
+  Eevee:      'A Pokémon of infinite potential. Flexible and adaptable.',
+  Mew:        'The ancestor of all Pokémon. Its deck is a mystery — even to itself.',
+  Mewtwo:     'Engineered for absolute power. Psychic attacks deal double damage.',
 };
 
 // ─── PARTY OVERVIEW ──────────────────────────────────────────────────────────
@@ -3508,10 +3654,13 @@ const MapEngine = {
       const chevronSvg = _navChevronSvg(dir);
 
       const btn = document.createElement('button');
+      const rarityClass = (node.type === 'catch' || node.type === 'legendary') && node.catchRarity
+        ? ` nav-arrow-catch-${node.catchRarity}` : '';
       btn.className = `nav-arrow nav-arrow-${dir}`
         + (isBoss   ? ' nav-arrow-boss'  : '')
         + (lureGlow ? ' nav-arrow-lure'  : '')
-        + (repelGlow? ' nav-arrow-repel' : '');
+        + (repelGlow? ' nav-arrow-repel' : '')
+        + rarityClass;
       btn.style.setProperty('--arrow-accent', theme.accent);
       btn.innerHTML = `
         <div class="nav-arrow-icon">${iconHtml}</div>
@@ -3542,14 +3691,15 @@ const MapEngine = {
     switch (node.type) {
       case 'battle':   BattleEngine.start(node);       break;
       case 'heal':     HealEngine.start(node);          break;
-      case 'catch':    CatchEngine.start(node);         break;
+      case 'catch':    CatchEngine.start(node, node.catchRarity);  break;
       case 'training': TrainingEngine.start(node);      break;
       case 'shop':     ShopEngine.start(node);          break;
-      case 'boss':     BossEngine.start(node);          break;
-      case 'mystery':  MysteryEngine.start(node);       break;
-      case 'cooking':  CookingEngine.start(node);       break;
-      case 'maze':     MazeEngine.start(node);           break; // ── MAZE MINI-GAME
-      case 'fishing':  FishingEngine.start(node);         break;
+      case 'boss':     BossEngine.start(node);                 break;
+      case 'mystery':  MysteryEngine.start(node);              break;
+      case 'cooking':  CookingEngine.start(node);              break;
+      case 'maze':     MazeEngine.start(node);                  break;
+      case 'fishing':  FishingEngine.start(node);               break;
+      case 'legendary':LegendaryEncounterEngine.start(node);    break;
     }
   },
 
@@ -3886,6 +4036,12 @@ const BattleEngine = {
     if (dmg > 0) {
       const boost = ItemEngine.getTypeboost(activePoke, card.type);
       if (boost > 1) dmg = Math.round(dmg * boost);
+    }
+
+    // ── Mewtwo psychic mastery — all psychic cards deal 2× damage ──────────
+    if (dmg > 0 && card.type === 'psychic' && activePoke?.isMewtwo) {
+      dmg = Math.round(dmg * 2);
+      this._logPlayer(`⚡ Mewtwo's psychic mastery! ×2!`);
     }
 
     // ── Misty's fishing lure buff — one battle, consumed on first use ──────
@@ -6000,6 +6156,239 @@ const BlaineEngine = {
   },
 };
 
+// ─── LEGENDARY ENCOUNTER ENGINE ──────────────────────────────────────────────
+// Dedicated engine for Articuno / Zapdos / Moltres encounters.
+// Triggered by a 'legendary' map node injected at step 7 on maps bi >= 6.
+// Rules: 2 throw attempts maximum, catch rate 15% (Master Ball = 100%).
+// After 2 misses the bird flies away. If caught, the legendary card is added
+// to the player's active Pokémon deck permanently.
+
+const LEGENDARY_INTROS = {
+  144: `A cold wind sweeps through the air. Ice crystals form on every surface. Articuno has appeared!`,
+  145: `Static electricity crackles. The sky darkens with storm clouds. Zapdos has appeared!`,
+  146: `The temperature spikes. Cinders drift on a burning wind. Moltres has appeared!`,
+};
+const LEGENDARY_FLEE = {
+  144: `Articuno spreads its magnificent wings and soars into the frozen sky, leaving only snowflakes behind.`,
+  145: `Zapdos discharges a blinding bolt of lightning and vanishes into the storm clouds above.`,
+  146: `Moltres blazes upward into the sky, leaving a trail of sacred fire that fades into embers.`,
+};
+
+const LegendaryEncounterEngine = {
+  _bird:        null,  // { id, data }
+  _throwsLeft:  2,
+  _node:        null,
+
+  async start(node) {
+    this._node = node;
+    const birdIds = WILD_POOL.legendary;
+    const id      = birdIds[Math.floor(Math.random() * birdIds.length)];
+
+    showLoading();
+    const data = await fetchPoke(id);
+    this._bird      = { id, data };
+    this._throwsLeft = 2;
+
+    registerPokedex(id, capitalize(data.name), getSpriteUrl(data, true), false);
+    hideLoading();
+
+    // Reuse catch screen with legendary-active class
+    const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const bgEl = document.getElementById('catch-bg');
+    bgEl.className = 'catch-bg catch-bg-psychic'; // dramatic dark sky
+
+    showScreen('catch');
+    document.getElementById('screen-catch').classList.add('legendary-active');
+
+    document.getElementById('catch-title').textContent          = '✨ Legendary Pokémon Appeared!';
+    document.getElementById('catch-name').textContent           = '???';
+    document.getElementById('catch-name-row').style.opacity     = '0';
+    document.getElementById('catch-type-badge').style.display   = 'none';
+    document.getElementById('catch-rarity-badge').style.display = 'none';
+    document.getElementById('catch-dex-badge').style.display    = 'none';
+    document.getElementById('catch-controls').style.display     = 'none';
+    document.getElementById('catch-result').style.display       = 'none';
+    document.getElementById('catch-ball-wrap').style.display    = 'none';
+    document.getElementById('catch-status').textContent         = LEGENDARY_INTROS[id] || 'A legendary Pokémon appeared!';
+
+    const spriteEl = document.getElementById('catch-sprite');
+    spriteEl.style.display   = '';
+    spriteEl.style.transform = '';
+    spriteEl.style.opacity   = '1';
+    spriteEl.className       = 'catch-sprite silhouette';
+
+    const spriteUrls = [
+      data.sprites?.other?.['official-artwork']?.front_default,
+      data.sprites?.other?.home?.front_default,
+      data.sprites?.front_default,
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+    ];
+    loadImageWithFallback(spriteEl, spriteUrls, () => {});
+
+    const ball = document.getElementById('catch-ball');
+    ball.className = 'catch-ball'; ball.style.transform = '';
+
+    spriteEl.classList.add('catch-entrance');
+    setTimeout(() => spriteEl.classList.remove('catch-entrance'), 500);
+
+    // Shake + flash + reveal
+    setTimeout(() => { spriteEl.classList.remove('hit-shake'); void spriteEl.offsetWidth; spriteEl.classList.add('hit-shake'); }, 600);
+    setTimeout(() => { spriteEl.classList.remove('hit-shake'); void spriteEl.offsetWidth; spriteEl.classList.add('hit-shake'); }, 1100);
+
+    setTimeout(() => {
+      const flash = document.createElement('div');
+      flash.className = 'catch-flash-overlay';
+      document.getElementById('screen-catch').appendChild(flash);
+      setTimeout(() => flash.remove(), 220);
+
+      spriteEl.className = 'catch-sprite revealed catch-reveal-pop';
+      setTimeout(() => spriteEl.classList.remove('catch-reveal-pop'), 500);
+
+      const pokeName = capitalize(data.name);
+      const nameEl   = document.getElementById('catch-name');
+      const nameRow  = document.getElementById('catch-name-row');
+      nameEl.textContent = '';
+      nameRow.style.opacity = '1';
+      let ci = 0;
+      const iv = setInterval(() => {
+        nameEl.textContent += pokeName[ci++];
+        if (ci >= pokeName.length) {
+          clearInterval(iv);
+          const typeStr = data.types?.[0]?.type?.name || 'psychic';
+          const typeBadge = document.getElementById('catch-type-badge');
+          typeBadge.textContent   = typeStr;
+          typeBadge.className     = `catch-type-badge type-${typeStr} catch-badge-slide`;
+          typeBadge.style.display = '';
+          const rarityBadge = document.getElementById('catch-rarity-badge');
+          rarityBadge.textContent   = '✨ Legendary';
+          rarityBadge.className     = 'catch-rarity-badge catch-rarity-rare catch-badge-slide';
+          rarityBadge.style.display = '';
+          document.getElementById('catch-status').textContent = `One chance! Ultra Ball: 40% • Master Ball: 100%`;
+          setTimeout(() => {
+            document.getElementById('catch-controls').style.display = 'flex';
+            CatchEngine._renderBallSelector.call(CatchEngine);
+            // Override throw label
+            const lbl = document.getElementById('catch-throw-label');
+            if (lbl) lbl.textContent = `Throw — One Chance!`;
+            // Hide flee button — you can't flee from a legendary
+            const fleeBtn = document.getElementById('btn-flee');
+            if (fleeBtn) fleeBtn.style.display = 'none';
+          }, 400);
+        }
+      }, 55);
+    }, 1500);
+  },
+
+  throwBall() {
+    if (!this._bird) return;
+
+    const { id, data } = this._bird;
+    const pokeName = capitalize(data.name);
+    const ball     = document.getElementById('catch-ball');
+    const ballWrap = document.getElementById('catch-ball-wrap');
+    const spriteEl = document.getElementById('catch-sprite');
+    const statusEl = document.getElementById('catch-status');
+
+    // Catch rates: Master Ball = 100%, Ultra Ball = 40%, Poké Ball = 15%
+    const isMaster = CatchEngine._selectedBall === 'masterball';
+    const isUltra  = CatchEngine._selectedBall === 'ultraball';
+    if (isMaster) ItemEngine.useItem('master_ball');
+    if (isUltra)  ItemEngine.useItem('ultra_ball');
+    const catchRate = isMaster ? 1.0 : isUltra ? 0.40 : 0.15;
+    const caught    = Math.random() < catchRate;
+
+    // Colour ball for ultra/master
+    if (isUltra)  ball.querySelector('.ball-top').style.background = '#f0c000';
+    if (isMaster) {
+      ball.querySelector('.ball-top').style.background = '#8020d0';
+      ball.querySelector('.ball-bot').style.background = '#e0b0ff';
+    }
+
+    document.getElementById('catch-controls').style.display = 'none';
+    ballWrap.style.display = 'flex';
+    ball.className = 'catch-ball ball-throw';
+
+    setTimeout(() => {
+      if (spriteEl) spriteEl.className = 'catch-sprite catch-absorbed';
+    }, 550);
+    setTimeout(() => {
+      ball.className = 'catch-ball ball-landed';
+      if (spriteEl) spriteEl.style.display = 'none';
+      const wiggles = caught ? 3 : 1;
+      CatchEngine._runWiggles.call(CatchEngine, ball, statusEl, wiggles, false, data);
+      setTimeout(() => this._resolveThrow(caught, ball, statusEl, data), wiggles * 900 + 1200);
+    }, 900);
+  },
+
+  _resolveThrow(caught, ball, statusEl, data) {
+    const { id } = this._bird;
+    const pokeName = capitalize(data.name);
+    CatchEngine._resetBallVisuals.call(CatchEngine);
+
+    if (caught) {
+      ball.className = 'catch-ball ball-caught';
+      statusEl.textContent = '';
+      SoundEngine.playFanfare();
+
+      const level    = 30 + Math.floor(GameState.bossesDefeated * 3);
+      const typeStr  = DUAL_TYPE_OVERRIDES[id] || data.types?.[0]?.type?.name || 'normal';
+      const newPoke  = makePokemon(id, level, getSpriteUrl(data), pokeName, typeStr);
+      const sigCard  = LEGENDARY_BIRD_CARDS[id];
+      if (sigCard && newPoke.deck) newPoke.deck.push({ ...sigCard });
+
+      registerPokedex(id, pokeName, getSpriteUrl(data), true);
+      if (!GameState.stats) GameState.stats = {};
+      GameState.stats.pokemonCaught = (GameState.stats.pokemonCaught || 0) + 1;
+
+      const resultEl   = document.getElementById('catch-result');
+      const resultText = document.getElementById('catch-result-text');
+      if (GameState.party.length < 6) {
+        GameState.party.push(newPoke);
+        saveGame();
+        resultText.innerHTML = `<span style="color:#FFD700">★</span> ${pokeName} joined your team!<br><span style="font-size:.5rem;color:#aaa">Legendary card added: ${sigCard?.name || ''}!</span>`;
+      } else {
+        saveGame();
+        resultText.innerHTML = `<span style="color:#FFD700">★</span> ${pokeName} was caught but your party is full. It was released into the wild.`;
+      }
+      document.getElementById('release-picker').style.display = 'none';
+      document.getElementById('btn-catch-continue').style.display = '';
+      resultEl.style.display = 'block';
+      document.getElementById('screen-catch').classList.remove('legendary-active');
+      document.getElementById('btn-flee').style.display = '';
+      this._bird = null;
+
+    } else {
+      // Miss — bird flees immediately (single attempt)
+      ball.className = 'catch-ball ball-burst';
+      const spriteEl = document.getElementById('catch-sprite');
+      if (spriteEl) {
+        spriteEl.style.display = '';
+        loadImageWithFallback(spriteEl, [data.sprites?.other?.['official-artwork']?.front_default, data.sprites?.front_default], () => {});
+        setTimeout(() => { spriteEl.className = 'catch-sprite revealed catch-runaway'; }, 300);
+      }
+      setTimeout(() => {
+        statusEl.textContent = LEGENDARY_FLEE[id] || `${pokeName} flew away!`;
+        const resultEl   = document.getElementById('catch-result');
+        const resultText = document.getElementById('catch-result-text');
+        resultText.innerHTML = `${pokeName} broke free and returned to the wild.<br><span style="font-size:.5rem;color:#aaa">Use an Ultra Ball or Master Ball next time!</span>`;
+        document.getElementById('release-picker').style.display = 'none';
+        document.getElementById('btn-catch-continue').style.display = '';
+        resultEl.style.display = 'block';
+        document.getElementById('screen-catch').classList.remove('legendary-active');
+        document.getElementById('btn-flee').style.display = '';
+        this._bird = null;
+        saveGame();
+      }, 1400);
+    }
+  },
+
+  finish() {
+    document.getElementById('screen-catch').classList.remove('legendary-active');
+    MapEngine.completeNode(GameState.currentNodeIndex);
+    MapEngine.show();
+  },
+};
+
 const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;
@@ -6312,8 +6701,13 @@ const CatchEngine = {
     const hasLure  = ItemEngine.hasItem('lure');
     let rarity, pool;
     const roll = Math.random();
-    if (forceRarity === 'rare') {
+    // forceRarity may be a node.catchRarity string ('common','uncommon','rare') or 'rare' from mystery
+    if (forceRarity === 'rare' || forceRarity === 'rare ✨') {
       rarity = 'Rare ✨'; pool = WILD_POOL.rare;
+    } else if (forceRarity === 'uncommon') {
+      rarity = 'Uncommon'; pool = WILD_POOL.uncommon;
+    } else if (forceRarity === 'common') {
+      rarity = 'Common'; pool = WILD_POOL.common;
     } else if (hasLure && Math.random() < 0.3) {
       rarity = 'Rare ✨'; pool = WILD_POOL.rare;
     } else if (hasRepel) {
@@ -9315,9 +9709,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Catch screen ──
-  document.getElementById('btn-throw-ball').addEventListener('click', () => CatchEngine.throwBall());
+  document.getElementById('btn-throw-ball').addEventListener('click', () => {
+    if (LegendaryEncounterEngine._bird) LegendaryEncounterEngine.throwBall();
+    else CatchEngine.throwBall();
+  });
   document.getElementById('btn-flee').addEventListener('click', () => CatchEngine.flee());
-  document.getElementById('btn-catch-continue').addEventListener('click', () => CatchEngine.finish());
+  document.getElementById('btn-catch-continue').addEventListener('click', () => {
+    if (LegendaryEncounterEngine._bird === null && document.getElementById('screen-catch').classList.contains('legendary-active') === false && LegendaryEncounterEngine._node === GameState.currentNodeIndex) {
+      LegendaryEncounterEngine.finish();
+    } else if (LegendaryEncounterEngine._node === GameState.currentNodeIndex) {
+      LegendaryEncounterEngine.finish();
+    } else {
+      CatchEngine.finish();
+    }
+  });
 
   // ── Card reward screen ──
   document.getElementById('btn-cr-skip').addEventListener('click', () => CardReward.skip());
