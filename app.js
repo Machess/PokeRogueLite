@@ -3735,12 +3735,151 @@ function hpColor(hp, max) {
 
 // ─── BATTLE ENGINE ───────────────────────────────────────────────────────────
 
+// ── Wild battle trainer portrait — keyed by opponent type ────────────────────
+// bug has two variants — chosen randomly for variety.
+const WILD_TRAINER_SPRITES = {
+  bug:      () => Math.random() < .5 ? 'assets/bug_trainer_1.png' : 'assets/bug_trainer_2.png',
+  fighting: () => 'assets/fight_trainer.png',
+  flying:   () => 'assets/flying_trainer.png',
+  ghost:    () => 'assets/ghost_trainer.png',
+  grass:    () => 'assets/grass_trainer.png',
+  normal:   () => 'assets/normal_trainer.png',
+  psychic:  () => 'assets/psy_trainer.png',
+  rock:     () => 'assets/rock_trainer.png',
+};
+function getWildTrainerSprite(type) {
+  const fn = WILD_TRAINER_SPRITES[type] || WILD_TRAINER_SPRITES.normal;
+  return fn();
+}
+
+// Trainer battle fluff lines — keyed by opponent type
+const TRAINER_FLUFF = {
+  bug:      ["You're about to get a lesson in the power of insects!",
+             "My bugs have been training all season. Hope you're ready!"],
+  fighting: ["I've been training every day! Let's see what you've got!",
+             "A real battle tests your strength AND your mind!"],
+  flying:   ["My Pokémon rule the skies! You won't catch them off guard!",
+             "Speed and altitude — that's the winning formula!"],
+  ghost:    ["Heh heh heh… you can't defeat what you can't see coming…",
+             "My Pokémon lurk in the shadows. Are you sure about this?"],
+  grass:    ["Nature will always find a way! My Pokémon are proof of that.",
+             "I raised these Pokémon in the wild. They're tougher than they look."],
+  normal:   ["Don't underestimate a well-trained Pokémon. Prepare yourself!",
+             "I may not have a fancy type — but I make up for it with heart!"],
+  psychic:  ["I already know your strategy. Care to try anyway?",
+             "Mind over matter, trainer. That's what my Pokémon believe."],
+  rock:     ["My Pokémon are as tough as the mountains themselves!",
+             "Solid defence, crushing offence. That's the Rock way!"],
+};
+function getTrainerFluff(type) {
+  const pool = TRAINER_FLUFF[type] || TRAINER_FLUFF.normal;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ─── TRAINER BATTLE ENGINE ────────────────────────────────────────────────────
+// Triggered 60% of the time from a battle node.
+// Uses boss screen for the trainer intro, then transitions to the normal
+// battle screen so opening.mp3 plays (not gym music).
+const TrainerBattleEngine = {
+  _isActive: false,
+  _pendingOpp: null,
+  _pendingActive: null,
+  _pendingNode: null,
+
+  async start(node) {
+    this._pendingNode = node;
+    showLoading();
+
+    const pool = Math.random() < .6 ? 'common' : Math.random() < .65 ? 'uncommon' : 'rare';
+    const poolArr = WILD_POOL[pool];
+    const oppId  = poolArr[Math.floor(Math.random() * poolArr.length)];
+    const level  = 5 + GameState.bossesDefeated * 6 + Math.floor(Math.random() * 5) + 3; // slight bonus
+
+    const [oppData] = await Promise.all([fetchPoke(oppId)]);
+    const oppType  = oppData.types[0]?.type?.name || 'normal';
+    const oppName  = capitalize(oppData.name);
+    const oppSprite = getSpriteUrl(oppData, true);
+    const opp      = makePokemon(oppId, level, oppSprite, oppName, oppType);
+
+    const active = GameState.party[GameState.activePokemonIndex];
+    const playerData = await fetchPoke(active.id);
+    const backSprite = playerData.sprites?.back_default
+                    || playerData.sprites?.front_default
+                    || active.spriteUrl;
+    active.backSpriteUrl = backSprite;
+
+    this._pendingOpp    = opp;
+    this._pendingActive = active;
+    this._isActive      = true;
+
+    hideLoading();
+
+    // Show boss intro screen (reuse trainer-intro layout) but no boss-bg treatment
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    // Clear any boss intro bg — plain dark background
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl)  { bgEl.classList.remove('boss-intro-mode'); bgEl.style.background = 'linear-gradient(160deg,#0a0a1a,#1a1a2e)'; }
+    if (imgEl) { imgEl.src = ''; imgEl.style.opacity = '0'; }
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = getWildTrainerSprite(oppType);
+    document.getElementById('dialogue-name').textContent = 'Trainer';
+    document.getElementById('dialogue-text').textContent = '';
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.style.display = 'none';
+
+    const fluff = getTrainerFluff(oppType);
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += fluff[ci++];
+      if (ci >= fluff.length) {
+        clearInterval(iv);
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Battle! ▶'; }
+      }
+    }, 30);
+  },
+
+  startBattle() {
+    this._isActive = false;
+    document.getElementById('trainer-intro').style.display = 'none';
+
+    const opp    = this._pendingOpp;
+    const active = this._pendingActive;
+
+    // Reset boss bg style so next real boss looks correct
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.style.background = '';
+
+    // Use normal battle screen + opening.mp3 (BattleEngine._initBattle calls showScreen('battle'))
+    setBattleBg(opp.type, false);
+    BattleEngine._isTrainerBattle = true;
+    BattleEngine._initBattle(active, opp, false);
+    BattleEngine._logSystem(`Trainer sent out <b>${opp.name}</b>!`);
+  },
+};
+
 const BattleEngine = {
   isBoss: false,
   state: null,
 
   async start(node) {
     this.isBoss = false;
+    this._isTrainerBattle = false;
+    // 60% chance of trainer battle — shows intro screen first
+    if (Math.random() < 0.60) {
+      TrainerBattleEngine.start(node);
+      return;
+    }
+
     showLoading();
 
     // Pick random wild opponent
@@ -3804,6 +3943,21 @@ const BattleEngine = {
     this._render();
     showScreen('battle');
     this._logSystem(`A wild <b>${oppPoke.name}</b> appeared!`);
+
+    // Show wild trainer portrait briefly, then fade out
+    if (!isBoss) {
+      const portrait = document.getElementById('wild-trainer-portrait');
+      if (portrait) {
+        portrait.src = getWildTrainerSprite(oppPoke.type);
+        portrait.style.display = '';
+        portrait.style.opacity = '1';
+        setTimeout(() => {
+          portrait.style.transition = 'opacity .6s ease';
+          portrait.style.opacity    = '0';
+          setTimeout(() => { portrait.style.display = 'none'; portrait.style.transition = ''; }, 650);
+        }, 1800);
+      }
+    }
   },
 
   _dealHand(n) {
@@ -4412,7 +4566,10 @@ const BattleEngine = {
     const opp = this.state.opp;
     registerPokedex(opp.id, opp.name, opp.spriteUrl, false);
 
-    const earned = goldForWildBattle();
+    const earned = BattleEngine._isTrainerBattle
+      ? Math.round(goldForWildBattle() * 1.8)  // trainer battles pay ~80% more
+      : goldForWildBattle();
+    BattleEngine._isTrainerBattle = false;
     GameState.gold = (GameState.gold || 0) + earned;
     ItemEngine.checkPassive();
     MapEngine.completeNode(GameState.currentNodeIndex);
@@ -9678,8 +9835,10 @@ document.addEventListener('DOMContentLoaded', () => {
       KogaEngine.startGame();
     } else if (BlaineEngine._isActive) {
       BlaineEngine.startGame();
-    } else if (MazeEngine._isActive) {      // ── MAZE MINI-GAME
-      MazeEngine.startGame();               // ── MAZE MINI-GAME
+    } else if (TrainerBattleEngine._isActive) {
+      TrainerBattleEngine.startBattle();
+    } else if (MazeEngine._isActive) {
+      MazeEngine.startGame();
     } else if (BossEngine._isRocket) {
       RocketBattleEngine.startBattle();
     } else {
