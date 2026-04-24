@@ -5735,3 +5735,21 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .ball-selected .ball-count-tag {
   color: rgba(255,255,255,.85);
 }
+
+/* ── Run Away — tertiary escape button, clearly subordinate to throw ── */
+.btn-flee {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: rgba(232,244,253,.38);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: .4em 1em;
+  border-radius: var(--r-sm);
+  transition: color .15s;
+  user-select: none;
+}
+.btn-flee:hover  { color: rgba(232,244,253,.65); }
+.btn-flee:active { color: rgba(232,244,253,.85); transform: translateY(1px); }
