@@ -3606,24 +3606,52 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ═══════════════════════════════════════════
    CATCH SCREEN — ENVIRONMENT BACKDROPS
+   4 images shared across 8 type classes.
+   Fallback screen bg set per pairing below.
 ═══════════════════════════════════════════ */
-.catch-bg { position:absolute; inset:0; z-index:0; transition: background .4s; }
-.catch-bg-rock     { background: radial-gradient(ellipse at 50% 80%, #6b5a3e 0%, #3d2e1a 60%, #1a1208 100%); }
-.catch-bg-water    { background: radial-gradient(ellipse at 50% 80%, #1a5a8a 0%, #0e3a6a 60%, #061828 100%); }
-.catch-bg-electric { background: radial-gradient(ellipse at 50% 80%, #4a4a10 0%, #2a2a08 60%, #101004 100%); }
-.catch-bg-grass    { background: radial-gradient(ellipse at 50% 80%, #1a5a1a 0%, #0e3a0e 60%, #062006 100%); }
-.catch-bg-poison   { background: radial-gradient(ellipse at 50% 80%, #3a1a5a 0%, #220e38 60%, #100620 100%); }
-.catch-bg-psychic  { background: radial-gradient(ellipse at 50% 80%, #4a1a4a 0%, #2e0e2e 60%, #180618 100%); }
-.catch-bg-fire     { background: radial-gradient(ellipse at 50% 80%, #6a2a00 0%, #481800 60%, #200800 100%); }
-.catch-bg-dark     { background: radial-gradient(ellipse at 50% 80%, #1a1a1a 0%, #0e0e0e 60%, #040404 100%); }
-
-/* Ground strip */
+.catch-bg {
+  position: absolute; inset: 0; z-index: 0;
+  background-size: cover;
+  background-position: center top;
+  transition: opacity .4s;
+}
 .catch-bg::after {
-  content: '';
-  position: absolute; bottom: 0; left: 0; right: 0;
-  height: 22%;
-  background: rgba(0,0,0,.35);
-  border-top: 2px solid rgba(255,255,255,.06);
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0,0,0,.10)   0%,
+    rgba(0,0,0,.28)   35%,
+    rgba(0,0,0,.72)   65%,
+    rgba(0,0,0,.94)   100%
+  );
+}
+
+/* Field — Brock (rock) + Lt. Surge (electric) */
+.catch-bg-rock,
+.catch-bg-electric {
+  background-image: url('assets/bg_catch_field.png');
+  background-color: #1a1208;
+}
+
+/* Lake — Misty (water) + Sabrina (psychic) */
+.catch-bg-water,
+.catch-bg-psychic {
+  background-image: url('assets/bg_catch_lake.png');
+  background-color: #061828;
+}
+
+/* Forest — Erika (grass) + Koga (poison) */
+.catch-bg-grass,
+.catch-bg-poison {
+  background-image: url('assets/bg_catch_forest.png');
+  background-color: #062006;
+}
+
+/* Cave — Blaine (fire) + Giovanni (dark) */
+.catch-bg-fire,
+.catch-bg-dark {
+  background-image: url('assets/bg_catch_cave.png');
+  background-color: #200800;
 }
 
 /* ═══════════════════════════════════════════
