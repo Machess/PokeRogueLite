@@ -8702,32 +8702,39 @@ const CookingEngine = {
       if (slot && slot.id === this._recipe[i].id && slot.qty === this._recipe[i].qty) correctSlots++;
     });
 
-    const party = GameState.party.filter(p => p.hp > 0);
+    const party = GameState.party; // all Pokémon — including fainted ones to revive
     let outcome, headline, detail;
 
     if (correctSlots === 3) {
       outcome  = 'perfect';
       headline = '🍽️ Perfect Meal!';
-      party.forEach(p => { p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.25)); });
+      party.forEach(p => {
+        const healAmt = Math.floor(p.maxHp * 0.25);
+        p.hp = Math.min(p.maxHp, p.hp + Math.max(healAmt, Math.floor(p.maxHp * 0.25)));
+      });
       GameState.cookingShield = 30;
       const goldPerfect = 10 + (GameState.bossesDefeated || 0) * 3;
       GameState.gold = (GameState.gold || 0) + goldPerfect;
-      detail = `All Pokémon healed 25% HP! Shield for next battle!\n+${goldPerfect}💰 from Brock!`;
+      detail = `All Pokémon healed 25% HP (fainted ones revived)!\nShield for next battle!\n+${goldPerfect}💰 from Brock!`;
     } else if (correctSlots > 0) {
       outcome  = 'partial';
       headline = '🍱 Partially Right';
-      const benefitCount = Math.min(correctSlots, party.length);
-      for (let i = 0; i < benefitCount; i++) {
-        party[i].hp = Math.min(party[i].maxHp, party[i].hp + Math.floor(party[i].maxHp * 0.15));
-      }
+      // Heal living Pokémon 15%; revive fainted at 10%
+      party.forEach(p => {
+        if (p.hp > 0) {
+          p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.15));
+        } else {
+          p.hp = Math.floor(p.maxHp * 0.10); // revive at 10%
+        }
+      });
       const goldPartial = 5 + (GameState.bossesDefeated || 0) * 1;
       GameState.gold = (GameState.gold || 0) + goldPartial;
-      detail = `${correctSlots}/3 slots correct. ${benefitCount} Pokémon healed a little.\n+${goldPartial}💰 from Brock.`;
+      detail = `${correctSlots}/3 slots correct. All Pokémon fed (fainted ones revived at 10% HP).\n+${goldPartial}💰 from Brock.`;
     } else {
       outcome  = 'wrong';
       headline = '😬 That Didn\'t Taste Great...';
-      party.forEach(p => { p.hp = Math.max(1, p.hp - Math.floor(p.hp * 0.10)); });
-      detail = 'All Pokémon lost 10% HP due to hunger!';
+      party.filter(p => p.hp > 0).forEach(p => { p.hp = Math.max(1, p.hp - Math.floor(p.hp * 0.10)); });
+      detail = 'Living Pokémon lost 10% HP due to hunger. Fainted ones still need a Pokémon Centre.';
     }
 
     saveGame();
