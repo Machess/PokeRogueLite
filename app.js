@@ -3928,11 +3928,9 @@ const TrainerBattleEngine = {
 
     // Inject pip bar into the battle screen
     this._renderBattlePips();
-    BattleEngine._logSystem(
-      idx === 0
-        ? `Trainer sent out <b>${opp.name}</b>!`
-        : `Trainer sent out <b>${opp.name}</b>! (Ace Pokémon!)`
-    );
+    if (idx > 0) {
+      BattleEngine._logSystem(`Trainer's ace: <b>${opp.name}</b>!`);
+    }
   },
 
   _renderBattlePips() {
@@ -4078,10 +4076,16 @@ const BattleEngine = {
     this._dealHand(5);
     this._render();
     showScreen('battle');
-    this._logSystem(`A wild <b>${oppPoke.name}</b> appeared!`);
+    this._logSystem(
+      this._isTrainerBattle
+        ? `Trainer sent out <b>${oppPoke.name}</b>!`
+        : `A wild <b>${oppPoke.name}</b> appeared!`
+    );
 
-    // Show wild trainer portrait briefly, then fade out
-    if (!isBoss) {
+    // Show wild trainer portrait briefly for WILD battles only.
+    // Trainer battles already showed the portrait on the intro screen.
+    // Boss battles have their own portrait system.
+    if (!isBoss && !this._isTrainerBattle) {
       const portrait = document.getElementById('wild-trainer-portrait');
       if (portrait) {
         portrait.src = getWildTrainerSprite(oppPoke.type);
