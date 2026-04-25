@@ -5449,6 +5449,9 @@ const SurgeEngine = {
   },
 
   _finish() {
+    // Reset state immediately so stale flags don't intercept future challenge-continue-btn clicks
+    this._answered = false;
+    this._round    = 0;
     document.getElementById('screen-challenge').classList.remove('surge-active');
     const score = this._score;
     const party = GameState.party.filter(p => p.hp > 0);
@@ -5738,6 +5741,8 @@ const ErikaEngine = {
   },
 
   _finish() {
+    this._answered = false;
+    this._round    = 0;
     document.getElementById('screen-challenge').classList.remove('erika-active');
     document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
 
@@ -6117,6 +6122,7 @@ const KogaEngine = {
   },
 
   finish() {
+    this._answered = false;
     document.getElementById('screen-challenge').classList.remove('koga-active');
     document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
 
@@ -6489,6 +6495,7 @@ const BlaineEngine = {
   },
 
   finish() {
+    this._answered = false;
     document.getElementById('screen-challenge').classList.remove('blaine-active');
     document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
     document.getElementById('jessie-word-display').style.display = 'none';
@@ -8070,6 +8077,8 @@ const ShopEngine = {
   },
 
   finish() {
+    this._answered = false;
+    this._isActive = false;
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },
