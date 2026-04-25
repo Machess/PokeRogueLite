@@ -2613,25 +2613,44 @@ const Game = {
   },
 
   _doStartNew() {
+    // ── Carry forward trainer identity from the existing save or profile ──────
+    // Read trainerName/Age/difficultyTier BEFORE deleteSave() wipes them.
+    // This means returning players never see the name/age/intro flow again.
+    const existingSave = loadGame();
+    const profiles     = loadProfiles();
+    const meta         = profiles.find(p => p.key === getActiveProfile());
+
+    const carriedName  = existingSave?.trainerName
+                      || meta?.name
+                      || '';
+    const carriedAge   = existingSave?.trainerAge    || 10;
+    const carriedTier  = existingSave?.difficultyTier || 2;
+
     deleteSave();
     const unlocks = loadUnlocks();
+
     GameState = {
       starterId: null, starterType: null, evolutionStage: 0,
       bossesDefeated: 0, party: [], activePokemonIndex: 0,
       deck: [], improvementMap: {}, map: null,
       currentNodeIndex: null, completedNodes: [], highWaterRow: -1,
       unlockedPikachu: unlocks.pikachu,
-      unlockedEevee: unlocks.eevee || false,
-      unlockedMew:    unlocks.mew    || false,
-      unlockedMewtwo: unlocks.mewtwo || false,
+      unlockedEevee:   unlocks.eevee   || false,
+      unlockedMew:     unlocks.mew     || false,
+      unlockedMewtwo:  unlocks.mewtwo  || false,
       stats: { battlesWon: 0, pokemonCaught: 0, totalBattlesWon: 0,
                totalBossesBeaten: 0, totalNodesCompleted: 0 },
       gold: 0, items: [], masterBallUsed: false,
-      trainerName: '', trainerAge: 10, difficultyTier: 2,
+      // Carry forward trainer identity — no re-registration needed
+      trainerName:    carriedName,
+      trainerAge:     carriedAge,
+      difficultyTier: carriedTier,
       nodesSinceRocket: 0, _lastRocketCheckAt: 0,
     };
-    showScreen('register');
-    RegistrationEngine.init();
+
+    // Skip register → intro → tutorial for returning players.
+    // Go straight to starter select.
+    this.showStarterSelect();
   },
 
   continueGame() {
