@@ -5836,3 +5836,176 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-family: sans-serif;
   letter-spacing: 0;
 }
+
+/* ═══════════════════════════════════════════
+   SABRINA JIGSAW PUZZLE
+   Deep purple psychic theme.
+═══════════════════════════════════════════ */
+#screen-challenge.sabrina-active {
+  background: linear-gradient(160deg, #080412 0%, #100820 50%, #080412 100%);
+}
+#screen-challenge.sabrina-active .challenge-bg {
+  background-image: url('assets/bg_5_boss.png');
+  background-size: cover;
+  background-position: center top;
+}
+#screen-challenge.sabrina-active .challenge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(
+    180deg, rgba(0,0,0,.22) 0%, rgba(0,0,0,.44) 35%,
+    rgba(8,4,18,.90) 60%, rgba(8,4,18,.97) 100%);
+}
+#screen-challenge.sabrina-active .challenge-badge { color: #c090f0; }
+#screen-challenge.sabrina-active .challenge-intro { color: rgba(192,144,240,.7); }
+
+/* ── Phase 1 preview ── */
+.sabrina-preview-sprite {
+  width: 160px; height: 160px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  animation: sabrina-shake-in .4s ease;
+  filter: drop-shadow(0 0 16px rgba(200,128,255,.7));
+}
+.sabrina-phase1 {
+  display: flex; flex-direction: column; align-items: center; gap: .6rem;
+}
+.sabrina-phase1-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .4rem; color: #c090f0; text-align: center;
+  animation: sabrina-text-pulse 1.2s ease-in-out infinite;
+}
+@keyframes sabrina-text-pulse {
+  0%,100% { opacity:.6; } 50% { opacity:1; }
+}
+
+/* ── Puzzle wrapper ── */
+.sabrina-puzzle-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: .6rem !important;
+}
+.sabrina-grid-entrance { animation: sabrina-shake-in .5s ease; }
+@keyframes sabrina-shake-in {
+  0%   { transform: scale(.8); opacity: 0; }
+  70%  { transform: scale(1.04); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+/* ── Grid ── */
+.sabrina-grid {
+  display: grid;
+  gap: 2px;
+  background: rgba(140,60,200,.2);
+  border: 2px solid rgba(140,60,200,.4);
+  border-radius: 6px;
+  padding: 3px;
+}
+
+/* ── Locked (pre-placed) pieces ── */
+.sabrina-piece-locked {
+  opacity: .7;
+  border: 1px solid rgba(140,60,200,.3);
+  border-radius: 2px;
+}
+
+/* ── Empty slots — pulsing purple glow ── */
+.sabrina-slot-empty {
+  background: rgba(80,20,140,.25);
+  border: 2px dashed rgba(180,100,255,.5);
+  border-radius: 2px;
+  cursor: pointer;
+  animation: slot-pulse 1.8s ease-in-out infinite;
+  transition: background .15s;
+}
+.sabrina-slot-empty:hover { background: rgba(120,40,200,.35); }
+@keyframes slot-pulse {
+  0%,100% { box-shadow: 0 0 6px rgba(180,100,255,.3); border-color: rgba(180,100,255,.4); }
+  50%      { box-shadow: 0 0 14px rgba(180,100,255,.7); border-color: rgba(220,160,255,.8); }
+}
+
+/* ── Tray pieces ── */
+.sabrina-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  padding: .4rem .6rem;
+  background: rgba(40,10,80,.35);
+  border: 1px solid rgba(140,60,200,.3);
+  border-radius: 8px;
+  min-height: 90px;
+}
+.sabrina-piece {
+  border-radius: 3px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform .12s, border-color .12s, box-shadow .12s;
+}
+.sabrina-tray-piece:hover { transform: scale(1.08); }
+.sabrina-piece-selected {
+  border-color: #e0a0ff !important;
+  box-shadow: 0 0 14px rgba(220,160,255,.8);
+  transform: scale(1.1) !important;
+  z-index: 2;
+}
+
+/* ── Correct placement flash ── */
+.sabrina-piece-placed { border-radius: 2px; }
+.sabrina-piece-correct-flash {
+  animation: correct-flash .5s ease forwards;
+}
+@keyframes correct-flash {
+  0%   { box-shadow: 0 0 0 rgba(160,255,160,0); }
+  40%  { box-shadow: 0 0 20px rgba(160,255,160,.9); }
+  100% { box-shadow: 0 0 0 rgba(160,255,160,0); }
+}
+
+/* ── Wrong slot shake ── */
+.sabrina-slot-wrong {
+  animation: wrong-shake .4s ease;
+  background: rgba(200,60,60,.3) !important;
+}
+@keyframes wrong-shake {
+  0%,100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* ── Complete flash ── */
+.sabrina-complete-flash {
+  animation: complete-flash .35s ease forwards;
+}
+@keyframes complete-flash {
+  0%   { filter: brightness(1); }
+  50%  { filter: brightness(3); }
+  100% { filter: brightness(1); }
+}
+
+/* ── Reveal sprite + sparkle ── */
+.sabrina-reveal {
+  display: flex; flex-direction: column; align-items: center; gap: .5rem;
+}
+.sabrina-reveal-sprite {
+  width: 180px; height: 180px;
+  object-fit: contain; image-rendering: pixelated;
+}
+.sabrina-sparkle {
+  animation: sparkle-pop .4s ease, sparkle-glow 1.4s ease-in-out .4s infinite;
+}
+@keyframes sparkle-pop {
+  0%   { transform: scale(.6); opacity: 0; }
+  70%  { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes sparkle-glow {
+  0%,100% { filter: drop-shadow(0 0 8px rgba(220,160,255,.5)); }
+  50%      { filter: drop-shadow(0 0 24px rgba(220,160,255,1)); }
+}
+.sabrina-reveal-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .48rem; color: #e0b0ff; text-align: center;
+  animation: sabrina-text-pulse 1.2s ease-in-out infinite;
+}
