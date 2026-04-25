@@ -5509,20 +5509,57 @@ const ERIKA_INTROS = [
   `Hmm... a trainer who can't tell a Sitrus Berry from a Pecha Berry has no business handling Pokémon. I'll be gentle. Identify these herbs for me, please.`,
 ];
 
-// Each herb/berry has: icon, name, category ('heal'|'cure'|'poison'), description, and explanation
+// Each herb/berry has: icon, name, category ('heal'|'cure'|'poison'), description, hint, and explanation
+// hint = a bridging sentence that lets the player deduce the category from the description
 const ERIKA_HERBS = [
-  { icon:'🍊', name:'Oran Berry',    cat:'heal',   desc:'Small, round, orange. Smells faintly sweet.',           explain:'Oran Berries restore HP — Pokémon eat them when hurt.' },
-  { icon:'🫐', name:'Sitrus Berry',  cat:'heal',   desc:'Larger than most berries. Deep blue, slightly tart.',   explain:'Sitrus Berries restore a good amount of HP when eaten.' },
-  { icon:'🌸', name:'Pecha Berry',   cat:'cure',   desc:'Soft pink. Extraordinarily sweet. Almost too sweet.',   explain:'Pecha Berries cure poison — the sweetness neutralises toxins.' },
-  { icon:'🟡', name:'Chesto Berry',  cat:'cure',   desc:'Crisp and waxy. Yellow with a firm texture.',           explain:'Chesto Berries cure sleep — they jolt a Pokémon awake.' },
-  { icon:'🍋', name:'Rawst Berry',   cat:'cure',   desc:'Bitter and tangy. Leaves a cool sensation.',            explain:'Rawst Berries cure burn — the cool juice soothes scorched skin.' },
-  { icon:'🍇', name:'Persim Berry',  cat:'cure',   desc:'Deep purple clusters. Sweet but disorienting to smell.',explain:'Persim Berries cure confusion — they sharpen the mind.' },
-  { icon:'🌿', name:'Poison Barb',   cat:'poison', desc:'Sharp and dark green. The tip glistens with liquid.',   explain:'Poison Barb is toxic — it poisons Pokémon that touch it.' },
-  { icon:'🍄', name:'Toxic Mushroom',cat:'poison', desc:'Pale spotted cap. Smells earthy but wrong somehow.',    explain:'Toxic Mushrooms are dangerous — never feed these to Pokémon!' },
-  { icon:'🌑', name:'Dark Spore',    cat:'poison', desc:'Fine black powder. Drifts in the air. Avoid breathing.',explain:'Dark Spores cause poisoning on contact — very hazardous.' },
-  { icon:'🍎', name:'Leppa Berry',   cat:'heal',   desc:'Firm and red. Gives off a faint energising warmth.',    explain:'Leppa Berries restore a move\'s PP — they replenish energy.' },
-  { icon:'🟠', name:'Lum Berry',     cat:'cure',   desc:'Bright orange. Smells medicinal, almost clinical.',     explain:'Lum Berries cure any status condition — very versatile!' },
-  { icon:'🌺', name:'Stun Spore',    cat:'poison', desc:'Orange powder on a pale flower. Smells like rust.',     explain:'Stun Spore paralyses Pokémon — keep well away from healthy ones!' },
+  { icon:'🍊', name:'Oran Berry',    cat:'heal',
+    desc:'Small, round, orange. Smells faintly sweet. A Pokémon that is hurt will seek this out on its own.',
+    hint:'A hurt Pokémon would reach for this instinctively. It seems to restore something.',
+    explain:'Oran Berries restore HP — Pokémon seek them out when hurt.' },
+  { icon:'🫐', name:'Sitrus Berry',  cat:'heal',
+    desc:'Larger than most berries. Deep blue, slightly tart. Leaves a feeling of renewed strength.',
+    hint:'Something about this fills you with energy just holding it. Like it gives back what was lost.',
+    explain:'Sitrus Berries restore a larger amount of HP when eaten.' },
+  { icon:'🌸', name:'Pecha Berry',   cat:'cure',
+    desc:'Soft pink. Extraordinarily sweet. Almost too sweet. The scent is clean and sharp.',
+    hint:'The sweetness seems to push something out — like it clears the body of something unwanted.',
+    explain:'Pecha Berries cure poison — their intense sweetness neutralises toxins.' },
+  { icon:'🟡', name:'Chesto Berry',  cat:'cure',
+    desc:'Crisp and waxy. Yellow with a firm texture. Has a sharp, jolting scent.',
+    hint:'Even smelling it makes you alert. Like a splash of cold water to the face.',
+    explain:'Chesto Berries cure sleep — their sharp scent jolts a Pokémon awake.' },
+  { icon:'🍋', name:'Rawst Berry',   cat:'cure',
+    desc:'Bitter and tangy. Leaves a distinct cool sensation on the tongue and skin.',
+    hint:'The cooling feeling seems to soothe heat and pain. Like ice on a burn.',
+    explain:'Rawst Berries cure burn — the cool juice soothes scorched skin and tissue.' },
+  { icon:'🍇', name:'Persim Berry',  cat:'cure',
+    desc:'Deep purple clusters. Sweet, but the smell is strangely disorienting at first.',
+    hint:'After a moment the confusion clears. It sharpens the mind and restores focus.',
+    explain:'Persim Berries cure confusion — they sharpen focus and clear the mind.' },
+  { icon:'🌿', name:'Poison Barb',   cat:'poison',
+    desc:'Sharp and dark green. The tip glistens with a clear liquid. Erika holds it with gloves.',
+    hint:'Erika keeps this away from the other plants. Even she won\'t touch it with bare hands.',
+    explain:'Poison Barb is toxic — it poisons Pokémon that make contact with it.' },
+  { icon:'🍄', name:'Toxic Mushroom',cat:'poison',
+    desc:'Pale spotted cap. Smells earthy — but there is something wrong underneath that smell.',
+    hint:'The wrong smell is subtle but unmistakable. Something here would hurt a Pokémon, not help it.',
+    explain:'Toxic Mushrooms are dangerous — never feed these to Pokémon under any circumstance.' },
+  { icon:'🌑', name:'Dark Spore',    cat:'poison',
+    desc:'Fine black powder. Drifts in the air when disturbed. Erika warns you not to breathe it in.',
+    hint:'Even Erika steps back from this one. Whatever it does, it does not help.',
+    explain:'Dark Spores cause poisoning on contact — extremely hazardous, handle with care.' },
+  { icon:'🍎', name:'Leppa Berry',   cat:'heal',
+    desc:'Firm and red. Gives off a faint energising warmth. Pokémon seem restless around it.',
+    hint:'It does not heal wounds — but something about it restores readiness. Like recharging.',
+    explain:'Leppa Berries restore a move\'s PP — they replenish a Pokémon\'s energy and drive.' },
+  { icon:'🟠', name:'Lum Berry',     cat:'cure',
+    desc:'Bright orange. Smells strangely clinical — almost like a medicine cabinet.',
+    hint:'The medicinal smell suggests it works on something internal. Something that ails the body.',
+    explain:'Lum Berries cure any status condition — the most versatile cure berry in Erika\'s garden.' },
+  { icon:'🌺', name:'Stun Spore',    cat:'poison',
+    desc:'Orange powder on a pale flower. Smells like rust and metal. Makes your hand tingle.',
+    hint:'The tingling is a warning. Erika says this one freezes muscles on contact.',
+    explain:'Stun Spore paralyses Pokémon — the metallic smell is a sign of its paralytic compound.' },
 ];
 
 function _generateErikaRound(usedNames) {
@@ -5637,17 +5674,17 @@ const ErikaEngine = {
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
 
-    // Show herb in the coin-visual slot as a big display
+    // Show herb display — name hidden until after answer to encourage deduction
     const cv = document.getElementById('challenge-coin-visual');
     cv.style.display = 'block';
     cv.className     = 'erika-herb-display';
     cv.innerHTML     = `
       <div class="erika-herb-icon">${h.icon}</div>
-      <div class="erika-herb-name">${h.name}</div>
-      <div class="erika-herb-desc">"${h.desc}"</div>`;
+      <div class="erika-herb-desc">"${h.desc}"</div>
+      <div class="erika-herb-hint">💡 ${h.hint}</div>`;
 
     document.getElementById('jessie-word-display').style.display = 'none';
-    document.getElementById('challenge-question').textContent    = `What does ${h.name} do to a Pokémon?`;
+    document.getElementById('challenge-question').textContent    = 'What does this plant do to a Pokémon?';
 
     const btnArea = document.getElementById('challenge-answer-btns');
     btnArea.innerHTML = '';
@@ -5684,7 +5721,7 @@ const ErikaEngine = {
 
     const resultEl = document.getElementById('challenge-result');
     resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
-    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${rd.correctChoice}</strong><br>${rd.subject.explain}<br><em>"${quote}" — Erika</em>`;
+    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${rd.correctChoice}</strong> — <em>${rd.subject.name}</em><br>${rd.subject.explain}<br><em>"${quote}" — Erika</em>`;
     resultEl.style.display = 'block';
 
     const isLast = this._round === 2;
@@ -5762,10 +5799,16 @@ const KOGA_PUZZLES = [
       'Its HP drains slowly each passing moment. Classic venomous sting.',
     ],
     summary: 'Purple tint, sweet-acrid smell, slow HP drain. A standard venom — the most common form of poisoning.',
+    koga_hint: 'Koga observes: "Standard venom. Slow and steady. A basic antidote handles this — nothing exotic."',
     question: '☠️ Which antidote cures this poison?',
-    correctAntidote: 'Antidote',
-    choices: ['Antidote', 'Burn Heal', 'Awakening', 'Ice Pack'],
-    explanation: 'An Antidote neutralises standard poison — it is always the first remedy a trained ninja reaches for.',
+    correctAntidote: 'antidote',
+    choices: [
+      { id:'antidote',   label:'Antidote',     desc:'Cures standard poison only.' },
+      { id:'burn_heal',  label:'Burn Heal',     desc:'Soothes burns and scorched skin.' },
+      { id:'awakening',  label:'Awakening',     desc:'Wakes a Pokémon from deep sleep.' },
+      { id:'ice_pack',   label:'Ice Pack',      desc:'Reduces swelling from physical hits.' },
+    ],
+    explanation: 'An Antidote neutralises standard poison — the go-to remedy for a classic venomous sting.',
     koga_right: 'Correct. Swift and precise. A true shinobi.',
     koga_wrong: 'An Antidote. Standard venom, standard cure. Remember this.',
   },
@@ -5776,10 +5819,16 @@ const KOGA_PUZZLES = [
       'Multiple symptoms at once: poison, confusion, and lethargy.',
     ],
     summary: 'Shivering, unfocused eyes, odourless, multiple simultaneous conditions. A compound poison requiring a versatile cure.',
+    koga_hint: 'Koga observes: "Multiple conditions at once. No single remedy handles all of them. You need something total."',
     question: '☠️ Multiple conditions at once. What cures all of them?',
-    correctAntidote: 'Full Heal',
-    choices: ['Antidote', 'Full Heal', 'Pecha Berry', 'Awakening'],
-    explanation: 'Full Heal cures all status conditions at once — essential when a compound poison strikes multiple systems.',
+    correctAntidote: 'full_heal',
+    choices: [
+      { id:'antidote',   label:'Antidote',     desc:'Cures standard poison only.' },
+      { id:'full_heal',  label:'Full Heal',     desc:'Erases ALL status conditions at once.' },
+      { id:'pecha',      label:'Pecha Berry',   desc:'Sweet berry — cures poison specifically.' },
+      { id:'awakening',  label:'Awakening',     desc:'Wakes a Pokémon from deep sleep.' },
+    ],
+    explanation: 'Full Heal cures all status conditions simultaneously — essential against compound poisons.',
     koga_right: 'Precisely. When facing compound poisons, the Full Heal is the only reliable answer.',
     koga_wrong: 'A Full Heal. It erases all status conditions simultaneously. Never forget its value.',
   },
@@ -5790,10 +5839,16 @@ const KOGA_PUZZLES = [
       'The Pokémon is calm but clearly weakened. HP fades slowly.',
     ],
     summary: 'Deep pink tongue, reacts to sweetness in the air, calm disposition but draining HP. A berry-soluble venom.',
+    koga_hint: 'Koga observes: "The poison reacts to sweetness. The cure must match its nature."',
     question: '☠️ A sugar-based poison. Which berry antidote works here?',
-    correctAntidote: 'Pecha Berry',
-    choices: ['Oran Berry', 'Pecha Berry', 'Rawst Berry', 'Chesto Berry'],
-    explanation: 'Pecha Berries dissolve sugar-based toxins — their intense sweetness overwhelms and neutralises the venom.',
+    correctAntidote: 'pecha',
+    choices: [
+      { id:'oran',       label:'Oran Berry',    desc:'Restores HP — does not cure status.' },
+      { id:'pecha',      label:'Pecha Berry',   desc:'Intensely sweet — dissolves sugar-based toxins.' },
+      { id:'rawst',      label:'Rawst Berry',   desc:'Cool and bitter — soothes burns.' },
+      { id:'chesto',     label:'Chesto Berry',  desc:'Sharp and jolting — wakes sleeping Pokémon.' },
+    ],
+    explanation: 'Pecha Berries dissolve sugar-based toxins — their intense sweetness overwhelms the venom.',
     koga_right: 'The Pecha Berry. Its sweetness is its weapon against sweet poisons. Well deduced.',
     koga_wrong: 'Pecha Berry. Sweet poisons are neutralised by sweeter cures. Study this.',
   },
@@ -5804,10 +5859,16 @@ const KOGA_PUZZLES = [
       'The eyes dart rapidly. This is a psychoactive compound, not a physical toxin.',
     ],
     summary: 'Earthy smell, erratic movement, no HP drain, darting eyes. A psychoactive compound affecting the mind, not the body.',
+    koga_hint: 'Koga observes: "The body is fine. The mind is compromised. Whatever you use must work on any condition."',
     question: '☠️ A mind-affecting poison with no HP drain. What cures it?',
-    correctAntidote: 'Lum Berry',
-    choices: ['Antidote', 'Paralyze Heal', 'Lum Berry', 'Full Restore'],
-    explanation: 'Lum Berries cure any single status condition including psychoactive compounds — they reset the nervous system.',
+    correctAntidote: 'lum',
+    choices: [
+      { id:'antidote',  label:'Antidote',      desc:'Cures standard body poison only.' },
+      { id:'para_heal', label:'Paralyze Heal', desc:'Restores muscle control from paralysis.' },
+      { id:'lum',       label:'Lum Berry',     desc:'Cures ANY single status condition.' },
+      { id:'full_restore', label:'Full Restore', desc:'Restores HP and all status — very rare.' },
+    ],
+    explanation: 'Lum Berries cure any single status condition — including psychoactive compounds that affect the mind.',
     koga_right: 'The Lum Berry. It resets all conditions. A ninja always carries one.',
     koga_wrong: 'Lum Berry. It cures any status condition. When in doubt, reach for the Lum.',
   },
@@ -5818,10 +5879,16 @@ const KOGA_PUZZLES = [
       'Its muscles are rigid. It cannot move at all, though it is still conscious.',
     ],
     summary: 'Sudden collapse, sharp electric smell, rigid muscles, fully conscious but immobile. Paralysis from a contact toxin.',
+    koga_hint: 'Koga observes: "Rigid muscles. Electric smell. The body wants to move but cannot. This is specific."',
     question: '☠️ Rigid muscles, fully conscious, cannot move. What cures this?',
-    correctAntidote: 'Paralyze Heal',
-    choices: ['Antidote', 'Full Heal', 'Paralyze Heal', 'Pecha Berry'],
-    explanation: 'Paralyze Heal dissolves the muscle-locking compound — the electric smell is a sign of a paralytic contact toxin.',
+    correctAntidote: 'para_heal',
+    choices: [
+      { id:'antidote',  label:'Antidote',      desc:'Cures standard poison only.' },
+      { id:'full_heal', label:'Full Heal',      desc:'Erases all status conditions at once.' },
+      { id:'para_heal', label:'Paralyze Heal', desc:'Dissolves muscle-locking compounds specifically.' },
+      { id:'pecha',     label:'Pecha Berry',   desc:'Cures poison — not effective on paralysis.' },
+    ],
+    explanation: 'Paralyze Heal targets muscle-locking toxins specifically — the electric smell confirms a paralytic compound.',
     koga_right: 'Paralyze Heal. You read the symptoms correctly. That is the mark of a trained mind.',
     koga_wrong: 'Paralyze Heal. Rigid muscles and electric smell — classic paralytic toxin. Remember the signs.',
   },
@@ -5831,11 +5898,17 @@ const KOGA_PUZZLES = [
       'It flinches from light — photosensitivity. A common side effect of deep toxins.',
       'The HP drains quickly. Faster than standard poison. This is a bad toxin.',
     ],
-    summary: 'Grey scales, photosensitivity, fast HP drain. This is a deep toxin — standard Badly Poisoned status.',
+    summary: 'Grey scales, photosensitivity, fast HP drain. This is a deeply embedded toxin — standard Antidote is insufficient.',
+    koga_hint: 'Koga observes: "This is not standard poison. Something deeper. An ordinary Antidote will not be enough."',
     question: '☠️ Fast HP drain and photosensitivity. This is badly poisoned. Cure it.',
-    correctAntidote: 'Full Heal',
-    choices: ['Antidote', 'Full Heal', 'Lum Berry', 'Pecha Berry'],
-    explanation: 'Badly poisoned (fast drain) requires Full Heal or Lum Berry — Antidote alone only cures standard poison.',
+    correctAntidote: 'full_heal',
+    choices: [
+      { id:'antidote',  label:'Antidote',      desc:'Cures only standard poison — not deep toxins.' },
+      { id:'full_heal', label:'Full Heal',      desc:'Erases all status conditions — handles deep toxins.' },
+      { id:'lum',       label:'Lum Berry',     desc:'Cures any single condition, including bad poison.' },
+      { id:'pecha',     label:'Pecha Berry',   desc:'Sweet berry — cures standard poison specifically.' },
+    ],
+    explanation: 'Badly poisoned requires Full Heal or Lum Berry — Antidote alone cannot handle deeply embedded toxins.',
     koga_right: 'Correct. Standard Antidote fails against deep toxins. Full Heal succeeds. Excellent.',
     koga_wrong: 'Full Heal — or Lum Berry. Standard Antidote cannot handle deeply embedded toxins.',
   },
@@ -5978,7 +6051,13 @@ const KogaEngine = {
             nb.onclick = () => { btnArea.innerHTML = ''; this._revealNextClue(); };
             btnArea.appendChild(nb);
           } else {
-            // All clues shown — show summary then question
+            // All clues shown — show Koga's deduction hint, then summary, then question
+            if (p.koga_hint) {
+              const hintEl = document.createElement('div');
+              hintEl.className   = 'koga-hint-line';
+              hintEl.textContent = p.koga_hint;
+              clueArea.appendChild(hintEl);
+            }
             const summary = document.createElement('div');
             summary.className = 'fishing-summary koga-summary';
             summary.textContent = p.summary;
@@ -6002,32 +6081,35 @@ const KogaEngine = {
     const btnArea = document.getElementById('challenge-answer-btns');
     btnArea.innerHTML = '';
     const choices = shuffle([...p.choices]);
-    choices.forEach(val => {
+    choices.forEach(ch => {
       const b = document.createElement('button');
-      b.className   = 'challenge-answer-btn';
-      b.textContent = val;
-      b.addEventListener('click', () => this._answer(val));
+      b.className       = 'challenge-answer-btn koga-choice-btn';
+      b.dataset.choiceId = ch.id;
+      b.innerHTML = `<span class="koga-choice-label">${ch.label}</span><span class="koga-choice-desc">${ch.desc}</span>`;
+      b.addEventListener('click', () => this._answer(ch.id, ch.label));
       btnArea.appendChild(b);
     });
   },
 
-  _answer(chosen) {
+  _answer(chosenId, chosenLabel) {
     if (this._answered) return;
     this._answered = true;
 
     const p       = this._puzzle;
-    const isRight = chosen === p.correctAntidote;
-    const name    = GameState.trainerName || 'Trainer';
+    const isRight = chosenId === p.correctAntidote;
 
     document.querySelectorAll('.challenge-answer-btn').forEach(b => {
       b.disabled = true;
-      if (b.textContent === p.correctAntidote) b.classList.add('answer-correct');
-      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
+      if (b.dataset.choiceId === p.correctAntidote) b.classList.add('answer-correct');
+      else if (b.dataset.choiceId === chosenId && !isRight) b.classList.add('answer-wrong');
     });
+
+    const correctChoice = p.choices.find(c => c.id === p.correctAntidote);
+    const correctLabel  = correctChoice?.label || p.correctAntidote;
 
     const resultEl = document.getElementById('challenge-result');
     resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
-    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${p.correctAntidote}</strong><br>${p.explanation}<br><em>"${isRight ? p.koga_right : p.koga_wrong}" — Koga</em>`;
+    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${correctLabel}</strong><br>${p.explanation}<br><em>"${isRight ? p.koga_right : p.koga_wrong}" — Koga</em>`;
     resultEl.style.display = 'block';
 
     document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';

@@ -5787,3 +5787,52 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   z-index: var(--z-ui);
   pointer-events: none;
 }
+
+/* ═══════════════════════════════════════════
+   ERIKA — herb hint line (deductive bridge)
+═══════════════════════════════════════════ */
+.erika-herb-hint {
+  font-size: .5rem;
+  color: rgba(125,232,125,.75);
+  font-style: italic;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: .3rem;
+  padding: .3rem .5rem;
+  border-top: 1px solid rgba(80,180,80,.2);
+}
+
+/* ═══════════════════════════════════════════
+   KOGA — hint line + two-line choice buttons
+═══════════════════════════════════════════ */
+.koga-hint-line {
+  font-size: .48rem;
+  color: rgba(192,128,240,.8);
+  font-style: italic;
+  padding: .5rem .6rem;
+  border-left: 3px solid rgba(140,60,200,.5);
+  background: rgba(80,20,120,.12);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  margin: .3rem 0;
+  line-height: 1.5;
+}
+.koga-choice-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: .15rem !important;
+  text-align: left !important;
+  padding: .5rem .8rem !important;
+}
+.koga-choice-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .48rem;
+  color: var(--col-text);
+}
+.koga-choice-desc {
+  font-size: .48rem;
+  color: var(--col-text-dim);
+  font-style: italic;
+  font-family: sans-serif;
+  letter-spacing: 0;
+}
