@@ -4081,23 +4081,6 @@ const BattleEngine = {
         ? `Trainer sent out <b>${oppPoke.name}</b>!`
         : `A wild <b>${oppPoke.name}</b> appeared!`
     );
-
-    // Show wild trainer portrait briefly for WILD battles only.
-    // Trainer battles already showed the portrait on the intro screen.
-    // Boss battles have their own portrait system.
-    if (!isBoss && !this._isTrainerBattle) {
-      const portrait = document.getElementById('wild-trainer-portrait');
-      if (portrait) {
-        portrait.src = getWildTrainerSprite(oppPoke.type);
-        portrait.style.display = '';
-        portrait.style.opacity = '1';
-        setTimeout(() => {
-          portrait.style.transition = 'opacity .6s ease';
-          portrait.style.opacity    = '0';
-          setTimeout(() => { portrait.style.display = 'none'; portrait.style.transition = ''; }, 650);
-        }, 1800);
-      }
-    }
   },
 
   _dealHand(n) {

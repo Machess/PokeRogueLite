@@ -5758,24 +5758,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ═══════════════════════════════════════════
-   WILD BATTLE TRAINER PORTRAIT
-   Appears briefly in the opponent corner at
-   battle start, fades out after 1.8s.
-═══════════════════════════════════════════ */
-.wild-trainer-portrait {
-  position: absolute;
-  right: 4px;
-  top: -4px;
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  image-rendering: pixelated;
-  z-index: var(--z-content);
-  filter: drop-shadow(0 2px 8px rgba(0,0,0,.6));
-  pointer-events: none;
-}
-
-/* ═══════════════════════════════════════════
    TRAINER BATTLE — 2-PIP PARTY BAR
    Shown in both the boss intro screen
    (via #boss-party-bar) and during battle
