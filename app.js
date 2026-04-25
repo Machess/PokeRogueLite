@@ -3776,49 +3776,81 @@ function getTrainerFluff(type) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+// ── Type-specific Kanto Pokémon pools for trainer battles ────────────────────
+// Trainers always use Pokémon that match their type.
+// Ghost only has 3 in Gen 1 — supplemented with psychic Drowzee/Hypno.
+const TRAINER_TYPE_POOLS = {
+  bug:      [10,11,12,13,14,15,46,47,48,123,127],
+  fighting: [56,57,62,66,67,68,106,107],
+  flying:   [16,17,18,21,22,83,84,85],
+  ghost:    [92,93,94,96,97],        // + Drowzee/Hypno as supplement
+  grass:    [1,2,3,43,44,45,69,70,71,102,103,114],
+  normal:   [19,20,35,36,39,40,52,53,108,113,128,132,133],
+  psychic:  [63,64,65,79,80,96,97,121,122,124,137],
+  rock:     [74,75,76,95,111,112,138,139,140,141,142],
+};
+function getTrainerPool(type) {
+  return TRAINER_TYPE_POOLS[type] || TRAINER_TYPE_POOLS.normal;
+}
+
 // ─── TRAINER BATTLE ENGINE ────────────────────────────────────────────────────
-// Triggered 60% of the time from a battle node.
-// Uses boss screen for the trainer intro, then transitions to the normal
-// battle screen so opening.mp3 plays (not gym music).
 const TrainerBattleEngine = {
-  _isActive: false,
-  _pendingOpp: null,
-  _pendingActive: null,
-  _pendingNode: null,
+  _isActive:  false,
+  _team:      [],      // [poke1, poke2]
+  _teamIdx:   0,       // which Pokémon is currently fighting
+  _goldEarned: 0,      // accumulated across both fights
+  _node:      null,
+  _trainerType: null,
 
   async start(node) {
-    this._pendingNode = node;
+    this._node        = node;
+    this._team        = [];
+    this._teamIdx     = 0;
+    this._goldEarned  = 0;
+
     showLoading();
 
-    const pool = Math.random() < .6 ? 'common' : Math.random() < .65 ? 'uncommon' : 'rare';
-    const poolArr = WILD_POOL[pool];
-    const oppId  = poolArr[Math.floor(Math.random() * poolArr.length)];
-    const level  = 5 + GameState.bossesDefeated * 6 + Math.floor(Math.random() * 5) + 3; // slight bonus
+    // Determine trainer type from any type pool (weighted toward having a clear identity)
+    const allTypes   = Object.keys(TRAINER_TYPE_POOLS);
+    const trainerType = allTypes[Math.floor(Math.random() * allTypes.length)];
+    this._trainerType = trainerType;
 
-    const [oppData] = await Promise.all([fetchPoke(oppId)]);
-    const oppType  = oppData.types[0]?.type?.name || 'normal';
-    const oppName  = capitalize(oppData.name);
-    const oppSprite = getSpriteUrl(oppData, true);
-    const opp      = makePokemon(oppId, level, oppSprite, oppName, oppType);
+    const pool      = getTrainerPool(trainerType);
+    const baseLevel = 5 + GameState.bossesDefeated * 6 + Math.floor(Math.random() * 4) + 3;
+
+    // Pick two distinct Pokémon from the type pool
+    const shuffled = shuffle([...pool]);
+    const id1 = shuffled[0];
+    const id2 = shuffled[1] ?? shuffled[0]; // fallback if pool has only 1 entry
+
+    const [data1, data2, playerData] = await Promise.all([
+      fetchPoke(id1),
+      fetchPoke(id2),
+      fetchPoke(GameState.party[GameState.activePokemonIndex].id),
+    ]);
 
     const active = GameState.party[GameState.activePokemonIndex];
-    const playerData = await fetchPoke(active.id);
-    const backSprite = playerData.sprites?.back_default
-                    || playerData.sprites?.front_default
-                    || active.spriteUrl;
-    active.backSpriteUrl = backSprite;
+    active.backSpriteUrl = playerData.sprites?.back_default
+                        || playerData.sprites?.front_default
+                        || active.spriteUrl;
 
-    this._pendingOpp    = opp;
-    this._pendingActive = active;
-    this._isActive      = true;
+    const makeOpp = (data, level) => {
+      const t    = DUAL_TYPE_OVERRIDES[data.id] || data.types?.[0]?.type?.name || 'normal';
+      return makePokemon(data.id, level, getSpriteUrl(data, true), capitalize(data.name), t);
+    };
+
+    // Ace (Pokémon 2) is 2 levels higher — acts as the trainer's stronger Pokémon
+    this._team = [
+      makeOpp(data1, baseLevel),
+      makeOpp(data2, baseLevel + 2),
+    ];
 
     hideLoading();
 
-    // Show boss intro screen (reuse trainer-intro layout) but no boss-bg treatment
+    // ── Show boss intro screen for trainer dialogue ─────────────────────────
     showScreen('boss');
     BossEngine._isRocket = false;
 
-    // Clear any boss intro bg — plain dark background
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
     const imgEl = document.querySelector('#screen-boss .battle-bg-img');
     if (bgEl)  { bgEl.classList.remove('boss-intro-mode'); bgEl.style.background = 'linear-gradient(160deg,#0a0a1a,#1a1a2e)'; }
@@ -3826,10 +3858,16 @@ const TrainerBattleEngine = {
 
     document.getElementById('trainer-intro').style.display    = 'flex';
     document.getElementById('boss-battle-area').style.display = 'none';
-    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    // ── 2-pip party bar in the intro screen ────────────────────────────────
+    const bar = document.getElementById('boss-party-bar');
+    bar.innerHTML = `
+      <div class="trainer-pip trainer-pip-0 trainer-pip-alive" id="trainer-pip-0"></div>
+      <div class="trainer-pip trainer-pip-1 trainer-pip-alive" id="trainer-pip-1"></div>`;
 
     const trainerImg = document.getElementById('boss-trainer-sprite');
-    if (trainerImg) trainerImg.src = getWildTrainerSprite(oppType);
+    if (trainerImg) trainerImg.src = getWildTrainerSprite(trainerType);
+
     document.getElementById('dialogue-name').textContent = 'Trainer';
     document.getElementById('dialogue-text').textContent = '';
     document.getElementById('btn-dialogue-next').style.display = 'none';
@@ -3837,7 +3875,7 @@ const TrainerBattleEngine = {
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.style.display = 'none';
 
-    const fluff = getTrainerFluff(oppType);
+    const fluff = getTrainerFluff(trainerType);
     let ci = 0;
     const iv = setInterval(() => {
       document.getElementById('dialogue-text').textContent += fluff[ci++];
@@ -3846,24 +3884,103 @@ const TrainerBattleEngine = {
         if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Battle! ▶'; }
       }
     }, 30);
+
+    this._isActive = true;
   },
 
   startBattle() {
     this._isActive = false;
     document.getElementById('trainer-intro').style.display = 'none';
 
-    const opp    = this._pendingOpp;
-    const active = this._pendingActive;
-
-    // Reset boss bg style so next real boss looks correct
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.style.background = '';
 
-    // Use normal battle screen + opening.mp3 (BattleEngine._initBattle calls showScreen('battle'))
+    this._loadOpp(0);
+  },
+
+  _loadOpp(idx) {
+    this._teamIdx = idx;
+    const opp    = this._team[idx];
+    const active = GameState.party[GameState.activePokemonIndex];
+
     setBattleBg(opp.type, false);
     BattleEngine._isTrainerBattle = true;
     BattleEngine._initBattle(active, opp, false);
-    BattleEngine._logSystem(`Trainer sent out <b>${opp.name}</b>!`);
+
+    // Inject pip bar into the battle screen
+    this._renderBattlePips();
+    BattleEngine._logSystem(
+      idx === 0
+        ? `Trainer sent out <b>${opp.name}</b>!`
+        : `Trainer sent out <b>${opp.name}</b>! (Ace Pokémon!)`
+    );
+  },
+
+  _renderBattlePips() {
+    // Place a small 2-pip bar at the top-centre of screen-battle
+    let bar = document.getElementById('trainer-battle-pips');
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id        = 'trainer-battle-pips';
+      bar.className = 'trainer-battle-pips';
+      document.getElementById('screen-battle').appendChild(bar);
+    }
+    bar.innerHTML = '';
+    bar.style.display = 'flex';
+    this._team.forEach((_, i) => {
+      const pip = document.createElement('div');
+      pip.id        = `tbp-${i}`;
+      pip.className = `trainer-pip ${i < this._teamIdx ? 'trainer-pip-fainted' : 'trainer-pip-alive'}`;
+      bar.appendChild(pip);
+    });
+  },
+
+  _markPipFainted(idx) {
+    // Update both intro pip and battle pip
+    const introP  = document.getElementById(`trainer-pip-${idx}`);
+    const battleP = document.getElementById(`tbp-${idx}`);
+    if (introP)  { introP.className  = 'trainer-pip trainer-pip-fainted'; }
+    if (battleP) { battleP.className = 'trainer-pip trainer-pip-fainted'; }
+  },
+
+  // Called from BattleEngine._victory() when _isTrainerBattle is set
+  onPokemonDefeated() {
+    const idx = this._teamIdx;
+
+    // Accumulate partial gold for each Pokémon defeated
+    this._goldEarned += goldForWildBattle();
+    this._markPipFainted(idx);
+
+    if (idx < this._team.length - 1) {
+      // More Pokémon left — brief pause then load next
+      BattleEngine._logSystem(`Trainer's ${this._team[idx].name} fainted!`);
+      setTimeout(() => this._loadOpp(idx + 1), 1200);
+    } else {
+      // All defeated — full trainer win
+      this._finishWin();
+    }
+  },
+
+  _finishWin() {
+    // Full gold = accumulated per-pokemon + bonus for completing the trainer
+    const totalGold = Math.round(this._goldEarned * 1.8);
+    GameState.gold = (GameState.gold || 0) + totalGold;
+
+    // Clean up pip bar from battle screen
+    const bar = document.getElementById('trainer-battle-pips');
+    if (bar) bar.style.display = 'none';
+
+    BattleEngine._isTrainerBattle = false;
+    MapEngine.completeNode(GameState.currentNodeIndex);
+
+    const evolutions = levelUpParty('battle');
+    if (evolutions.length > 0) {
+      saveGame();
+      runEvolutions(evolutions, () => CardReward.show(totalGold));
+    } else {
+      saveGame();
+      CardReward.show(totalGold);
+    }
   },
 };
 
@@ -4566,10 +4683,14 @@ const BattleEngine = {
     const opp = this.state.opp;
     registerPokedex(opp.id, opp.name, opp.spriteUrl, false);
 
-    const earned = BattleEngine._isTrainerBattle
-      ? Math.round(goldForWildBattle() * 1.8)  // trainer battles pay ~80% more
-      : goldForWildBattle();
-    BattleEngine._isTrainerBattle = false;
+    // Trainer battle — delegate to TrainerBattleEngine which handles
+    // multi-Pokémon flow, gold accumulation, and completion.
+    if (this._isTrainerBattle) {
+      TrainerBattleEngine.onPokemonDefeated();
+      return;
+    }
+
+    const earned = goldForWildBattle();
     GameState.gold = (GameState.gold || 0) + earned;
     ItemEngine.checkPassive();
     MapEngine.completeNode(GameState.currentNodeIndex);

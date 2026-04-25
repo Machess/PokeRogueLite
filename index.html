@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=42" />
+  <link rel="stylesheet" href="style.css?v=45" />
 </head>
 <body>
 
@@ -312,6 +312,8 @@
 
   <!-- Opponent side -->
   <div class="battle-opponent-area">
+    <!-- Wild trainer portrait — shown briefly at battle start, fades when Pokémon appears -->
+    <img id="wild-trainer-portrait" src="" alt="" class="wild-trainer-portrait" style="display:none" />
     <div class="battle-hud hud-opponent" id="opp-hud">
       <div class="hud-name" id="opp-name">???</div>
       <div class="hud-level-row">
@@ -342,6 +344,9 @@
       <div class="status-badges-row" id="player-status-badges"></div>
     </div>
   </div>
+
+  <!-- Trainer 2-pip bar — shown only during trainer battles -->
+  <div id="trainer-battle-pips" class="trainer-battle-pips" style="display:none"></div>
 
   <!-- Battle log — 2-panel: player action top, enemy response bottom -->
   <div class="battle-log" id="battle-log">
@@ -859,6 +864,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=52"></script>
+<script src="app.js?v=56"></script>
 </body>
 </html>
