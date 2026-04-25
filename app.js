@@ -6713,6 +6713,7 @@ const LegendaryEncounterEngine = {
         saveGame();
         resultText.innerHTML = `<span style="color:#FFD700">★</span> ${pokeName} joined your team!<br><span style="font-size:.5rem;color:#aaa">Legendary card added: ${sigCard?.name || ''}!</span>`;
       } else {
+        document.getElementById('catch-ball-wrap').style.display = 'none';
         saveGame();
         resultText.innerHTML = `<span style="color:#FFD700">★</span> ${pokeName} was caught but your party is full. It was released into the wild.`;
       }
@@ -7350,7 +7351,8 @@ const CatchEngine = {
           await this._showPokedexCard(data, newPoke, isNewDex);
 
         } else {
-          // ── Party full — show Pokédex card first, then release picker ───
+          // ── Party full — hide ball so release picker is unobstructed ────
+          document.getElementById('catch-ball-wrap').style.display = 'none';
           this._pendingCatch = newPoke;
 
           resultText.innerHTML =
