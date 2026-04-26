@@ -4998,7 +4998,7 @@ const BossEngine = {
       hand: [], discardPile: [], exhaustedPile: [],
       energy: 3,
       statusEffects: { player: [], opp: [] },
-      shield: 0, oppAtkDebuff: 0, rainTurns: 0,
+      shield: 0, oppAtkDebuff: 0, oppAccDebuff: 0, rainTurns: 0,
       leechTurns: 0, leechStacks: 0, oppSkipped: false,
       bonusEnergy: 0,
       totalDamageDealt: 0,
@@ -5040,6 +5040,26 @@ const BossEngine = {
         b.textContent = STATUS_LABELS[s] || s;
         bossStatus.appendChild(b);
       });
+      // ATK debuff badge
+      if (st.oppAtkDebuff > 0) {
+        const b = document.createElement('span');
+        b.className   = 'status-badge status-debuff-atk';
+        b.textContent = `ATK-${st.oppAtkDebuff}`;
+        bossStatus.appendChild(b);
+      }
+      // ACC debuff badge
+      if ((st.oppAccDebuff||0) > 0) {
+        const b = document.createElement('span');
+        b.className   = 'status-badge status-debuff-acc';
+        b.textContent = `ACC-${st.oppAccDebuff}%`;
+        bossStatus.appendChild(b);
+      }
+    }
+
+    // Update debuff detail panel if visible (boss uses same panel element)
+    const panel = document.getElementById('opp-debuff-panel');
+    if (panel && panel.style.display !== 'none') {
+      BattleEngine._renderDebuffPanel.call({ state: st }, st);
     }
 
     const bossOppSprite = document.getElementById('boss-opp-sprite');
@@ -5097,7 +5117,13 @@ const BossEngine = {
     }
   },
 
-  _log(msg)       { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${msg}</span>`); },
+  _toggleDebuffPanel() {
+    const panel = document.getElementById('opp-debuff-panel');
+    if (!panel) return;
+    const visible = panel.style.display !== 'none';
+    panel.style.display = visible ? 'none' : 'block';
+    if (!visible) BattleEngine._renderDebuffPanel.call(BattleEngine, this.bState);
+  },
   _logPlayer(html){ BattleEngine._writeLog.call({ isBoss: true }, 'player', html); },
   _logEnemy(html) { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  html); },
   _logSystem(html){ BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${html}</span>`); },

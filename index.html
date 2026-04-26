@@ -424,11 +424,12 @@
     <div class="boss-party-bar" id="boss-party-bar"></div>
 
     <div class="battle-opponent-area">
-      <div class="battle-hud hud-opponent" id="boss-opp-hud">
+      <div class="battle-hud hud-opponent" id="boss-opp-hud" onclick="BossEngine._toggleDebuffPanel()" style="cursor:pointer" title="Tap for status details">
         <div class="hud-name" id="boss-opp-name">???</div>
         <div class="hud-level-row">
           <span class="hud-level" id="boss-opp-level">Lv.1</span>
           <span class="hud-type-badge" id="boss-opp-type-badge"></span>
+          <span class="hud-debuff-hint">ℹ</span>
         </div>
         <div class="hud-bar-wrap"><div class="hud-bar" id="boss-opp-hp-bar"></div></div>
         <div class="hud-hp-text" id="boss-opp-hp-text">? / ?</div>
@@ -870,6 +871,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=72"></script>
+<script src="app.js?v=73"></script>
 </body>
 </html>
