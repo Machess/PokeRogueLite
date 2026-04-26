@@ -4059,13 +4059,16 @@ const BattleEngine = {
       exhaustedPile: [],
       energy:      3,
       statusEffects: { player: [], opp: [] },
-      shield: GameState.cookingShield || 0,  // apply cooking buff if active
+      shield: GameState.cookingShield || 0,
       oppAtkDebuff: 0,
       rainTurns: 0,
       leechTurns: 0,
       leechStacks: 0,
       oppSkipped: false,
       playerFlinch: false,
+      totalDamageDealt: 0,
+      totalDamageTaken: 0,
+      cardsPlayedCount: 0,
       bonusEnergy: 0,
     };
     // Consume the cooking shield — one battle only
@@ -4295,6 +4298,7 @@ const BattleEngine = {
       st.discardPile.push(card);
     }
     st.energy -= cost;
+    st.cardsPlayedCount = (st.cardsPlayedCount || 0) + 1;
     this._applyCardEffect(card);
     if (this.isBoss) BossEngine._syncFromBattleState(st);
     this._checkDefeated();
@@ -4351,6 +4355,7 @@ const BattleEngine = {
 
     if (dmg > 0) {
       st.opp.hp = Math.max(0, st.opp.hp - dmg);
+      st.totalDamageDealt = (st.totalDamageDealt || 0) + dmg;
       const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
       const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
       applyHitAnimation(playerSpriteId, oppSpriteId, card.type);
@@ -4600,6 +4605,7 @@ const BattleEngine = {
 
     if (blocked > 0) {
       st.player.hp = Math.max(0, st.player.hp - blocked);
+      st.totalDamageTaken = (st.totalDamageTaken || 0) + blocked;
       applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal');
 
       const effStr = logEff(mult);
@@ -4624,8 +4630,28 @@ const BattleEngine = {
 
     if (st.opp.hp <= 0) {
       this._battleOver = true;
+
+      // Type matchup comment in battle log
+      const playerType = st.player.type || 'normal';
+      const oppType    = st.opp.type    || 'normal';
+      const mult       = getTypeMultiplier(playerType, oppType);
+      const matchupLog =
+        mult >= 2  ? `⚡ Type advantage! ${st.player.name}'s ${playerType} was super effective!` :
+        mult === 0 || mult < 1 ? `💪 ${st.player.name} overcame the type disadvantage — impressive!` :
+                    `⚔️ A fair fight. Your cards made the difference.`;
+      this._logSystem(matchupLog);
       this._logSystem(`⭐ ${st.opp.name} fainted! You win!`);
-      setTimeout(() => this._victory(), 1200);
+
+      // Faint animation on opponent sprite
+      const oppSpriteEl = document.getElementById(this.isBoss ? 'boss-opp-sprite' : 'opp-sprite');
+      if (oppSpriteEl) {
+        oppSpriteEl.classList.add('pokemon-faint');
+        setTimeout(() => oppSpriteEl.classList.remove('pokemon-faint'), 700);
+      }
+
+      // Pass matchup tier to victory for fluff text
+      this._lastMatchupMult = mult;
+      setTimeout(() => this._victory(), 1400);
       return true;
     }
     if (st.player.hp <= 0) {
@@ -4883,6 +4909,9 @@ const BossEngine = {
       shield: 0, oppAtkDebuff: 0, rainTurns: 0,
       leechTurns: 0, leechStacks: 0, oppSkipped: false,
       bonusEnergy: 0,
+      totalDamageDealt: 0,
+      totalDamageTaken: 0,
+      cardsPlayedCount: 0,
     };
     BattleEngine._dealHand.call({ state: this.bState }, 5);
     this._render();
@@ -5139,9 +5168,27 @@ const BossEngine = {
           GameState.stats.totalBossesBeaten = (GameState.stats.totalBossesBeaten || 0) + 1;
           setTimeout(() => {
             const isFinalBoss = GameState.bossesDefeated >= 7;
+            const bossName    = this.bossData.name;
+            const BOSS_WIN_LINES = {
+              'Brock':     `"Your Pokémon has real grit. I can see you've been training hard. The Boulder Badge is yours."`,
+              'Misty':     `"Fine. You beat me fair and square. Don't let it go to your head — the real trainers are ahead."`,
+              'Lt. Surge': `"Outstanding instincts! A soldier who reads battle like that goes far. The Thunder Badge!"`,
+              'Erika':     `"Your Pokémon moved with grace and patience. The Rainbow Badge suits a trainer like you."`,
+              'Koga':      `"You have the mind of a shinobi — patient, precise, relentless. The Soul Badge is yours."`,
+              'Sabrina':   `"...I did not foresee this outcome. You have surprised me. The Marsh Badge is yours."`,
+              'Blaine':    `"Ha! You burned bright today! You've got fire in you, kid! Take the Volcano Badge!"`,
+              'Giovanni':  `"Impressive control. I expected nothing less. You've earned your place in this world."`,
+              'Lorelei':   `"You've broken through my ice. The Elite Four won't forget a trainer like you."`,
+              'Bruno':     `"Your fighting spirit rivals mine. A true warrior's heart. Well earned, trainer."`,
+              'Agatha':    `"You have more spirit than I expected, child. Come back when you're older — if you dare!"`,
+              'Lance':     `"The Dragon Master bows to a worthy challenger. The skies are yours today."`,
+              'Blue':      `"...you got lucky." He walks off without another word. You both know it wasn't luck.`,
+            };
+            const bossLine = BOSS_WIN_LINES[bossName]
+              || `You defeated ${bossName}! Your team is getting stronger!`;
             const modalMsg = isFinalBoss
-              ? `You defeated ${this.bossData.name}! You are the Champion!`
-              : `You defeated ${this.bossData.name}! Your team is getting stronger!`;
+              ? `You are the Champion!\n\n${bossLine}`
+              : bossLine;
             showModal('Boss Defeated! 🏅', modalMsg, () => {
               Game.afterBoss(GameState.bossesDefeated);
             });
@@ -8104,21 +8151,18 @@ const CardReward = {
   _pool: [], // 3 cards offered
 
   show(goldEarned) {
-    // Build reward pool: generic normal cards + cards matching the active pokemon's type only
     const activePoke = GameState.party[GameState.activePokemonIndex];
     const activeType = activePoke?.type || GameState.starterType || 'normal';
+    const st         = BattleEngine.state || BossEngine.bState;
+    const mult       = BattleEngine._lastMatchupMult ?? 1;
+    const name       = activePoke?.name || 'Your Pokémon';
 
-    // Eligible card sources:
-    // 1. All STANDARD_CARDS (normal type generics — fine for everyone)
-    // 2. TYPE_SIGNATURE_CARDS for the active pokemon's type
-    // 3. CARD_TEMPLATES for the active pokemon's type (starter-quality cards)
+    // Build reward pool
     const eligible = [
       ...STANDARD_CARDS.map(c => ({ ...c })),
       ...(TYPE_SIGNATURE_CARDS[activeType] || []).map(c => ({ ...c })),
       ...(CARD_TEMPLATES[activeType] || []).map(c => ({ ...c })),
     ];
-
-    // Deduplicate by card id, then shuffle and pick 3
     const seen = new Set();
     const unique = eligible.filter(c => {
       if (seen.has(c.id)) return false;
@@ -8126,12 +8170,50 @@ const CardReward = {
     });
     this._pool = shuffle(unique).slice(0, 3);
 
-    const el = document.getElementById('card-reward-screen');
+    const el      = document.getElementById('card-reward-screen');
     const deckSize = GameState.deck.length;
     const MAX_DECK = 31;
     const atCap    = deckSize >= MAX_DECK;
     document.getElementById('cr-gold-earned').textContent =
       `+${goldEarned}g earned  ·  Deck: ${deckSize}/${MAX_DECK}${atCap ? ' — FULL' : ''}`;
+
+    // ── Battle fluff comment ─────────────────────────────────────────────────
+    const commentEl = document.getElementById('cr-battle-comment');
+    if (commentEl) {
+      const ADVANTAGE_LINES = [
+        `Type advantage well used — ${name}'s ${activeType} was the perfect call.`,
+        `Super effective! You read that matchup like a pro trainer.`,
+        `The type advantage made all the difference. Brock would approve.`,
+      ];
+      const DISADVANTAGE_LINES = [
+        `${name} wasn't the ideal type here — but you won anyway. Respect.`,
+        `Fighting uphill and pulling through. That takes real skill.`,
+        `Not the best matchup on paper, but your card play compensated perfectly.`,
+      ];
+      const NEUTRAL_LINES = [
+        `A clean neutral battle — pure card skill decided this one.`,
+        `No type edge on either side. The better trainer won today.`,
+        `Straight down the middle. ${name} outplayed the opponent.`,
+      ];
+      const pool = mult >= 2 ? ADVANTAGE_LINES : (mult === 0 || mult < 1) ? DISADVANTAGE_LINES : NEUTRAL_LINES;
+      commentEl.textContent = pool[Math.floor(Math.random() * pool.length)];
+      commentEl.className   = `cr-battle-comment cr-comment-${mult >= 2 ? 'advantage' : mult < 1 ? 'disadvantage' : 'neutral'}`;
+    }
+
+    // ── Battle summary ───────────────────────────────────────────────────────
+    const summaryEl = document.getElementById('cr-battle-summary');
+    if (summaryEl && st) {
+      const dealt  = st.totalDamageDealt || 0;
+      const taken  = st.totalDamageTaken || 0;
+      const cards  = st.cardsPlayedCount || 0;
+      summaryEl.textContent = `⚔ ${dealt} dmg dealt  ·  🛡 ${taken} dmg taken  ·  🃏 ${cards} cards played`;
+      summaryEl.style.display = dealt + taken + cards > 0 ? '' : 'none';
+    } else if (summaryEl) {
+      summaryEl.style.display = 'none';
+    }
+
+    // Reset matchup for next battle
+    BattleEngine._lastMatchupMult = 1;
 
     const grid = document.getElementById('cr-cards-grid');
     grid.innerHTML = '';

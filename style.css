@@ -6009,3 +6009,42 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .48rem; color: #e0b0ff; text-align: center;
   animation: sabrina-text-pulse 1.2s ease-in-out infinite;
 }
+
+/* ═══════════════════════════════════════════
+   POKEMON FAINT ANIMATION
+   Opponent sprite tilts, squishes, fades.
+═══════════════════════════════════════════ */
+@keyframes pokemon-faint {
+  0%   { transform: rotate(0deg)   scaleX(1)   scaleY(1);   opacity: 1; filter: brightness(1); }
+  25%  { transform: rotate(12deg)  scaleX(1.05) scaleY(.9); filter: brightness(2.5); }
+  55%  { transform: rotate(28deg)  scaleX(.85)  scaleY(.45); opacity: .65; filter: brightness(.8); }
+  100% { transform: rotate(35deg)  scaleX(.6)   scaleY(0);   opacity: 0;  filter: brightness(.4); }
+}
+.pokemon-faint {
+  animation: pokemon-faint .7s cubic-bezier(.4,0,.6,1) forwards;
+  transform-origin: center bottom;
+}
+
+/* ═══════════════════════════════════════════
+   CARD REWARD — battle comment + summary
+═══════════════════════════════════════════ */
+.cr-battle-comment {
+  font-size: .48rem;
+  text-align: center;
+  padding: .35rem .8rem;
+  border-radius: var(--r-sm);
+  margin: .2rem 0 .1rem;
+  font-style: italic;
+  line-height: 1.55;
+}
+.cr-comment-advantage    { color: #80e080; background: rgba(80,200,80,.1);  border: 1px solid rgba(80,200,80,.25); }
+.cr-comment-disadvantage { color: #f0a040; background: rgba(240,160,64,.08); border: 1px solid rgba(240,160,64,.2); }
+.cr-comment-neutral      { color: #aac8f0; background: rgba(120,160,220,.08); border: 1px solid rgba(120,160,220,.2); }
+
+.cr-battle-summary {
+  font-size: .38rem;
+  color: var(--col-text-dim);
+  text-align: center;
+  padding: .2rem .5rem .3rem;
+  letter-spacing: .03em;
+}
