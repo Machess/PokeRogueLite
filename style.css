@@ -6304,3 +6304,10 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .38rem; color: rgba(180,100,255,.6);
   margin-left: .2rem; cursor: pointer;
 }
+
+/* DEF debuff badge — orange-yellow */
+.status-badge.status-debuff-def {
+  background: rgba(220,160,40,.25);
+  color: #ffcc44;
+  border: 1px solid rgba(220,160,40,.4);
+}

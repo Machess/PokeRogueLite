@@ -4073,6 +4073,7 @@ const BattleEngine = {
       statusEffects: { player: [], opp: [] },
       shield: GameState.cookingShield || 0,
       oppAtkDebuff: 0,
+      oppDefDebuff: 0,
       oppAccDebuff: 0,
       rainTurns: 0,
       leechTurns: 0,
@@ -4140,6 +4141,13 @@ const BattleEngine = {
         const b = document.createElement('span');
         b.className   = 'status-badge status-debuff-atk';
         b.textContent = `ATK-${st.oppAtkDebuff}`;
+        statusWrap.appendChild(b);
+      }
+      // DEF debuff badge
+      if ((st.oppDefDebuff||0) > 0) {
+        const b = document.createElement('span');
+        b.className   = 'status-badge status-debuff-def';
+        b.textContent = `DEF-${st.oppDefDebuff}`;
         statusWrap.appendChild(b);
       }
       // ACC debuff badge
@@ -4250,10 +4258,14 @@ const BattleEngine = {
     // Utility card effect hint — show impact of debuffs in plain language
     let effectHint = '';
     if (card.power <= 0 && card.special) {
-      if (card.special === 'debuff_atk' || card.special === 'growl_draw' || card.special === 'leer_free') {
+      if (card.special === 'debuff_atk' || card.special === 'growl_draw') {
         const current = st.oppAtkDebuff || 0;
-        const added   = card.special === 'leer_free' ? 5 : 10;
+        const added   = 10;
         effectHint = `<div class="card-effect-hint">Opp ATK: -${current} → -${current + added}</div>`;
+      } else if (card.special === 'leer_free' || card.special === 'debuff_def') {
+        const current = st.oppDefDebuff || 0;
+        const added   = card.special === 'leer_free' ? 5 : 5;
+        effectHint = `<div class="card-effect-hint">Opp DEF: -${current} → -${current + added}</div>`;
       } else if (card.special === 'debuff_acc' || card.special === 'string_shot') {
         const current = st.oppAccDebuff || 0;
         const added   = 8;
@@ -4303,8 +4315,9 @@ const BattleEngine = {
     if (statuses.includes('para'))    lines.push(`⚡ Paralysis — 40% chance to skip a turn`);
     if (statuses.includes('sleep'))   lines.push(`💤 Sleep — skips turns until it wakes`);
     if (statuses.includes('confuse')) lines.push(`🌀 Confused — 30% chance of self-damage`);
-    if (st.oppAtkDebuff > 0)  lines.push(`⬇ ATK debuff: -${st.oppAtkDebuff} damage on each hit`);
-    if ((st.oppAccDebuff||0) > 0) lines.push(`🎯 Accuracy: -${st.oppAccDebuff}% miss chance`);
+    if (st.oppAtkDebuff > 0)      lines.push(`⚔ ATK debuff: -${st.oppAtkDebuff} · each hit deals ~${st.oppAtkDebuff} less dmg`);
+    if ((st.oppDefDebuff||0) > 0) lines.push(`🛡 DEF debuff: -${st.oppDefDebuff} · each hit deals ~${st.oppDefDebuff} less dmg`);
+    if ((st.oppAccDebuff||0) > 0) lines.push(`🎯 Accuracy: -${st.oppAccDebuff}% · ${st.oppAccDebuff}% chance to miss`);
     if (st.leechTurns > 0)   lines.push(`🌿 Leech Seed: drains ${st.leechTurns} more turns`);
     if (st.rainTurns > 0)    lines.push(`🌧 Rain: Water moves +20%, Fire moves -20%`);
     if (!lines.length) lines.push('No active debuffs or status effects.');
@@ -4480,7 +4493,7 @@ const BattleEngine = {
       case 'draw_1':        this._dealHand(1); this._logPlayer(`${card.name}! Drew a card!`); break;
       case 'growl_draw':    st.oppAtkDebuff += 10; this._dealHand(1);
                             this._logPlayer(`${card.name}! Opp ATK fell + drew a card!`); break;
-      case 'leer_free':     st.oppAtkDebuff += 5;
+      case 'leer_free':     st.oppDefDebuff = (st.oppDefDebuff||0) + 5;
                             this._logPlayer(`${card.name}! Opp DEF fell!`); break;
       case 'string_shot':   st.oppSkipped = false; st.oppAccDebuff = (st.oppAccDebuff||0) + 8; this._dealHand(1);
                             this._logPlayer(`${card.name}! Opp slowed + drew a card!`); break;
@@ -4491,7 +4504,7 @@ const BattleEngine = {
       case 'iron_defense':  st.shield += 50; this._logPlayer(`${card.name}! Blocked 50 dmg next hit!`); break;
       case 'debuff_atk':    st.oppAtkDebuff += 10; this._logPlayer(`${st.opp.name}'s ATK fell!`); break;
       case 'debuff_acc':    st.oppAccDebuff = (st.oppAccDebuff||0) + 8; this._logPlayer(`${st.opp.name}'s accuracy fell!`); break;
-      case 'debuff_def':    if(Math.random()<.35){ st.oppAtkDebuff += 5; this._logPlayer(`${st.opp.name}'s DEF fell!`); } break;
+      case 'debuff_def':    if(Math.random()<.35){ st.oppDefDebuff = (st.oppDefDebuff||0) + 5; this._logPlayer(`${st.opp.name}'s DEF fell!`); } break;
       case 'skip_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} fell asleep!`); break;
       case 'slow_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} is slowed!`); break;
       case 'burn_chance':   if (Math.random()<.15){ addStatus(st,'opp','burn'); this._logPlayer(`${st.opp.name} is burned!`); } break;
@@ -4642,6 +4655,8 @@ const BattleEngine = {
 
     // Debuff decay
     if (st.oppAtkDebuff > 0) st.oppAtkDebuff = Math.max(0, st.oppAtkDebuff - 5);
+    if ((st.oppDefDebuff||0) > 0) st.oppDefDebuff = Math.max(0, st.oppDefDebuff - 3);
+    if ((st.oppAccDebuff||0) > 0) st.oppAccDebuff = Math.max(0, st.oppAccDebuff - 4);
 
     // Check defeats
     if (this._checkDefeated()) return;
@@ -4683,8 +4698,16 @@ const BattleEngine = {
     power         = Math.round(power * mult);
 
     // Apply debuff and shield
-    const debuffed = Math.max(0, power - st.oppAtkDebuff);
+    const totalAtkReduction = (st.oppAtkDebuff || 0) + (st.oppDefDebuff || 0);
+    const debuffed = Math.max(0, power - totalAtkReduction);
     const blocked  = Math.max(0, debuffed - st.shield);
+
+    // Accuracy debuff — opponent misses entirely if roll beats their accuracy
+    if ((st.oppAccDebuff || 0) > 0 && Math.random() * 100 < st.oppAccDebuff) {
+      this._logEnemy(`<b>${st.opp.name}</b> used ${move.name}! <span class="log-sys">But it missed!</span>`);
+      applyHitAnimation(oppSpriteId, playerSpriteId, st.opp.type || 'normal', 1);
+      return;
+    }
 
     // Apply effect (10% chance)
     if (move.effect && Math.random() < 0.15) {
@@ -5001,7 +5024,7 @@ const BossEngine = {
       hand: [], discardPile: [], exhaustedPile: [],
       energy: 3,
       statusEffects: { player: [], opp: [] },
-      shield: 0, oppAtkDebuff: 0, oppAccDebuff: 0, rainTurns: 0,
+      shield: 0, oppAtkDebuff: 0, oppDefDebuff: 0, oppAccDebuff: 0, rainTurns: 0,
       leechTurns: 0, leechStacks: 0, oppSkipped: false,
       bonusEnergy: 0,
       totalDamageDealt: 0,
@@ -5048,6 +5071,13 @@ const BossEngine = {
         const b = document.createElement('span');
         b.className   = 'status-badge status-debuff-atk';
         b.textContent = `ATK-${st.oppAtkDebuff}`;
+        bossStatus.appendChild(b);
+      }
+      // DEF debuff badge
+      if ((st.oppDefDebuff||0) > 0) {
+        const b = document.createElement('span');
+        b.className   = 'status-badge status-debuff-def';
+        b.textContent = `DEF-${st.oppDefDebuff}`;
         bossStatus.appendChild(b);
       }
       // ACC debuff badge
@@ -5216,6 +5246,8 @@ const BossEngine = {
     if (st.stealthRock > 0){ st.opp.hp = Math.max(0, st.opp.hp - 15); st.stealthRock--; }
     if (st.opp.curseTurns > 0){ st.opp.hp = Math.max(0, st.opp.hp - 20); st.opp.curseTurns--; }
     if (st.oppAtkDebuff > 0) st.oppAtkDebuff = Math.max(0, st.oppAtkDebuff - 5);
+    if ((st.oppDefDebuff||0) > 0) st.oppDefDebuff = Math.max(0, st.oppDefDebuff - 3);
+    if ((st.oppAccDebuff||0) > 0) st.oppAccDebuff = Math.max(0, st.oppAccDebuff - 4);
 
     if (this._checkDefeated()) return;
 
