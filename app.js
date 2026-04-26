@@ -4371,7 +4371,7 @@ const BattleEngine = {
       st.totalDamageDealt = (st.totalDamageDealt || 0) + dmg;
       const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
       const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
-      applyHitAnimation(playerSpriteId, oppSpriteId, card.type);
+      applyHitAnimation(playerSpriteId, oppSpriteId, card.type, card.cost ?? 1);
 
       // Shell Bell — heal on dealing damage
       const bellMsg = ItemEngine.checkShellBell(st, this);
@@ -10348,7 +10348,78 @@ const TYPE_HIT_CLASS = {
   normal:   'hit-flash-normal',
 };
 
-function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType) {
+// ─── PARTICLE EFFECTS ────────────────────────────────────────────────────────
+// Spawns CSS particle burst over the target sprite.
+// cost 1 → no particles; cost 2 → 4 small; cost 3 → 10 large.
+
+const PARTICLE_CFG = {
+  fire:     { shape:'flame',   colors:['#ff4400','#ff8800','#ffcc00','#ff2200'], count:10 },
+  water:    { shape:'drop',    colors:['#00aaff','#44ccff','#88eeff','#0066cc'], count:9  },
+  grass:    { shape:'leaf',    colors:['#44cc44','#88ee44','#00aa22','#ccff44'], count:9  },
+  electric: { shape:'bolt',    colors:['#ffee00','#ffffff','#ffcc00','#ffe066'], count:8  },
+  ice:      { shape:'shard',   colors:['#aaeeff','#ddfaff','#88ccee','#ffffff'], count:8  },
+  psychic:  { shape:'ring',    colors:['#ff44ff','#dd88ff','#ff00cc','#ffaaff'], count:8  },
+  poison:   { shape:'bubble',  colors:['#aa44cc','#cc66ee','#8800aa','#ee88ff'], count:7  },
+  ghost:    { shape:'wisp',    colors:['#6633cc','#aa66ff','#220066','#cc99ff'], count:7  },
+  rock:     { shape:'chunk',   colors:['#aa8844','#ccaa66','#886622','#ddbb88'], count:7  },
+  ground:   { shape:'chunk',   colors:['#cc8833','#aa6622','#ee9944','#884411'], count:7  },
+  flying:   { shape:'feather', colors:['#aaddff','#ffffff','#88ccee','#cceeFF'], count:7  },
+  fighting: { shape:'burst',   colors:['#ee4422','#ff8844','#cc2200','#ffaa88'], count:8  },
+  dragon:   { shape:'flame',   colors:['#4400ff','#8844ff','#0000cc','#aa88ff'], count:9  },
+  fairy:    { shape:'ring',    colors:['#ffaaee','#ff88cc','#ffddee','#ff44aa'], count:8  },
+  bug:      { shape:'leaf',    colors:['#88cc00','#aabb00','#ccee22','#66aa00'], count:6  },
+  normal:   { shape:'burst',   colors:['#ffffff','#cccccc','#aaaaaa','#eeeeee'], count:5  },
+};
+
+function spawnParticles(type, cost, targetSpriteId) {
+  if (cost < 2) return; // 1-energy → flash only
+  const cfg  = PARTICLE_CFG[type] || PARTICLE_CFG.normal;
+  const count = cost >= 3 ? cfg.count : Math.ceil(cfg.count * 0.4); // 2-energy = 40% count
+  const scale = cost >= 3 ? 1 : 0.6;
+
+  const el = document.getElementById(targetSpriteId);
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const cx   = rect.left + rect.width  / 2;
+  const cy   = rect.top  + rect.height / 2;
+
+  const overlay = document.createElement('div');
+  overlay.className = 'particle-overlay';
+  overlay.style.cssText = `left:${cx}px;top:${cy}px;`;
+  document.body.appendChild(overlay);
+
+  for (let i = 0; i < count; i++) {
+    const p     = document.createElement('span');
+    const angle = (360 / count) * i + (Math.random() * 30 - 15);
+    const dist  = (30 + Math.random() * 55) * scale;
+    const rad   = angle * Math.PI / 180;
+    const tx    = Math.cos(rad) * dist;
+    const ty    = Math.sin(rad) * dist;
+    const rot   = Math.random() * 360;
+    const delay = Math.random() * 80;
+    const color = cfg.colors[Math.floor(Math.random() * cfg.colors.length)];
+    const size  = (cost >= 3 ? 8 + Math.random() * 7 : 5 + Math.random() * 4) * scale;
+
+    p.className = `particle particle-${cfg.shape}`;
+    p.style.cssText = `
+      --tx:${tx.toFixed(1)}px;
+      --ty:${ty.toFixed(1)}px;
+      --rot:${rot.toFixed(0)}deg;
+      --color:${color};
+      --size:${size.toFixed(1)}px;
+      animation-delay:${delay.toFixed(0)}ms;`;
+    overlay.appendChild(p);
+  }
+
+  // For electric cost-3: add extra screen flash
+  if (type === 'electric' && cost >= 3) {
+    overlay.classList.add('electric-screen-flash');
+  }
+
+  setTimeout(() => overlay.remove(), 900);
+}
+
+function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 1) {
   const atk = document.getElementById(attackerSpriteId);
   const def = document.getElementById(defenderSpriteId);
 
@@ -10360,7 +10431,7 @@ function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType) {
     setTimeout(() => atk.classList.remove('sprite-lunge'), 350);
   }
 
-  // Defender: shake + type-coloured flash, with slight delay after lunge
+  // Defender: shake + type-coloured flash
   if (def) {
     const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
     setTimeout(() => {
@@ -10368,6 +10439,8 @@ function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType) {
       void def.offsetWidth;
       def.classList.add('hit-shake', flashClass);
       setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
+      // Particle burst offset slightly after lunge lands
+      spawnParticles(moveType, cost, defenderSpriteId);
     }, 150);
   }
 }
