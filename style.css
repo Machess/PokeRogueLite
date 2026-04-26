@@ -6199,3 +6199,29 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   40%  { opacity: .6; }
   100% { opacity: 0; }
 }
+
+/* ═══════════════════════════════════════════
+   BEAM EFFECTS — typed energy beam
+   Positioned fixed on document.body,
+   rotated to connect attacker → defender.
+═══════════════════════════════════════════ */
+.beam-element {
+  position: fixed;
+  transform-origin: 0 50%;
+  pointer-events: none;
+  z-index: 9998;
+  border-radius: 9999px;
+  margin-top: calc(var(--h, 6px) / -2);
+  /* Start as a tiny sliver at the attacker */
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--travel, 160ms) cubic-bezier(.4,0,.2,1);
+}
+/* Shoot: reveal beam left-to-right over travel duration */
+.beam-shoot {
+  clip-path: inset(0 0% 0 0);
+}
+/* Fade: dissolve after impact */
+.beam-fade {
+  opacity: 0;
+  transition: opacity .3s ease-out, clip-path var(--travel, 160ms) cubic-bezier(.4,0,.2,1);
+}

@@ -10419,6 +10419,86 @@ function spawnParticles(type, cost, targetSpriteId) {
   setTimeout(() => overlay.remove(), 900);
 }
 
+// ─── BEAM EFFECTS ────────────────────────────────────────────────────────────
+// Draws a typed energy beam connecting attacker → defender centre points.
+// cost 1 → no beam; cost 2 → thin short beam; cost 3 → thick full beam.
+
+const BEAM_CFG = {
+  fire:     { core:'#ff7722', glow:'#ff2200', width:3, blur:6  },
+  water:    { core:'#44ccff', glow:'#0077cc', width:3, blur:5  },
+  grass:    { core:'#66ee44', glow:'#009900', width:3, blur:5  },
+  electric: { core:'#ffee00', glow:'#ffffff', width:2, blur:8  },
+  ice:      { core:'#cceeff', glow:'#88ccff', width:2, blur:5  },
+  psychic:  { core:'#ff55ff', glow:'#aa00cc', width:4, blur:7  },
+  poison:   { core:'#cc44ee', glow:'#660099', width:3, blur:5  },
+  ghost:    { core:'#9955ee', glow:'#330066', width:4, blur:9  },
+  dragon:   { core:'#6644ff', glow:'#0000cc', width:4, blur:7  },
+  fighting: { core:'#ff6633', glow:'#cc2200', width:3, blur:4  },
+  rock:     { core:'#ccaa55', glow:'#886622', width:3, blur:3  },
+  ground:   { core:'#ee8833', glow:'#aa5511', width:3, blur:4  },
+  flying:   { core:'#88ddff', glow:'#44aacc', width:2, blur:5  },
+  fairy:    { core:'#ffaaee', glow:'#ff44aa', width:3, blur:6  },
+  bug:      { core:'#99dd22', glow:'#447700', width:2, blur:4  },
+  normal:   { core:'#dddddd', glow:'#999999', width:2, blur:3  },
+};
+
+function spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost) {
+  if (cost < 2) return;
+
+  const atkEl = document.getElementById(attackerSpriteId);
+  const defEl = document.getElementById(defenderSpriteId);
+  if (!atkEl || !defEl) return;
+
+  const ar = atkEl.getBoundingClientRect();
+  const dr = defEl.getBoundingClientRect();
+
+  // Centre points of each sprite
+  const ax = ar.left + ar.width  / 2;
+  const ay = ar.top  + ar.height / 2;
+  const bx = dr.left + dr.width  / 2;
+  const by = dr.top  + dr.height / 2;
+
+  const dx    = bx - ax;
+  const dy    = by - ay;
+  const dist  = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  const cfg        = BEAM_CFG[moveType] || BEAM_CFG.normal;
+  const thickness  = cost >= 3 ? cfg.width * 2.5 : cfg.width;
+  const blurAmount = cost >= 3 ? cfg.blur       : cfg.blur * 0.6;
+  const travelMs   = cost >= 3 ? 180            : 140;
+
+  const beam = document.createElement('div');
+  beam.className = 'beam-element';
+  beam.style.cssText = `
+    left: ${ax}px;
+    top:  ${ay}px;
+    width: ${dist}px;
+    height: ${thickness}px;
+    transform: rotate(${angle}deg);
+    background: linear-gradient(90deg,
+      transparent 0%,
+      ${cfg.glow} 15%,
+      ${cfg.core} 40%,
+      #ffffff 50%,
+      ${cfg.core} 60%,
+      ${cfg.glow} 85%,
+      transparent 100%);
+    box-shadow: 0 0 ${blurAmount}px ${Math.ceil(blurAmount/2)}px ${cfg.glow};
+    --travel: ${travelMs}ms;`;
+
+  document.body.appendChild(beam);
+
+  // Animate: shoot → hold → fade
+  requestAnimationFrame(() => {
+    beam.classList.add('beam-shoot');
+    setTimeout(() => {
+      beam.classList.add('beam-fade');
+      setTimeout(() => beam.remove(), 350);
+    }, travelMs + 200);
+  });
+}
+
 function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 1) {
   const atk = document.getElementById(attackerSpriteId);
   const def = document.getElementById(defenderSpriteId);
@@ -10431,7 +10511,13 @@ function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 
     setTimeout(() => atk.classList.remove('sprite-lunge'), 350);
   }
 
-  // Defender: shake + type-coloured flash
+  // Beam fires shortly after lunge starts (cost ≥ 2 only)
+  if (cost >= 2) {
+    setTimeout(() => spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost), 80);
+  }
+
+  // Flash + particles fire when beam arrives: 260ms for beams, 150ms for 1-energy
+  const impactDelay = cost >= 2 ? 260 : 150;
   if (def) {
     const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
     setTimeout(() => {
@@ -10439,9 +10525,8 @@ function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 
       void def.offsetWidth;
       def.classList.add('hit-shake', flashClass);
       setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
-      // Particle burst offset slightly after lunge lands
       spawnParticles(moveType, cost, defenderSpriteId);
-    }, 150);
+    }, impactDelay);
   }
 }
 
