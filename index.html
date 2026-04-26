@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=49" />
+  <link rel="stylesheet" href="style.css?v=52" />
 </head>
 <body>
 
@@ -312,16 +312,19 @@
 
   <!-- Opponent side -->
   <div class="battle-opponent-area">
-    <div class="battle-hud hud-opponent" id="opp-hud">
+    <div class="battle-hud hud-opponent" id="opp-hud" onclick="BattleEngine._toggleDebuffPanel()" style="cursor:pointer" title="Tap for status details">
       <div class="hud-name" id="opp-name">???</div>
       <div class="hud-level-row">
         <span class="hud-level" id="opp-level">Lv.1</span>
         <span class="hud-type-badge" id="opp-type-badge"></span>
+        <span class="hud-debuff-hint">ℹ</span>
       </div>
       <div class="hud-bar-wrap"><div class="hud-bar" id="opp-hp-bar"></div></div>
       <div class="hud-hp-text" id="opp-hp-text">? / ?</div>
       <div class="status-badges-row" id="opp-status-badges"></div>
     </div>
+    <!-- Opponent debuff detail panel — shown on HUD tap -->
+    <div id="opp-debuff-panel" class="opp-debuff-panel" style="display:none"></div>
     <div class="battle-sprite-wrap opponent">
       <!-- Asset slot: opp-sprite src set by JS from PokeAPI -->
       <img id="opp-sprite" src="" alt="Opponent" class="battle-sprite opponent-sprite" />
@@ -666,6 +669,7 @@
     <div class="training-tabs">
       <button class="training-tab active-tab" id="training-mode-upgrade">⬆ Upgrade</button>
       <button class="training-tab" id="training-mode-remove">🗑 Remove</button>
+      <button class="training-tab" id="training-mode-item">💎 Item</button>
     </div>
     <p class="screen-sub" id="training-subtitle">Select 2 cards to power up (+25% damage)</p>
     <div class="training-cards-grid" id="training-cards-grid"></div>
@@ -674,6 +678,8 @@
       <button class="btn-pixel btn-primary" id="btn-improve" disabled>⚡ Upgrade Selected</button>
       <button class="btn-pixel btn-secondary" id="btn-training-skip">Skip</button>
     </div>
+    <!-- Item upgrade panel (shown in item mode) -->
+    <div id="training-item-panel" style="display:none"></div>
   </div>
 </div>
 
@@ -864,6 +870,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=65"></script>
+<script src="app.js?v=72"></script>
 </body>
 </html>

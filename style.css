@@ -6225,3 +6225,82 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   opacity: 0;
   transition: opacity .3s ease-out, clip-path var(--travel, 160ms) cubic-bezier(.4,0,.2,1);
 }
+
+/* ═══════════════════════════════════════════
+   HELD ITEM UPGRADE — training screen
+═══════════════════════════════════════════ */
+.item-upgrade-card {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .4rem; padding: .8rem; text-align: center;
+}
+.item-upgrade-icon  { font-size: 2.2rem; }
+.item-upgrade-name  { font-family: 'Press Start 2P', monospace; font-size: .48rem; color: var(--col-text); }
+.item-upgrade-type  { font-size: .42rem; color: var(--col-text-dim); }
+.item-upgrade-tiers { display: flex; gap: .5rem; margin: .3rem 0; }
+.item-tier-pip      { font-size: .55rem; color: rgba(255,255,255,.2); }
+.item-tier-pip.filled { color: #ffd700; text-shadow: 0 0 8px rgba(255,215,0,.7); }
+.item-upgrade-stats { font-size: .42rem; color: var(--col-text-dim); }
+.item-stat-row      { display: flex; gap: .4rem; justify-content: center; align-items: center; margin: .1rem 0; }
+.item-stat-val      { color: var(--col-text); font-weight: bold; }
+.upgrade-preview    { color: #80ee80; }
+.item-cost-unafford { color: #e08080; }
+.item-upgrade-maxed { font-size: .45rem; color: #ffd700; margin-top: .4rem; }
+.item-upgrade-btn   { margin-top: .5rem; font-size: .38rem; }
+.item-upgrade-msg   { font-size: .42rem; margin-top: .3rem; min-height: .8rem; }
+.item-upgrade-empty { padding: 1.2rem; text-align: center; }
+.held-tier-badge    { font-size: .28rem; color: #ffd700; vertical-align: super; }
+
+/* ═══════════════════════════════════════════
+   CARD EFFECT HINT — utility card preview
+═══════════════════════════════════════════ */
+.card-effect-hint {
+  font-size: .34rem;
+  color: #80ccff;
+  margin-top: .15rem;
+  font-style: italic;
+}
+
+/* ═══════════════════════════════════════════
+   OPP STATUS BADGES — new debuff types
+═══════════════════════════════════════════ */
+.status-badge.status-debuff-atk {
+  background: rgba(220,80,40,.25);
+  color: #ff8866;
+  border: 1px solid rgba(220,80,40,.4);
+}
+.status-badge.status-debuff-acc {
+  background: rgba(80,120,220,.25);
+  color: #88aaff;
+  border: 1px solid rgba(80,120,220,.4);
+}
+
+/* ═══════════════════════════════════════════
+   OPP DEBUFF DETAIL PANEL — tap to view
+═══════════════════════════════════════════ */
+.opp-debuff-panel {
+  position: absolute;
+  top: 70px; left: 4px;
+  z-index: var(--z-ui);
+  background: rgba(8,4,18,.92);
+  border: 1px solid rgba(180,100,255,.35);
+  border-radius: var(--r-sm);
+  padding: .5rem .6rem;
+  min-width: 180px; max-width: 220px;
+  pointer-events: none;
+}
+.debuff-panel-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #c090ff; margin-bottom: .25rem;
+}
+.debuff-panel-hp {
+  font-size: .38rem; color: #ff9090; margin-bottom: .2rem;
+}
+.debuff-panel-line {
+  font-size: .38rem; color: rgba(220,200,255,.8);
+  line-height: 1.55; padding: .05rem 0;
+  border-top: 1px solid rgba(100,60,160,.2);
+}
+.hud-debuff-hint {
+  font-size: .38rem; color: rgba(180,100,255,.6);
+  margin-left: .2rem; cursor: pointer;
+}

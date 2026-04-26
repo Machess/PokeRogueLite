@@ -3053,7 +3053,7 @@ const PartyOverview = {
 
       const heldItem  = p.heldItem;
       const heldBadge = heldItem
-        ? `<div class="party-held-badge" title="${heldItem.name}">${heldItem.icon}</div>`
+        ? `<div class="party-held-badge" title="${heldItem.name}">${heldItem.icon}${heldItem.tier > 1 ? `<span class="held-tier-badge">${'★'.repeat(heldItem.tier)}</span>` : ''}</div>`
         : '';
 
       row.innerHTML = `
@@ -4073,6 +4073,7 @@ const BattleEngine = {
       statusEffects: { player: [], opp: [] },
       shield: GameState.cookingShield || 0,
       oppAtkDebuff: 0,
+      oppAccDebuff: 0,
       rainTurns: 0,
       leechTurns: 0,
       leechStacks: 0,
@@ -4134,6 +4135,20 @@ const BattleEngine = {
         b.textContent = STATUS_LABELS[s] || s;
         statusWrap.appendChild(b);
       });
+      // ATK debuff badge
+      if (st.oppAtkDebuff > 0) {
+        const b = document.createElement('span');
+        b.className   = 'status-badge status-debuff-atk';
+        b.textContent = `ATK-${st.oppAtkDebuff}`;
+        statusWrap.appendChild(b);
+      }
+      // ACC debuff badge
+      if ((st.oppAccDebuff||0) > 0) {
+        const b = document.createElement('span');
+        b.className   = 'status-badge status-debuff-acc';
+        b.textContent = `ACC-${st.oppAccDebuff}%`;
+        statusWrap.appendChild(b);
+      }
       // Leech indicator
       if (st.leechTurns > 0) {
         const b = document.createElement('span');
@@ -4148,6 +4163,12 @@ const BattleEngine = {
         b.textContent = `🌧${st.rainTurns}`;
         statusWrap.appendChild(b);
       }
+    }
+
+    // Update opp debuff detail panel if visible
+    const panel = document.getElementById('opp-debuff-panel');
+    if (panel && panel.style.display !== 'none') {
+      this._renderDebuffPanel(st);
     }
 
     // Player status badges
@@ -4198,7 +4219,6 @@ const BattleEngine = {
     const oppType   = st.opp?.type || 'normal';
     const mult      = card.power > 0 ? getTypeMultiplier(card.type, oppType) : 1;
     const effLabel  = card.power > 0 ? typeEffectivenessLabel(mult) : null;
-    const dispPower = card.power > 0 ? Math.round(card.power * mult) : 0;
     const cost      = card.cost ?? 1;
     const canAfford = st.energy >= cost;
     const disabled  = !canAfford;
@@ -4213,11 +4233,39 @@ const BattleEngine = {
       ? `<div class="card-eff-badge" style="color:${effLabel.color}">${effLabel.text}</div>`
       : '';
 
-    const powerDisplay = card.power > 0
-      ? (mult !== 1
-          ? `<span class="card-power-base">${card.power}</span> → <span style="color:${mult>=2?'#FFD700':mult===0?'#888':'#aaa'}">${dispPower}</span>`
-          : `${card.power}`)
-      : '✦';
+    // Full damage preview — accounts for type, held item boost, mewtwo, fishing buff, rain, charge
+    const actualDmg = previewDamage(card, st);
+    let powerDisplay;
+    if (card.power <= 0) {
+      // Utility card — show what effect it applies
+      powerDisplay = '✦';
+    } else if (actualDmg !== null && actualDmg !== card.power) {
+      // Actual differs from base — show base → actual with colour
+      const previewColor = actualDmg > card.power ? '#80ee80' : '#ee8880';
+      powerDisplay = `<span class="card-power-base">${card.power}</span> → <span style="color:${previewColor};font-weight:bold">${actualDmg}</span>`;
+    } else {
+      powerDisplay = `${card.power}`;
+    }
+
+    // Utility card effect hint — show impact of debuffs in plain language
+    let effectHint = '';
+    if (card.power <= 0 && card.special) {
+      if (card.special === 'debuff_atk' || card.special === 'growl_draw' || card.special === 'leer_free') {
+        const current = st.oppAtkDebuff || 0;
+        const added   = card.special === 'leer_free' ? 5 : 10;
+        effectHint = `<div class="card-effect-hint">Opp ATK: -${current} → -${current + added}</div>`;
+      } else if (card.special === 'debuff_acc' || card.special === 'string_shot') {
+        const current = st.oppAccDebuff || 0;
+        const added   = 8;
+        effectHint = `<div class="card-effect-hint">Opp Acc: -${current}% → -${current + added}%</div>`;
+      } else if (card.special === 'heal_25_draw' || card.special === 'recover') {
+        const activePoke = GameState.party[GameState.activePokemonIndex];
+        if (activePoke) {
+          const healed = Math.min(activePoke.maxHp, activePoke.hp + Math.floor(activePoke.maxHp * 0.25));
+          effectHint = `<div class="card-effect-hint">HP: ${activePoke.hp} → ${healed}</div>`;
+        }
+      }
+    }
 
     // Cost pip: 0=gold star, 1=white dot, 2=orange dots, 3=red dots
     const costColour = cost === 0 ? '#ffd700' : cost === 1 ? '#ccc' : cost === 2 ? '#ff9040' : '#ff4040';
@@ -4231,6 +4279,7 @@ const BattleEngine = {
       <div class="card-name">${card.name}</div>
       <div class="card-power">⚔ ${powerDisplay}</div>
       <div class="card-effect">${card.effect}</div>
+      ${effectHint}
       ${effBadge}
       ${card.exhaust ? `<div class="card-exhaust-badge">🔥 Once</div>` : ''}
       ${card.improved ? `<div class="card-improved-badge">+${card.improved}</div>` : ''}
@@ -4239,6 +4288,35 @@ const BattleEngine = {
       el.onclick = () => this.playCard(idx);
     }
     return el;
+  },
+
+  _renderDebuffPanel(st) {
+    const panel = document.getElementById('opp-debuff-panel');
+    if (!panel) return;
+    const lines = [];
+    const statuses = st.statusEffects?.opp || [];
+    if (statuses.includes('burn'))    lines.push(`🔥 Burn — ${st.opp.name} loses 10 HP each turn`);
+    if (statuses.includes('poison'))  lines.push(`☠ Poison — ${st.opp.name} loses 15 HP each turn`);
+    if (statuses.includes('para'))    lines.push(`⚡ Paralysis — 40% chance to skip a turn`);
+    if (statuses.includes('sleep'))   lines.push(`💤 Sleep — skips turns until it wakes`);
+    if (statuses.includes('confuse')) lines.push(`🌀 Confused — 30% chance of self-damage`);
+    if (st.oppAtkDebuff > 0)  lines.push(`⬇ ATK debuff: -${st.oppAtkDebuff} damage on each hit`);
+    if ((st.oppAccDebuff||0) > 0) lines.push(`🎯 Accuracy: -${st.oppAccDebuff}% miss chance`);
+    if (st.leechTurns > 0)   lines.push(`🌿 Leech Seed: drains ${st.leechTurns} more turns`);
+    if (st.rainTurns > 0)    lines.push(`🌧 Rain: Water moves +20%, Fire moves -20%`);
+    if (!lines.length) lines.push('No active debuffs or status effects.');
+    panel.innerHTML = `
+      <div class="debuff-panel-title">📋 ${st.opp.name} — Status</div>
+      <div class="debuff-panel-hp">❤ ${st.opp.hp} / ${st.opp.maxHp} HP</div>
+      ${lines.map(l => `<div class="debuff-panel-line">${l}</div>`).join('')}`;
+  },
+
+  _toggleDebuffPanel() {
+    const panel = document.getElementById('opp-debuff-panel');
+    if (!panel) return;
+    const visible = panel.style.display !== 'none';
+    panel.style.display = visible ? 'none' : 'block';
+    if (!visible) this._renderDebuffPanel(this.state);
   },
 
   _renderPartySwap() {
@@ -4401,7 +4479,7 @@ const BattleEngine = {
                             this._logPlayer(`${card.name}! Opp ATK fell + drew a card!`); break;
       case 'leer_free':     st.oppAtkDebuff += 5;
                             this._logPlayer(`${card.name}! Opp DEF fell!`); break;
-      case 'string_shot':   st.oppSkipped = false; st.oppAtkDebuff += 5; this._dealHand(1);
+      case 'string_shot':   st.oppSkipped = false; st.oppAccDebuff = (st.oppAccDebuff||0) + 8; this._dealHand(1);
                             this._logPlayer(`${card.name}! Opp slowed + drew a card!`); break;
       case 'metronome':     this._dealHand(2); this._logPlayer(`${card.name}! Drew 2 cards!`); break;
       case 'shield_draw':   st.shield += 45; this._dealHand(1);
@@ -4409,7 +4487,7 @@ const BattleEngine = {
       case 'shield_35':     st.shield += 30; this._logPlayer(`${card.name}! Blocked 30 dmg next hit!`); break;
       case 'iron_defense':  st.shield += 50; this._logPlayer(`${card.name}! Blocked 50 dmg next hit!`); break;
       case 'debuff_atk':    st.oppAtkDebuff += 10; this._logPlayer(`${st.opp.name}'s ATK fell!`); break;
-      case 'debuff_acc':    st.oppAtkDebuff += 8;  this._logPlayer(`${st.opp.name}'s accuracy fell!`); break;
+      case 'debuff_acc':    st.oppAccDebuff = (st.oppAccDebuff||0) + 8; this._logPlayer(`${st.opp.name}'s accuracy fell!`); break;
       case 'debuff_def':    if(Math.random()<.35){ st.oppAtkDebuff += 5; this._logPlayer(`${st.opp.name}'s DEF fell!`); } break;
       case 'skip_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} fell asleep!`); break;
       case 'slow_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} is slowed!`); break;
@@ -8134,14 +8212,40 @@ const ItemEngine = {
   // ── Type booster held items ──────────────────────────────────────────────
   getTypeboost(poke, cardType) {
     if (!poke?.heldItem) return 1;
-    const boosts = {
-      charcoal:     { type: 'fire',     mult: 1.2 },
-      mystic_water: { type: 'water',    mult: 1.2 },
-      miracle_seed: { type: 'grass',    mult: 1.2 },
-      magnet:       { type: 'electric', mult: 1.2 },
+    const BOOST_TYPES = {
+      charcoal:     'fire',
+      mystic_water: 'water',
+      miracle_seed: 'grass',
+      magnet:       'electric',
     };
-    const b = boosts[poke.heldItem.id];
-    return (b && b.type === cardType) ? b.mult : 1;
+    const boostType = BOOST_TYPES[poke.heldItem.id];
+    if (!boostType || boostType !== cardType) return 1;
+    // Tier 1 = 1.20, Tier 2 = 1.35, Tier 3 = 1.50
+    const tier = poke.heldItem.tier || 1;
+    return tier === 3 ? 1.50 : tier === 2 ? 1.35 : 1.20;
+  },
+
+  // Upgrade a held item to the next tier (costs gold, max tier 3)
+  upgradeHeldItem(pokeIdx) {
+    const poke = GameState.party[pokeIdx];
+    if (!poke?.heldItem) return null;
+    const UPGRADEABLE = ['charcoal','mystic_water','miracle_seed','magnet'];
+    if (!UPGRADEABLE.includes(poke.heldItem.id)) return null;
+    const tier = poke.heldItem.tier || 1;
+    if (tier >= 3) return null;
+    const cost = tier === 1
+      ? 40 + (GameState.bossesDefeated || 0) * 8
+      : 80 + (GameState.bossesDefeated || 0) * 12;
+    if ((GameState.gold || 0) < cost) return { error: 'Not enough gold', cost };
+    GameState.gold -= cost;
+    poke.heldItem.tier = tier + 1;
+    saveGame();
+    return { success: true, newTier: poke.heldItem.tier, cost };
+  },
+
+  // Tier label helper used in UI
+  tierLabel(tier) {
+    return ['','★','★★','★★★'][tier || 1] || '★';
   },
 
   // ── Post-battle passive berry check ─────────────────────────────────────
@@ -8748,11 +8852,27 @@ const TrainingEngine = {
   },
 
   _render() {
-    const grid = document.getElementById('training-cards-grid');
-    grid.innerHTML = '';
+    const grid      = document.getElementById('training-cards-grid');
+    const itemPanel = document.getElementById('training-item-panel');
+    const footer    = document.querySelector('.training-footer');
+    grid.innerHTML  = '';
 
     document.getElementById('training-mode-upgrade').classList.toggle('active-tab', this.mode === 'upgrade');
     document.getElementById('training-mode-remove').classList.toggle('active-tab',  this.mode === 'remove');
+    document.getElementById('training-mode-item').classList.toggle('active-tab',    this.mode === 'item-upgrade');
+
+    if (this.mode === 'item-upgrade') {
+      grid.style.display      = 'none';
+      if (itemPanel) itemPanel.style.display = '';
+      if (footer)    footer.style.display    = 'none';
+      document.getElementById('training-subtitle').textContent = 'Upgrade a held item to increase its power boost';
+      this._renderItemUpgrade();
+      return;
+    }
+
+    grid.style.display = '';
+    if (itemPanel) itemPanel.style.display = 'none';
+    if (footer)    footer.style.display    = '';
 
     const subtitle = document.getElementById('training-subtitle');
     subtitle.textContent = this.mode === 'upgrade'
@@ -8784,6 +8904,66 @@ const TrainingEngine = {
     document.getElementById('selected-count').textContent = `${this.selected.length} / ${maxSel} selected`;
     document.getElementById('btn-improve').textContent = this.mode === 'upgrade' ? '⚡ Upgrade Selected' : '🗑 Remove Card';
     document.getElementById('btn-improve').disabled    = this.selected.length !== maxSel;
+  },
+
+  _renderItemUpgrade() {
+    const poke  = GameState.party[this._trainingPokeIdx];
+    const panel = document.getElementById('training-item-panel');
+    const UPGRADEABLE = { charcoal:'fire', mystic_water:'water', miracle_seed:'grass', magnet:'electric' };
+    const ITEM_ICONS  = { charcoal:'🪵', mystic_water:'💦', miracle_seed:'🌱', magnet:'🧲' };
+    const ITEM_NAMES  = { charcoal:'Charcoal', mystic_water:'Mystic Water', miracle_seed:'Miracle Seed', magnet:'Magnet' };
+    const heldItem = poke?.heldItem;
+    if (!heldItem || !UPGRADEABLE[heldItem.id]) {
+      panel.innerHTML = `<div class="item-upgrade-empty">
+        <div style="font-size:2rem">💎</div>
+        <div style="font-size:.48rem;color:var(--col-text-dim);margin-top:.5rem;text-align:center;line-height:1.6">
+          ${poke?.name || 'This Pokémon'} has no upgradeable item.<br>
+          Equip Charcoal, Mystic Water, Miracle Seed or Magnet from the shop.
+        </div></div>`;
+      return;
+    }
+    const tier      = heldItem.tier || 1;
+    const maxed     = tier >= 3;
+    const cost      = tier === 1
+      ? 40 + (GameState.bossesDefeated || 0) * 8
+      : 80 + (GameState.bossesDefeated || 0) * 12;
+    const canAfford = (GameState.gold || 0) >= cost;
+    const boostNow  = tier === 3 ? 50 : tier === 2 ? 35 : 20;
+    const boostNext = (tier+1) === 3 ? 50 : 35;
+    panel.innerHTML = `
+      <div class="item-upgrade-card">
+        <div class="item-upgrade-icon">${ITEM_ICONS[heldItem.id]}</div>
+        <div class="item-upgrade-name">${ITEM_NAMES[heldItem.id]}</div>
+        <div class="item-upgrade-type">Boosts ${UPGRADEABLE[heldItem.id]} moves on ${poke.name}</div>
+        <div class="item-upgrade-tiers">
+          ${[1,2,3].map(t=>`<span class="item-tier-pip${t<=tier?' filled':''}">${['★','★★','★★★'][t-1]}</span>`).join('')}
+        </div>
+        <div class="item-upgrade-stats">
+          <div class="item-stat-row">Current boost: <span class="item-stat-val">+${boostNow}%</span></div>
+          ${!maxed?`
+          <div class="item-stat-row">After upgrade: <span class="item-stat-val upgrade-preview">+${boostNext}%</span></div>
+          <div class="item-stat-row">Cost: <span class="item-stat-val ${canAfford?'':'item-cost-unafford'}">💰 ${cost}g</span>
+            <span style="font-size:.34rem;color:var(--col-text-dim)">&nbsp;(have ${GameState.gold||0}g)</span></div>`:''}
+        </div>
+        ${maxed
+          ? `<div class="item-upgrade-maxed">✨ MAX TIER — +50% boost active!</div>`
+          : `<button class="btn-pixel btn-primary item-upgrade-btn" id="btn-do-item-upgrade"${canAfford?'':' disabled'}>
+               Upgrade to ${'★'.repeat(tier+1)} (+${boostNext}%) — ${cost}g
+             </button>`}
+        <div class="item-upgrade-msg" id="item-upgrade-msg"></div>
+      </div>`;
+    document.getElementById('btn-do-item-upgrade')?.addEventListener('click', () => {
+      const result = ItemEngine.upgradeHeldItem(this._trainingPokeIdx);
+      const msg    = document.getElementById('item-upgrade-msg');
+      if (result?.success) {
+        msg.textContent = `✅ Upgraded to Tier ${result.newTier}! (+${result.newTier===3?50:35}% boost)`;
+        msg.style.color = '#80e080';
+        setTimeout(() => this._renderItemUpgrade(), 800);
+      } else {
+        msg.textContent = `❌ Need ${result?.cost || '?'}g`;
+        msg.style.color = '#e08080';
+      }
+    });
   },
 
   toggleSelect(idx) {
@@ -10419,7 +10599,23 @@ function spawnParticles(type, cost, targetSpriteId) {
   setTimeout(() => overlay.remove(), 900);
 }
 
-// ─── BEAM EFFECTS ────────────────────────────────────────────────────────────
+// ─── CARD DAMAGE PREVIEW ─────────────────────────────────────────────────────
+// Returns the actual damage this card will deal given current battle state.
+// Mirrors _applyCardEffect without side effects.
+function previewDamage(card, st) {
+  if (!card || card.power <= 0) return null;
+  const activePoke = GameState.party[GameState.activePokemonIndex];
+  const mult    = getTypeMultiplier(card.type, st.opp?.type || 'normal');
+  let dmg       = Math.round(card.power * mult);
+  const boost   = ItemEngine.getTypeboost(activePoke, card.type);
+  if (boost > 1) dmg = Math.round(dmg * boost);
+  if (card.type === 'psychic' && activePoke?.isMewtwo) dmg = Math.round(dmg * 2);
+  if (GameState.fishingBuff?.type === card.type) dmg = Math.round(dmg * GameState.fishingBuff.mult);
+  if (st.rainTurns > 0 && card.type === 'water') dmg = Math.round(dmg * 1.2);
+  if ((BattleEngine._chargeBonus || 0) > 0) dmg = Math.round(dmg * (1 + BattleEngine._chargeBonus));
+  if ((BattleEngine._dragonDanceBonus || 0) > 0) dmg = Math.round(dmg * (1 + BattleEngine._dragonDanceBonus));
+  return dmg;
+}
 // Draws a typed energy beam connecting attacker → defender centre points.
 // cost 1 → no beam; cost 2 → thin short beam; cost 3 → thick full beam.
 
@@ -10726,7 +10922,8 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-training-skip').addEventListener('click', () => TrainingEngine.skip());
   document.getElementById('btn-training-pick-skip').addEventListener('click', () => TrainingEngine._startWithPokemon(GameState.activePokemonIndex));
   document.getElementById('training-mode-upgrade').addEventListener('click', () => TrainingEngine.setMode('upgrade'));
-  document.getElementById('training-mode-remove').addEventListener('click', () => TrainingEngine.setMode('remove'));
+  document.getElementById('training-mode-remove').addEventListener('click',  () => TrainingEngine.setMode('remove'));
+  document.getElementById('training-mode-item').addEventListener('click',    () => TrainingEngine.setMode('item-upgrade'));
 
   // ── Game Over screen ──
   document.getElementById('btn-gameover-restart').addEventListener('click', () => GameOver.restart());
