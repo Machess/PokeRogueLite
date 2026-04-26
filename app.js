@@ -4953,7 +4953,10 @@ const BossEngine = {
     }
 
     const bossOppSprite = document.getElementById('boss-opp-sprite');
-    if (bossOppSprite) { bossOppSprite.style.visibility = ''; bossOppSprite.classList.remove('pokemon-faint'); }
+    if (bossOppSprite) {
+      bossOppSprite.style.visibility = '';
+      bossOppSprite.classList.remove('pokemon-faint');
+    }
     document.getElementById('boss-opp-sprite').src    = st.opp.spriteUrl;
     document.getElementById('boss-player-sprite').src = st.player.backSpriteUrl || st.player.spriteUrl;
 
@@ -5034,8 +5037,8 @@ const BossEngine = {
       _dealHand:     (n)    => BattleEngine._dealHand.call({ state: st }, n),
       _chargeBonus:  0, _futureSightDmg: 0, _dragonDanceBonus: 0,
     }, card);
-    this._checkDefeated();
-    this._render();
+    const defeated = this._checkDefeated();
+    if (!defeated) this._render();  // skip render when opp fainted — animation needs to complete first
   },
 
   endTurn() {
@@ -5138,76 +5141,87 @@ const BossEngine = {
     const st = this.bState;
     if (st.opp.hp <= 0) {
       this.oppTeam[this.oppIdx].hp = 0;
-      this.oppIdx++;
-      if (this.oppIdx >= this.oppTeam.length) {
-        // All opponents defeated — mark boss battle as over
-        this._isOver = true;
-        GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
-        MapEngine.completeNode(GameState.currentNodeIndex);
+      this._isOver = true;
 
-        if (this._isRocket) {
-          // Rocket battle win — card reward + gold, no badge
-          this._isRocket = false;
-          if (!GameState.stats) GameState.stats = {};
-          GameState.stats.totalBattlesWon = (GameState.stats.totalBattlesWon || 0) + 1;
-          const earned = Math.floor(20 + Math.random() * 30);
-          GameState.gold = (GameState.gold || 0) + earned;
-          setTimeout(() => {
-            showModal('Team Rocket Fled! 🚀',
-              `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`,
-              () => {
-                const evolutions = levelUpParty('battle');
-                if (evolutions.length > 0) {
-                  runEvolutions(evolutions, () => CardReward.show(earned));
-                } else {
-                  CardReward.show(earned);
-                }
-              }
-            );
-          }, 800);
-        } else {
-          // Normal gym boss win
-          if (!GameState.stats) GameState.stats = {};
-          GameState.stats.totalBattlesWon  = (GameState.stats.totalBattlesWon  || 0) + 1;
-          GameState.stats.totalBossesBeaten = (GameState.stats.totalBossesBeaten || 0) + 1;
-          setTimeout(() => {
-            const isFinalBoss = GameState.bossesDefeated >= 7;
-            const bossName    = this.bossData.name;
-            const BOSS_WIN_LINES = {
-              'Brock':     `"Your Pokémon has real grit. I can see you've been training hard. The Boulder Badge is yours."`,
-              'Misty':     `"Fine. You beat me fair and square. Don't let it go to your head — the real trainers are ahead."`,
-              'Lt. Surge': `"Outstanding instincts! A soldier who reads battle like that goes far. The Thunder Badge!"`,
-              'Erika':     `"Your Pokémon moved with grace and patience. The Rainbow Badge suits a trainer like you."`,
-              'Koga':      `"You have the mind of a shinobi — patient, precise, relentless. The Soul Badge is yours."`,
-              'Sabrina':   `"...I did not foresee this outcome. You have surprised me. The Marsh Badge is yours."`,
-              'Blaine':    `"Ha! You burned bright today! You've got fire in you, kid! Take the Volcano Badge!"`,
-              'Giovanni':  `"Impressive control. I expected nothing less. You've earned your place in this world."`,
-              'Lorelei':   `"You've broken through my ice. The Elite Four won't forget a trainer like you."`,
-              'Bruno':     `"Your fighting spirit rivals mine. A true warrior's heart. Well earned, trainer."`,
-              'Agatha':    `"You have more spirit than I expected, child. Come back when you're older — if you dare!"`,
-              'Lance':     `"The Dragon Master bows to a worthy challenger. The skies are yours today."`,
-              'Blue':      `"...you got lucky." He walks off without another word. You both know it wasn't luck.`,
-            };
-            const bossLine = BOSS_WIN_LINES[bossName]
-              || `You defeated ${bossName}! Your team is getting stronger!`;
-            const modalMsg = isFinalBoss
-              ? `You are the Champion!\n\n${bossLine}`
-              : bossLine;
-            showModal('Boss Defeated! 🏅', modalMsg, () => {
-              Game.afterBoss(GameState.bossesDefeated);
-            });
-          }, 800);
-        }
-        return true;
+      // Faint animation — same as wild battle
+      const oppSpriteEl = document.getElementById('boss-opp-sprite');
+      if (oppSpriteEl) {
+        oppSpriteEl.classList.add('pokemon-faint');
+        setTimeout(() => { oppSpriteEl.style.visibility = 'hidden'; }, 700);
       }
-      this._logEnemy(`${this.bossData.name} sends ${this.oppTeam[this.oppIdx].name}!`);
-      st.opp = { ...this.oppTeam[this.oppIdx] };
-      // Reset per-turn and battle-over flags for the new opponent
-      BattleEngine._battleOver       = false;
-      BattleEngine._itemUsedThisTurn = false;
-      this._isOver                   = false;
-      this._render();
-      return false;
+
+      // All logic deferred until animation completes
+      setTimeout(() => {
+        this.oppIdx++;
+        if (this.oppIdx >= this.oppTeam.length) {
+          // All opponents defeated
+          GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
+          MapEngine.completeNode(GameState.currentNodeIndex);
+
+          if (this._isRocket) {
+            this._isRocket = false;
+            if (!GameState.stats) GameState.stats = {};
+            GameState.stats.totalBattlesWon = (GameState.stats.totalBattlesWon || 0) + 1;
+            const earned = Math.floor(20 + Math.random() * 30);
+            GameState.gold = (GameState.gold || 0) + earned;
+            setTimeout(() => {
+              showModal('Team Rocket Fled! 🚀',
+                `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`,
+                () => {
+                  const evolutions = levelUpParty('battle');
+                  if (evolutions.length > 0) {
+                    runEvolutions(evolutions, () => CardReward.show(earned));
+                  } else {
+                    CardReward.show(earned);
+                  }
+                }
+              );
+            }, 200);
+          } else {
+            // Normal gym boss win
+            if (!GameState.stats) GameState.stats = {};
+            GameState.stats.totalBattlesWon  = (GameState.stats.totalBattlesWon  || 0) + 1;
+            GameState.stats.totalBossesBeaten = (GameState.stats.totalBossesBeaten || 0) + 1;
+            setTimeout(() => {
+              const isFinalBoss = GameState.bossesDefeated >= 7;
+              const bossName    = this.bossData.name;
+              const BOSS_WIN_LINES = {
+                'Brock':     `"Your Pokémon has real grit. I can see you've been training hard. The Boulder Badge is yours."`,
+                'Misty':     `"Fine. You beat me fair and square. Don't let it go to your head — the real trainers are ahead."`,
+                'Lt. Surge': `"Outstanding instincts! A soldier who reads battle like that goes far. The Thunder Badge!"`,
+                'Erika':     `"Your Pokémon moved with grace and patience. The Rainbow Badge suits a trainer like you."`,
+                'Koga':      `"You have the mind of a shinobi — patient, precise, relentless. The Soul Badge is yours."`,
+                'Sabrina':   `"...I did not foresee this outcome. You have surprised me. The Marsh Badge is yours."`,
+                'Blaine':    `"Ha! You burned bright today! You've got fire in you, kid! Take the Volcano Badge!"`,
+                'Giovanni':  `"Impressive control. I expected nothing less. You've earned your place in this world."`,
+                'Lorelei':   `"You've broken through my ice. The Elite Four won't forget a trainer like you."`,
+                'Bruno':     `"Your fighting spirit rivals mine. A true warrior's heart. Well earned, trainer."`,
+                'Agatha':    `"You have more spirit than I expected, child. Come back when you're older — if you dare!"`,
+                'Lance':     `"The Dragon Master bows to a worthy challenger. The skies are yours today."`,
+                'Blue':      `"...you got lucky." He walks off without another word. You both know it wasn't luck.`,
+              };
+              const bossLine = BOSS_WIN_LINES[bossName]
+                || `You defeated ${bossName}! Your team is getting stronger!`;
+              const modalMsg = isFinalBoss
+                ? `You are the Champion!\n\n${bossLine}`
+                : bossLine;
+              showModal('Boss Defeated! 🏅', modalMsg, () => {
+                Game.afterBoss(GameState.bossesDefeated);
+              });
+            }, 200);
+          }
+        } else {
+          // More opponents remain — load next
+          BattleEngine._battleOver       = false;
+          BattleEngine._itemUsedThisTurn = false;
+          this._isOver                   = false;
+          this._logEnemy(`${this.bossData.name} sends ${this.oppTeam[this.oppIdx].name}!`);
+          st.opp = { ...this.oppTeam[this.oppIdx] };
+          this._render();  // sprite reset happens here — animation is already done
+        }
+      }, 750); // wait for faint animation to finish
+
+      return true;
     }
     if (st.player.hp <= 0) {
       GameState.party[GameState.activePokemonIndex].hp = 0;
