@@ -5362,12 +5362,19 @@ const BossEngine = {
             }, 200);
           }
         } else {
-          // More opponents remain — load next
+          // More opponents remain — load next, reset ALL opp-side status
           BattleEngine._battleOver       = false;
           BattleEngine._itemUsedThisTurn = false;
           this._isOver                   = false;
           this._logEnemy(`${this.bossData.name} sends ${this.oppTeam[this.oppIdx].name}!`);
-          st.opp = { ...this.oppTeam[this.oppIdx] };
+          st.opp                         = { ...this.oppTeam[this.oppIdx] };
+          // Clear opp-side status so previous Pokémon's debuffs don't carry over
+          st.statusEffects.opp = [];
+          st.oppAtkDebuff      = 0;
+          st.oppDefDebuff      = 0;
+          st.oppAccDebuff      = 0;
+          st.leechTurns        = 0;
+          st.leechStacks       = 0;
           this._render();  // sprite reset happens here — animation is already done
         }
       }, 750); // wait for faint animation to finish
