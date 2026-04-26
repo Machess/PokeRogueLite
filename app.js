@@ -4291,7 +4291,10 @@ const BattleEngine = {
   },
 
   _renderDebuffPanel(st) {
-    const panel = document.getElementById('opp-debuff-panel');
+    // Use boss panel if boss battle area is active, else wild panel
+    const panelId = document.getElementById('boss-battle-area')?.style.display !== 'none'
+      ? 'boss-debuff-panel' : 'opp-debuff-panel';
+    const panel = document.getElementById(panelId);
     if (!panel) return;
     const lines = [];
     const statuses = st.statusEffects?.opp || [];
@@ -5056,10 +5059,10 @@ const BossEngine = {
       }
     }
 
-    // Update debuff detail panel if visible (boss uses same panel element)
-    const panel = document.getElementById('opp-debuff-panel');
+    // Update debuff detail panel if visible (boss uses boss-debuff-panel)
+    const panel = document.getElementById('boss-debuff-panel');
     if (panel && panel.style.display !== 'none') {
-      BattleEngine._renderDebuffPanel.call({ state: st }, st);
+      BattleEngine._renderDebuffPanel.call(BattleEngine, this.bState);
     }
 
     const bossOppSprite = document.getElementById('boss-opp-sprite');
@@ -5118,7 +5121,7 @@ const BossEngine = {
   },
 
   _toggleDebuffPanel() {
-    const panel = document.getElementById('opp-debuff-panel');
+    const panel = document.getElementById('boss-debuff-panel');
     if (!panel) return;
     const visible = panel.style.display !== 'none';
     panel.style.display = visible ? 'none' : 'block';
