@@ -224,6 +224,15 @@ const PATH_STYLES = [
 ];
 
 const NODE_TYPES = ['battle', 'heal', 'catch', 'training', 'shop'];
+// All CSS classes that can be active on #screen-challenge.
+// Every engine must remove ALL of these before adding its own,
+// so no stale class from a previous encounter bleeds through.
+const CHALLENGE_CLASSES = [
+  'meowth-active','jessie-active','james-active',
+  'surge-active','erika-active','koga-active',
+  'blaine-active','sabrina-active','fishing-active',
+];
+
 const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓', cooking: '🍳', maze: '🌊', fishing: '🎣' };
 const NODE_MYSTERY_ICON = '❓';
 
@@ -2204,6 +2213,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('meowth-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
   },
@@ -2241,6 +2251,7 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('jessie-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
   },
@@ -2273,13 +2284,14 @@ const TeamRocketChallenge = {
     });
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('james-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
   },
 
   finish() {
     const sc = document.getElementById('screen-challenge');
-    if (sc) sc.classList.remove('meowth-active', 'jessie-active', 'james-active', 'surge-active', 'erika-active', 'koga-active', 'blaine-active', 'sabrina-active');
+    if (sc) sc.classList.remove(...CHALLENGE_CLASSES);
     showScreen('map');
     MapEngine.renderParty();
     if (this._onComplete) { this._onComplete(); this._onComplete = null; }
@@ -5469,7 +5481,7 @@ const SurgeEngine = {
     });
 
     showScreen('challenge');
-    document.getElementById('screen-challenge').classList.remove('jessie-active','james-active','meowth-active','fishing-active');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('surge-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
   },
@@ -5765,8 +5777,7 @@ const ErikaEngine = {
     });
 
     showScreen('challenge');
-    document.getElementById('screen-challenge').classList.remove(
-      'jessie-active','james-active','meowth-active','surge-active','fishing-active');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('erika-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
   },
@@ -6084,8 +6095,7 @@ const KogaEngine = {
     clueArea.innerHTML     = '';
 
     showScreen('challenge');
-    document.getElementById('screen-challenge').classList.remove(
-      'jessie-active','james-active','meowth-active','surge-active','erika-active','fishing-active');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('koga-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
 
@@ -6447,8 +6457,7 @@ const BlaineEngine = {
     clueArea.innerHTML     = '';
 
     showScreen('challenge');
-    document.getElementById('screen-challenge').classList.remove(
-      'jessie-active','james-active','meowth-active','surge-active','erika-active','koga-active','fishing-active');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('blaine-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
 
@@ -6966,9 +6975,7 @@ const SabrinaEngine = {
     document.getElementById('jessie-word-display').style.display    = 'none';
 
     showScreen('challenge');
-    document.getElementById('screen-challenge').classList.remove(
-      'jessie-active','james-active','meowth-active','surge-active',
-      'erika-active','koga-active','blaine-active','fishing-active');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('sabrina-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
 
@@ -9903,6 +9910,7 @@ const FishingEngine = {
     qEl.textContent   = '';
 
     showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('fishing-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
     this._renderCurrentClue();
