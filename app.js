@@ -6753,8 +6753,22 @@ const LegendaryEncounterEngine = {
       ball.className = 'catch-ball ball-landed';
       if (spriteEl) spriteEl.style.display = 'none';
       const wiggles = caught ? 3 : 1;
-      CatchEngine._runWiggles.call(CatchEngine, ball, statusEl, wiggles, false, data);
-      setTimeout(() => this._resolveThrow(caught, ball, statusEl, data), wiggles * 900 + 1200);
+
+      // Self-contained wiggle loop — does NOT borrow CatchEngine._runWiggles
+      // (that method routes to CatchEngine._showResult, wrong for legendaries).
+      let done = 0;
+      const wiggle = () => {
+        done++;
+        ball.className = 'catch-ball'; void ball.offsetWidth;
+        ball.className = 'catch-ball ball-wiggle';
+        statusEl.textContent = done === 1 ? '...' : done === 2 ? '... ...' : '... ... ...';
+        if (done < wiggles) {
+          setTimeout(wiggle, 900);
+        } else {
+          setTimeout(() => this._resolveThrow(caught, ball, statusEl, data), 700);
+        }
+      };
+      setTimeout(wiggle, 400);
     }, 900);
   },
 
