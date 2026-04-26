@@ -4153,6 +4153,7 @@ const BattleEngine = {
     // Sprites — player shows back, opponent shows front
     const ps = document.getElementById('player-sprite');
     const os = document.getElementById('opp-sprite');
+    if (os) { os.style.visibility = ''; os.classList.remove('pokemon-faint'); }
     ps.src = st.player.backSpriteUrl || st.player.spriteUrl;
     os.src = st.opp.spriteUrl;
 
@@ -4642,11 +4643,12 @@ const BattleEngine = {
       this._logSystem(matchupLog);
       this._logSystem(`⭐ ${st.opp.name} fainted! You win!`);
 
-      // Faint animation on opponent sprite
+      // Faint animation on opponent sprite — class stays on to preserve forwards fill,
+      // then hide the element so it never snaps back to visible
       const oppSpriteEl = document.getElementById(this.isBoss ? 'boss-opp-sprite' : 'opp-sprite');
       if (oppSpriteEl) {
         oppSpriteEl.classList.add('pokemon-faint');
-        setTimeout(() => oppSpriteEl.classList.remove('pokemon-faint'), 700);
+        setTimeout(() => { oppSpriteEl.style.visibility = 'hidden'; }, 700);
       }
 
       // Pass matchup tier to victory for fluff text
@@ -4950,6 +4952,8 @@ const BossEngine = {
       });
     }
 
+    const bossOppSprite = document.getElementById('boss-opp-sprite');
+    if (bossOppSprite) { bossOppSprite.style.visibility = ''; bossOppSprite.classList.remove('pokemon-faint'); }
     document.getElementById('boss-opp-sprite').src    = st.opp.spriteUrl;
     document.getElementById('boss-player-sprite').src = st.player.backSpriteUrl || st.player.spriteUrl;
 
