@@ -4465,7 +4465,7 @@ const BattleEngine = {
       st.totalDamageDealt = (st.totalDamageDealt || 0) + dmg;
       const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
       const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
-      applyHitAnimation(playerSpriteId, oppSpriteId, card.type, card.cost ?? 1);
+      applyHitAnimation(playerSpriteId, oppSpriteId, card.type, card.cost ?? 1, card.name || '');
 
       // Shell Bell — heal on dealing damage
       const bellMsg = ItemEngine.checkShellBell(st, this);
@@ -10706,54 +10706,213 @@ const BEAM_CFG = {
   normal:   { core:'#dddddd', glow:'#999999', width:2, blur:3  },
 };
 
-function spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost) {
-  if (cost < 2) return;
+// ─── MOVE ANIMATION ROUTING ──────────────────────────────────────────────────
+// Classifies card name into animation style.
 
-  const atkEl = document.getElementById(attackerSpriteId);
-  const defEl = document.getElementById(defenderSpriteId);
+function isBeamMove(name) {
+  const n = name.toLowerCase();
+  return n.includes('beam') || n.includes('ray') || n.includes('cannon')
+      || n.includes('laser') || n === 'hyper beam' || n === 'solar beam'
+      || n === 'psybeam' || n === 'signal beam' || n === 'flash cannon';
+}
+function isStreamMove(name) {
+  const n = name.toLowerCase();
+  return ['flamethrower','inferno','overheat','hydro pump','thunder','thunder storm',
+          'draco meteor','fire blast','sacred fire','blizzard','hurricane',
+          'aerial ace','air slash'].includes(n);
+}
+function isArcMove(name) {
+  const n = name.toLowerCase();
+  return ['ember','fire spin','water gun','aqua jet','surf','whirlpool','bubble',
+          'bubble beam','razor leaf','razor wind','vine whip','leaf tornado',
+          'petal blizzard','ice shard','icy wind','powder snow','shadow sneak',
+          'shadow punch','shadow force','shadow ball'].includes(n);
+}
+function isImpact(type, name) {
+  // Physical contact moves — no projectile, just impact at defender
+  if (type === 'fighting') return true;
+  const n = name.toLowerCase();
+  return ['tackle','scratch','pound','slash','cut','bite','crunch','headbutt',
+          'body slam','take down','double edge','close combat','superpower',
+          'strength','mega punch','mega kick','seismic toss'].includes(n);
+}
+
+// ─── TRAVELLING PARTICLES — spawn at attacker, fly to defender ───────────────
+function spawnTravellingParticles(atkSpriteId, defSpriteId, type, count, arcHeight = 0) {
+  const atkEl = document.getElementById(atkSpriteId);
+  const defEl = document.getElementById(defSpriteId);
+  if (!atkEl || !defEl) return;
+
+  const ar  = atkEl.getBoundingClientRect();
+  const dr  = defEl.getBoundingClientRect();
+  const ax  = ar.left + ar.width  / 2;
+  const ay  = ar.top  + ar.height / 2;
+  const bx  = dr.left + dr.width  / 2;
+  const by  = dr.top  + dr.height / 2;
+
+  const cfg  = PARTICLE_CFG[type] || PARTICLE_CFG.normal;
+  const travelMs = 220;
+
+  for (let i = 0; i < count; i++) {
+    const spread = (Math.random() - 0.5) * 28;
+    const p    = document.createElement('div');
+    p.className = `travel-particle travel-particle-${cfg.shape}`;
+    const color = cfg.colors[i % cfg.colors.length];
+    const size  = 6 + Math.random() * 5;
+    const delay = i * (travelMs / count * 0.6);
+
+    p.style.cssText = `
+      left: ${ax}px; top: ${ay}px;
+      width: ${size}px; height: ${size}px;
+      background: ${color};
+      --tx: ${bx - ax + spread}px;
+      --ty: ${by - ay + spread}px;
+      --arc: ${arcHeight}px;
+      animation: travel-fly ${travelMs}ms cubic-bezier(.4,0,.2,1) ${delay}ms forwards;
+      position: fixed; z-index: 9999; border-radius: 50%;
+      pointer-events: none;
+      box-shadow: 0 0 5px 2px ${color};
+      transform: translate(-50%,-50%);`;
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), travelMs + delay + 100);
+  }
+
+  // Impact burst at defender after travel
+  setTimeout(() => spawnImpactBurst(type, defSpriteId), travelMs);
+}
+
+function spawnImpactBurst(type, defSpriteId) {
+  const el = document.getElementById(defSpriteId);
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width  / 2;
+  const cy = rect.top  + rect.height / 2;
+  const cfg = PARTICLE_CFG[type] || PARTICLE_CFG.normal;
+  const overlay = document.createElement('div');
+  overlay.className = 'particle-overlay';
+  overlay.style.cssText = `left:${cx}px;top:${cy}px;`;
+  document.body.appendChild(overlay);
+  for (let i = 0; i < 5; i++) {
+    const p     = document.createElement('span');
+    const angle = (360/5)*i + Math.random()*20;
+    const dist  = 20 + Math.random() * 25;
+    const rad   = angle * Math.PI / 180;
+    const color = cfg.colors[i % cfg.colors.length];
+    p.className = `particle particle-${cfg.shape}`;
+    p.style.cssText = `
+      --tx:${(Math.cos(rad)*dist).toFixed(1)}px;
+      --ty:${(Math.sin(rad)*dist).toFixed(1)}px;
+      --rot:${Math.random()*360}deg;
+      --color:${color};
+      --size:${5+Math.random()*4}px;`;
+    overlay.appendChild(p);
+  }
+  setTimeout(() => overlay.remove(), 800);
+}
+
+// ─── CHARGE GLOBE → BEAM — for Hyper Beam, Solar Beam, Psybeam etc. ─────────
+function spawnChargeBeam(atkSpriteId, defSpriteId, type, cost) {
+  const atkEl = document.getElementById(atkSpriteId);
+  const defEl = document.getElementById(defSpriteId);
   if (!atkEl || !defEl) return;
 
   const ar = atkEl.getBoundingClientRect();
   const dr = defEl.getBoundingClientRect();
-
-  // Centre points of each sprite
   const ax = ar.left + ar.width  / 2;
   const ay = ar.top  + ar.height / 2;
   const bx = dr.left + dr.width  / 2;
   const by = dr.top  + dr.height / 2;
 
-  const dx    = bx - ax;
-  const dy    = by - ay;
-  const dist  = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const cfg      = BEAM_CFG[type] || BEAM_CFG.normal;
+  const globeSize = cost >= 3 ? 48 : 32;
+  const chargeMs  = cost >= 3 ? 500 : 320;
+  const travelMs  = cost >= 3 ? 180 : 140;
 
+  // Phase 1 — charge globe at attacker
+  const globe = document.createElement('div');
+  globe.className = 'charge-globe';
+  globe.style.cssText = `
+    left: ${ax}px; top: ${ay}px;
+    width: ${globeSize}px; height: ${globeSize}px;
+    background: radial-gradient(circle, #ffffff 0%, ${cfg.core} 40%, ${cfg.glow} 80%, transparent 100%);
+    box-shadow: 0 0 ${globeSize}px ${globeSize/2}px ${cfg.glow};
+    --charge: ${chargeMs}ms;`;
+  document.body.appendChild(globe);
+
+  requestAnimationFrame(() => globe.classList.add('charge-grow'));
+
+  // Phase 2 — fire beam after charge
+  setTimeout(() => {
+    globe.classList.add('charge-fire');
+    setTimeout(() => globe.remove(), 200);
+
+    // Fire the beam
+    const dx    = bx - ax;
+    const dy    = by - ay;
+    const dist  = Math.sqrt(dx*dx + dy*dy);
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const thickness  = cost >= 3 ? cfg.width * 2.5 : cfg.width * 1.8;
+    const blurAmount = cost >= 3 ? cfg.blur : cfg.blur * 0.7;
+
+    const beam = document.createElement('div');
+    beam.className = 'beam-element';
+    beam.style.cssText = `
+      left: ${ax}px; top: ${ay}px;
+      width: ${dist}px; height: ${thickness}px;
+      transform: rotate(${angle}deg);
+      background: linear-gradient(90deg,
+        ${cfg.core} 0%, ${cfg.core} 10%,
+        #ffffff 30%, ${cfg.core} 50%,
+        ${cfg.glow} 80%, transparent 100%);
+      box-shadow: 0 0 ${blurAmount}px ${Math.ceil(blurAmount/2)}px ${cfg.glow};
+      --travel: ${travelMs}ms;`;
+    document.body.appendChild(beam);
+
+    requestAnimationFrame(() => {
+      beam.classList.add('beam-shoot');
+      setTimeout(() => {
+        beam.classList.add('beam-fade');
+        setTimeout(() => beam.remove(), 350);
+      }, travelMs + 200);
+    });
+  }, chargeMs);
+
+  return chargeMs; // caller delays impact by this much extra
+}
+
+function spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost) {
+  if (cost < 2) return;
+  const atkEl = document.getElementById(attackerSpriteId);
+  const defEl = document.getElementById(defenderSpriteId);
+  if (!atkEl || !defEl) return;
+  const ar = atkEl.getBoundingClientRect();
+  const dr = defEl.getBoundingClientRect();
+  const ax = ar.left + ar.width  / 2;
+  const ay = ar.top  + ar.height / 2;
+  const bx = dr.left + dr.width  / 2;
+  const by = dr.top  + dr.height / 2;
+  const dx = bx - ax;
+  const dy = by - ay;
+  const dist  = Math.sqrt(dx*dx + dy*dy);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
   const cfg        = BEAM_CFG[moveType] || BEAM_CFG.normal;
   const thickness  = cost >= 3 ? cfg.width * 2.5 : cfg.width;
   const blurAmount = cost >= 3 ? cfg.blur       : cfg.blur * 0.6;
-  const travelMs   = cost >= 3 ? 180            : 140;
-
+  const travelMs   = cost >= 3 ? 180 : 140;
   const beam = document.createElement('div');
   beam.className = 'beam-element';
   beam.style.cssText = `
-    left: ${ax}px;
-    top:  ${ay}px;
-    width: ${dist}px;
-    height: ${thickness}px;
+    left: ${ax}px; top: ${ay}px;
+    width: ${dist}px; height: ${thickness}px;
     transform: rotate(${angle}deg);
     background: linear-gradient(90deg,
-      transparent 0%,
-      ${cfg.glow} 15%,
-      ${cfg.core} 40%,
-      #ffffff 50%,
-      ${cfg.core} 60%,
-      ${cfg.glow} 85%,
+      ${cfg.core} 0%, ${cfg.glow} 10%,
+      ${cfg.core} 40%, #ffffff 50%,
+      ${cfg.core} 60%, ${cfg.glow} 85%,
       transparent 100%);
     box-shadow: 0 0 ${blurAmount}px ${Math.ceil(blurAmount/2)}px ${cfg.glow};
     --travel: ${travelMs}ms;`;
-
   document.body.appendChild(beam);
-
-  // Animate: shoot → hold → fade
   requestAnimationFrame(() => {
     beam.classList.add('beam-shoot');
     setTimeout(() => {
@@ -10763,24 +10922,103 @@ function spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost) {
   });
 }
 
-function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 1) {
+function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 1, cardName = '') {
   const atk = document.getElementById(attackerSpriteId);
   const def = document.getElementById(defenderSpriteId);
 
-  // Attacker: lunge forward
-  if (atk) {
+  const isBeam    = cost >= 2 && isBeamMove(cardName);
+  const isStream  = cost >= 2 && isStreamMove(cardName);
+  const isArc     = isArcMove(cardName);
+  const isContact = isImpact(moveType, cardName);
+
+  // Attacker lunge — skip for charge-beam moves (globe handles timing)
+  if (atk && !isBeam) {
     atk.classList.remove('sprite-lunge');
     void atk.offsetWidth;
     atk.classList.add('sprite-lunge');
     setTimeout(() => atk.classList.remove('sprite-lunge'), 350);
   }
 
-  // Beam fires shortly after lunge starts (cost ≥ 2 only)
+  // ── BEAM MOVES — charge globe → beam ──────────────────────────────────────
+  if (isBeam) {
+    const chargeMs = spawnChargeBeam(attackerSpriteId, defenderSpriteId, moveType, cost);
+    // Lunge during charge phase
+    if (atk) {
+      setTimeout(() => {
+        atk.classList.remove('sprite-lunge');
+        void atk.offsetWidth;
+        atk.classList.add('sprite-lunge');
+        setTimeout(() => atk.classList.remove('sprite-lunge'), 350);
+      }, chargeMs - 100);
+    }
+    const impactDelay = chargeMs + (cost >= 3 ? 180 : 140);
+    if (def) {
+      const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
+      setTimeout(() => {
+        def.classList.remove('hit-shake', flashClass);
+        void def.offsetWidth;
+        def.classList.add('hit-shake', flashClass);
+        setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
+        spawnParticles(moveType, cost, defenderSpriteId);
+      }, impactDelay);
+    }
+    return;
+  }
+
+  // ── STREAM MOVES — travelling particles + no beam ─────────────────────────
+  if (isStream) {
+    const cfg   = PARTICLE_CFG[moveType] || PARTICLE_CFG.normal;
+    const count = cost >= 3 ? 10 : 6;
+    setTimeout(() => spawnTravellingParticles(attackerSpriteId, defenderSpriteId, moveType, count, 0), 80);
+    if (def) {
+      const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
+      setTimeout(() => {
+        def.classList.remove('hit-shake', flashClass);
+        void def.offsetWidth;
+        def.classList.add('hit-shake', flashClass);
+        setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
+      }, 310);
+    }
+    return;
+  }
+
+  // ── ARC MOVES — particles arc from attacker to defender ───────────────────
+  if (isArc) {
+    const count    = cost >= 2 ? 7 : 4;
+    const arcH     = ['water gun','aqua jet','surf','hydro pump','bubble','bubble beam',
+                      'razor leaf','razor wind','ember','fire spin'].includes(cardName.toLowerCase()) ? -35 : -20;
+    setTimeout(() => spawnTravellingParticles(attackerSpriteId, defenderSpriteId, moveType, count, arcH), 80);
+    if (def) {
+      const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
+      setTimeout(() => {
+        def.classList.remove('hit-shake', flashClass);
+        void def.offsetWidth;
+        def.classList.add('hit-shake', flashClass);
+        setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
+      }, 300);
+    }
+    return;
+  }
+
+  // ── CONTACT/IMPACT MOVES — impact burst at defender only, no projectile ───
+  if (isContact) {
+    if (def) {
+      const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
+      setTimeout(() => {
+        def.classList.remove('hit-shake', flashClass);
+        void def.offsetWidth;
+        def.classList.add('hit-shake', flashClass);
+        setTimeout(() => def.classList.remove('hit-shake', flashClass), 500);
+        if (cost >= 2) spawnParticles(moveType, cost, defenderSpriteId);
+      }, 150);
+    }
+    return;
+  }
+
+  // ── DEFAULT — non-classified: beam for cost≥2, flash only for cost 1 ──────
   if (cost >= 2) {
     setTimeout(() => spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost), 80);
   }
-
-  // Flash + particles fire when beam arrives: 260ms for beams, 150ms for 1-energy
   const impactDelay = cost >= 2 ? 260 : 150;
   if (def) {
     const flashClass = TYPE_HIT_CLASS[moveType] || 'hit-flash-normal';
