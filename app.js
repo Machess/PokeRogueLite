@@ -1114,10 +1114,13 @@ function generateMap(bossIndex) {
   }
 
   // ── Inject legendary encounter at step 7 on maps bi >= 6 ─────────────────
+  // Uses a regular catch node with 'legendary' rarity — no separate engine needed.
   if (bi >= 6) {
     const step7nodes = nodes.filter(n => n.row === 7);
     if (step7nodes.length > 0) {
-      step7nodes[Math.floor(Math.random() * step7nodes.length)].type = 'legendary';
+      const legendaryNode = step7nodes[Math.floor(Math.random() * step7nodes.length)];
+      legendaryNode.type        = 'catch';
+      legendaryNode.catchRarity = 'legendary';
     }
   }
 
@@ -3730,7 +3733,6 @@ const MapEngine = {
       case 'cooking':  CookingEngine.start(node);              break;
       case 'maze':     MazeEngine.start(node);                  break;
       case 'fishing':  FishingEngine.start(node);               break;
-      case 'legendary':LegendaryEncounterEngine.start(node);    break;
     }
   },
 
@@ -6756,247 +6758,6 @@ const BlaineEngine = {
 // After 2 misses the bird flies away. If caught, the legendary card is added
 // to the player's active Pokémon deck permanently.
 
-const LEGENDARY_INTROS = {
-  144: `A cold wind sweeps through the air. Ice crystals form on every surface. Articuno has appeared!`,
-  145: `Static electricity crackles. The sky darkens with storm clouds. Zapdos has appeared!`,
-  146: `The temperature spikes. Cinders drift on a burning wind. Moltres has appeared!`,
-};
-const LEGENDARY_FLEE = {
-  144: `Articuno spreads its magnificent wings and soars into the frozen sky, leaving only snowflakes behind.`,
-  145: `Zapdos discharges a blinding bolt of lightning and vanishes into the storm clouds above.`,
-  146: `Moltres blazes upward into the sky, leaving a trail of sacred fire that fades into embers.`,
-};
-
-const LegendaryEncounterEngine = {
-  _bird:        null,  // { id, data }
-  _throwsLeft:  2,
-  _node:        null,
-
-  async start(node) {
-    this._node = node;
-    const birdIds = WILD_POOL.legendary;
-    const id      = birdIds[Math.floor(Math.random() * birdIds.length)];
-
-    showLoading();
-    const data = await fetchPoke(id);
-    this._bird      = { id, data };
-    this._throwsLeft = 2;
-
-    registerPokedex(id, capitalize(data.name), getSpriteUrl(data, true), false);
-    hideLoading();
-
-    // Reuse catch screen with legendary-active class
-    const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
-    const bgEl = document.getElementById('catch-bg');
-    bgEl.className = 'catch-bg catch-bg-psychic'; // dramatic dark sky
-
-    showScreen('catch');
-    document.getElementById('screen-catch').classList.add('legendary-active');
-
-    document.getElementById('catch-title').textContent          = '✨ Legendary Pokémon Appeared!';
-    document.getElementById('catch-name').textContent           = '???';
-    document.getElementById('catch-name-row').style.opacity     = '0';
-    document.getElementById('catch-type-badge').style.display   = 'none';
-    document.getElementById('catch-rarity-badge').style.display = 'none';
-    document.getElementById('catch-dex-badge').style.display    = 'none';
-    document.getElementById('catch-controls').style.display     = 'none';
-    document.getElementById('catch-result').style.display       = 'none';
-    document.getElementById('catch-ball-wrap').style.display    = 'none';
-    document.getElementById('catch-status').textContent         = LEGENDARY_INTROS[id] || 'A legendary Pokémon appeared!';
-
-    const spriteEl = document.getElementById('catch-sprite');
-    spriteEl.style.display   = '';
-    spriteEl.style.transform = '';
-    spriteEl.style.opacity   = '1';
-    spriteEl.className       = 'catch-sprite silhouette';
-
-    const spriteUrls = [
-      data.sprites?.other?.['official-artwork']?.front_default,
-      data.sprites?.other?.home?.front_default,
-      data.sprites?.front_default,
-      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
-    ];
-    loadImageWithFallback(spriteEl, spriteUrls, () => {});
-
-    const ball = document.getElementById('catch-ball');
-    ball.className = 'catch-ball'; ball.style.transform = '';
-
-    spriteEl.classList.add('catch-entrance');
-    setTimeout(() => spriteEl.classList.remove('catch-entrance'), 500);
-
-    // Shake + flash + reveal
-    setTimeout(() => { spriteEl.classList.remove('hit-shake'); void spriteEl.offsetWidth; spriteEl.classList.add('hit-shake'); }, 600);
-    setTimeout(() => { spriteEl.classList.remove('hit-shake'); void spriteEl.offsetWidth; spriteEl.classList.add('hit-shake'); }, 1100);
-
-    setTimeout(() => {
-      const flash = document.createElement('div');
-      flash.className = 'catch-flash-overlay';
-      document.getElementById('screen-catch').appendChild(flash);
-      setTimeout(() => flash.remove(), 220);
-
-      spriteEl.className = 'catch-sprite revealed catch-reveal-pop';
-      setTimeout(() => spriteEl.classList.remove('catch-reveal-pop'), 500);
-
-      const pokeName = capitalize(data.name);
-      const nameEl   = document.getElementById('catch-name');
-      const nameRow  = document.getElementById('catch-name-row');
-      nameEl.textContent = '';
-      nameRow.style.opacity = '1';
-      let ci = 0;
-      const iv = setInterval(() => {
-        nameEl.textContent += pokeName[ci++];
-        if (ci >= pokeName.length) {
-          clearInterval(iv);
-          const typeStr = data.types?.[0]?.type?.name || 'psychic';
-          const typeBadge = document.getElementById('catch-type-badge');
-          typeBadge.textContent   = typeStr;
-          typeBadge.className     = `catch-type-badge type-${typeStr} catch-badge-slide`;
-          typeBadge.style.display = '';
-          const rarityBadge = document.getElementById('catch-rarity-badge');
-          rarityBadge.textContent   = '✨ Legendary';
-          rarityBadge.className     = 'catch-rarity-badge catch-rarity-rare catch-badge-slide';
-          rarityBadge.style.display = '';
-          document.getElementById('catch-status').textContent = `One chance! Ultra Ball: 40% • Master Ball: 100%`;
-          setTimeout(() => {
-            document.getElementById('catch-controls').style.display = 'flex';
-            CatchEngine._renderBallSelector.call(CatchEngine);
-            // Override throw label
-            const lbl = document.getElementById('catch-throw-label');
-            if (lbl) lbl.textContent = `Throw — One Chance!`;
-            // Hide flee button — you can't flee from a legendary
-            const fleeBtn = document.getElementById('btn-flee');
-            if (fleeBtn) fleeBtn.style.display = 'none';
-          }, 400);
-        }
-      }, 55);
-    }, 1500);
-  },
-
-  throwBall() {
-    if (!this._bird) return;
-
-    const { id, data } = this._bird;
-    const pokeName = capitalize(data.name);
-    const ball     = document.getElementById('catch-ball');
-    const ballWrap = document.getElementById('catch-ball-wrap');
-    const spriteEl = document.getElementById('catch-sprite');
-    const statusEl = document.getElementById('catch-status');
-
-    // Catch rates: Master Ball = 100%, Ultra Ball = 40%, Poké Ball = 15%
-    const isMaster = CatchEngine._selectedBall === 'masterball';
-    const isUltra  = CatchEngine._selectedBall === 'ultraball';
-    if (isMaster) ItemEngine.useItem('master_ball');
-    if (isUltra)  ItemEngine.useItem('ultra_ball');
-    const catchRate = isMaster ? 1.0 : isUltra ? 0.40 : 0.15;
-    const caught    = Math.random() < catchRate;
-
-    // Colour ball for ultra/master
-    if (isUltra)  ball.querySelector('.ball-top').style.background = '#f0c000';
-    if (isMaster) {
-      ball.querySelector('.ball-top').style.background = '#8020d0';
-      ball.querySelector('.ball-bot').style.background = '#e0b0ff';
-    }
-
-    document.getElementById('catch-controls').style.display = 'none';
-    ballWrap.style.display = 'flex';
-    ball.className = 'catch-ball ball-throw';
-
-    setTimeout(() => {
-      if (spriteEl) spriteEl.className = 'catch-sprite catch-absorbed';
-    }, 550);
-    setTimeout(() => {
-      ball.className = 'catch-ball ball-landed';
-      if (spriteEl) spriteEl.style.display = 'none';
-      const wiggles = caught ? 3 : 1;
-
-      // Self-contained wiggle loop — does NOT borrow CatchEngine._runWiggles
-      // (that method routes to CatchEngine._showResult, wrong for legendaries).
-      let done = 0;
-      const wiggle = () => {
-        done++;
-        ball.className = 'catch-ball'; void ball.offsetWidth;
-        ball.className = 'catch-ball ball-wiggle';
-        statusEl.textContent = done === 1 ? '...' : done === 2 ? '... ...' : '... ... ...';
-        if (done < wiggles) {
-          setTimeout(wiggle, 900);
-        } else {
-          setTimeout(() => this._resolveThrow(caught, ball, statusEl, data), 700);
-        }
-      };
-      setTimeout(wiggle, 400);
-    }, 900);
-  },
-
-  _resolveThrow(caught, ball, statusEl, data) {
-    const { id } = this._bird;
-    const pokeName = capitalize(data.name);
-    CatchEngine._resetBallVisuals.call(CatchEngine);
-
-    if (caught) {
-      ball.className = 'catch-ball ball-caught';
-      statusEl.textContent = '';
-      SoundEngine.playFanfare();
-
-      const level    = 30 + Math.floor(GameState.bossesDefeated * 3);
-      const typeStr  = DUAL_TYPE_OVERRIDES[id] || data.types?.[0]?.type?.name || 'normal';
-      const newPoke  = makePokemon(id, level, getSpriteUrl(data), pokeName, typeStr);
-      const sigCard  = LEGENDARY_BIRD_CARDS[id];
-      if (sigCard && newPoke.deck) newPoke.deck.push({ ...sigCard });
-
-      registerPokedex(id, pokeName, getSpriteUrl(data), true);
-      if (!GameState.stats) GameState.stats = {};
-      GameState.stats.pokemonCaught = (GameState.stats.pokemonCaught || 0) + 1;
-
-      const resultEl   = document.getElementById('catch-result');
-      const resultText = document.getElementById('catch-result-text');
-      if (GameState.party.length < 6) {
-        GameState.party.push(newPoke);
-        saveGame();
-        resultText.innerHTML = `<span style="color:#FFD700">★</span> ${pokeName} joined your team!<br><span style="font-size:.5rem;color:#aaa">Legendary card added: ${sigCard?.name || ''}!</span>`;
-      } else {
-        document.getElementById('catch-ball-wrap').style.display = 'none';
-        saveGame();
-        resultText.innerHTML = `<span style="color:#FFD700">★</span> ${pokeName} was caught but your party is full. It was released into the wild.`;
-      }
-      document.getElementById('release-picker').style.display = 'none';
-      document.getElementById('btn-catch-continue').style.display = '';
-      resultEl.style.display = 'block';
-      document.getElementById('screen-catch').classList.remove('legendary-active');
-      document.getElementById('btn-flee').style.display = '';
-      this._bird = null;
-
-    } else {
-      // Miss — bird flees immediately (single attempt)
-      ball.className = 'catch-ball ball-burst';
-      const spriteEl = document.getElementById('catch-sprite');
-      if (spriteEl) {
-        spriteEl.style.display = '';
-        loadImageWithFallback(spriteEl, [data.sprites?.other?.['official-artwork']?.front_default, data.sprites?.front_default], () => {});
-        setTimeout(() => { spriteEl.className = 'catch-sprite revealed catch-runaway'; }, 300);
-      }
-      setTimeout(() => {
-        statusEl.textContent = LEGENDARY_FLEE[id] || `${pokeName} flew away!`;
-        const resultEl   = document.getElementById('catch-result');
-        const resultText = document.getElementById('catch-result-text');
-        resultText.innerHTML = `${pokeName} broke free and returned to the wild.<br><span style="font-size:.5rem;color:#aaa">Use an Ultra Ball or Master Ball next time!</span>`;
-        document.getElementById('release-picker').style.display = 'none';
-        document.getElementById('btn-catch-continue').style.display = '';
-        resultEl.style.display = 'block';
-        document.getElementById('screen-catch').classList.remove('legendary-active');
-        document.getElementById('btn-flee').style.display = '';
-        this._bird = null;
-        saveGame();
-      }, 1400);
-    }
-  },
-
-  finish() {
-    document.getElementById('screen-catch').classList.remove('legendary-active');
-    MapEngine.completeNode(GameState.currentNodeIndex);
-    MapEngine.show();
-  },
-};
-
 // ─── SABRINA JIGSAW ENGINE ────────────────────────────────────────────────────
 
 const SABRINA_INTROS = [
@@ -7822,6 +7583,13 @@ const CatchEngine = {
     let catchRate;
     if (this._selectedBall === 'masterball') {
       catchRate = 1.0; ItemEngine.useItem('master_ball');
+    } else if (rarity === 'legendary') {
+      // Legendary birds: Ultra Ball 40%, Poké Ball 15%
+      if (this._selectedBall === 'ultraball') {
+        catchRate = 0.40; ItemEngine.useItem('ultra_ball');
+      } else {
+        catchRate = 0.15;
+      }
     } else {
       const base       = rarity.startsWith('Rare') ? .25 : rarity === 'Uncommon' ? .5 : .75;
       const ultraBoost = (this._selectedBall === 'ultraball' && !rarity.startsWith('Common')) ? .5 : 0;
@@ -7886,8 +7654,11 @@ const CatchEngine = {
       ball.className = 'catch-ball ball-caught';
       statusEl.textContent = '';
       const level     = 5 + GameState.bossesDefeated * 5 + Math.floor(Math.random() * 5);
-      const typeStr   = data.types?.[0]?.type?.name || 'normal';
+      const typeStr   = DUAL_TYPE_OVERRIDES[data.id] || data.types?.[0]?.type?.name || 'normal';
       const newPoke   = makePokemon(data.id, level, getSpriteUrl(data), pokeName, typeStr);
+      // Legendary birds get their signature card added to the deck
+      const sigCard = LEGENDARY_BIRD_CARDS[data.id];
+      if (sigCard && newPoke.deck) newPoke.deck.push({ ...sigCard });
       const isNewDex  = !loadPokedex()[data.id]?.caught;
       registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
 
@@ -11199,20 +10970,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Catch screen ──
-  document.getElementById('btn-throw-ball').addEventListener('click', () => {
-    if (LegendaryEncounterEngine._bird) LegendaryEncounterEngine.throwBall();
-    else CatchEngine.throwBall();
-  });
+  document.getElementById('btn-throw-ball').addEventListener('click', () => CatchEngine.throwBall());
   document.getElementById('btn-flee').addEventListener('click', () => CatchEngine.flee());
-  document.getElementById('btn-catch-continue').addEventListener('click', () => {
-    if (LegendaryEncounterEngine._bird === null && document.getElementById('screen-catch').classList.contains('legendary-active') === false && LegendaryEncounterEngine._node === GameState.currentNodeIndex) {
-      LegendaryEncounterEngine.finish();
-    } else if (LegendaryEncounterEngine._node === GameState.currentNodeIndex) {
-      LegendaryEncounterEngine.finish();
-    } else {
-      CatchEngine.finish();
-    }
-  });
+  document.getElementById('btn-catch-continue').addEventListener('click', () => CatchEngine.finish());
 
   // ── Card reward screen ──
   document.getElementById('btn-cr-skip').addEventListener('click', () => CardReward.skip());
