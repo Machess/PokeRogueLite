@@ -6387,3 +6387,61 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   box-shadow: none !important;
   opacity: .8;
 }
+
+/* ═══════════════════════════════════════════
+   DIRECTIONAL SCREEN TRANSITIONS
+   Applied by showScreen(id, direction).
+   Exit classes move the outgoing screen away.
+   Enter classes bring the incoming screen in.
+   Duration: 320ms — fast enough to feel snappy,
+   slow enough to register direction.
+═══════════════════════════════════════════ */
+
+/* Prevent layout shifts during transition */
+.screen-transitioning { pointer-events: none; }
+
+/* ── EXIT animations — outgoing screen leaves ── */
+@keyframes exit-left-anim {
+  from { transform: translateX(0);     opacity : 1; }
+  to   { transform: translateX(-32vw); opacity: 0; }
+}
+@keyframes exit-right-anim {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(32vw); opacity: 0; }
+}
+@keyframes exit-forward-anim {
+  from { transform: scale(1)    translateY(0);    opacity: 1; }
+  to   { transform: scale(1.08) translateY(-4vh); opacity: 0; }
+}
+@keyframes exit-back-anim {
+  from { transform: scale(1)    translateY(0);   opacity: 1; }
+  to   { transform: scale(0.92) translateY(3vh); opacity: 0; }
+}
+
+.exit-left    { animation: exit-left-anim    320ms cubic-bezier(.4,0,1,1) forwards; }
+.exit-right   { animation: exit-right-anim   320ms cubic-bezier(.4,0,1,1) forwards; }
+.exit-forward { animation: exit-forward-anim 320ms cubic-bezier(.4,0,1,1) forwards; }
+.exit-back    { animation: exit-back-anim    320ms cubic-bezier(.4,0,1,1) forwards; }
+
+/* ── ENTER animations — incoming screen arrives ── */
+@keyframes enter-left-anim {
+  from { transform: translateX(-32vw); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
+}
+@keyframes enter-right-anim {
+  from { transform: translateX(32vw); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes enter-forward-anim {
+  from { transform: scale(0.92) translateY(4vh); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);   opacity: 1; }
+}
+@keyframes enter-back-anim {
+  from { transform: scale(1.08) translateY(-3vh); opacity: 0; }
+  to   { transform: scale(1)    translateY(0);    opacity: 1; }
+}
+
+.enter-left    { animation: enter-left-anim    320ms cubic-bezier(0,0,.6,1) forwards; }
+.enter-right   { animation: enter-right-anim   320ms cubic-bezier(0,0,.6,1) forwards; }
+.enter-forward { animation: enter-forward-anim 320ms cubic-bezier(0,0,.6,1) forwards; }
+.enter-back    { animation: enter-back-anim    320ms cubic-bezier(0,0,.6,1) forwards; }

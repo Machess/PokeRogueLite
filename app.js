@@ -1142,10 +1142,47 @@ function generateMap(bossIndex) {
 
 // ─── SCREEN MANAGER ──────────────────────────────────────────────────────────
 
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById('screen-' + id).classList.add('active');
+// Direction → CSS class mapping for screen transitions
+const TRANSITION_EXIT  = { left:'exit-left', right:'exit-right', straight:'exit-forward', back:'exit-back' };
+const TRANSITION_ENTER = { left:'enter-left', right:'enter-right', straight:'enter-forward', back:'enter-back' };
+
+function showScreen(id, direction) {
+  const incoming = document.getElementById('screen-' + id);
+  if (!incoming) return;
+
+  if (!direction) {
+    // No transition — instant swap (menus, modals, non-navigation screens)
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    incoming.classList.add('active');
+    SoundEngine.onScreenChange(id);
+    return;
+  }
+
+  // Determine reverse direction for enter class
+  const enterDir = { left:'right', right:'left', straight:'straight', back:'back' }[direction] || 'straight';
+  const exitClass  = TRANSITION_EXIT[direction]  || 'exit-forward';
+  const enterClass = TRANSITION_ENTER[enterDir]  || 'enter-forward';
+
+  const outgoing = document.querySelector('.screen.active');
+
+  // Apply exit to outgoing
+  if (outgoing && outgoing !== incoming) {
+    outgoing.classList.add('screen-transitioning', exitClass);
+  }
+
+  // Prepare incoming off-screen
+  incoming.classList.add('screen-transitioning', enterClass);
+  incoming.classList.add('active');
+
   SoundEngine.onScreenChange(id);
+
+  // After animation: clean up all transition classes
+  setTimeout(() => {
+    if (outgoing && outgoing !== incoming) {
+      outgoing.classList.remove('active', 'screen-transitioning', exitClass);
+    }
+    incoming.classList.remove('screen-transitioning', enterClass);
+  }, 320);
 }
 
 // ─── SOUND ENGINE ─────────────────────────────────────────────────────────────
@@ -2215,7 +2252,7 @@ const TeamRocketChallenge = {
       this._showResult(isRight, String(correct), explanation, quote);
     });
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('meowth-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
@@ -2253,7 +2290,7 @@ const TeamRocketChallenge = {
       this._showResult(isRight, entry.correct, explanation, entry.jessie);
     });
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('jessie-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
@@ -2286,7 +2323,7 @@ const TeamRocketChallenge = {
       this._showResult(isRight, entry.correct, explanation, entry.james);
     });
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('james-active');
     SoundEngine.playBGM('teamrocket_battle.mp3');
@@ -3350,6 +3387,14 @@ const PartyOverview = {
   },
 };
 
+// Helper: read the last nav direction chosen by the player, then clear it.
+// Every engine entered from the map calls getNavDir() in its showScreen call.
+function getNavDir() {
+  const dir = MapEngine?._lastDir || 'straight';
+  if (MapEngine) MapEngine._lastDir = null;
+  return dir;
+}
+
 // ─── MAP ENGINE (Navigation View) ────────────────────────────────────────────
 
 // Background image filenames per boss index
@@ -3475,8 +3520,8 @@ const MapEngine = {
     this._showNav();
   },
 
-  _showNav() {
-    showScreen('map');
+  _showNav(returnDir = 'back') {
+    showScreen('map', returnDir);
     this.renderParty();
     this.renderNav();
     ItemEngine.renderBagBar();
@@ -3702,13 +3747,15 @@ const MapEngine = {
         <div class="nav-arrow-label">${info.label}</div>
       `;
       btn.title = `Go ${dir} — ${info.label}`;
-      btn.addEventListener('click', () => this.visitNode(node));
+      btn.addEventListener('click', () => this.visitNode(node, dir));
       choicesEl.appendChild(btn);
     });
   },
 
   // ── Visit a node ─────────────────────────────────────────────────────────
-  visitNode(node) {
+  visitNode(node, dir = 'straight') {
+    // Store direction so individual engines can use it in their showScreen call
+    MapEngine._lastDir = dir;
     // Bypass sibling nodes at same row
     GameState.map.forEach(n => {
       if (typeof n.idx !== 'number') return;
@@ -3881,7 +3928,7 @@ const TrainerBattleEngine = {
     hideLoading();
 
     // ── Show boss intro screen for trainer dialogue ─────────────────────────
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
@@ -4094,7 +4141,7 @@ const BattleEngine = {
     }
     this._dealHand(5);
     this._render();
-    showScreen('battle');
+    showScreen('battle', getNavDir());
     this._logSystem(
       this._isTrainerBattle
         ? `Trainer sent out <b>${oppPoke.name}</b>!`
@@ -4973,7 +5020,7 @@ const BossEngine = {
     const firstOppType = this.oppTeam[0]?.type || 'normal';
     this._firstOppType = firstOppType;   // stored so startBattle can restore it
     setBossIntroBg(bossIdx);
-    showScreen('boss');
+    showScreen('boss', getNavDir());
 
     const trainerSpriteWrap = document.querySelector('.trainer-sprite-wrap');
     const trainerImg = document.getElementById('boss-trainer-sprite');
@@ -5555,7 +5602,7 @@ const SurgeEngine = {
     ];
 
     // Boss-screen intro with Surge portrait + gym background
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
@@ -5628,7 +5675,7 @@ const SurgeEngine = {
       btnArea.appendChild(b);
     });
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('surge-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
@@ -5841,7 +5888,7 @@ const ErikaEngine = {
     ];
 
     // Boss-screen intro with Erika portrait + gym background
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
@@ -5924,7 +5971,7 @@ const ErikaEngine = {
       btnArea.appendChild(b);
     });
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('erika-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
@@ -6171,7 +6218,7 @@ const KogaEngine = {
     this._puzzle = KOGA_PUZZLES[idx];
 
     // Boss-screen intro
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
@@ -6242,7 +6289,7 @@ const KogaEngine = {
     clueArea.className     = 'fishing-clue-area koga-clue-area';
     clueArea.innerHTML     = '';
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('koga-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
@@ -6535,7 +6582,7 @@ const BlaineEngine = {
     this._riddle = BLAINE_RIDDLES[idx];
 
     // Boss-screen intro
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
@@ -6604,7 +6651,7 @@ const BlaineEngine = {
     clueArea.className     = 'fishing-clue-area blaine-clue-area';
     clueArea.innerHTML     = '';
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('blaine-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
@@ -6812,7 +6859,7 @@ const SabrinaEngine = {
     hideLoading();
 
     // Boss screen intro
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
     const imgEl = document.querySelector('#screen-boss .battle-bg-img');
@@ -6881,7 +6928,7 @@ const SabrinaEngine = {
     document.getElementById('challenge-question').style.display     = 'none';
     document.getElementById('jessie-word-display').style.display    = 'none';
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('sabrina-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
@@ -7164,7 +7211,7 @@ const RocketBattleEngine = {
     this.bossData = { name: 'Team Rocket' };
 
     hideLoading();
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = true;
 
     // ── Set full-portrait intro background ───────────────────────────────────
@@ -7427,7 +7474,7 @@ const CatchEngine = {
     bgEl.className = 'catch-bg ' + (CATCH_BACKDROPS[Math.min(bi, CATCH_BACKDROPS.length - 1)] || '');
 
     // ── Reset all UI ───────────────────────────────────────────────────────
-    showScreen('catch');
+    showScreen('catch', getNavDir());
     document.getElementById('catch-title').textContent          = 'Wild Pokémon Appeared!';
     document.getElementById('catch-name').textContent           = '???';
     document.getElementById('catch-name-row').style.opacity     = '0';
@@ -8336,7 +8383,7 @@ async function stoneEvolve(stoneId) {
 const ShopEngine = {
   start(node) {
     this._render();
-    showScreen('shop');
+    showScreen('shop', getNavDir());
   },
 
   _render() {
@@ -8622,7 +8669,7 @@ const TrainingEngine = {
     this._upgradeJustDone  = false;
     this._trainingPokeIdx  = GameState.activePokemonIndex; // default
 
-    showScreen('training');
+    showScreen('training', getNavDir());
     this._showPicker();
   },
 
@@ -9033,7 +9080,7 @@ const CookingEngine = {
     this._lineIdx  = 0;
 
     // Show the boss screen in intro-only mode (same as Rocket encounter)
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     // Blank the battle background — Brock's kitchen is not a battle arena
@@ -9443,7 +9490,7 @@ const MazeEngine = {
     this._script   = MISTY_MAZE_SCRIPTS[Math.floor(Math.random() * MISTY_MAZE_SCRIPTS.length)];
     this._lineIdx  = 0;
 
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
 
     const bgImg = document.querySelector('#screen-boss .battle-bg-img');
@@ -9860,7 +9907,7 @@ const FishingEngine = {
     this._clueIdx = 0;
 
     // Use boss-screen intro: Misty's portrait + opening line
-    showScreen('boss');
+    showScreen('boss', getNavDir());
     BossEngine._isRocket = false;
     CookingEngine._isActive = false;
     MazeEngine._isActive    = false;
@@ -9930,7 +9977,7 @@ const FishingEngine = {
     qEl.style.display = this._clueIdx >= p.clues.length ? '' : 'none';
     qEl.textContent   = '';
 
-    showScreen('challenge');
+    showScreen('challenge', getNavDir());
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('fishing-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
@@ -10127,7 +10174,7 @@ const FishingEngine = {
 
 const HealEngine = {
   start(node) {
-    showScreen('heal');
+    showScreen('heal', getNavDir());
     // Apply heal center background
     const healBg = document.getElementById('heal-bg');
     if (healBg) {
