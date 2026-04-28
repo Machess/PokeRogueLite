@@ -7395,6 +7395,8 @@ const CatchEngine = {
       rarity = 'Uncommon'; pool = WILD_POOL.uncommon;
     } else if (forceRarity === 'common') {
       rarity = 'Common'; pool = WILD_POOL.common;
+    } else if (forceRarity === 'legendary') {
+      rarity = 'legendary'; pool = WILD_POOL.legendary;
     } else if (hasLure && Math.random() < 0.3) {
       rarity = 'Rare ✨'; pool = WILD_POOL.rare;
     } else if (hasRepel) {
