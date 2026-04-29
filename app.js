@@ -3990,6 +3990,7 @@ const TrainerBattleEngine = {
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.style.background = '';
 
+    showScreen('battle', getNavDir());
     this._loadOpp(0);
   },
 
@@ -4114,6 +4115,7 @@ const BattleEngine = {
 
     hideLoading();
     setBattleBg(oppType, false);
+    showScreen('battle', getNavDir());
     this._initBattle(active, opp, false);
   },
 
@@ -4156,7 +4158,6 @@ const BattleEngine = {
     }
     this._dealHand(5);
     this._render();
-    showScreen('battle', getNavDir());
     this._logSystem(
       this._isTrainerBattle
         ? `Trainer sent out <b>${oppPoke.name}</b>!`
