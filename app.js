@@ -1145,6 +1145,9 @@ function generateMap(bossIndex) {
 // Direction → CSS class mapping for screen transitions
 const TRANSITION_EXIT  = { left:'exit-left', right:'exit-right', straight:'exit-forward', back:'exit-back' };
 const TRANSITION_ENTER = { left:'enter-left', right:'enter-right', straight:'enter-forward', back:'enter-back' };
+// Exit duration per direction (ms) — enter fires after this + 50ms hold
+const EXIT_DURATION  = { left:350, right:350, straight:350, back:200 };
+const ENTER_DURATION = { left:400, right:400, straight:420, back:520 };
 
 function showScreen(id, direction) {
   const incoming = document.getElementById('screen-' + id);
@@ -1158,31 +1161,43 @@ function showScreen(id, direction) {
     return;
   }
 
-  // Determine reverse direction for enter class
-  const enterDir = { left:'right', right:'left', straight:'straight', back:'back' }[direction] || 'straight';
+  // Reverse direction for the enter class
+  const enterDir   = { left:'right', right:'left', straight:'straight', back:'back' }[direction] || 'straight';
   const exitClass  = TRANSITION_EXIT[direction]  || 'exit-forward';
   const enterClass = TRANSITION_ENTER[enterDir]  || 'enter-forward';
+  const exitMs     = EXIT_DURATION[direction]    || 350;
+  const enterMs    = ENTER_DURATION[enterDir]    || 400;
+  const totalMs    = exitMs + 50 + enterMs; // exit + hold + enter
 
   const outgoing = document.querySelector('.screen.active');
 
-  // Apply exit to outgoing
+  // ── Phase 1: exit — outgoing screen leaves ──────────────────────────────
   if (outgoing && outgoing !== incoming) {
     outgoing.classList.add('screen-transitioning', exitClass);
+    outgoing.style.animationDuration = exitMs + 'ms';
   }
-
-  // Prepare incoming off-screen
-  incoming.classList.add('screen-transitioning', enterClass);
-  incoming.classList.add('active');
 
   SoundEngine.onScreenChange(id);
 
-  // After animation: clean up all transition classes
+  // ── Phase 2: hold + enter — after exit completes ────────────────────────
   setTimeout(() => {
+    // Remove outgoing completely
     if (outgoing && outgoing !== incoming) {
       outgoing.classList.remove('active', 'screen-transitioning', exitClass);
+      outgoing.style.animationDuration = '';
     }
-    incoming.classList.remove('screen-transitioning', enterClass);
-  }, 320);
+
+    // Bring in incoming
+    incoming.classList.add('active', 'screen-transitioning', enterClass);
+    incoming.style.animationDuration = enterMs + 'ms';
+
+    // Clean up enter class when done
+    setTimeout(() => {
+      incoming.classList.remove('screen-transitioning', enterClass);
+      incoming.style.animationDuration = '';
+    }, enterMs);
+
+  }, exitMs + 50); // 50ms hold between exit and enter
 }
 
 // ─── SOUND ENGINE ─────────────────────────────────────────────────────────────
