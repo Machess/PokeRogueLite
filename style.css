@@ -6585,3 +6585,90 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   30%  { opacity: .9;  transform: scaleX(1);  }
   100% { opacity: 0;   transform: scaleX(1.4); }
 }
+
+/* ═══════════════════════════════════════════
+   JAMES LETTER-FILL CHALLENGE
+═══════════════════════════════════════════ */
+.james-word-build {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 3px;
+  padding: .5rem .4rem .3rem;
+  font-family: 'Press Start 2P', monospace;
+}
+.james-letter-fixed {
+  font-size: 1.15rem;
+  color: var(--col-text);
+  line-height: 1;
+  padding: 0 1px;
+}
+.james-letter-slot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.4rem;
+  height: 1.8rem;
+  border-bottom: 3px solid rgba(255,255,255,.6);
+  font-size: .9rem;
+  color: #fff;
+  padding: 0 3px;
+  transition: border-color .15s;
+}
+.james-letter-slot.empty {
+  color: rgba(255,255,255,.3);
+  border-bottom-color: rgba(255,255,255,.4);
+  animation: slot-pulse-white 1.6s ease-in-out infinite;
+}
+@keyframes slot-pulse-white {
+  0%,100% { border-bottom-color: rgba(255,255,255,.3); }
+  50%      { border-bottom-color: rgba(255,255,255,.8); }
+}
+.james-letter-slot.correct {
+  color: #80ee80;
+  border-bottom-color: #80ee80;
+  animation: correct-flash .4s ease forwards;
+}
+.james-letter-slot.wrong {
+  color: #ee8080;
+  border-bottom-color: #ee8080;
+  animation: wrong-shake .4s ease;
+}
+.james-letter-slot.corrected {
+  color: #ffdd88;
+  border-bottom-color: #ffdd88;
+}
+.james-clue {
+  font-size: .44rem;
+  color: var(--col-text-dim);
+  text-align: center;
+  padding: .4rem .6rem .1rem;
+  font-style: italic;
+}
+.james-letter-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .72rem;
+  padding: .55rem .9rem;
+  background: rgba(40,40,80,.7);
+  border: 2px solid rgba(100,120,200,.5);
+  border-radius: var(--r-sm);
+  color: #b0c8ff;
+  cursor: pointer;
+  transition: background .12s, border-color .12s, transform .1s;
+  min-width: 2.8rem;
+  text-align: center;
+}
+.james-letter-btn:hover:not(:disabled) {
+  background: rgba(80,80,160,.7);
+  border-color: rgba(160,180,255,.7);
+  transform: translateY(-2px);
+}
+.james-letter-btn:disabled { opacity: .4; cursor: default; }
+#challenge-answer-btns:has(.james-letter-btn) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: center;
+  margin-top: .6rem;
+}
