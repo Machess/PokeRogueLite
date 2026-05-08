@@ -6585,159 +6585,155 @@ const NinjaMemoryEngine = {
 };
 // ─── BLAINE RIDDLE ENGINE ────────────────────────────────────────────────────
 const BLAINE_INTROS = [
-  `HA! ${'{name}'}! I hope you brought your thinking cap — and some ointment for the burn! Three riddles. Guess the Pokémon. Get it wrong and you'll feel the heat!`,
-  `${'{name}'}! A true trainer doesn't just battle — they KNOW their Pokémon! Answer my riddles and prove it. Or don't. My Arcanine finds failure amusing.`,
-  `Fwa ha ha! ${'{name}'}! Science, riddles, and Pokémon — the three great loves of my life! Let's see if you share at least one of them!`,
+  `HA! ${'{name}'}! Welcome to my laboratory! Today — no riddles. Instead, a BATTLE EXPERIMENT! I will show you two Pokémon. You tell me — who wins? Type matchups are science. Let\'s see if you\'ve been paying attention!`,
+  `Fwa ha ha! ${'{name}'}! Science and Pokémon — inseparable! I have two specimens ready to clash. Study their types. Predict the winner. It\'s not guesswork — it\'s ANALYSIS!`,
+  `${'{name}'}! My research today concerns battle outcomes. I will present two Pokémon. Your task: determine the winner based on type. The type chart never lies — unlike my students' excuses!`,
 ];
 
-const BLAINE_PUNS = [
-  'That\'s HOT — you really know your stuff! I\'m not just saying that because I run a volcano gym.',
-  'Impressive! You\'re really fired up today! Unlike my last challenger, who was just... lukewarm.',
-  'You\'ve got a burning passion for Pokémon knowledge! I can appreciate that — professionally speaking.',
-  'You\'ve truly put the FUN in... wait, that doesn\'t work. But great answer anyway!',
-  'Blaine is... quite impressed! Don\'t tell anyone, I have a reputation to maintain.',
-  'Hot hot hot! Three for three! You might just be smarter than my Rapidash. Maybe.',
-];
+const BLAINE_TEACHING_LINES = {
+  super: [
+    `EXACTLY! {atkType} is super effective against {defType} — 2× damage! Burn that into your memory!`,
+    `Correct! {atkType} attacks deal double damage to {defType} types. Science in action!`,
+    `Right! {atkType} versus {defType} — the type chart is clear. You\'re thinking like a researcher!`,
+  ],
+  immune: [
+    `PERFECT! {defType} types are completely IMMUNE to {atkType} attacks — zero damage! The ultimate defence!`,
+    `Excellent! {atkType} literally cannot hurt a {defType} type. Zero effect. It\'s in the data!`,
+  ],
+  resist: [
+    `Correct! {defType} resists {atkType} — only half damage gets through. Every fraction matters in battle!`,
+    `Right! {atkType} hits {defType} for just 0.5×. Resistance is a powerful tool!`,
+  ],
+  wrong_super: [
+    `Fwa ha ha! Not quite! {atkType} is super effective against {defType} — the {atkName} wins! Remember: {atkType} deals 2× to {defType}!`,
+    `Almost! But {atkType} crushes {defType} — double damage! Don\'t forget your type chart!`,
+    `Incorrect! {atkType} versus {defType} is a clear advantage for {atkName}. Type knowledge wins battles!`,
+  ],
+  wrong_immune: [
+    `Wrong! {defType} is completely IMMUNE to {atkType} — that\'s 0× damage! {defName} doesn\'t even flinch!`,
+    `Nope! {atkType} cannot touch {defType} — zero effect. The immunity rule is critical!`,
+  ],
+  wrong_resist: [
+    `Not this time! {defType} resists {atkType} — only 0.5× damage. {defName} has the edge!`,
+    `Incorrect! {defType} types shrug off {atkType} attacks — half damage only. Study those resistances!`,
+  ],
+  neutral: [
+    `Interesting case! Both types deal normal damage to each other — so the stronger Pokémon wins. {winName} has better raw stats!`,
+  ],
+};
 
-// Each riddle: 3 clues describing a Pokémon (habitat/diet/appearance — never the type),
-// the answer, and 3 wrong options that are plausible but incorrect.
-const BLAINE_RIDDLES = [
-  {
-    clues: [
-      'I sleep inside volcanoes. The heat is like a warm blanket to me.',
-      'My shell can withstand temperatures that would melt steel.',
-      'I spray boiling water from the holes in my rocky hide.',
-    ],
-    summary: 'Sleeps in volcanoes, shell resists extreme heat, sprays boiling water from rocky hide.',
-    answer: 'Magmar',
-    wrong:  ['Geodude', 'Rapidash', 'Rhydon'],
-    poke_id: 126,
-    explanation: 'Magmar lives near volcanic areas and breathes fire that burns at over 2,000°F!',
-    blaine_right: 'CORRECT! Magmar — the Spitfire Pokémon. A personal favourite. Burns bright!',
-    blaine_wrong: 'Magmar! It lives IN volcanoes. Fire-type through and through. Sear that into your memory!',
-  },
-  {
-    clues: [
-      'I can swim faster than any boat — 150 miles per hour in water.',
-      'My shell is made of small hexagonal stones cemented together naturally.',
-      'I shoot water jets so powerful they can pierce steel.',
-    ],
-    summary: 'Swims at 150mph, hexagonal stone shell, water jets that pierce steel.',
-    answer: 'Blastoise',
-    wrong:  ['Slowbro', 'Cloyster', 'Lapras'],
-    poke_id: 9,
-    explanation: 'Blastoise\'s shell has two water cannons that can punch through reinforced steel!',
-    blaine_right: 'The Shellfish Pokémon! Blastoise! My fire would struggle against it — don\'t tell anyone.',
-    blaine_wrong: 'Blastoise! Steel-piercing water cannons. The clue was in "hexagonal stones". Classic!',
-  },
-  {
-    clues: [
-      'I can run at 150 miles per hour with a rider on my back.',
-      'My mane ignites when I reach full speed. I leave a trail of fire behind me.',
-      'I have never been observed standing still. Even in sleep, I pace.',
-    ],
-    summary: 'Runs at 150mph with a rider, mane ignites at full speed, never stands still even sleeping.',
-    answer: 'Rapidash',
-    wrong:  ['Ponyta', 'Arcanine', 'Tauros'],
-    poke_id: 78,
-    explanation: 'Rapidash\'s flaming mane ignites when it gallops — and it reaches top speed in just 10 steps!',
-    blaine_right: 'RAPIDASH! My prized partner. Fastest Pokémon I\'ve ever trained. Good eye!',
-    blaine_wrong: 'Rapidash! "Never stands still" was the key. It\'s been clocked at 150mph flat out!',
-  },
-  {
-    clues: [
-      'I nest inside active volcanoes. The flames there are nothing to me.',
-      'When I flap my wings, the air itself ignites. I leave scorched trails across the sky.',
-      'I am said to bring early spring when I fly north — my flames melt even the deepest snow.',
-    ],
-    summary: 'Nests in volcanoes, wings ignite the air, scorches the sky, brings spring by melting snow.',
-    answer: 'Moltres',
-    wrong:  ['Charizard', 'Ninetales', 'Arcanine'],
-    poke_id: 146,
-    explanation: 'Moltres is one of the three legendary birds — a Fire/Flying type said to signal the arrival of spring!',
-    blaine_right: 'Moltres! The Flame Pokémon! One of the three great legendaries. You have an exceptional mind!',
-    blaine_wrong: 'Moltres! "Brings spring by melting snow" — that\'s the legendary bird. A truly iconic Pokémon!',
-  },
-  {
-    clues: [
-      'I was discovered in the Andes mountains, 10,000 years ago according to fossils.',
-      'My eyes can see ultraviolet light invisible to humans.',
-      'I can survive at altitudes where there is almost no oxygen.',
-    ],
-    summary: 'Ancient Andean fossil, sees ultraviolet light, survives in near-zero oxygen altitudes.',
-    answer: 'Aerodactyl',
-    wrong:  ['Articuno', 'Pidgeot', 'Fearow'],
-    poke_id: 142,
-    explanation: 'Aerodactyl was revived from Old Amber — a prehistoric Pokémon that ruled the ancient skies!',
-    blaine_right: 'AERODACTYL! Revived from a fossil I helped restore! Science triumphs again!',
-    blaine_wrong: 'Aerodactyl! The fossil clue was the giveaway — it\'s an ancient restored Pokémon!',
-  },
-  {
-    clues: [
-      'I live at the bottom of the sea, sometimes for 10,000 years.',
-      'I carry a living coral reef on my back that houses other Pokémon.',
-      'My movements are so slow, algae grow over my shell.',
-    ],
-    summary: 'Lives on the seafloor for millennia, carries a coral reef on its shell, moves so slowly algae grow on it.',
-    answer: 'Slowbro',
-    wrong:  ['Lapras', 'Cloyster', 'Dewgong'],
-    poke_id: 80,
-    explanation: 'A Shellder bit Slowpoke\'s tail and the combination created Slowbro — it\'s been drifting the seafloor ever since!',
-    blaine_right: 'Slowbro! Surprisingly hard to identify given how slowly it thinks. Much like some trainers I know!',
-    blaine_wrong: 'Slowbro! Algae growing on a moving creature — that\'s the signature of something VERY slow.',
-  },
-  {
-    clues: [
-      'My cry sounds like a crackling fire and can be heard for miles.',
-      'I guard my territory by releasing intensely bright flashes of light.',
-      'I am so rare that some scientists consider me a legend.',
-    ],
-    summary: 'Cry sounds like crackling fire, guards with blinding light flashes, extremely rare — considered legendary by some.',
-    answer: 'Arcanine',
-    wrong:  ['Ninetales', 'Flareon', 'Growlithe'],
-    poke_id: 59,
-    explanation: 'Arcanine is called the "Legendary Pokémon" — it was once thought to be a legendary creature!',
-    blaine_right: 'Arcanine! The LEGENDARY Pokémon! One of the finest Fire-types in existence. You have taste!',
-    blaine_wrong: 'Arcanine! "Some consider it a legend" — that\'s literal. Arcanine\'s species is Legendary Pokémon!',
-  },
-  {
-    clues: [
-      'I shed my skin every year. The shed skin smells strongly of herbs.',
-      'I move so silently that prey never hears me coming.',
-      'My markings change pattern to match my surroundings perfectly.',
-    ],
-    summary: 'Sheds herbal-smelling skin annually, moves in complete silence, adaptive camouflage markings.',
-    answer: 'Arbok',
-    wrong:  ['Ekans', 'Seviper', 'Ditto'],
-    poke_id: 24,
-    explanation: 'Arbok\'s belly pattern is said to be so terrifying it can paralyse prey with fear!',
-    blaine_right: 'Arbok! The Cobra Pokémon. Silent, adaptive, and herb-scented. An unusual combination!',
-    blaine_wrong: 'Arbok! The herbal shed skin is the key — it\'s a documented fact in my research notes!',
-  },
-];
+// Type memory hooks — plain-language reasons why each matchup works
+const TYPE_HOOKS = {
+  'fire-grass':    'Fire burns plants — always.',
+  'fire-ice':      'Fire melts ice — straightforward.',
+  'fire-bug':      'Fire scorches insects — 2× damage.',
+  'water-fire':    'Water extinguishes fire — every time.',
+  'water-ground':  'Water soaks through earth — super effective.',
+  'water-rock':    'Water erodes rock over time — 2× damage.',
+  'electric-water':'Electricity and water are a dangerous combo.',
+  'electric-flying':'Lightning strikes birds — Flying types beware.',
+  'ground-electric':'Earth grounds electricity — immune!',
+  'ground-fire':   'Ground smothers fire — super effective.',
+  'ground-poison': 'Burying poison neutralises it — 2× damage.',
+  'grass-water':   'Plants drink water — 2× effective.',
+  'grass-ground':  'Roots break through earth — super effective.',
+  'grass-rock':    'Plants crack rock over time — 2× damage.',
+  'ice-grass':     'Ice freezes plants — super effective.',
+  'ice-flying':    'Ice grounds flying creatures — 2× damage.',
+  'ice-dragon':    'Cold is a dragon\'s weakness — super effective.',
+  'fighting-normal':'Fighting type hits normal hard — 2× damage.',
+  'fighting-rock': 'Punches break rock — super effective.',
+  'fighting-ice':  'Fighting warms up cold — 2× damage.',
+  'psychic-fighting':'Mind over muscle — Psychic wins.',
+  'psychic-poison':'Mental power neutralises toxins — 2× damage.',
+  'ghost-psychic': 'Ghosts haunt the mind — super effective.',
+  'ghost-ghost':   'Only ghosts can truly hurt each other.',
+  'normal-ghost':  'Normal attacks can\'t touch ghosts — immune!',
+  'bug-psychic':   'Bugs unsettle even psychic minds — 2× damage.',
+  'bug-grass':     'Insects devour plants — super effective.',
+  'rock-fire':     'Rock smothers flames — 2× effective.',
+  'rock-flying':   'Rocks knock birds out of the sky.',
+  'rock-ice':      'Rock shatters ice — super effective.',
+  'poison-grass':  'Poison wilts plants — super effective.',
+  'dragon-dragon': 'Only dragons can truly wound other dragons.',
+  'flying-grass':  'Wind shreds leaves — Flying beats Grass.',
+  'flying-fighting':'Taking the fight to the skies — Flying wins.',
+  'flying-bug':    'Birds eat insects — Flying beats Bug.',
+};
+
+function _getTypeHook(atkType, defType) {
+  return TYPE_HOOKS[`${atkType}-${defType}`] || `${capitalize(atkType)} is strong against ${capitalize(defType)} type.`;
+}
+
+// Build a matchup: returns { leftId, rightId, leftType, rightType, winnerId, mult, relationship }
+function _buildMatchup(tier) {
+  // Pick a random advantaged type pair from TYPE_CHART
+  const attackTypes = Object.keys(TYPE_CHART);
+  let attempts = 0;
+  while (attempts++ < 40) {
+    const atkType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+    const defTypes = Object.keys(TYPE_CHART[atkType]);
+    if (!defTypes.length) continue;
+    const defType = defTypes[Math.floor(Math.random() * defTypes.length)];
+    const mult    = TYPE_CHART[atkType][defType];
+
+    // For tier 1 only use 2× matchups, tier 2+ include 0.5× and 0×
+    if (tier <= 1 && mult !== 2) continue;
+
+    // Find a Pokémon of each type from the full catchable pool
+    const allIds   = [...new Set([...WILD_POOL.common, ...WILD_POOL.uncommon, ...WILD_POOL.rare])];
+    const atkPool  = allIds.filter(id => {
+      const t = DUAL_TYPE_OVERRIDES[id];
+      return t ? t === atkType : false;
+    });
+    const defPool  = allIds.filter(id => {
+      const t = DUAL_TYPE_OVERRIDES[id];
+      return t ? t === defType : false;
+    });
+    if (!atkPool.length || !defPool.length) continue;
+
+    const atkId = atkPool[Math.floor(Math.random() * atkPool.length)];
+    const defId = defPool[Math.floor(Math.random() * defPool.length)];
+    if (atkId === defId) continue;
+
+    // Randomise left/right position
+    const flip = Math.random() < 0.5;
+    return {
+      leftId:   flip ? defId  : atkId,
+      rightId:  flip ? atkId  : defId,
+      leftType: flip ? defType : atkType,
+      rightType:flip ? atkType : defType,
+      winnerId: atkId,
+      loserId:  defId,
+      atkType, defType, mult,
+      relationship: mult === 0 ? 'immune' : mult >= 2 ? 'super' : 'resist',
+    };
+  }
+  return null;
+}
 
 const BlaineEngine = {
-  _isActive:  false,
-  _answered:  false,
-  _node:      null,
-  _clueIdx:   0,
-  _riddle:    null,
-  _usedIdxs:  null,
+  _isActive:   false,
+  _answered:   false,
+  _node:       null,
+  _matchup:    null,
+  _leftData:   null,
+  _rightData:  null,
 
   start(node) {
     this._node     = node;
     this._isActive = true;
     this._answered = false;
-    this._clueIdx  = 0;
-    this._usedIdxs = this._usedIdxs || new Set();
+    this._matchup  = null;
 
-    // Pick unused riddle
-    const available = BLAINE_RIDDLES.map((_,i) => i).filter(i => !this._usedIdxs.has(i));
-    if (available.length === 0) this._usedIdxs.clear();
-    const pool = available.length > 0 ? available : BLAINE_RIDDLES.map((_,i) => i);
-    const idx  = pool[Math.floor(Math.random() * pool.length)];
-    this._usedIdxs.add(idx);
-    this._riddle = BLAINE_RIDDLES[idx];
+    const tier   = GameState.difficultyTier || 2;
+    this._matchup = _buildMatchup(tier);
+    if (!this._matchup) {
+      // Fallback if no matchup found — skip
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+      return;
+    }
 
     // Boss-screen intro
     showScreen('boss');
@@ -6775,187 +6771,211 @@ const BlaineEngine = {
       document.getElementById('dialogue-text').textContent += intro[ci++];
       if (ci >= intro.length) {
         clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Riddle me this! 🔥'; }
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Start Experiment 🔥'; }
       }
-    }, 24);
+    }, 22);
   },
 
   startGame() {
     this._isActive = false;
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) startBtn.textContent = 'Battle! ▶';
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
     document.getElementById('trainer-intro').style.display = 'none';
-    this._showClues();
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) startBtn.textContent = 'Battle! ▶';
+    this._showArena();
   },
 
-  _showClues() {
-    const r = this._riddle;
+  async _showArena() {
+    const m = this._matchup;
 
+    // Setup challenge screen
     const img = document.getElementById('challenge-character-img');
     if (img) { img.src = 'assets/blaine.png'; img.style.display = ''; }
-    document.getElementById('challenge-badge').textContent   = '🔥 Blaine\'s Pokémon Riddle';
-    document.getElementById('challenge-intro').textContent   = 'Who am I describing?';
+    document.getElementById('challenge-badge').textContent   = '🔥 Blaine\'s Battle Lab!';
+    document.getElementById('challenge-intro').textContent   = 'Which Pokémon wins this matchup?';
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
-    document.getElementById('challenge-answer-btns').innerHTML      = '';
-    document.getElementById('challenge-question').textContent       = '';
     document.getElementById('challenge-question').style.display     = 'none';
     document.getElementById('jessie-word-display').style.display    = 'none';
-
-    const clueArea = document.getElementById('challenge-coin-visual');
-    clueArea.style.display = 'block';
-    clueArea.className     = 'fishing-clue-area blaine-clue-area';
-    clueArea.innerHTML     = '';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
 
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('blaine-active');
-    SoundEngine.playBGM('pallet_town_theme.mp3');
+    SoundEngine.playBGM('mini_game.mp3');
 
-    this._clueIdx = 0;
-    this._revealNextClue();
-  },
+    // Build arena UI
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'blaine-arena';
+    cv.innerHTML     = `
+      <div class="blaine-combatant" id="blaine-left">
+        <div class="blaine-sprite-wrap">
+          <img class="blaine-sprite" id="blaine-left-img" src="" alt="" onerror="this.src=''"/>
+        </div>
+        <div class="blaine-poke-name" id="blaine-left-name">…</div>
+        <div class="blaine-type-row" id="blaine-left-type"></div>
+      </div>
+      <div class="blaine-vs">VS</div>
+      <div class="blaine-combatant" id="blaine-right">
+        <div class="blaine-sprite-wrap">
+          <img class="blaine-sprite" id="blaine-right-img" src="" alt="" onerror="this.src=''"/>
+        </div>
+        <div class="blaine-poke-name" id="blaine-right-name">…</div>
+        <div class="blaine-type-row" id="blaine-right-type"></div>
+      </div>`;
 
-  _revealNextClue() {
-    const r        = this._riddle;
-    const clueArea = document.getElementById('challenge-coin-visual');
-    const btnArea  = document.getElementById('challenge-answer-btns');
+    // Fetch both sprites in parallel
+    const [leftData, rightData] = await Promise.all([
+      fetchPoke(m.leftId).catch(() => null),
+      fetchPoke(m.rightId).catch(() => null),
+    ]);
+    this._leftData  = leftData;
+    this._rightData = rightData;
 
-    if (this._clueIdx < r.clues.length) {
-      const bubble = document.createElement('div');
-      // First clue gets a 🔥 prefix flavour
-      bubble.className = 'fishing-bubble fishing-bubble-typing blaine-bubble';
-      clueArea.appendChild(bubble);
-
-      const text = `Clue ${this._clueIdx + 1}: ${r.clues[this._clueIdx]}`;
-      let ci = 0;
-      const iv = setInterval(() => {
-        bubble.textContent += text[ci++];
-        if (ci >= text.length) {
-          clearInterval(iv);
-          bubble.className = 'fishing-bubble fishing-bubble-shown blaine-bubble';
-          this._clueIdx++;
-
-          if (this._clueIdx < r.clues.length) {
-            btnArea.innerHTML = '';
-            const nb = document.createElement('button');
-            nb.className   = 'btn-pixel btn-secondary fishing-next-btn';
-            nb.textContent = 'Next clue ▶';
-            nb.onclick = () => { btnArea.innerHTML = ''; this._revealNextClue(); };
-            btnArea.appendChild(nb);
-          } else {
-            // All clues shown — summary then question
-            const summary = document.createElement('div');
-            summary.className   = 'fishing-summary blaine-summary';
-            summary.textContent = r.summary;
-            clueArea.appendChild(summary);
-            this._showQuestion();
-          }
-        }
-      }, 28);
-    } else {
-      this._showQuestion();
+    if (leftData) {
+      const lImg  = document.getElementById('blaine-left-img');
+      const lName = document.getElementById('blaine-left-name');
+      const lType = document.getElementById('blaine-left-type');
+      lImg.src  = getSpriteUrl(leftData);
+      lImg.alt  = capitalize(leftData.name);
+      lName.textContent = capitalize(leftData.name);
+      lType.innerHTML   = `<span class="hud-type-badge type-${m.leftType}">${m.leftType}</span>`;
     }
-  },
+    if (rightData) {
+      const rImg  = document.getElementById('blaine-right-img');
+      const rName = document.getElementById('blaine-right-name');
+      const rType = document.getElementById('blaine-right-type');
+      rImg.src  = getSpriteUrl(rightData);
+      rImg.alt  = capitalize(rightData.name);
+      rName.textContent = capitalize(rightData.name);
+      rType.innerHTML   = `<span class="hud-type-badge type-${m.rightType}">${m.rightType}</span>`;
+    }
 
-  _showQuestion() {
-    const r       = this._riddle;
-    const qEl     = document.getElementById('challenge-question');
-    qEl.textContent   = '🔥 Which Pokémon am I describing?';
-    qEl.style.display = '';
-
-    const choices = shuffle([r.answer, ...r.wrong]);
+    // Choice buttons
     const btnArea = document.getElementById('challenge-answer-btns');
     btnArea.innerHTML = '';
-    choices.forEach(val => {
-      const b = document.createElement('button');
-      b.className   = 'challenge-answer-btn';
-      b.textContent = val;
-      b.addEventListener('click', () => this._answer(val));
-      btnArea.appendChild(b);
-    });
+    const leftName  = leftData  ? capitalize(leftData.name)  : `#${m.leftId}`;
+    const rightName = rightData ? capitalize(rightData.name) : `#${m.rightId}`;
+
+    const lb = document.createElement('button');
+    lb.className   = 'blaine-choice-btn';
+    lb.innerHTML   = `← ${leftName}`;
+    lb.addEventListener('click', () => this._answer('left'));
+    btnArea.appendChild(lb);
+
+    const rb = document.createElement('button');
+    rb.className   = 'blaine-choice-btn';
+    rb.innerHTML   = `${rightName} →`;
+    rb.addEventListener('click', () => this._answer('right'));
+    btnArea.appendChild(rb);
   },
 
-  _answer(chosen) {
+  _answer(side) {
     if (this._answered) return;
     this._answered = true;
+    const m        = this._matchup;
+    const isLeft   = side === 'left';
+    const pickedId = isLeft ? m.leftId : m.rightId;
+    const isRight  = pickedId === m.winnerId;
 
-    const r       = this._riddle;
-    const isRight = chosen === r.answer;
+    // Disable buttons
+    document.querySelectorAll('.blaine-choice-btn').forEach(b => b.disabled = true);
 
-    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
-      b.disabled = true;
-      if (b.textContent === r.answer) b.classList.add('answer-correct');
-      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
-    });
+    // Visual reveal — winner advances, loser fades
+    const winnerSide  = m.winnerId === m.leftId ? 'left' : 'right';
+    const winnerEl    = document.getElementById(`blaine-${winnerSide}`);
+    const loserSide   = winnerSide === 'left' ? 'right' : 'left';
+    const loserEl     = document.getElementById(`blaine-${loserSide}`);
 
-    // Reveal Pokémon sprite
-    const revEl = document.getElementById('jessie-word-display');
-    revEl.style.display = 'flex';
-    revEl.className     = 'fishing-reveal';
-    const wordEl = document.getElementById('jessie-word');
-    const typeEl = document.getElementById('jessie-word-type');
-    wordEl.textContent = '...';
-    typeEl.textContent = '';
-    fetchPoke(r.poke_id).then(data => {
-      const name      = capitalize(data.name);
-      const sprite    = data.sprites?.front_default || getSpriteUrl(data);
-      const types     = (data.types || []).map(t => t.type.name);
-      wordEl.innerHTML = `<img src="${sprite}" alt="${name}" class="fishing-reveal-sprite"
-        onerror="this.style.display='none'" /> ${name}`;
-      typeEl.innerHTML = types.map(t =>
-        `<span class="hud-type-badge type-${t}">${t}</span>`).join(' ');
-    }).catch(() => { wordEl.textContent = r.answer; });
+    setTimeout(() => {
+      if (winnerEl) winnerEl.classList.add('blaine-winner');
+      if (loserEl)  loserEl.classList.add('blaine-loser');
+    }, 200);
 
-    const resultEl = document.getElementById('challenge-result');
-    const pun = BLAINE_PUNS[Math.floor(Math.random() * BLAINE_PUNS.length)];
-    resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
-    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${r.answer}</strong><br>${r.explanation}<br>` +
-      `<em>"${isRight ? r.blaine_right : r.blaine_wrong}" — Blaine</em>` +
-      (isRight ? `<div class="blaine-pun">"${pun}"</div>` : '');
-    resultEl.style.display = 'block';
+    // Effectiveness badge between combatants
+    const vsEl = document.querySelector('.blaine-vs');
+    if (vsEl) {
+      const eff = m.mult === 0 ? 'Immune! 0×'
+                : m.mult >= 2  ? '⚡ 2× Super Effective!'
+                : '🛡️ 0.5× Resisted';
+      const col = m.mult === 0 ? '#888' : m.mult >= 2 ? '#FFD700' : '#aaa';
+      setTimeout(() => {
+        vsEl.innerHTML = `<span class="blaine-eff-badge" style="color:${col}">${eff}</span>`;
+      }, 500);
+    }
 
-    document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';
-    document.getElementById('challenge-continue-btn').style.display = 'block';
+    // Build explanation
+    const winnerName = m.winnerId === m.leftId
+      ? (this._leftData  ? capitalize(this._leftData.name)  : `#${m.leftId}`)
+      : (this._rightData ? capitalize(this._rightData.name) : `#${m.rightId}`);
+    const loserName  = m.winnerId === m.leftId
+      ? (this._rightData ? capitalize(this._rightData.name) : `#${m.rightId}`)
+      : (this._leftData  ? capitalize(this._leftData.name)  : `#${m.leftId}`);
+
+    const linePool   = isRight
+      ? BLAINE_TEACHING_LINES[m.relationship]
+      : BLAINE_TEACHING_LINES[`wrong_${m.relationship}`] || BLAINE_TEACHING_LINES.wrong_super;
+    const rawLine    = linePool[Math.floor(Math.random() * linePool.length)] || '';
+    const teachLine  = rawLine
+      .replace('{atkType}', capitalize(m.atkType))
+      .replace('{defType}', capitalize(m.defType))
+      .replace('{atkName}', winnerName)
+      .replace('{defName}', loserName)
+      .replace('{winName}', winnerName);
+
+    const hook       = _getTypeHook(m.atkType, m.defType);
+    const multLabel  = m.mult === 0 ? '0× (immune)' : m.mult >= 2 ? '2× (super effective)' : '0.5× (resisted)';
+
+    const resultEl   = document.getElementById('challenge-result');
+    resultEl.className = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
+    resultEl.innerHTML = `
+      <div class="blaine-result-title">${isRight ? '✅ Correct!' : '❌ ' + winnerName + ' wins!'}</div>
+      <div class="blaine-result-matchup">
+        <span class="hud-type-badge type-${m.atkType}">${m.atkType}</span>
+        → <strong>${multLabel}</strong> →
+        <span class="hud-type-badge type-${m.defType}">${m.defType}</span>
+      </div>
+      <div class="blaine-result-hook">💡 ${hook}</div>
+      <div class="blaine-result-quote"><em>"${teachLine}" — Blaine</em></div>`;
+    setTimeout(() => {
+      resultEl.style.display = 'block';
+      document.getElementById('challenge-continue-btn').style.display = 'block';
+      document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';
+    }, 800);
   },
 
   finish() {
     this._answered = false;
     document.getElementById('screen-challenge').classList.remove('blaine-active');
-    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
-    document.getElementById('jessie-word-display').style.display = 'none';
-    document.getElementById('jessie-word-display').className = 'jessie-word-display';
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
 
-    const isRight     = !!document.querySelector('.answer-correct');
-    const goldReward  = isRight
-      ? 40 + (GameState.bossesDefeated || 0) * 5
-      : 10;
+    const isRight    = !!document.querySelector('.result-correct');
+    const tier       = GameState.difficultyTier || 2;
+    const goldBase   = 30 + (GameState.bossesDefeated || 0) * 5;
+    const goldReward = isRight ? goldBase : Math.floor(goldBase * 0.3);
+
     GameState.gold = (GameState.gold || 0) + goldReward;
-
-    const pun = BLAINE_PUNS[Math.floor(Math.random() * BLAINE_PUNS.length)];
+    if (isRight) {
+      const poke = GameState.party[GameState.activePokemonIndex];
+      if (poke) { poke.level++; poke.maxHp += 8; poke.hp = Math.min(poke.maxHp, poke.hp + 8); }
+    }
     saveGame();
 
-    if (isRight) {
-      SoundEngine.playFanfare();
-      showModal(
-        '🔥 Correct!',
-        `+${goldReward}💰 gold reward!\n\n"${pun}" — Blaine`,
-        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
-      );
-    } else {
-      showModal(
-        '🔥 Not quite!',
-        `+${goldReward}💰 for trying — Blaine appreciates the effort.\n\n"${this._riddle?.blaine_wrong || 'Study harder!'}" — Blaine`,
-        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
-      );
-    }
+    const titleStr = isRight ? '🔥 Correct!' : '🔥 Study up!';
+    const msg      = isRight
+      ? `+${goldReward}💰 · +1 level!\n\n"Knowledge IS power — and you have both!" — Blaine`
+      : `+${goldReward}💰 consolation gold.\n\n"Failure is just data. Come back stronger!" — Blaine`;
 
-    this._answered = false;
+    if (isRight) SoundEngine.playFanfare();
+    showModal(titleStr, msg, () => {
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+    });
   },
 };
-
 // ─── LEGENDARY ENCOUNTER ENGINE ──────────────────────────────────────────────
 // Dedicated engine for Articuno / Zapdos / Moltres encounters.
 // Triggered by a 'legendary' map node injected at step 7 on maps bi >= 6.
