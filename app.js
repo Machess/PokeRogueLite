@@ -230,7 +230,7 @@ const NODE_TYPES = ['battle', 'heal', 'catch', 'training', 'shop'];
 const CHALLENGE_CLASSES = [
   'meowth-active','jessie-active','james-active',
   'surge-active','erika-active','koga-active',
-  'blaine-active','sabrina-active','fishing-active',
+  'blaine-active','sabrina-active','fishing-active','jigglypuff-active',
 ];
 
 const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣' };
@@ -7310,6 +7310,314 @@ const SabrinaEngine = {
   },
 };
 
+// ─── JIGGLYPUFF SONG ENGINE ──────────────────────────────────────────────────
+// Web Audio API tone synthesis — no audio files needed.
+// Notes from C major pentatonic. Triangle oscillator ≈ soft singing tone.
+
+const JIGGLYPUFF_NOTES = [
+  { id:'C',  freq:261.63, color:'#ff4444', label:'C',  labelFull:'C4'  },
+  { id:'D',  freq:293.66, color:'#ff8c00', label:'D',  labelFull:'D4'  },
+  { id:'E',  freq:329.63, color:'#ffd700', label:'E',  labelFull:'E4'  },
+  { id:'G',  freq:392.00, color:'#44cc44', label:'G',  labelFull:'G4'  },
+  { id:'A',  freq:440.00, color:'#4488ff', label:'A',  labelFull:'A4'  },
+  { id:'C2', freq:523.25, color:'#8844ff', label:'C\'', labelFull:'C5'  },
+  { id:'D2', freq:587.33, color:'#ff44cc', label:'D\'', labelFull:'D5'  },
+];
+
+// Synthesise a note using Web Audio API
+// ─── SHARED WEB AUDIO CONTEXT ────────────────────────────────────────────────
+// One AudioContext reused for all notes — browsers limit simultaneous contexts.
+let _audioCtx = null;
+function _getAudioCtx() {
+  if (!_audioCtx || _audioCtx.state === 'closed') {
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if (_audioCtx.state === 'suspended') _audioCtx.resume();
+  return _audioCtx;
+}
+
+function playNoteFreq(freq, duration = 0.45, volume = 0.35) {
+  try {
+    const ctx  = _getAudioCtx();
+    const now  = ctx.currentTime;
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    // Vibrato — makes it sound like singing
+    const vibrato      = ctx.createOscillator();
+    const vibratoGain  = ctx.createGain();
+    vibrato.frequency.value  = 5.5;
+    vibratoGain.gain.value   = 6;
+    vibrato.connect(vibratoGain);
+    vibratoGain.connect(osc.frequency);
+
+    osc.type = 'triangle';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(volume, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    vibrato.start(now);
+    osc.start(now);
+    vibrato.stop(now + duration);
+    osc.stop(now + duration);
+  } catch(e) { /* AudioContext not available */ }
+}
+
+function playWrongBuzz() {
+  try {
+    const ctx  = _getAudioCtx();
+    const now  = ctx.currentTime;
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 140;
+    gain.gain.setValueAtTime(0.25, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now);
+    osc.stop(now + 0.18);
+  } catch(e) {}
+}
+
+const JigglypuffEngine = {
+  _node:       null,
+  _sequence:   [],   // array of note indices
+  _playerPos:  0,    // which position the player is currently filling
+  _noteCount:  0,    // length of sequence this round
+  _replayPenalty: false,
+
+  start(node) {
+    this._node     = node;
+    this._playerPos = 0;
+    const tier     = GameState.difficultyTier || 2;
+    const beaten   = GameState.bossesDefeated || 0;
+    const notePool = tier <= 1 ? 5 : tier === 2 ? 6 : 7;
+    const seqLen   = tier <= 1 ? (beaten < 2 ? 3 : 4)
+                   : tier === 2 ? (beaten < 5 ? 4 : 5)
+                   : Math.min(4 + Math.floor(beaten / 2), 7);
+    this._replayPenalty = tier >= 3;
+
+    // Build random sequence
+    this._sequence = [];
+    for (let i = 0; i < seqLen; i++) {
+      this._sequence.push(Math.floor(Math.random() * notePool));
+    }
+
+    // Set up challenge screen
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = 'assets/jigglypuff.png'; img.style.display = ''; }
+    document.getElementById('challenge-badge').textContent   = '🎵 Jigglypuff\'s Song!';
+    document.getElementById('challenge-intro').textContent   = 'Listen carefully and sing along!';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('jessie-word-display').style.display    = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
+
+    // Build coin-visual area (sequence bar + Jigglypuff face)
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'jigglypuff-wrap';
+    cv.innerHTML     = `
+      <div class="jigglypuff-sprite-area" id="jiggly-sprite-area">
+        <img src="assets/jiglypuff.png" class="jiggly-img" id="jiggly-img"
+             onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/39.png'" alt="Jigglypuff"/>
+        <div class="jiggly-listen-msg" id="jiggly-msg">🎵 Listen…</div>
+      </div>
+      <div class="jiggly-seq-bar" id="jiggly-seq-bar"></div>`;
+
+    this._buildSeqBar();
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
+    document.getElementById('screen-challenge').classList.add('jigglypuff-active');
+    SoundEngine.stopBGM();
+
+    // Play sequence after brief intro delay
+    setTimeout(() => this._playSequence(() => this._showPiano()), 900);
+  },
+
+  _buildSeqBar() {
+    const bar = document.getElementById('jiggly-seq-bar');
+    if (!bar) return;
+    bar.innerHTML = '';
+    this._sequence.forEach((noteIdx, i) => {
+      const dot = document.createElement('div');
+      dot.className    = 'jiggly-dot jiggly-dot-pending';
+      dot.id           = `jiggly-dot-${i}`;
+      dot.style.setProperty('--note-color', JIGGLYPUFF_NOTES[noteIdx].color);
+      const tier = GameState.difficultyTier || 2;
+      dot.textContent  = tier <= 2 ? JIGGLYPUFF_NOTES[noteIdx].label : '';
+      bar.appendChild(dot);
+    });
+  },
+
+  _playSequence(onDone) {
+    const msgEl = document.getElementById('jiggly-msg');
+    if (msgEl) msgEl.textContent = '🎵 Listen…';
+    const jiggly = document.getElementById('jiggly-img');
+
+    let i = 0;
+    const playNext = () => {
+      if (i >= this._sequence.length) {
+        if (onDone) setTimeout(onDone, 400);
+        return;
+      }
+      const noteIdx = this._sequence[i];
+      const note    = JIGGLYPUFF_NOTES[noteIdx];
+
+      // Highlight dot
+      const dot = document.getElementById(`jiggly-dot-${i}`);
+      if (dot) { dot.classList.add('jiggly-dot-playing'); }
+
+      // Jigglypuff puff animation
+      if (jiggly) { jiggly.classList.add('jiggly-puff'); }
+
+      // Play the note
+      playNoteFreq(note.freq, 0.45);
+
+      setTimeout(() => {
+        if (dot) dot.classList.remove('jiggly-dot-playing');
+        if (jiggly) jiggly.classList.remove('jiggly-puff');
+        i++;
+        setTimeout(playNext, 150);
+      }, 480);
+    };
+    playNext();
+  },
+
+  _showPiano() {
+    this._playerPos = 0;
+    const msgEl = document.getElementById('jiggly-msg');
+    if (msgEl) msgEl.textContent = '🎵 Your turn!';
+    const jiggly = document.getElementById('jiggly-img');
+    if (jiggly) jiggly.classList.add('jiggly-bounce');
+
+    // Replay button
+    const btnArea = document.getElementById('challenge-answer-btns');
+    btnArea.innerHTML = '';
+
+    const replayBtn = document.createElement('button');
+    const penaltyMsg = this._replayPenalty ? ' (-5💰)' : '';
+    replayBtn.className   = 'jiggly-replay-btn';
+    replayBtn.textContent = `🎵 Hear again${penaltyMsg}`;
+    replayBtn.addEventListener('click', () => {
+      _getAudioCtx(); // ensure context running
+      if (this._replayPenalty && (GameState.gold || 0) >= 5) {
+        GameState.gold -= 5;
+      }
+      this._playerPos = 0;
+      this._buildSeqBar();
+      this._playSequence(() => this._showPiano());
+    });
+    btnArea.appendChild(replayBtn);
+
+    // Piano buttons
+    const piano = document.createElement('div');
+    piano.className = 'jiggly-piano';
+    const tier = GameState.difficultyTier || 2;
+    const notePool = tier <= 1 ? 5 : tier === 2 ? 6 : 7;
+
+    JIGGLYPUFF_NOTES.slice(0, notePool).forEach((note, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'jiggly-key';
+      btn.style.setProperty('--key-color', note.color);
+      btn.dataset.noteIdx = idx;
+      btn.innerHTML = `<span class="jiggly-key-label">${tier <= 2 ? note.label : note.labelFull}</span>`;
+      btn.addEventListener('click', () => {
+        // Ensure AudioContext is running (required after user gesture on mobile)
+        _getAudioCtx();
+        this._playerTap(idx);
+      });
+      piano.appendChild(btn);
+    });
+    btnArea.appendChild(piano);
+    if (jiggly) setTimeout(() => jiggly.classList.remove('jiggly-bounce'), 600);
+  },
+
+  _playerTap(noteIdx) {
+    const expected = this._sequence[this._playerPos];
+    const note     = JIGGLYPUFF_NOTES[noteIdx];
+    playNoteFreq(note.freq, 0.35);
+
+    const dot   = document.getElementById(`jiggly-dot-${this._playerPos}`);
+    const jiggly = document.getElementById('jiggly-img');
+
+    if (noteIdx === expected) {
+      // Correct
+      if (dot) {
+        dot.classList.remove('jiggly-dot-pending');
+        dot.classList.add('jiggly-dot-correct');
+      }
+      if (jiggly) { jiggly.classList.add('jiggly-nod'); setTimeout(() => jiggly.classList.remove('jiggly-nod'), 400); }
+      this._playerPos++;
+
+      if (this._playerPos >= this._sequence.length) {
+        setTimeout(() => this._complete(), 400);
+      }
+    } else {
+      // Wrong
+      playWrongBuzz();
+      if (dot) {
+        dot.classList.add('jiggly-dot-wrong');
+        setTimeout(() => dot.classList.remove('jiggly-dot-wrong'), 500);
+      }
+      if (jiggly) {
+        jiggly.classList.add('jiggly-ears');
+        setTimeout(() => jiggly.classList.remove('jiggly-ears'), 600);
+      }
+      const msgEl = document.getElementById('jiggly-msg');
+      if (msgEl) { msgEl.textContent = '😣 Try again!'; setTimeout(() => { if (msgEl) msgEl.textContent = '🎵 Your turn!'; }, 700); }
+    }
+  },
+
+  _complete() {
+    const jiggly = document.getElementById('jiggly-img');
+    if (jiggly) { jiggly.classList.add('jiggly-spin'); }
+    const msgEl = document.getElementById('jiggly-msg');
+    if (msgEl) msgEl.textContent = '🎵 ★ Perfect! ★';
+
+    // Play full sequence back as celebration
+    let i = 0;
+    const celebrate = () => {
+      if (i >= this._sequence.length) {
+        setTimeout(() => this._finish(), 600);
+        return;
+      }
+      playNoteFreq(JIGGLYPUFF_NOTES[this._sequence[i]].freq, 0.35);
+      i++;
+      setTimeout(celebrate, 320);
+    };
+    celebrate();
+
+    // Sparkle all dots
+    this._sequence.forEach((_, i) => {
+      const dot = document.getElementById(`jiggly-dot-${i}`);
+      if (dot) dot.classList.add('jiggly-dot-complete');
+    });
+  },
+
+  _finish() {
+    const goldReward = 20 + (GameState.bossesDefeated || 0) * 5;
+    GameState.gold   = (GameState.gold || 0) + goldReward;
+    const activePoke = GameState.party[GameState.activePokemonIndex];
+    if (activePoke) { activePoke.level++; activePoke.maxHp += 8; activePoke.hp = Math.min(activePoke.maxHp, activePoke.hp + 8); }
+    saveGame();
+
+    document.getElementById('screen-challenge').classList.remove('jigglypuff-active');
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
+
+    showModal('🎵 Song Complete!',
+      `You sang with Jigglypuff!\n+${goldReward}💰 gold · +1 level!\n"La la la la la~" — Jigglypuff`,
+      () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+    );
+  },
+};
+
 const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;
@@ -7318,6 +7626,7 @@ const MysteryEngine = {
       { weight: 3, fn: () => CatchEngine.start(node, 'rare') },
       { weight: 2, fn: () => RocketBattleEngine.start(node) },
     ];
+    if (beaten >= 2) pool.push({ weight: 2, fn: () => JigglypuffEngine.start(node) });
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
     if (beaten >= 4) pool.push({ weight: 2, fn: () => ErikaEngine.start(node) });
     if (beaten >= 5) pool.push({ weight: 2, fn: () => KogaEngine.start(node) });
