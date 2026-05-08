@@ -233,7 +233,7 @@ const CHALLENGE_CLASSES = [
   'blaine-active','sabrina-active','fishing-active',
 ];
 
-const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓', cooking: '🍳', maze: '🌊', fishing: '🎣' };
+const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣' };
 const NODE_MYSTERY_ICON = '❓';
 
 
@@ -602,9 +602,45 @@ const DEFAULT_DECK_INDICES = [0, 1, 2, 3, 4, 0, 1, 5, 6, 3];
 
 // Common wild Pokémon pool (ids)
 const WILD_POOL = {
-  common: [19,16,10,13,21,41,43,46,48,60,63,66,69,72,74,77,79,81,84,86,88,90,92,95,96,98,100,102,104,108,111,113,114,116,118,120],
-  uncommon: [23,27,29,32,37,50,52,54,56,58,88,90,92,95,109,115,117,119,121,122,123,124,125,126,127,128,129,130,131,132,133,136,137,138,140,142],
-  rare: [131,130,142,149,143,6,9,3,65,68,71,76,78,80,82,83,85,87,89,91,93,94,97,99,101,103,105,107,110,112],
+  // Common — unevolved Kanto Pokémon, widely encountered in the wild
+  common: [
+    10,11,13,14,16,17,19,20,21,
+    39,40,41,42,43,44,46,47,48,49,
+    50,51,52,53,54,55,56,57,58,
+    60,61,63,66,69,70,72,73,74,75,
+    77,79,81,84,86,88,90,92,95,96,98,
+    100,102,104,108,109,111,113,114,116,118,120,
+    129,133,
+  ],
+  // Uncommon — mid-stage evolutions + less common Kanto Pokémon
+  uncommon: [
+    12,15,18,22,23,24,27,28,
+    29,30,31,32,33,34,35,36,37,38,
+    45,59,62,64,67,71,76,78,80,82,
+    83,85,87,89,91,93,94,97,99,
+    101,103,105,107,110,112,115,117,119,121,
+    122,123,124,125,126,127,128,130,131,132,
+    134,135,136,137,138,139,140,141,142,143,
+  ],
+  // Rare — fully evolved powerful Pokémon + starter second evolutions
+  rare: [
+    2,5,8,           // Ivysaur, Charmeleon, Wartortle (starter 2nd evos — rare only)
+    3,6,9,           // Venusaur, Charizard, Blastoise (final forms — very rare)
+    65,68,
+    149,             // Dragonite
+    130,             // Gyarados
+    143,             // Snorlax
+    106,             // Hitmonlee
+    107,             // Hitmonchan
+    110,             // Weezing
+    112,             // Rhydon
+    76,              // Golem
+    103,             // Exeggutor
+    105,             // Marowak
+    148,             // Dragonair
+    147,             // Dratini
+    59,              // Arcanine
+  ],
   legendary: [144, 145, 146],  // Articuno, Zapdos, Moltres
 };
 
@@ -3597,7 +3633,6 @@ const ARROW_LABELS = {
   boss:     { icon: 'assets/boss_icon.png',    label: 'GYM!'   },
   mystery:  { icon: null, emoji: '❓',          label: '???'    },
   cooking:  { icon: null, emoji: '🍳',          label: "Brock's Kitchen" },
-  maze:     { icon: null, emoji: '🌊',          label: "Misty's Maze"   },
   fishing:  { icon: null, emoji: '🎣',          label: "Misty's Fishing"},
 };
 
@@ -3925,7 +3960,6 @@ const MapEngine = {
       case 'boss':     BossEngine.start(node);                 break;
       case 'mystery':  MysteryEngine.start(node);              break;
       case 'cooking':  CookingEngine.start(node);              break;
-      case 'maze':     MazeEngine.start(node);                  break;
       case 'fishing':  FishingEngine.start(node);               break;
     }
   },
@@ -9487,552 +9521,8 @@ const CookingEngine = {
   },
 };
 
-// ══════════════════════════════════════════════════════════════════════════════
-// ── MAZE MINI-GAME START ──────────────────────────────────────────────────────
-// To remove this feature entirely, delete everything between the
-// MAZE MINI-GAME START and MAZE MINI-GAME END comments, plus:
-//   • case 'maze' in MapEngine dispatch switch
-//   • 'maze' entries in NODE_ICONS and ARROW_LABELS
-//   • bi >= 2 injection block in generateMap
-//   • MazeEngine._isActive branches in btn-start-boss-battle / btn-dialogue-next
-//   • #screen-maze HTML block
-//   • .maze-* CSS rules
-// ──────────────────────────────────────────────────────────────────────────────
+// ─── FISHING MINI-GAME ────────────────────────────────────────────────────────
 
-const MISTY_MAZE_SCRIPTS = [
-  [
-    { name:'Misty', img:'assets/misty.png',
-      text:'${name}! I need your help. I dropped my gym key somewhere in the water caves and I have to get it back.' },
-    { name:'Misty', img:'assets/misty.png',
-      text:'The problem is... there are Bug Pokémon in there. Caterpie and Weedle. I can\'t stand them. Don\'t even ask.' },
-    { name:'Misty', img:'assets/misty.png',
-      text:'Guide me through without touching any of them. If I make it out, your team gets a proper rest. Deal?' },
-  ],
-  [
-    { name:'Misty', img:'assets/misty.png',
-      text:'Ugh — ${name}! Those horrible bugs are blocking the path to Cerulean Cave again.' },
-    { name:'Misty', img:'assets/misty.png',
-      text:'I know, I know. I\'m a Pokémon trainer. I shouldn\'t be scared. But they\'re just so... wriggly.' },
-    { name:'Misty', img:'assets/misty.png',
-      text:'Help me get through without touching one. Please? I\'ll make it worth your while.' },
-  ],
-  [
-    { name:'Misty', img:'assets/misty.png',
-      text:'${name}! Don\'t laugh, but I need an escort through the Bug Pokémon section of the gym path.' },
-    { name:'Misty', img:'assets/misty.png',
-      text:'Starmie keeps trying to drag me over to them. Absolutely not. I need a human guide.' },
-    { name:'Misty', img:'assets/misty.png',
-      text:'Get me to the exit and your Pokémon will be well taken care of. Let\'s go!' },
-  ],
-];
-
-// ─── MAZE GENERATION ─────────────────────────────────────────────────────────
-// Procedural maze using Recursive Backtracker (depth-first search).
-// Guarantees: always solvable, every floor cell reachable, never the same twice.
-//
-// The logical grid is (size × size) cells where size is ODD (the walls between
-// cells are also cells in the grid). So a 7×7 grid has (7-1)/2 = 3×3 logical rooms.
-// start = top-left room [1,1], exit = bottom-right room [size-2, size-2].
-//
-// Bug speed: 1 = moves 1 step per player move, 2 = moves 2 steps per player move.
-// Tier 1: 2 speed-1 bugs (slow, readable)
-// Tier 2: 2 speed-1 + 2 speed-2 bugs
-// Tier 3: 2 speed-1 + 4 speed-2 bugs
-
-const MAZE_TIER_CFG = {
-  // gridSize must be odd. pauseAtEnd = how many player steps the bug freezes at each end.
-  1: { gridSize: 7,  bugCount: 2, lives: 3, pauseAtEnd: 3 },
-  2: { gridSize: 9,  bugCount: 4, lives: 2, pauseAtEnd: 2 },
-  3: { gridSize: 11, bugCount: 6, lives: 1, pauseAtEnd: 1 },
-};
-
-function _generateMaze(gridSize) {
-  // Fill everything with walls
-  const grid = Array.from({ length: gridSize }, () => new Array(gridSize).fill(1));
-
-  // Recursive backtracker — carve passages between rooms
-  const roomSize = (gridSize - 1) / 2;  // number of rooms per axis
-  const visited  = Array.from({ length: roomSize }, () => new Array(roomSize).fill(false));
-  const dirs      = [[-1,0],[1,0],[0,-1],[0,1]];
-
-  function carve(rr, rc) {
-    visited[rr][rc] = true;
-    grid[rr * 2 + 1][rc * 2 + 1] = 0;  // carve the room itself
-
-    const shuffled = [...dirs].sort(() => Math.random() - 0.5);
-    for (const [dr, dc] of shuffled) {
-      const nr = rr + dr, nc = rc + dc;
-      if (nr < 0 || nr >= roomSize || nc < 0 || nc >= roomSize) continue;
-      if (visited[nr][nc]) continue;
-      // Carve the wall between rr,rc and nr,nc
-      grid[rr * 2 + 1 + dr][rc * 2 + 1 + dc] = 0;
-      carve(nr, nc);
-    }
-  }
-
-  carve(0, 0);
-  return grid;
-}
-
-function _placeBugs(grid, gridSize, bugCount, pauseAtEnd, start, exit) {
-  // Collect all floor cells that are not start or exit
-  const floors = [];
-  for (let r = 1; r < gridSize - 1; r++) {
-    for (let c = 1; c < gridSize - 1; c++) {
-      if (grid[r][c] === 0
-          && !(r === start[0] && c === start[1])
-          && !(r === exit[0]  && c === exit[1])) {
-        floors.push([r, c]);
-      }
-    }
-  }
-  floors.sort(() => Math.random() - 0.5);
-
-  const bugs = [];
-  const chosen = floors.slice(0, bugCount);
-
-  chosen.forEach((cell, i) => {
-    const [r, c] = cell;
-    const icon   = (i % 2 === 0) ? '🐛' : '🪱';
-
-    // Build a short patrol path from adjacent floor cells
-    const adj = [[r-1,c],[r+1,c],[r,c-1],[r,c+1]]
-      .filter(([nr,nc]) => nr > 0 && nr < gridSize-1 && nc > 0 && nc < gridSize-1
-                        && grid[nr][nc] === 0
-                        && !(nr === start[0] && nc === start[1])
-                        && !(nr === exit[0]  && nc === exit[1]));
-
-    let path;
-    if (adj.length === 0) {
-      path = [[r,c]];
-    } else if (adj.length === 1) {
-      path = [[r,c], adj[0]];
-    } else {
-      const a      = adj[Math.floor(Math.random() * adj.length)];
-      const others = adj.filter(n => !(n[0] === a[0] && n[1] === a[1]));
-      const b      = others.length > 0 ? others[Math.floor(Math.random() * others.length)] : null;
-      path = b ? [a, [r,c], b, [r,c]] : [[r,c], a];
-    }
-
-    bugs.push({ path, pauseAtEnd, icon });
-  });
-
-  return bugs;
-}
-
-const MazeEngine = {
-  _node:      null,
-  _isActive:  false,
-  _script:    [],
-  _lineIdx:   0,
-
-  // ── Runtime state ─────────────────────────────────────────────────────────
-  _grid:      [],
-  _misty:     null,
-  _exit:      null,
-  _bugs:      [],   // [{ row, col, path, pathIdx, speed, icon }]
-  _lives:     0,
-  _size:      0,
-  _livesLost: 0,
-  _finished:  false,
-  _maxLives:  0,
-
-  // ─── Entry point ─────────────────────────────────────────────────────────
-  start(node) {
-    this._node     = node;
-    this._isActive = true;
-    this._script   = MISTY_MAZE_SCRIPTS[Math.floor(Math.random() * MISTY_MAZE_SCRIPTS.length)];
-    this._lineIdx  = 0;
-
-    showScreen('boss');
-    BossEngine._isRocket = false;
-
-    const bgImg = document.querySelector('#screen-boss .battle-bg-img');
-    if (bgImg) { bgImg.src = ''; bgImg.style.opacity = '0'; }
-
-    document.getElementById('trainer-intro').style.display    = 'flex';
-    document.getElementById('boss-battle-area').style.display = 'none';
-    document.getElementById('boss-party-bar').innerHTML       = '';
-
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) startBtn.textContent = 'Into the Maze! ▶';
-
-    this._showLine(0);
-  },
-
-  _showLine(idx) {
-    const line   = this._script[idx];
-    const name   = GameState.trainerName || 'Trainer';
-    const text   = line.text.replace(/\$\{name\}/g, name);
-    const isLast = idx === this._script.length - 1;
-
-    const img = document.getElementById('boss-trainer-sprite');
-    if (img) { img.src = line.img; }
-    document.getElementById('dialogue-name').textContent = line.name;
-    document.getElementById('dialogue-text').textContent = '';
-
-    const nextBtn  = document.getElementById('btn-dialogue-next');
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (nextBtn)  nextBtn.style.display  = 'none';
-    if (startBtn) startBtn.style.display = 'none';
-
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += text[ci++];
-      if (ci >= text.length) {
-        clearInterval(iv);
-        if (isLast) { if (startBtn) startBtn.style.display = ''; }
-        else        { if (nextBtn)  nextBtn.style.display  = ''; }
-      }
-    }, 28);
-
-    this._lineIdx = idx;
-  },
-
-  advanceDialogue() {
-    const next = this._lineIdx + 1;
-    if (next < this._script.length) this._showLine(next);
-  },
-
-  // ─── Start the actual maze ────────────────────────────────────────────────
-  startGame() {
-    this._isActive = false;
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) startBtn.textContent = 'Battle! ▶';
-    document.getElementById('trainer-intro').style.display = 'none';
-
-    const tier  = GameState.difficultyTier || 2;
-    const cfg   = MAZE_TIER_CFG[tier] || MAZE_TIER_CFG[2];
-
-    this._size      = cfg.gridSize;
-    this._lives     = cfg.lives;
-    this._maxLives  = cfg.lives;
-    this._livesLost = 0;
-    this._finished  = false;
-
-    // Generate a fresh maze every time
-    this._grid  = _generateMaze(cfg.gridSize);
-
-    const start = [1, 1];
-    const exit  = [cfg.gridSize - 2, cfg.gridSize - 2];
-    this._misty = { row: start[0], col: start[1] };
-    this._exit  = { row: exit[0],  col: exit[1] };
-
-    const bugDefs = _placeBugs(this._grid, cfg.gridSize, cfg.bugCount, cfg.pauseAtEnd, start, exit);
-    this._bugs = bugDefs.map(b => ({
-      row:          b.path[0][0],
-      col:          b.path[0][1],
-      path:         b.path,
-      pathIdx:      0,
-      pauseAtEnd:   b.pauseAtEnd,
-      pauseCounter: 0,   // counts down when frozen at a path end
-      icon:         b.icon,
-    }));
-
-    showScreen('maze');
-    this._renderMaze();
-    this._bindControls();
-  },
-
-  // ─── Bugs step when Misty moves ──────────────────────────────────────────
-  // Each bug moves 1 cell per player step.
-  // When a bug reaches either end of its patrol path it pauses for
-  // `pauseAtEnd` player steps before reversing — giving the player a window.
-  _stepBugs() {
-    this._bugs.forEach(bug => {
-      if (bug.path.length <= 1) return;  // static bug — never moves
-
-      // Currently paused at an end — count down and stay put
-      if (bug.pauseCounter > 0) {
-        bug.pauseCounter--;
-        return;
-      }
-
-      // Advance one step
-      bug.pathIdx = (bug.pathIdx + 1) % bug.path.length;
-      bug.row = bug.path[bug.pathIdx][0];
-      bug.col = bug.path[bug.pathIdx][1];
-
-      // Check if we've reached an end of the path (index 0 or last index)
-      const isEnd = bug.pathIdx === 0 || bug.pathIdx === bug.path.length - 1;
-      if (isEnd) {
-        bug.pauseCounter = bug.pauseAtEnd;
-      }
-    });
-  },
-
-  // ─── Player movement ──────────────────────────────────────────────────────
-  _move(dr, dc) {
-    if (this._finished) return;
-    const nr = this._misty.row + dr;
-    const nc = this._misty.col + dc;
-    if (nr < 0 || nr >= this._size || nc < 0 || nc >= this._size) return;
-    if (this._grid[nr][nc] === 1) return;   // wall — do NOT step bugs on blocked moves
-    this._misty.row = nr;
-    this._misty.col = nc;
-    // Step bugs AFTER Misty moves so the player sees where they're moving to
-    this._stepBugs();
-    this._checkCollision();
-    this._checkExit();
-    this._renderMaze();
-  },
-
-  _checkCollision() {
-    if (this._finished) return;
-    const hit = this._bugs.some(b => b.row === this._misty.row && b.col === this._misty.col);
-    if (!hit) return;
-    this._livesLost++;
-    this._lives--;
-    if (this._lives <= 0) {
-      this._finish('fail');
-    } else {
-      const grid = document.getElementById('maze-grid');
-      if (grid) {
-        grid.classList.remove('maze-hit');
-        void grid.offsetWidth;
-        grid.classList.add('maze-hit');
-      }
-      this._renderMaze();
-    }
-  },
-
-  _checkExit() {
-    if (this._misty.row === this._exit.row && this._misty.col === this._exit.col) {
-      this._finish(this._livesLost === 0 ? 'perfect' : 'partial');
-    }
-  },
-
-  _finish(outcome) {
-    if (this._finished) return;
-    this._finished = true;
-
-    const party = GameState.party.filter(p => p.hp > 0);
-    let headline, detail, quote;
-
-    if (outcome === 'perfect') {
-      party.forEach(p => { p.hp = Math.min(p.maxHp, p.hp + Math.floor(p.maxHp * 0.20)); });
-      headline = '✨ Made It Through!';
-      detail   = 'All Pokémon healed 20% HP!';
-      quote    = 'I made it! Ugh — those bugs... but your Pokémon look so refreshed after watching me suffer through that.';
-    } else if (outcome === 'partial') {
-      const lead = party[0];
-      if (lead) lead.hp = Math.min(lead.maxHp, lead.hp + Math.floor(lead.maxHp * 0.10));
-      headline = '😰 Made It — Barely!';
-      detail   = 'Lead Pokémon healed 10% HP.';
-      quote    = 'I made it, but one of those things TOUCHED me. I need a moment. Here — take care of your partner.';
-    } else {
-      party.forEach(p => { p.hp = Math.max(1, p.hp - Math.floor(p.hp * 0.05)); });
-      headline = '😱 Too Many Bugs!';
-      detail   = 'All Pokémon lost 5% HP.';
-      quote    = 'I CAN\'T. There are too many of them. We\'re going around. Sorry.';
-    }
-
-    saveGame();
-    showModal(headline, `${detail}\n\n"${quote}" — Misty`, () => {
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
-    });
-  },
-
-  // ─── Rendering ────────────────────────────────────────────────────────────
-  _renderMaze() {
-    const gridEl = document.getElementById('maze-grid');
-    if (!gridEl) return;
-    gridEl.style.gridTemplateColumns = `repeat(${this._size}, 1fr)`;
-
-    const bugMap = {};
-    this._bugs.forEach(b => { bugMap[`${b.row},${b.col}`] = b.icon; });
-
-    let html = '';
-    for (let r = 0; r < this._size; r++) {
-      for (let c = 0; c < this._size; c++) {
-        const key     = `${r},${c}`;
-        const isWall  = this._grid[r][c] === 1;
-        const isMisty = r === this._misty.row && c === this._misty.col;
-        const isExit  = r === this._exit.row  && c === this._exit.col;
-        const bugIcon = bugMap[key];
-
-        let cls = 'maze-cell';
-        let content = '';
-        if (isWall)       { cls += ' maze-wall'; }
-        else if (isExit)  { cls += ' maze-exit'; content = isMisty ? '🏃‍♀️' : '✨'; }
-        else if (isMisty) { cls += ' maze-misty'; content = '🏃‍♀️'; }
-        else if (bugIcon) { cls += ' maze-bug'; content = bugIcon; }
-        else              { cls += ' maze-floor'; }
-
-        html += `<div class="${cls}">${content}</div>`;
-      }
-    }
-    gridEl.innerHTML = html;
-
-    // Lives display
-    const livesEl = document.getElementById('maze-lives');
-    if (livesEl) {
-      livesEl.textContent = '❤️'.repeat(this._lives)
-        + '🖤'.repeat(Math.max(0, this._maxLives - this._lives));
-    }
-  },
-
-  // ─── D-pad ────────────────────────────────────────────────────────────────
-  _bindControls() {
-    const dirs = {
-      'maze-up':    [-1,  0],
-      'maze-down':  [ 1,  0],
-      'maze-left':  [ 0, -1],
-      'maze-right': [ 0,  1],
-    };
-    Object.entries(dirs).forEach(([id, [dr, dc]]) => {
-      const btn = document.getElementById(id);
-      if (btn) btn.onclick = () => this._move(dr, dc);
-    });
-  },
-};
-
-// ── MAZE MINI-GAME END ────────────────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════════════════════════
-
-// ══════════════════════════════════════════════════════════════════════════════
-// ── FISHING MINI-GAME START ───────────────────────────────────────────────────
-// To remove: delete FISHING_PUZZLES + FishingEngine + 'fishing' node injection
-//   + 'fishing' in NODE_ICONS/ARROW_LABELS + case 'fishing' dispatch
-//   + fishingBuff in _applyCardEffect + challenge-continue-btn routing change
-// ─────────────────────────────────────────────────────────────────────────────
-
-// Each puzzle: one Pokémon described through clues, one question, one answer.
-// mode: 'super_effective' = what beats it  |  'not_effective' = what it resists
-// correctTypes: array — all accepted answers (some types share weaknesses)
-// pokeId: shown as reveal at the end
-const FISHING_PUZZLES = [
-  // ── TIER 1 ─────────────────────────────────────────────────────────────────
-  {
-    tier:1, pokeId:129, targetType:'water', mode:'super_effective',
-    clues:[
-      'I can see something jumping! It keeps leaping out of the water.',
-      'It\'s orange and has fins. It splashes a lot but doesn\'t seem very tough...',
-    ],
-    summary: 'An orange, fin-covered Pokémon that loves leaping out of the water. Doesn\'t look very strong yet!',
-    question: '🎣 Which lure would be SUPER EFFECTIVE against this Water-type?',
-    correctTypes: ['electric','grass'],
-    explanation: 'Water Pokémon are weak to Electric and Grass moves — like splashing in a puddle near a power line!',
-    mistyFluff_right: 'Exactly right! Now let\'s hope it doesn\'t just splash at us.',
-    mistyFluff_wrong: 'It\'s a Water type! Electric or Grass lures work best on Water Pokémon.',
-  },
-  {
-    tier:1, pokeId:10, targetType:'bug', mode:'super_effective',
-    clues:[
-      'Ewww. Something green is crawling on the riverbank.',
-      'It has lots of little legs and huge round eyes. I really don\'t want it near me.',
-    ],
-    summary: 'A small, green, many-legged creature crawling slowly near the water. Very creepy according to Misty.',
-    question: '🎣 Which lure would be SUPER EFFECTIVE against this Bug-type?',
-    correctTypes: ['fire','flying','rock'],
-    explanation: 'Bug Pokémon are weak to Fire, Flying, and Rock — think of a bug flying too close to a flame!',
-    mistyFluff_right: 'Yes! Now use it and get that thing AWAY from me.',
-    mistyFluff_wrong: 'It\'s Bug-type! Fire, Flying, or Rock lures are super effective against Bug Pokémon.',
-  },
-  {
-    tier:1, pokeId:54, targetType:'water', mode:'not_effective',
-    clues:[
-      'There\'s something cute looking up at me with big eyes...',
-      'It\'s yellow and looks confused. It keeps tilting its head.',
-    ],
-    summary: 'A small, yellow, big-eyed Pokémon that looks permanently confused. Actually quite adorable.',
-    question: '🎣 Misty WANTS this one! Which lure would NOT scare it away? (Not effective against Water)',
-    hint_t1: 'Misty WANTS this Pokémon! Pick a type that Water Pokémon are NOT hurt by.',
-    correctTypes: ['water','fire','normal'],
-    explanation: 'Water Pokémon resist Water and Fire moves — they just drink them up! Use one of those to avoid scaring it.',
-    mistyFluff_right: 'Perfect! A gentle lure so we don\'t frighten the little thing.',
-    mistyFluff_wrong: 'Water Pokémon resist Water and Fire moves — those won\'t scare it off.',
-  },
-  // ── TIER 2 ─────────────────────────────────────────────────────────────────
-  {
-    tier:2, pokeId:72, targetType:'poison', mode:'super_effective',
-    clues:[
-      'Something is floating just below the surface. It\'s almost see-through.',
-      'It has long tentacles trailing behind it. They look dangerous — possibly venomous.',
-      'It drifts on the current without swimming. Almost like a jellyfish.',
-    ],
-    summary: 'Translucent, tentacled, venomous, drifting on the current. A water-dwelling creature with a toxic sting.',
-    question: '🎣 This is a Poison-type! Which lure would be SUPER EFFECTIVE?',
-    correctTypes: ['ground','psychic'],
-    explanation: 'Poison Pokémon are weak to Ground and Psychic — their toxins don\'t work against a clear mind or solid earth!',
-    mistyFluff_right: 'Ugh, Tentacool. But at least now I know how to deal with it.',
-    mistyFluff_wrong: 'Poison types are weak to Ground and Psychic moves. Think: what neutralises venom?',
-  },
-  {
-    tier:2, pokeId:79, targetType:'water', mode:'not_effective',
-    clues:[
-      'Something enormous is half-submerged near the reeds...',
-      'It looks like it\'s asleep even though it\'s moving. Very... slow.',
-      'Pink body, vacant expression. It doesn\'t seem to notice anything around it.',
-    ],
-    summary: 'A huge, pink, perpetually drowsy Pokémon wading through the shallows. Moves incredibly slowly.',
-    question: '🎣 Misty wants it! Which type would NOT be effective, so she doesn\'t scare it off?',
-    correctTypes: ['water','fire','ice'],
-    explanation: 'Slowpoke is Water/Psychic. It resists Water, Fire, Ice, and Psychic moves — it barely notices them!',
-    mistyFluff_right: 'Use a calm lure so we don\'t startle it. It takes about five minutes to notice anything anyway.',
-    mistyFluff_wrong: 'Slowpoke resists Water and Fire types — those moves just wash right off it.',
-  },
-  {
-    tier:2, pokeId:120, targetType:'water', mode:'super_effective',
-    clues:[
-      'Something is spinning rapidly underneath the surface — it\'s making tiny whirlpools.',
-      'It\'s shaped like a star. Bright red. Very fast.',
-      'It moves in every direction instantly, like it has no front or back.',
-    ],
-    summary: 'A spinning, star-shaped, bright red Pokémon that can move in any direction at high speed.',
-    question: '🎣 This Water-type is quick and acrobatic! What lure is SUPER EFFECTIVE?',
-    correctTypes: ['electric','grass'],
-    explanation: 'Staryu is a Water type — Electric and Grass lures are super effective because water conducts electricity!',
-    mistyFluff_right: 'Staryu! One of my favourites. But I need it to feel the challenge of a proper lure first.',
-    mistyFluff_wrong: 'Water types are weak to Electric and Grass. Even Staryu can\'t dodge a thunderbolt!',
-  },
-  // ── TIER 3 ─────────────────────────────────────────────────────────────────
-  {
-    tier:3, pokeId:130, targetType:'water', mode:'super_effective',
-    clues:[
-      'The whole lake just rippled. Something massive moved down there.',
-      'I can see a red mane under the water. It\'s long and serpentine.',
-      'Its scales look like armour. I can feel the power from here.',
-      'It broke the surface for a second — fangs, a coiling body, enormous.',
-    ],
-    summary: 'An enormous, serpentine, armoured sea creature with a red mane and fearsome fangs. The lake trembled when it moved.',
-    question: '🎣 This is a Water/Flying type! What lure is SUPER EFFECTIVE against both types?',
-    correctTypes: ['electric'],
-    explanation: 'Gyarados is Water AND Flying — Electric is 4× super effective because it\'s weak to Electric from BOTH types! That\'s double damage!',
-    mistyFluff_right: 'Electric! Yes — and against Gyarados that\'s not just super effective, it\'s DOUBLY effective. Brilliant.',
-    mistyFluff_wrong: 'Gyarados is Water/Flying — Electric is the only type that\'s super effective against BOTH. It\'s doubly weak!',
-  },
-  {
-    tier:3, pokeId:121, targetType:'psychic', mode:'not_effective',
-    clues:[
-      'Something is glowing faintly near the surface — a soft light pulsing rhythmically.',
-      'It has the same star shape but much larger. It seems to radiate awareness.',
-      'I get the feeling it already knows what I\'m going to do before I do it.',
-      'When I thought "I want to catch it", it looked directly at me.',
-    ],
-    summary: 'A large, glowing, star-shaped Pokémon that seems to read minds. It looks ancient and serene.',
-    question: '🎣 Starmie is Water/Psychic. Which type would be NOT very effective against it?',
-    correctTypes: ['fire','water','ice','psychic'],
-    explanation: 'Starmie resists Fire, Water, Ice, and Psychic. Its Water typing resists Fire and Ice — its Psychic typing resists Psychic and Fighting!',
-    mistyFluff_right: 'Exactly — Starmie shrugs those off completely. You really know your types.',
-    mistyFluff_wrong: 'Starmie is Water/Psychic — it resists Fire, Water, Ice and Psychic. Those moves barely tickle it.',
-  },
-  {
-    tier:3, pokeId:117, targetType:'water', mode:'super_effective',
-    clues:[
-      'Something with fins is circling just below. It seems to be breathing fire bubbles.',
-      'Wait — fire? Underwater? The water around it is actually warm.',
-      'It has a horse-like shape. Its mane is made of flame that somehow burns underwater.',
-    ],
-    summary: 'A horse-shaped Pokémon whose flaming mane somehow keeps burning even underwater. The water around it is warm.',
-    question: '🎣 It\'s a Water-type despite the flames! Which lure is SUPER EFFECTIVE?',
-    correctTypes: ['electric','grass'],
-    explanation: 'Seadra is pure Water type despite looking fiery — Electric and Grass are still super effective because its type is what matters, not its looks!',
-    mistyFluff_right: 'Right! Looks can be deceiving — it\'s the TYPE that matters, not the appearance.',
-    mistyFluff_wrong: 'Don\'t be fooled by the flames! Seadra is Water type — Electric and Grass are super effective regardless of how it looks.',
-  },
-];
 
 const TYPE_ICONS = {
   normal:'⬜', fire:'🔥', water:'💧', grass:'🌿', electric:'⚡',
@@ -10064,7 +9554,6 @@ const FishingEngine = {
     showScreen('boss');
     BossEngine._isRocket = false;
     CookingEngine._isActive = false;
-    MazeEngine._isActive    = false;
 
     const bgImg = document.querySelector('#screen-boss .battle-bg-img');
     if (bgImg) { bgImg.src = ''; bgImg.style.opacity = '0'; }
@@ -11573,8 +11062,6 @@ document.addEventListener('DOMContentLoaded', () => {
       SabrinaEngine.startGame();
     } else if (TrainerBattleEngine._isActive) {
       TrainerBattleEngine.startBattle();
-    } else if (MazeEngine._isActive) {
-      MazeEngine.startGame();
     } else if (BossEngine._isRocket) {
       RocketBattleEngine.startBattle();
     } else {
@@ -11584,8 +11071,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-dialogue-next').addEventListener('click', () => {
     if (CookingEngine._isActive) {
       CookingEngine.advanceDialogue();
-    } else if (MazeEngine._isActive) {      // ── MAZE MINI-GAME
-      MazeEngine.advanceDialogue();         // ── MAZE MINI-GAME
     } else {
       RocketBattleEngine.advanceDialogue();
     }
