@@ -5642,6 +5642,7 @@ const BossEngine = {
   _logPlayer(html){ BattleEngine._writeLog.call({ isBoss: true }, 'player', html); },
   _logEnemy(html) { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  html); },
   _logSystem(html){ BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${html}</span>`); },
+  _log(html)      { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${html}</span>`); },
 
   playCard(idx) {
     const st   = this.bState;
