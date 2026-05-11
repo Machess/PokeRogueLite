@@ -922,9 +922,11 @@ function _updateProfileMeta(profileKey) {
   const meta = profiles[idx];
   meta.lastSaved = Date.now();
   if (GameState) {
-    meta.bossesDefeated = GameState.bossesDefeated || 0;
-    meta.starterId      = GameState.starterId || null;
-    // Store starter sprite URL from party if available
+    meta.bossesDefeated  = GameState.bossesDefeated || 0;
+    meta.starterId       = GameState.starterId || null;
+    meta.trainerAge      = GameState.trainerAge      || 10;
+    meta.difficultyTier  = GameState.difficultyTier  || 2;
+    meta.trainerName     = GameState.trainerName     || meta.name || '';
     const starter = GameState.party?.find(p => p.isStarter);
     if (starter?.spriteUrl) meta.starterSprite = starter.spriteUrl;
     meta.hasActiveSave  = true;
@@ -2934,18 +2936,24 @@ const Game = {
   },
 
   _doStartNew() {
-    // ── Carry forward trainer identity from the existing save or profile ──────
-    // Read trainerName/Age/difficultyTier BEFORE deleteSave() wipes them.
-    // This means returning players never see the name/age/intro flow again.
+    // ── Carry forward trainer identity ───────────────────────────────────────
+    // Priority: existing save → profile meta → GameState (pre-deletion) → defaults
+    // This preserves age/tier across GameOver.restart() which nulls GameState.
     const existingSave = loadGame();
     const profiles     = loadProfiles();
     const meta         = profiles.find(p => p.key === getActiveProfile());
 
-    const carriedName  = existingSave?.trainerName
-                      || meta?.name
-                      || '';
-    const carriedAge   = existingSave?.trainerAge    || 10;
-    const carriedTier  = existingSave?.difficultyTier || 2;
+    const carriedName = existingSave?.trainerName
+                     || meta?.trainerName
+                     || meta?.name
+                     || '';
+    const carriedAge  = existingSave?.trainerAge
+                     || meta?.trainerAge
+                     || 10;
+    // Use nullish coalescing — tier can be 1 (falsy-adjacent in old || 2 guard)
+    const carriedTier = existingSave?.difficultyTier
+                     ?? meta?.difficultyTier
+                     ?? 2;
 
     deleteSave();
     const unlocks = loadUnlocks();
@@ -8415,6 +8423,19 @@ const GameOver = {
 
   restart() {
     SoundEngine.stopSFX();
+    // Persist age/tier/name into profile meta BEFORE deleteSave wipes the save
+    // and before GameState is nulled — so _doStartNew can recover them.
+    if (GameState) {
+      const profiles = loadProfiles();
+      const idx      = profiles.findIndex(p => p.key === getActiveProfile());
+      if (idx >= 0) {
+        profiles[idx].trainerAge     = GameState.trainerAge     || 10;
+        profiles[idx].difficultyTier = GameState.difficultyTier || 2;
+        profiles[idx].trainerName    = GameState.trainerName    || profiles[idx].name || '';
+        profiles[idx].hasActiveSave  = false;
+        saveProfiles(profiles);
+      }
+    }
     deleteSave();
     GameState = null;
     showScreen('start');
