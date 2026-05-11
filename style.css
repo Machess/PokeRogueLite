@@ -7009,3 +7009,328 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-style: italic;
   margin-top: .25rem;
 }
+
+/* ═══════════════════════════════════════════
+   ERIKA POTION MIXING LAB
+   Soft green botanical aesthetic.
+═══════════════════════════════════════════ */
+#screen-challenge.erika-active {
+  background: linear-gradient(160deg, #0a1a0c 0%, #102010 50%, #0a1a0c 100%);
+}
+#screen-challenge.erika-active .challenge-badge { color: #80e880; }
+#screen-challenge.erika-active .challenge-intro { color: rgba(140,210,140,.75); }
+
+/* ── Lab layout ── */
+.erika-lab {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: .4rem !important;
+  width: 100%;
+}
+
+/* ── Recipe card ── */
+.erika-recipe-card {
+  background: rgba(20,60,20,.7);
+  border: 1px solid rgba(100,200,100,.25);
+  border-radius: 8px;
+  padding: .3rem .5rem;
+  width: 100%;
+}
+.erika-recipe-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: #80e880;
+  margin-bottom: .25rem;
+  text-align: center;
+}
+.erika-recipe-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: .44rem;
+  color: rgba(200,240,200,.8);
+  margin-bottom: 2px;
+}
+.erika-recipe-highlight {
+  background: rgba(255,220,0,.12);
+  border-radius: 4px;
+  padding: 1px 4px;
+  border: 1px solid rgba(255,220,0,.3);
+}
+.erika-recipe-label { font-size: .4rem; opacity: .75; }
+.erika-swatch {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,.3);
+  flex-shrink: 0;
+}
+
+/* ── Target flask area ── */
+.erika-target-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .25rem;
+}
+.erika-target-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem;
+  color: #c0f0c0;
+  text-align: center;
+}
+
+/* CSS Flask shape */
+.erika-flask {
+  width: 44px;
+  height: 80px;
+  position: relative;
+  border: 2px solid rgba(150,220,150,.5);
+  border-radius: 4px 4px 20px 20px;
+  overflow: hidden;
+  background: rgba(0,0,0,.3);
+  box-shadow: inset 0 0 10px rgba(0,0,0,.4), 0 0 8px rgba(80,200,80,.2);
+}
+.erika-flask::before {
+  content: '';
+  position: absolute;
+  top: -10px; left: 50%;
+  transform: translateX(-50%);
+  width: 14px; height: 12px;
+  background: rgba(0,0,0,.3);
+  border: 2px solid rgba(150,220,150,.5);
+  border-bottom: none;
+  border-radius: 3px 3px 0 0;
+}
+.erika-flask-liquid {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 0%;
+  transition: height .5s cubic-bezier(.2,.8,.4,1), background .4s;
+  border-radius: 0 0 18px 18px;
+}
+.erika-flask-line {
+  position: absolute;
+  left: 0; right: 0;
+  border-top: 2px dashed rgba(255,255,255,.55);
+  pointer-events: none;
+}
+
+/* Correct/wrong flash */
+@keyframes erika-correct-glow {
+  0%,100% { box-shadow: inset 0 0 10px rgba(0,0,0,.4), 0 0 8px rgba(80,200,80,.2); }
+  50%      { box-shadow: inset 0 0 10px rgba(0,0,0,.4), 0 0 24px 8px rgba(100,255,100,.7); }
+}
+.erika-flask-correct { animation: erika-correct-glow .6s ease 2; }
+@keyframes erika-wrong-shake {
+  0%,100% { transform: translateX(0); }
+  20%     { transform: translateX(-5px); }
+  40%     { transform: translateX(5px); }
+  60%     { transform: translateX(-4px); }
+  80%     { transform: translateX(3px); }
+}
+.erika-flask-wrong { animation: erika-wrong-shake .4s ease; }
+
+/* Fill bar */
+.erika-fill-bar-wrap {
+  width: 44px;
+  height: 8px;
+  background: rgba(0,0,0,.3);
+  border-radius: 4px;
+  border: 1px solid rgba(150,220,150,.3);
+  position: relative;
+  overflow: visible;
+}
+.erika-fill-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #40c060, #80f080);
+  border-radius: 4px;
+  transition: width .4s ease;
+}
+.erika-fill-tick {
+  position: absolute;
+  top: -14px;
+  font-size: .38rem;
+  color: rgba(180,240,180,.6);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Comment line */
+.erika-comment {
+  font-size: .48rem;
+  color: rgba(160,230,160,.7);
+  font-style: italic;
+  text-align: center;
+  padding: 0 .4rem;
+  min-height: .7rem;
+}
+
+/* Pour stream */
+.erika-pour-stream {
+  width: 6px;
+  border-radius: 3px;
+  margin: 0 auto;
+}
+@keyframes erika-stream-anim {
+  0%   { height: 0px;  opacity: 1; }
+  60%  { height: 28px; opacity: 1; }
+  100% { height: 28px; opacity: 0; }
+}
+.erika-stream-flow { animation: erika-stream-anim .55s ease-out forwards; }
+
+/* ── Bottle buttons ── */
+.erika-bottle-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: .2rem 0;
+}
+.erika-bottle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 8px;
+  transition: transform .15s;
+}
+.erika-bottle-btn:hover:not(:disabled) { transform: translateY(-3px); }
+.erika-bottle-btn:disabled { opacity: .38; cursor: default; }
+
+/* CSS bottle shape */
+.erika-bottle {
+  width: 28px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.erika-bottle-neck {
+  width: 10px; height: 10px;
+  background: rgba(180,220,180,.18);
+  border: 1.5px solid rgba(180,220,180,.4);
+  border-radius: 3px 3px 0 0;
+  border-bottom: none;
+}
+.erika-bottle-body {
+  width: 28px; height: 46px;
+  background: rgba(180,220,180,.1);
+  border: 1.5px solid rgba(180,220,180,.4);
+  border-radius: 4px 4px 14px 14px;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+}
+.erika-bottle-liquid {
+  width: 100%;
+  height: 60%;
+  background: var(--liquid);
+  border-radius: 0 0 12px 12px;
+  transition: height .4s ease;
+  opacity: .85;
+  box-shadow: inset 0 2px 4px rgba(255,255,255,.2);
+}
+.erika-bottle-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem;
+  color: rgba(180,240,180,.7);
+  text-align: center;
+  max-width: 40px;
+  word-break: break-word;
+  line-height: 1.3;
+}
+
+/* Bottle tilt animation */
+@keyframes erika-tilt {
+  0%   { transform: rotate(0); }
+  30%  { transform: rotate(-38deg) translateX(-4px); }
+  70%  { transform: rotate(-38deg) translateX(-4px); }
+  100% { transform: rotate(0); }
+}
+.erika-bottle-tilt .erika-bottle { animation: erika-tilt .5s ease-in-out; }
+
+/* ── Action row ── */
+.erika-action-row {
+  display: flex;
+  gap: .4rem;
+  justify-content: center;
+  margin-top: .1rem;
+}
+.erika-action-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem;
+  padding: .4rem .7rem;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  transition: background .12s, transform .1s;
+  border: none;
+}
+.erika-action-btn:active { transform: scale(.97); }
+.erika-reset-btn {
+  background: rgba(180,60,60,.2);
+  border: 1px solid rgba(220,80,80,.3);
+  color: #f08080;
+}
+.erika-reset-btn:hover { background: rgba(180,60,60,.35); }
+.erika-submit-btn {
+  background: rgba(60,180,80,.2);
+  border: 1px solid rgba(80,220,100,.3);
+  color: #80f080;
+}
+.erika-submit-btn:hover:not(:disabled) { background: rgba(60,180,80,.35); }
+.erika-submit-btn:disabled { opacity: .35; cursor: default; }
+
+/* ── Result ── */
+.erika-result-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .7rem;
+  margin-bottom: .35rem;
+}
+.erika-result-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .52rem;
+  margin-bottom: .2rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.erika-result-swatch {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1.5px solid rgba(255,255,255,.4);
+  flex-shrink: 0;
+}
+.erika-result-quote {
+  font-size: .5rem;
+  color: rgba(160,230,160,.75);
+  font-style: italic;
+  margin-top: .3rem;
+  padding: 0 .3rem;
+  line-height: 1.6;
+}
+
+/* Pour Out button */
+.erika-pourout-btn {
+  background: rgba(60,120,180,.2);
+  border: 1px solid rgba(80,160,220,.3);
+  color: #88c8ff;
+}
+.erika-pourout-btn:hover:not(:disabled) { background: rgba(60,120,180,.35); }
+.erika-pourout-btn:disabled { opacity: .35; cursor: default; }
+
+/* Downward pour-out stream */
+@keyframes erika-stream-out-anim {
+  0%   { height: 0px;  opacity: 1;  transform: scaleY(0) translateY(0); transform-origin: top; }
+  40%  { height: 24px; opacity: 1;  transform: scaleY(1) translateY(0); transform-origin: top; }
+  100% { height: 24px; opacity: 0;  transform: scaleY(1) translateY(4px); transform-origin: top; }
+}
+.erika-stream-out { animation: erika-stream-out-anim .5s ease-out forwards; }

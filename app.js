@@ -5976,130 +5976,140 @@ const SurgeEngine = {
 
 // ─── ERIKA HERB SORTING ENGINE ───────────────────────────────────────────────
 
+// ─── ERIKA POTION MIXING ENGINE ──────────────────────────────────────────────
+
 const ERIKA_INTROS = [
-  `Oh my, ${'{name}'}... you startled me. I was tending to the garden. Before you rush off, let me test your knowledge of herbs and berries. A true trainer cares for their Pokémon properly.`,
-  `${'{name}'}. Sit with me a moment. These berries won't sort themselves, and neither will your understanding of them. Let's see what you know.`,
-  `Hmm... a trainer who can't tell a Sitrus Berry from a Pecha Berry has no business handling Pokémon. I'll be gentle. Identify these herbs for me, please.`,
+  `${'{name}'}. Welcome. My laboratory is a place of patience and observation. Today I have a puzzle for you — a colour mixing challenge. Study the target. Choose your ingredients carefully. Nature rewards those who look before they pour.`,
+  `Ah, ${'{name}'}. I was hoping for a visitor with a curious mind. I have prepared a potion mixing puzzle. The colours must be correct, and the amount must be precise. Take your time. Rushing produces only mistakes.`,
+  `${'{name}'}. In my garden, we learn by doing. Today you will mix a potion. The recipe is simple — but precision matters. Too much or too little and the potion fails. Study the target and think before you pour.`,
 ];
 
-// Each herb/berry has: icon, name, category ('heal'|'cure'|'poison'), description, hint, and explanation
-// hint = a bridging sentence that lets the player deduce the category from the description
-const ERIKA_HERBS = [
-  { icon:'🍊', name:'Oran Berry',    cat:'heal',
-    desc:'Small, round, orange. Smells faintly sweet. A Pokémon that is hurt will seek this out on its own.',
-    hint:'A hurt Pokémon would reach for this instinctively. It seems to restore something.',
-    explain:'Oran Berries restore HP — Pokémon seek them out when hurt.' },
-  { icon:'🫐', name:'Sitrus Berry',  cat:'heal',
-    desc:'Larger than most berries. Deep blue, slightly tart. Leaves a feeling of renewed strength.',
-    hint:'Something about this fills you with energy just holding it. Like it gives back what was lost.',
-    explain:'Sitrus Berries restore a larger amount of HP when eaten.' },
-  { icon:'🌸', name:'Pecha Berry',   cat:'cure',
-    desc:'Soft pink. Extraordinarily sweet. Almost too sweet. The scent is clean and sharp.',
-    hint:'The sweetness seems to push something out — like it clears the body of something unwanted.',
-    explain:'Pecha Berries cure poison — their intense sweetness neutralises toxins.' },
-  { icon:'🟡', name:'Chesto Berry',  cat:'cure',
-    desc:'Crisp and waxy. Yellow with a firm texture. Has a sharp, jolting scent.',
-    hint:'Even smelling it makes you alert. Like a splash of cold water to the face.',
-    explain:'Chesto Berries cure sleep — their sharp scent jolts a Pokémon awake.' },
-  { icon:'🍋', name:'Rawst Berry',   cat:'cure',
-    desc:'Bitter and tangy. Leaves a distinct cool sensation on the tongue and skin.',
-    hint:'The cooling feeling seems to soothe heat and pain. Like ice on a burn.',
-    explain:'Rawst Berries cure burn — the cool juice soothes scorched skin and tissue.' },
-  { icon:'🍇', name:'Persim Berry',  cat:'cure',
-    desc:'Deep purple clusters. Sweet, but the smell is strangely disorienting at first.',
-    hint:'After a moment the confusion clears. It sharpens the mind and restores focus.',
-    explain:'Persim Berries cure confusion — they sharpen focus and clear the mind.' },
-  { icon:'🌿', name:'Poison Barb',   cat:'poison',
-    desc:'Sharp and dark green. The tip glistens with a clear liquid. Erika holds it with gloves.',
-    hint:'Erika keeps this away from the other plants. Even she won\'t touch it with bare hands.',
-    explain:'Poison Barb is toxic — it poisons Pokémon that make contact with it.' },
-  { icon:'🍄', name:'Toxic Mushroom',cat:'poison',
-    desc:'Pale spotted cap. Smells earthy — but there is something wrong underneath that smell.',
-    hint:'The wrong smell is subtle but unmistakable. Something here would hurt a Pokémon, not help it.',
-    explain:'Toxic Mushrooms are dangerous — never feed these to Pokémon under any circumstance.' },
-  { icon:'🌑', name:'Dark Spore',    cat:'poison',
-    desc:'Fine black powder. Drifts in the air when disturbed. Erika warns you not to breathe it in.',
-    hint:'Even Erika steps back from this one. Whatever it does, it does not help.',
-    explain:'Dark Spores cause poisoning on contact — extremely hazardous, handle with care.' },
-  { icon:'🍎', name:'Leppa Berry',   cat:'heal',
-    desc:'Firm and red. Gives off a faint energising warmth. Pokémon seem restless around it.',
-    hint:'It does not heal wounds — but something about it restores readiness. Like recharging.',
-    explain:'Leppa Berries restore a move\'s PP — they replenish a Pokémon\'s energy and drive.' },
-  { icon:'🟠', name:'Lum Berry',     cat:'cure',
-    desc:'Bright orange. Smells strangely clinical — almost like a medicine cabinet.',
-    hint:'The medicinal smell suggests it works on something internal. Something that ails the body.',
-    explain:'Lum Berries cure any status condition — the most versatile cure berry in Erika\'s garden.' },
-  { icon:'🌺', name:'Stun Spore',    cat:'poison',
-    desc:'Orange powder on a pale flower. Smells like rust and metal. Makes your hand tingle.',
-    hint:'The tingling is a warning. Erika says this one freezes muscles on contact.',
-    explain:'Stun Spore paralyses Pokémon — the metallic smell is a sign of its paralytic compound.' },
-];
+// Colour system — base colours + mixes
+const POTION_COLORS = {
+  red:    { hex:'#e84040', label:'Fire Extract',   emoji:'🔴' },
+  blue:   { hex:'#4080e8', label:'Aqua Essence',   emoji:'🔵' },
+  yellow: { hex:'#f0d020', label:'Solar Pollen',   emoji:'🟡' },
+  white:  { hex:'#d8eeff', label:'Pure Dew',       emoji:'⚪' },
+  purple: { hex:'#9040d0', label:'Shadow Root',    emoji:'🟣' },
+  green:  { hex:'#38c060', label:'Leaf Spirit',    emoji:'🟢' },
+  orange: { hex:'#f07020', label:'Ember Sap',      emoji:'🟠' },
+  pink:   { hex:'#f060a0', label:'Blossom Mist',   emoji:'🩷' },
+  cyan:   { hex:'#28c0c8', label:'Frost Bloom',    emoji:'🩵' },
+};
 
-function _generateErikaRound(usedNames) {
-  // Pick one from each category — heal, cure, poison
-  const heals   = ERIKA_HERBS.filter(h => h.cat === 'heal'   && !usedNames.has(h.name));
-  const cures   = ERIKA_HERBS.filter(h => h.cat === 'cure'   && !usedNames.has(h.name));
-  const poisons = ERIKA_HERBS.filter(h => h.cat === 'poison' && !usedNames.has(h.name));
+// Mix rules: sorted key (colorA-colorB alphabetically) → result
+const POTION_MIX_RULES = {
+  'red-yellow':   'orange',
+  'blue-yellow':  'green',
+  'blue-red':     'purple',
+  'red-white':    'pink',
+  'blue-white':   'cyan',
+  'yellow-white': 'yellow',  // barely changes — same colour
+};
 
-  // If any category runs out, reset that category's used tracking
-  if (!heals.length)   ERIKA_HERBS.filter(h => h.cat === 'heal').forEach(h => usedNames.delete(h.name));
-  if (!cures.length)   ERIKA_HERBS.filter(h => h.cat === 'cure').forEach(h => usedNames.delete(h.name));
-  if (!poisons.length) ERIKA_HERBS.filter(h => h.cat === 'poison').forEach(h => usedNames.delete(h.name));
-
-  const heal   = heals[Math.floor(Math.random()   * heals.length)]   || ERIKA_HERBS.find(h => h.cat === 'heal');
-  const cure   = cures[Math.floor(Math.random()   * cures.length)]   || ERIKA_HERBS.find(h => h.cat === 'cure');
-  const poison = poisons[Math.floor(Math.random() * poisons.length)] || ERIKA_HERBS.find(h => h.cat === 'poison');
-
-  [heal, cure, poison].forEach(h => usedNames.add(h.name));
-
-  // Question: pick one herb at random, ask the player what it does
-  const subject = [heal, cure, poison][Math.floor(Math.random() * 3)];
-  const allChoices = ['Heals HP', 'Cures a status condition', 'Is poisonous — dangerous!'];
-  const correctChoice = subject.cat === 'heal'   ? 'Heals HP'
-                      : subject.cat === 'cure'   ? 'Cures a status condition'
-                      :                            'Is poisonous — dangerous!';
-  const choices = shuffle([...allChoices]);
-
-  return { subject, correctChoice, choices };
+function mixColors(colorsArr) {
+  if (!colorsArr.length) return null;
+  if (colorsArr.length === 1) return colorsArr[0];
+  const sorted = [...colorsArr].sort().join('-');
+  return POTION_MIX_RULES[sorted] || 'brown'; // brown = wrong mix
 }
 
+// Puzzle definitions — { target colour, target level (1=full, 0.5=half, 0.25=quarter),
+//   bottles: [{ color, units }] where units = amount one pour delivers, one of bottle is decoy }
+function _buildErikaPuzzle(tier) {
+  const puzzles = [
+    // Tier 1 — always full, clear 2-colour mix
+    { tier:1, targetColor:'green',  targetLevel:1,    recipe:['blue','yellow'],
+      bottles:['blue','yellow','red'],
+      hint:'Blue + Yellow = Green. Pour both fully.' },
+    { tier:1, targetColor:'orange', targetLevel:1,    recipe:['red','yellow'],
+      bottles:['red','yellow','blue'],
+      hint:'Red + Yellow = Orange. Pour both fully.' },
+    { tier:1, targetColor:'purple', targetLevel:1,    recipe:['red','blue'],
+      bottles:['red','blue','yellow'],
+      hint:'Red + Blue = Purple. Pour both fully.' },
+    { tier:1, targetColor:'pink',   targetLevel:1,    recipe:['red','white'],
+      bottles:['red','white','blue'],
+      hint:'Red + White = Pink. Pour both fully.' },
+    { tier:1, targetColor:'cyan',   targetLevel:1,    recipe:['blue','white'],
+      bottles:['blue','white','red'],
+      hint:'Blue + White = Cyan. Pour both fully.' },
+    // Tier 2 — half or full, 2-colour mix with 1 decoy
+    { tier:2, targetColor:'green',  targetLevel:0.5,  recipe:['blue','yellow'],
+      bottles:['blue','yellow','purple'],
+      hint:'Mix Blue + Yellow = Green. Then use Pour Out 🫗 to reach the halfway line.' },
+    { tier:2, targetColor:'orange', targetLevel:0.5,  recipe:['red','yellow'],
+      bottles:['red','yellow','white'],
+      hint:'Mix Red + Yellow = Orange. Then Pour Out 🫗 once to reach half.' },
+    { tier:2, targetColor:'purple', targetLevel:1,    recipe:['red','blue'],
+      bottles:['red','blue','green'],
+      hint:'Red + Blue = Purple. Pour both fully — no pour-out needed.' },
+    { tier:2, targetColor:'cyan',   targetLevel:0.5,  recipe:['blue','white'],
+      bottles:['blue','white','yellow'],
+      hint:'Blue + White = Cyan. Mix both, then Pour Out 🫗 to the halfway line.' },
+    // Tier 3 — quarter levels, hidden hints, 2 decoys
+    { tier:3, targetColor:'green',  targetLevel:0.25, recipe:['blue','yellow'],
+      bottles:['blue','yellow','red','purple'],
+      hint:'' },
+    { tier:3, targetColor:'orange', targetLevel:1,    recipe:['red','yellow'],
+      bottles:['red','yellow','blue','white'],
+      hint:'' },
+    { tier:3, targetColor:'purple', targetLevel:0.5,  recipe:['red','blue'],
+      bottles:['red','blue','white','green'],
+      hint:'' },
+    { tier:3, targetColor:'pink',   targetLevel:0.25, recipe:['red','white'],
+      bottles:['red','white','blue','yellow'],
+      hint:'' },
+  ];
+
+  const pool = puzzles.filter(p => p.tier <= tier);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+const ERIKA_LINES = {
+  correct:      `"Beautiful. You understood the mixture perfectly. This is how all medicine begins." — Erika`,
+  wrong_color:  `"The colour is not right. Look at the mix rules again — which two colours make your target?" — Erika`,
+  wrong_level:  `"The colour is correct, but the amount is wrong. Watch the dotted line — use Pour Out to reduce the level." — Erika`,
+  wrong_both:   `"Both the colour and the amount need work. Reset and try again — patience is part of the craft." — Erika`,
+  reset:        `"Starting fresh is not failure. It is how we learn." — Erika`,
+  decoy:        `"Careful — not every bottle belongs in this recipe. One is a decoy." — Erika`,
+  pour_out:     `"Good. You are learning to control the amount. Precision matters as much as the ingredients." — Erika`,
+  over_full:    `"The flask is full. Use Pour Out 🫗 to reduce the level before submitting." — Erika`,
+};
+
 const ErikaEngine = {
-  _isActive:  false,
-  _answered:  false,
-  _node:      null,
-  _round:     0,
-  _score:     0,
-  _usedNames: null,
-  _rounds:    [],
+  _isActive:    false,
+  _answered:    false,
+  _node:        null,
+  _puzzle:      null,
+  _poured:      [],    // array of color strings added so far
+  _totalPoured: 0,     // sum of units poured (each bottle = 0.5 units)
+  _maxPour:     1,     // full = 1.0, half = 0.5, quarter = 0.25
+  _pourOutCommented: false,
 
   start(node) {
     this._node      = node;
     this._isActive  = true;
     this._answered  = false;
-    this._round     = 0;
-    this._score     = 0;
-    this._usedNames = new Set();
-    this._rounds    = [
-      _generateErikaRound(this._usedNames),
-      _generateErikaRound(this._usedNames),
-      _generateErikaRound(this._usedNames),
-    ];
+    this._poured            = [];
+    this._totalPoured       = 0;
+    this._pourOutCommented  = false;
+    const tier      = GameState.difficultyTier || 2;
+    this._puzzle    = _buildErikaPuzzle(tier);
 
-    // Boss-screen intro with Erika portrait + gym background
+    // Boss-screen intro
     showScreen('boss');
     BossEngine._isRocket = false;
-
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
     const imgEl = document.querySelector('#screen-boss .battle-bg-img');
     if (bgEl && imgEl) {
       bgEl.classList.add('boss-intro-mode');
-      bgEl.style.background = GYM_FALLBACKS[3]; // Erika green fallback
+      bgEl.style.background = GYM_FALLBACKS[3];
       imgEl.style.opacity = '0';
       imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
       imgEl.onerror = () => { imgEl.style.opacity = '0'; };
       imgEl.src = 'assets/bg_3_boss.png';
     }
-
     document.getElementById('trainer-intro').style.display    = 'flex';
     document.getElementById('boss-battle-area').style.display = 'none';
     document.getElementById('boss-party-bar').innerHTML       = '';
@@ -6121,9 +6131,9 @@ const ErikaEngine = {
       document.getElementById('dialogue-text').textContent += intro[ci++];
       if (ci >= intro.length) {
         clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Begin Sorting 🌿'; }
+        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Enter the Lab 🌸'; }
       }
-    }, 28);
+    }, 26);
   },
 
   startGame() {
@@ -6133,130 +6143,331 @@ const ErikaEngine = {
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
     document.getElementById('trainer-intro').style.display = 'none';
-    this._showRound();
+    this._showLab();
   },
 
-  _showRound() {
-    const rd  = this._rounds[this._round];
-    const h   = rd.subject;
+  _showLab() {
+    const p    = this._puzzle;
+    const tier = GameState.difficultyTier || 2;
+    this._poured      = [];
+    this._totalPoured = 0;
 
     const img = document.getElementById('challenge-character-img');
     if (img) { img.src = 'assets/erika.png'; img.style.display = ''; }
-    document.getElementById('challenge-badge').textContent   = `🌿 Erika's Herb Garden — Round ${this._round + 1}/3`;
-    document.getElementById('challenge-intro').textContent   = `Score: ${this._score}/${this._round}`;
+    document.getElementById('challenge-badge').textContent   = '🌸 Erika\'s Potion Lab';
+    document.getElementById('challenge-intro').textContent   = 'Mix the correct potion!';
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
-
-    // Show herb display — name hidden until after answer to encourage deduction
-    const cv = document.getElementById('challenge-coin-visual');
-    cv.style.display = 'block';
-    cv.className     = 'erika-herb-display';
-    cv.innerHTML     = `
-      <div class="erika-herb-icon">${h.icon}</div>
-      <div class="erika-herb-desc">"${h.desc}"</div>
-      <div class="erika-herb-hint">💡 ${h.hint}</div>`;
-
-    document.getElementById('jessie-word-display').style.display = 'none';
-    document.getElementById('challenge-question').textContent    = 'What does this plant do to a Pokémon?';
-
-    const btnArea = document.getElementById('challenge-answer-btns');
-    btnArea.innerHTML = '';
-    rd.choices.forEach(val => {
-      const b = document.createElement('button');
-      b.className   = 'challenge-answer-btn';
-      b.textContent = val;
-      b.addEventListener('click', () => this._answer(val));
-      btnArea.appendChild(b);
-    });
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('jessie-word-display').style.display    = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
 
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('erika-active');
-    SoundEngine.playBGM('pallet_town_theme.mp3');
-  },
+    SoundEngine.playBGM('mini_game.mp3');
 
-  _answer(chosen) {
-    const rd      = this._rounds[this._round];
-    const isRight = chosen === rd.correctChoice;
-    if (isRight) this._score++;
+    const targetC     = POTION_COLORS[p.targetColor];
+    const levelLabel  = p.targetLevel === 1 ? 'Full' : p.targetLevel === 0.5 ? 'Half' : 'Quarter';
+    const levelPct    = p.targetLevel * 100;
 
-    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
-      b.disabled = true;
-      if (b.textContent === rd.correctChoice) b.classList.add('answer-correct');
-      else if (b.textContent === chosen && !isRight) b.classList.add('answer-wrong');
+    // Build lab UI in challenge-coin-visual
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'erika-lab';
+    cv.innerHTML     = `
+      <!-- Recipe hint card — hidden on tier 3 -->
+      <div class="erika-recipe-card" id="erika-recipe-card" style="${tier >= 3 ? 'display:none' : ''}">
+        <div class="erika-recipe-title">Mix Rules</div>
+        ${Object.entries(POTION_MIX_RULES).map(([k, v]) => {
+          const [a, b] = k.split('-');
+          const ca = POTION_COLORS[a], cb = POTION_COLORS[b], cv2 = POTION_COLORS[v];
+          const highlight = tier === 1 && p.recipe.sort().join('-') === k ? 'erika-recipe-highlight' : '';
+          return `<div class="erika-recipe-row ${highlight}">
+            <span class="erika-swatch" style="background:${ca?.hex}"></span>+
+            <span class="erika-swatch" style="background:${cb?.hex}"></span>=
+            <span class="erika-swatch" style="background:${cv2?.hex}"></span>
+            <span class="erika-recipe-label">${cv2?.label || v}</span></div>`;
+        }).join('')}
+      </div>
+
+      <!-- Target flask -->
+      <div class="erika-target-area">
+        <div class="erika-target-label">Target: <strong>${levelLabel}-full ${targetC.label}</strong></div>
+        <div class="erika-flask" id="erika-target-flask">
+          <div class="erika-flask-liquid" id="erika-flask-liquid" style="height:0%;background:#888"></div>
+          <div class="erika-flask-line" style="bottom:${levelPct}%"></div>
+        </div>
+        <div class="erika-fill-bar-wrap">
+          <div class="erika-fill-bar" id="erika-fill-bar" style="width:0%"></div>
+          <div class="erika-fill-tick" style="left:25%">¼</div>
+          <div class="erika-fill-tick" style="left:50%">½</div>
+          <div class="erika-fill-tick" style="left:100%;transform:translateX(-100%)">Full</div>
+        </div>
+      </div>
+
+      <!-- Erika comment -->
+      <div class="erika-comment" id="erika-comment">${tier >= 3 ? '🌸 No hints today.' : `💡 ${p.hint}`}</div>
+
+      <!-- Pour stream (hidden by default) -->
+      <div class="erika-pour-stream" id="erika-pour-stream" style="display:none"></div>`;
+
+    // Build bottle buttons
+    const btnArea = document.getElementById('challenge-answer-btns');
+    btnArea.innerHTML = '';
+
+    // Shuffle bottle order so decoy isn't always last
+    const bottleColors = shuffle([...p.bottles]);
+
+    const bottleRow = document.createElement('div');
+    bottleRow.className = 'erika-bottle-row';
+
+    bottleColors.forEach(colorKey => {
+      const c   = POTION_COLORS[colorKey];
+      if (!c) return;
+      const btn = document.createElement('button');
+      btn.className = 'erika-bottle-btn';
+      btn.dataset.color = colorKey;
+      btn.innerHTML = `
+        <div class="erika-bottle" style="--liquid:${c.hex}">
+          <div class="erika-bottle-neck"></div>
+          <div class="erika-bottle-body">
+            <div class="erika-bottle-liquid" id="bottle-liq-${colorKey}"></div>
+          </div>
+        </div>
+        <span class="erika-bottle-label">${c.label}</span>`;
+      btn.addEventListener('click', () => this._pour(colorKey, btn));
+      bottleRow.appendChild(btn);
     });
 
-    const quotes = isRight
-      ? ['Wonderful. You have a gardener\'s instinct.', 'Correct. Even the gentlest berry has a purpose.', 'Yes — that\'s exactly right. Well done.']
-      : ['Oh dear... not quite. Let me explain.', 'I\'m afraid that\'s wrong. Don\'t worry — now you know.', 'Hmm. Close, but mistaken. Remember this for next time.'];
-    const quote = quotes[Math.floor(Math.random() * quotes.length)];
+    // Reset + Pour Out + Submit buttons
+    const actionRow = document.createElement('div');
+    actionRow.className = 'erika-action-row';
 
-    const resultEl = document.getElementById('challenge-result');
-    resultEl.className   = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
-    resultEl.innerHTML   = `${isRight ? '✅' : '❌'} <strong>${rd.correctChoice}</strong> — <em>${rd.subject.name}</em><br>${rd.subject.explain}<br><em>"${quote}" — Erika</em>`;
-    resultEl.style.display = 'block';
+    const resetBtn = document.createElement('button');
+    resetBtn.className   = 'erika-action-btn erika-reset-btn';
+    resetBtn.textContent = '🗑️ Reset';
+    resetBtn.addEventListener('click', () => this._reset());
 
-    const isLast = this._round === 2;
-    const btn    = document.getElementById('challenge-continue-btn');
-    btn.textContent   = isLast ? 'Return to path 🌸' : 'Next herb ▶';
-    btn.style.display = 'block';
+    const pourOutBtn = document.createElement('button');
+    pourOutBtn.className   = 'erika-action-btn erika-pourout-btn';
+    pourOutBtn.id          = 'erika-pourout-btn';
+    pourOutBtn.textContent = '🫗 Pour Out';
+    pourOutBtn.disabled    = true;
+    pourOutBtn.addEventListener('click', () => this._pourOut());
 
-    if (isLast) this._answered = true;
-    this._round++;
+    const submitBtn = document.createElement('button');
+    submitBtn.className   = 'erika-action-btn erika-submit-btn';
+    submitBtn.id          = 'erika-submit-btn';
+    submitBtn.textContent = '✓ Submit';
+    submitBtn.disabled    = true;
+    submitBtn.addEventListener('click', () => this._evaluate());
+
+    actionRow.appendChild(resetBtn);
+    actionRow.appendChild(pourOutBtn);
+    actionRow.appendChild(submitBtn);
+    btnArea.appendChild(bottleRow);
+    btnArea.appendChild(actionRow);
   },
 
-  nextRound() {
-    if (this._answered) { this._finish(); } else { this._showRound(); }
-  },
-
-  _finish() {
-    this._answered = false;
-    this._round    = 0;
-    document.getElementById('screen-challenge').classList.remove('erika-active');
-    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
-
-    const score = this._score;
-    let headline, detail, quote;
-
-    if (score >= 2) {
-      // Full HP restore for one party member (lead)
-      const lead = GameState.party.find(p => p.hp > 0);
-      if (lead) lead.hp = lead.maxHp;
-      headline = '🌸 Herb Knowledge!';
-      detail   = `${lead?.name || 'Your Pokémon'} was fully healed!`;
-      quote    = score === 3
-        ? 'Excellent. Your Pokémon are in good hands.'
-        : 'Two out of three. Good enough. Here — take this for your partner.';
-    } else if (score === 1) {
-      const lead = GameState.party.find(p => p.hp > 0);
-      if (lead) lead.hp = Math.min(lead.maxHp, lead.hp + Math.floor(lead.maxHp * 0.3));
-      headline = '🌿 Partial Knowledge';
-      detail   = 'Lead Pokémon healed 30% HP.';
-      quote    = 'One out of three. A little knowledge is better than none. Study more.';
-    } else {
-      headline = '🍄 Oh My...';
-      detail   = 'No reward. Erika sighs gently.';
-      quote    = 'Zero. Please be careful around real herbs, dear. For your Pokémon\'s sake.';
+  _pour(colorKey, btn) {
+    if (this._answered) return;
+    const pourUnit = 0.5; // each bottle = half unit
+    if (this._totalPoured >= 1) {
+      // Flask full — nudge player toward pour-out
+      const commentEl = document.getElementById('erika-comment');
+      if (commentEl) commentEl.textContent = ERIKA_LINES.over_full;
+      return;
     }
 
-    saveGame();
-    showModal(headline, `${detail}\n\n"${quote}" — Erika`, () => {
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
+    this._poured.push(colorKey);
+    this._totalPoured = Math.min(1, this._totalPoured + pourUnit);
+
+    // Animate bottle tilt
+    btn.classList.add('erika-bottle-tilt');
+    setTimeout(() => btn.classList.remove('erika-bottle-tilt'), 500);
+
+    // Shrink bottle liquid
+    const liqEl = document.getElementById(`bottle-liq-${colorKey}`);
+    if (liqEl) liqEl.style.height = '0%';
+
+    // Animate pour-in stream
+    const stream = document.getElementById('erika-pour-stream');
+    if (stream) {
+      const c = POTION_COLORS[colorKey];
+      stream.style.cssText = `display:block;background:${c.hex};`;
+      stream.classList.remove('erika-stream-out');
+      stream.classList.add('erika-stream-flow');
+      setTimeout(() => {
+        stream.style.display = 'none';
+        stream.classList.remove('erika-stream-flow');
+      }, 550);
+    }
+
+    // Update flask fill after stream
+    setTimeout(() => {
+      this._updateFlask();
+      document.getElementById('erika-submit-btn').disabled  = false;
+      document.getElementById('erika-pourout-btn').disabled = false;
+      btn.disabled = true;
+    }, 300);
+  },
+
+  _pourOut() {
+    if (this._answered) return;
+    if (this._totalPoured <= 0) return;
+
+    this._totalPoured = Math.max(0, this._totalPoured - 0.5);
+
+    // Animate downward stream from flask
+    const stream = document.getElementById('erika-pour-stream');
+    if (stream) {
+      const resultColor = mixColors(this._poured);
+      const c = POTION_COLORS[resultColor] || { hex: '#704020' };
+      stream.style.cssText = `display:block;background:${c.hex};`;
+      stream.classList.remove('erika-stream-flow');
+      stream.classList.add('erika-stream-out');
+      setTimeout(() => {
+        stream.style.display = 'none';
+        stream.classList.remove('erika-stream-out');
+      }, 500);
+    }
+
+    setTimeout(() => {
+      this._updateFlask();
+
+      // Erika pour-out comment (once only)
+      const commentEl = document.getElementById('erika-comment');
+      if (commentEl && !this._pourOutCommented) {
+        commentEl.textContent    = ERIKA_LINES.pour_out;
+        this._pourOutCommented   = true;
+      }
+
+      // Disable pour-out when empty
+      const pourOutBtn = document.getElementById('erika-pourout-btn');
+      if (pourOutBtn) pourOutBtn.disabled = this._totalPoured <= 0;
+
+      // Disable submit when empty
+      const submitBtn = document.getElementById('erika-submit-btn');
+      if (submitBtn) submitBtn.disabled = this._totalPoured <= 0;
+    }, 200);
+  },
+
+  _updateFlask() {
+    const resultColor = mixColors(this._poured);
+    const c   = POTION_COLORS[resultColor] || { hex: '#704020' };
+    const pct = this._totalPoured * 100;
+    const flaskLiq = document.getElementById('erika-flask-liquid');
+    if (flaskLiq) { flaskLiq.style.height = `${pct}%`; flaskLiq.style.background = c.hex; }
+    const fillBar  = document.getElementById('erika-fill-bar');
+    if (fillBar)  fillBar.style.width = `${pct}%`;
+  },
+
+  _reset() {
+    this._poured            = [];
+    this._totalPoured       = 0;
+    this._pourOutCommented  = false;
+
+    // Reset flask
+    const flaskLiq = document.getElementById('erika-flask-liquid');
+    if (flaskLiq) { flaskLiq.style.height = '0%'; flaskLiq.style.background = '#888'; }
+    const fillBar = document.getElementById('erika-fill-bar');
+    if (fillBar) fillBar.style.width = '0%';
+
+    // Re-enable bottles
+    document.querySelectorAll('.erika-bottle-btn').forEach(b => {
+      b.disabled = false;
+      const ck = b.dataset.color;
+      const liq = document.getElementById(`bottle-liq-${ck}`);
+      if (liq) liq.style.height = '';
     });
+
+    // Disable submit + pour-out
+    const submitBtn  = document.getElementById('erika-submit-btn');
+    if (submitBtn)  submitBtn.disabled  = true;
+    const pourOutBtn = document.getElementById('erika-pourout-btn');
+    if (pourOutBtn) pourOutBtn.disabled = true;
+
+    // Erika reset comment
+    const commentEl = document.getElementById('erika-comment');
+    if (commentEl) commentEl.textContent = ERIKA_LINES.reset;
+  },
+
+  _evaluate() {
+    if (this._answered) return;
+    this._answered = true;
+
+    const p = this._puzzle;
+    const resultColor = mixColors(this._poured);
+    const colorOk = resultColor === p.targetColor;
+    const levelOk = Math.abs(this._totalPoured - p.targetLevel) < 0.01;
+    const isRight = colorOk && levelOk;
+
+    // Flask celebration or shake
+    const flask = document.getElementById('erika-target-flask');
+    if (flask) flask.classList.add(isRight ? 'erika-flask-correct' : 'erika-flask-wrong');
+
+    const line = isRight        ? ERIKA_LINES.correct
+               : !colorOk && !levelOk ? ERIKA_LINES.wrong_both
+               : !colorOk       ? ERIKA_LINES.wrong_color
+               :                  ERIKA_LINES.wrong_level;
+
+    const targetC    = POTION_COLORS[p.targetColor];
+    const resultC    = POTION_COLORS[resultColor] || { label: 'Unknown', hex: '#704020' };
+    const levelLabel = p.targetLevel === 1 ? 'Full' : p.targetLevel === 0.5 ? 'Half' : 'Quarter';
+    const gotLabel   = this._totalPoured === 1 ? 'Full' : this._totalPoured === 0.5 ? 'Half' : this._totalPoured === 0.25 ? 'Quarter' : `${Math.round(this._totalPoured * 100)}%`;
+
+    const resultEl = document.getElementById('challenge-result');
+    resultEl.className = `challenge-result ${isRight ? 'result-correct' : 'result-wrong'}`;
+    resultEl.innerHTML = `
+      <div class="erika-result-title">${isRight ? '🌸 Perfect Potion!' : '🌿 Not quite…'}</div>
+      <div class="erika-result-row">
+        <span>Target:</span>
+        <span class="erika-result-swatch" style="background:${targetC.hex}"></span>
+        <strong>${levelLabel} ${targetC.label}</strong>
+      </div>
+      <div class="erika-result-row">
+        <span>You made:</span>
+        <span class="erika-result-swatch" style="background:${resultC.hex}"></span>
+        <strong>${gotLabel} ${resultC.label}</strong>
+      </div>
+      <div class="erika-result-quote">${line}</div>`;
+    resultEl.style.display = 'block';
+    document.getElementById('challenge-continue-btn').style.display = 'block';
+    document.getElementById('challenge-continue-btn').textContent   = 'Continue 🌸';
   },
 
   finish() {
     this._answered = false;
     document.getElementById('screen-challenge').classList.remove('erika-active');
-    document.getElementById('challenge-coin-visual').className = 'challenge-coin-visual';
-    MapEngine.completeNode(GameState.currentNodeIndex);
-    MapEngine.show();
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
+
+    const resultEl = document.getElementById('challenge-result');
+    const isRight  = resultEl && resultEl.classList.contains('result-correct');
+    const goldBase = 30 + (GameState.bossesDefeated || 0) * 5;
+    const goldReward = isRight ? goldBase : Math.floor(goldBase * 0.3);
+
+    GameState.gold = (GameState.gold || 0) + goldReward;
+
+    if (isRight) {
+      const lead = GameState.party.find(p => p.hp > 0);
+      if (lead) { lead.hp = Math.min(lead.maxHp, lead.hp + 30); }
+      SoundEngine.playFanfare();
+    }
+    saveGame();
+
+    const headline = isRight ? '🌸 Potion Complete!' : '🌿 Keep Practising';
+    const detail   = isRight
+      ? `+${goldReward}💰 · Your lead Pokémon recovered 30 HP!\n\n"Beautiful work." — Erika`
+      : `+${goldReward}💰 consolation gold.\n\n"Study the mix rules. Try again next time." — Erika`;
+
+    showModal(headline, detail, () => {
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+    });
   },
 };
-
-// ─── KOGA POISON ANTIDOTE ENGINE ─────────────────────────────────────────────
-
 // ─── NINJA MEMORY ENGINE — Koga's Card Grid ──────────────────────────────────
 
 const NINJA_CARDS = [
@@ -6665,46 +6876,68 @@ function _getTypeHook(atkType, defType) {
   return TYPE_HOOKS[`${atkType}-${defType}`] || `${capitalize(atkType)} is strong against ${capitalize(defType)} type.`;
 }
 
-// Build a matchup: returns { leftId, rightId, leftType, rightType, winnerId, mult, relationship }
-function _buildMatchup(tier) {
-  // Pick a random advantaged type pair from TYPE_CHART
-  const attackTypes = Object.keys(TYPE_CHART);
-  let attempts = 0;
-  while (attempts++ < 40) {
-    const atkType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
-    const defTypes = Object.keys(TYPE_CHART[atkType]);
-    if (!defTypes.length) continue;
-    const defType = defTypes[Math.floor(Math.random() * defTypes.length)];
-    const mult    = TYPE_CHART[atkType][defType];
+// Primary type for all 151 Kanto Pokémon — used by Blaine battle simulator
+const POKEMON_TYPES = {
+  1:'grass',2:'grass',3:'grass',4:'fire',5:'fire',6:'fire',
+  7:'water',8:'water',9:'water',10:'bug',11:'bug',12:'bug',
+  13:'bug',14:'bug',15:'bug',16:'normal',17:'normal',18:'normal',
+  19:'normal',20:'normal',21:'normal',22:'normal',23:'poison',24:'poison',
+  25:'electric',26:'electric',27:'ground',28:'ground',29:'poison',30:'poison',
+  31:'poison',32:'poison',33:'poison',34:'poison',35:'normal',36:'normal',
+  37:'fire',38:'fire',39:'normal',40:'normal',41:'poison',42:'poison',
+  43:'grass',44:'grass',45:'grass',46:'grass',47:'grass',48:'bug',
+  49:'bug',50:'ground',51:'ground',52:'normal',53:'normal',54:'water',
+  55:'water',56:'fighting',57:'fighting',58:'fire',59:'fire',60:'water',
+  61:'water',62:'water',63:'psychic',64:'psychic',65:'psychic',66:'fighting',
+  67:'fighting',68:'fighting',69:'grass',70:'grass',71:'grass',72:'water',
+  73:'water',74:'rock',75:'rock',76:'rock',77:'fire',78:'fire',
+  79:'water',80:'water',81:'electric',82:'electric',83:'normal',84:'normal',
+  85:'normal',86:'water',87:'water',88:'poison',89:'poison',90:'water',
+  91:'water',92:'ghost',93:'ghost',94:'ghost',95:'rock',96:'psychic',
+  97:'psychic',98:'water',99:'water',100:'electric',101:'electric',102:'grass',
+  103:'grass',104:'ground',105:'ground',106:'fighting',107:'fighting',108:'normal',
+  109:'poison',110:'poison',111:'ground',112:'ground',113:'normal',114:'grass',
+  115:'normal',116:'water',117:'water',118:'water',119:'water',120:'water',
+  121:'water',122:'psychic',123:'bug',124:'ice',125:'electric',126:'fire',
+  127:'bug',128:'normal',129:'water',130:'water',131:'water',132:'normal',
+  133:'normal',134:'water',135:'electric',136:'fire',137:'normal',138:'rock',
+  139:'rock',140:'rock',141:'rock',142:'rock',143:'normal',144:'ice',
+  145:'electric',146:'fire',147:'dragon',148:'dragon',149:'dragon',150:'psychic',151:'psychic',
+};
 
-    // For tier 1 only use 2× matchups, tier 2+ include 0.5× and 0×
+// Build a matchup: returns { leftId, rightId, leftType, rightType, winnerId, loserId, mult, relationship }
+function _buildMatchup(tier) {
+  const attackTypes = Object.keys(TYPE_CHART);
+  const allIds = [...new Set([...WILD_POOL.common, ...WILD_POOL.uncommon, ...WILD_POOL.rare])];
+
+  let attempts = 0;
+  while (attempts++ < 60) {
+    const atkType = attackTypes[Math.floor(Math.random() * attackTypes.length)];
+    const defEntries = Object.entries(TYPE_CHART[atkType]);
+    if (!defEntries.length) continue;
+    const [defType, mult] = defEntries[Math.floor(Math.random() * defEntries.length)];
+
+    // Tier 1 only 2× matchups; tier 2+ also 0.5× and 0×
     if (tier <= 1 && mult !== 2) continue;
 
-    // Find a Pokémon of each type from the full catchable pool
-    const allIds   = [...new Set([...WILD_POOL.common, ...WILD_POOL.uncommon, ...WILD_POOL.rare])];
-    const atkPool  = allIds.filter(id => {
-      const t = DUAL_TYPE_OVERRIDES[id];
-      return t ? t === atkType : false;
-    });
-    const defPool  = allIds.filter(id => {
-      const t = DUAL_TYPE_OVERRIDES[id];
-      return t ? t === defType : false;
-    });
+    // Find Pokémon of each type using DUAL_TYPE_OVERRIDES first, then POKEMON_TYPES
+    const typeOf = id => DUAL_TYPE_OVERRIDES[id] || POKEMON_TYPES[id];
+    const atkPool = allIds.filter(id => typeOf(id) === atkType);
+    const defPool = allIds.filter(id => typeOf(id) === defType);
     if (!atkPool.length || !defPool.length) continue;
 
     const atkId = atkPool[Math.floor(Math.random() * atkPool.length)];
     const defId = defPool[Math.floor(Math.random() * defPool.length)];
     if (atkId === defId) continue;
 
-    // Randomise left/right position
     const flip = Math.random() < 0.5;
     return {
-      leftId:   flip ? defId  : atkId,
-      rightId:  flip ? atkId  : defId,
-      leftType: flip ? defType : atkType,
-      rightType:flip ? atkType : defType,
-      winnerId: atkId,
-      loserId:  defId,
+      leftId:    flip ? defId   : atkId,
+      rightId:   flip ? atkId   : defId,
+      leftType:  flip ? defType : atkType,
+      rightType: flip ? atkType : defType,
+      winnerId:  atkId,
+      loserId:   defId,
       atkType, defType, mult,
       relationship: mult === 0 ? 'immune' : mult >= 2 ? 'super' : 'resist',
     };
@@ -11278,9 +11511,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (SurgeEngine._round > 0 && SurgeEngine._round <= 3) {
       SurgeEngine.nextRound();
     } else if (ErikaEngine._answered) {
-      ErikaEngine._finish();
-    } else if (ErikaEngine._round > 0 && ErikaEngine._round <= 3) {
-      ErikaEngine.nextRound();
+      ErikaEngine.finish();
     } else if (BlaineEngine._answered) {
       BlaineEngine.finish();
     } else if (FishingEngine._answered) {
