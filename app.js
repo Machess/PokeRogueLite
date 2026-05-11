@@ -2338,15 +2338,21 @@ const TeamRocketChallenge = {
     const intro = document.getElementById('challenge-intro');
     if (intro) intro.textContent = introText;
     const coin = document.getElementById('challenge-coin-visual');
-    if (coin) coin.style.display = 'none';
+    if (coin) { coin.style.display = 'none'; coin.innerHTML = ''; coin.className = 'challenge-coin-visual'; }
     const word = document.getElementById('jessie-word-display');
-    if (word) word.style.display = 'none';
+    if (word) {
+      word.style.display = 'none';
+      word.innerHTML     = '';           // clear James/Fishing/Jigglypuff content
+      word.className     = 'jessie-word-display'; // reset any overridden class
+    }
     const result = document.getElementById('challenge-result');
-    if (result) result.style.display = 'none';
+    if (result) { result.style.display = 'none'; result.innerHTML = ''; result.className = 'challenge-result'; }
     const cont = document.getElementById('challenge-continue-btn');
     if (cont) cont.style.display = 'none';
     const q = document.getElementById('challenge-question');
     if (q) { q.textContent = ''; q.style.display = ''; }
+    const btns = document.getElementById('challenge-answer-btns');
+    if (btns) btns.innerHTML = '';
   },
 
   _renderAnswerBtns(choices, answerFn) {
@@ -6079,7 +6085,8 @@ const SurgeEngine = {
     document.getElementById('challenge-badge').textContent   = `⚡ Surge's Type Drill — Round ${this._round + 1}/3`;
     document.getElementById('challenge-intro').textContent   = `Score: ${this._score}/${this._round} correct`;
     document.getElementById('challenge-coin-visual').style.display  = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-question').textContent       = sc.question;
@@ -6388,7 +6395,8 @@ const ErikaEngine = {
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-answer-btns').innerHTML      = '';
 
     showScreen('challenge');
@@ -6843,7 +6851,8 @@ const NinjaMemoryEngine = {
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-answer-btns').innerHTML      = '';
 
     showScreen('challenge');
@@ -7289,7 +7298,8 @@ const BlaineEngine = {
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-answer-btns').innerHTML      = '';
 
     showScreen('challenge');
@@ -7607,7 +7617,8 @@ const SabrinaEngine = {
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-answer-btns').innerHTML      = '';
     document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
 
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
@@ -7907,7 +7918,8 @@ const JigglypuffEngine = {
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-answer-btns').innerHTML      = '';
 
     // Build coin-visual area (sequence bar + Jigglypuff face)
@@ -10600,7 +10612,8 @@ const FishingEngine = {
     document.getElementById('challenge-badge').textContent   = '🎣 Misty\'s Fishing Challenge';
     document.getElementById('challenge-intro').textContent   = 'Read the clues carefully, then pick your lure!';
     document.getElementById('challenge-coin-visual').style.display  = 'none';
-    document.getElementById('jessie-word-display').style.display    = 'none';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
     document.getElementById('challenge-answer-btns').innerHTML      = '';
