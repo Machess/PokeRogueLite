@@ -10382,6 +10382,9 @@ const FISHING_PUZZLES = [
     hint_t1:  'It is a Water type. Which one matches?',
     correctTypes: ['water'],
     mode: 'type',
+    explanation: 'Magikarp is a pure Water type. Famous for being helpless — until it evolves into the fearsome Gyarados.',
+    mistyFluff_right: 'Exactly! Even a Magikarp deserves respect. It evolves into something fearsome.',
+    mistyFluff_wrong: 'Nope! Magikarp is a Water type. It splashes at the surface — classic Water behaviour.',
   },
   {
     tier: 1,
@@ -10396,6 +10399,9 @@ const FISHING_PUZZLES = [
     hint_t1:  'This elegant swimmer is a Water type.',
     correctTypes: ['water'],
     mode: 'type',
+    explanation: 'Goldeen is a Water type known for its graceful movement and the sharp horn on its forehead.',
+    mistyFluff_right: 'Yes! Goldeen is one of my favourites. Graceful, elegant, powerful.',
+    mistyFluff_wrong: 'Wrong! Goldeen is a Water type. Flowing fins and clear water are the giveaway.',
   },
   {
     tier: 1,
@@ -10410,6 +10416,9 @@ const FISHING_PUZZLES = [
     hint_t1:  'This dreamy Pokémon is Water and Psychic type.',
     correctTypes: ['water', 'psychic'],
     mode: 'type',
+    explanation: 'Slowpoke is Water and Psychic type. It processes everything very slowly — but it does have psychic sensitivity.',
+    mistyFluff_right: 'Right! Water and Psychic. Slowpoke proves you can be powerful without being in a hurry.',
+    mistyFluff_wrong: 'Not quite! Slowpoke is Water AND Psychic. That dopey face hides a psychic mind somewhere.',
   },
   // ── Tier 2 ─────────────────────────────────────────────────────────────────
   {
@@ -10424,6 +10433,9 @@ const FISHING_PUZZLES = [
     question: 'What types is this Pokémon?',
     correctTypes: ['water', 'poison'],
     mode: 'type',
+    explanation: 'Tentacool is Water and Poison type. Its transparent body lets it drift unseen, and its tentacles deliver a toxic sting.',
+    mistyFluff_right: 'Correct! Water and Poison. Tentacool looks harmless until those tentacles wrap around you.',
+    mistyFluff_wrong: 'Wrong! Tentacool is Water AND Poison — the paralysing sting is the Poison-type giveaway.',
   },
   {
     tier: 2,
@@ -10437,6 +10449,9 @@ const FISHING_PUZZLES = [
     question: 'What type is this Pokémon?',
     correctTypes: ['water'],
     mode: 'type',
+    explanation: 'Shellder is a pure Water type. Its hard shell and powerful clamp protect it — the same shell can protect Slowpoke too.',
+    mistyFluff_right: 'Yes! Shellder is a Water type. Life on the cold ocean floor is a Water-type lifestyle.',
+    mistyFluff_wrong: 'No! Shellder is a Water type. Cold ocean floors and clamping shut — pure Water.',
   },
   {
     tier: 2,
@@ -10450,6 +10465,9 @@ const FISHING_PUZZLES = [
     question: 'What type is this Pokémon?',
     correctTypes: ['water'],
     mode: 'type',
+    explanation: 'Krabby is a pure Water type. Its enormous claws help it burrow in sand and defend territory. The foam it produces signals good health.',
+    mistyFluff_right: 'Right! Krabby is a Water type. Claws, foam, sandy beaches — pure Water habitat.',
+    mistyFluff_wrong: 'Nope! Krabby is a Water type. Sandy beaches and ocean edges are classic Water territory.',
   },
   // ── Tier 3 ─────────────────────────────────────────────────────────────────
   {
@@ -10464,6 +10482,9 @@ const FISHING_PUZZLES = [
     question: 'What types is this Pokémon? (pick the two correct types)',
     correctTypes: ['water', 'flying'],
     mode: 'type',
+    explanation: 'Gyarados is Water and Flying type — not Dragon as most trainers assume. Its rage is said to last a whole month once triggered.',
+    mistyFluff_right: 'YES! Water and Flying — not Dragon despite everything. Gyarados is the ultimate surprise. My personal favourite.',
+    mistyFluff_wrong: 'Wrong! Gyarados is Water AND Flying — not Dragon. The type chart is full of surprises like this.',
   },
   {
     tier: 3,
@@ -10477,6 +10498,9 @@ const FISHING_PUZZLES = [
     question: 'What types is this Pokémon?',
     correctTypes: ['water', 'ice'],
     mode: 'type',
+    explanation: 'Lapras is Water and Ice type. Its gentle nature and large size make it a natural transport Pokémon from cold northern seas.',
+    mistyFluff_right: 'Correct! Water and Ice. Lapras is one of the rarest and kindest Pokémon in the ocean.',
+    mistyFluff_wrong: 'No! Lapras is Water AND Ice. Cold northern seas and icy temperament — Ice type is key.',
   },
   {
     tier: 3,
@@ -10490,6 +10514,9 @@ const FISHING_PUZZLES = [
     question: 'What type is this Pokémon?',
     correctTypes: ['water'],
     mode: 'type',
+    explanation: 'Seadra is a pure Water type. Its backwards swimming speed and sharp spines make it a dangerous catch despite being small.',
+    mistyFluff_right: 'Right! Pure Water type. Seadra is deceptively tough — those fins are sharper than they look.',
+    mistyFluff_wrong: 'Wrong! Seadra is a Water type. Seahorse, ocean dweller, sharp fins — pure Water.',
   },
 ];
 
@@ -10752,22 +10779,29 @@ const FishingEngine = {
 
     const wordEl = document.getElementById('jessie-word');
     const typeEl = document.getElementById('jessie-word-type');
-    wordEl.textContent = '...';
-    typeEl.textContent = '';
+    // Show name immediately from local data — no API needed
+    wordEl.textContent = p.pokemonName || 'Unknown Pokémon';
+    typeEl.innerHTML   = (p.correctTypes || []).map(t =>
+      `<span class="hud-type-badge type-${t}">${t}</span>`
+    ).join(' ');
 
+    // Try to load sprite from API — gracefully skip if unavailable
     try {
-      const data = await fetchPoke(p.pokeId);
-      const name = capitalize(data.name);
-      const spriteUrl = data.sprites?.front_default || getSpriteUrl(data);
-      const types = (data.types || []).map(t => t.type.name);
-
-      wordEl.innerHTML = `<img src="${spriteUrl}" alt="${name}"
-        class="fishing-reveal-sprite" onerror="this.style.display='none'" />${name}`;
-      typeEl.innerHTML = types.map(t =>
-        `<span class="hud-type-badge type-${t}">${t}</span>`
-      ).join(' ');
+      const data      = await fetchPoke(p.pokemonName.toLowerCase());
+      const spriteUrl = data?.sprites?.front_default || getSpriteUrl(data) || '';
+      if (spriteUrl) {
+        wordEl.innerHTML = `<img src="${spriteUrl}" alt="${p.pokemonName}"
+          class="fishing-reveal-sprite" onerror="this.onerror=null;this.style.display='none'" />${p.pokemonName}`;
+      }
+      // Update types from API if available (more accurate)
+      const types = (data?.types || []).map(t => t.type.name);
+      if (types.length) {
+        typeEl.innerHTML = types.map(t =>
+          `<span class="hud-type-badge type-${t}">${t}</span>`
+        ).join(' ');
+      }
     } catch(e) {
-      wordEl.textContent = `Pokémon #${p.pokeId}`;
+      // API unavailable — text fallback already set above, nothing to do
     }
   },
 
