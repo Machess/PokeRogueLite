@@ -233,7 +233,12 @@ const CHALLENGE_CLASSES = [
   'blaine-active','sabrina-active','fishing-active','jigglypuff-active',
 ];
 
-const NODE_ICONS = { battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒', boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣' };
+const NODE_ICONS = {
+  battle: '⚔️', heal: '💚', catch: '🔵', training: '⚡', shop: '🛒',
+  boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣',
+  jigglypuff_node: '🎵', surge_node: '⚡', erika_node: '🧪',
+  ninja_node: '🥷', sabrina_node: '🔮', blaine_node: '🔥',
+};
 const NODE_MYSTERY_ICON = '❓';
 
 
@@ -870,11 +875,12 @@ function deleteSave() {
 // ── Unlocks ───────────────────────────────────────────────────────────────────
 function loadUnlocks() {
   const p = getActiveProfile();
-  if (!p) return { pikachu: false };
+  if (!p) return { pikachu: false, miniGamesUnlocked: [] };
   try {
-    const d = localStorage.getItem(unlockKey(p));
-    return d ? JSON.parse(d) : { pikachu: false };
-  } catch(e) { return { pikachu: false }; }
+    const d = JSON.parse(localStorage.getItem(unlockKey(p)) || '{}');
+    if (!d.miniGamesUnlocked) d.miniGamesUnlocked = [];
+    return d;
+  } catch(e) { return { pikachu: false, miniGamesUnlocked: [] }; }
 }
 function saveUnlocks(unlocks) {
   const p = getActiveProfile();
@@ -989,6 +995,8 @@ function freshState(starterId) {
     unlockedEevee:   false,
     unlockedMew:     false,
     unlockedMewtwo:  false,
+    pendingPlayerStatuses: [],  // statuses applied to player at start of next battle
+    pendingPlayerEffects:  {},  // {energyOverride, briefed, clarityBuff, typeAnnotations}
   };
 }
 
@@ -1141,11 +1149,63 @@ function generateMap(bossIndex) {
     firstRow[cookIdx].type = 'cooking';
   }
   // ── FISHING MINI-GAME — inject fishing node after Misty (bi>=2) ───────────
-  // Change 'fishing' back to 'maze' to re-enable the maze instead.
   if (bi >= 2) {
     const free = firstRow.filter(n => n.type !== 'cooking');
     if (free.length > 0) {
       free[Math.floor(Math.random() * free.length)].type = 'fishing';
+    }
+  }
+
+  // ── MINI-GAME GUARANTEED NODES ────────────────────────────────────────────
+  // Load which mini-games are unlocked for this profile.
+  // First run: unlocked progressively by boss defeats.
+  // Recurring runs (completedWith.length > 0): all unlocked from bi=0.
+  {
+    const unlocks   = loadUnlocks();
+    const isReturning = (unlocks.completedWith?.length || 0) > 0;
+
+    // Build the full schedule — which mini-game maps to which node type and row
+    const MG_SCHEDULE = [
+      { key:'jigglypuff', type:'jigglypuff_node', row:3, minBi:2 },
+      { key:'surge',      type:'surge_node',      row:2, minBi:3 },
+      { key:'erika',      type:'erika_node',      row:2, minBi:4 },
+      { key:'ninja',      type:'ninja_node',       row:2, minBi:5 },
+      { key:'sabrina',    type:'sabrina_node',    row:2, minBi:6 },
+      { key:'blaine',     type:'blaine_node',     row:2, minBi:7 },
+    ];
+
+    // Determine which are available this map
+    const available = MG_SCHEDULE.filter(mg => {
+      if (bi < mg.minBi) return false;
+      return isReturning || unlocks.miniGamesUnlocked.includes(mg.key);
+    });
+
+    if (available.length > 0) {
+      // Shuffle and pick 1–3 (weighted: 50% = 1, 35% = 2, 15% = 3)
+      const shuffled = shuffle([...available]);
+      const r        = Math.random();
+      const count    = r < 0.50 ? 1 : r < 0.85 ? 2 : Math.min(3, shuffled.length);
+      const chosen   = shuffled.slice(0, count);
+
+      chosen.forEach(mg => {
+        // Find a node at the target row that isn't already a special type
+        const candidates = nodes.filter(n =>
+          n.row === mg.row &&
+          !['cooking','fishing','boss','jigglypuff_node','surge_node',
+            'erika_node','ninja_node','sabrina_node','blaine_node'].includes(n.type)
+        );
+        if (candidates.length > 0) {
+          const target = candidates[Math.floor(Math.random() * candidates.length)];
+          target.type   = mg.type;
+          target.isNew  = !unlocks.miniGamesIntroduced?.includes(mg.key);
+          // Mark as introduced
+          if (!unlocks.miniGamesIntroduced) unlocks.miniGamesIntroduced = [];
+          if (!unlocks.miniGamesIntroduced.includes(mg.key)) {
+            unlocks.miniGamesIntroduced.push(mg.key);
+            saveUnlocks(unlocks);
+          }
+        }
+      });
     }
   }
 
@@ -3132,6 +3192,26 @@ const Game = {
     const defeated = GameState.bossesDefeated;
     const boss     = BOSS_TRAINERS[Math.min(defeated - 1, BOSS_TRAINERS.length - 1)];
 
+    // ── Unlock mini-games progressively on boss defeat ────────────────────────
+    // Each boss unlocks the next mini-game for subsequent maps.
+    // Persisted in unlocks so recurring runs have all from the start.
+    const MINIGAME_UNLOCK_SCHEDULE = {
+      1: 'jigglypuff',   // After Brock
+      2: 'surge',        // After Misty
+      3: 'erika',        // After Surge
+      4: 'ninja',        // After Erika
+      5: 'sabrina',      // After Koga
+      6: 'blaine',       // After Sabrina
+    };
+    if (MINIGAME_UNLOCK_SCHEDULE[defeated]) {
+      const unlocks = loadUnlocks();
+      const mg = MINIGAME_UNLOCK_SCHEDULE[defeated];
+      if (!unlocks.miniGamesUnlocked.includes(mg)) {
+        unlocks.miniGamesUnlocked.push(mg);
+        saveUnlocks(unlocks);
+      }
+    }
+
     // ── Won all 8 gyms → Victory ──────────────────────────────────────────
     if (defeated >= 8) {
       // Track which starter completed this run
@@ -3642,8 +3722,14 @@ const ARROW_LABELS = {
   shop:     { icon: 'assets/shop_icon.png',    label: 'Shop'    },
   boss:     { icon: 'assets/boss_icon.png',    label: 'GYM!'   },
   mystery:  { icon: null, emoji: '❓',          label: '???'    },
-  cooking:  { icon: null, emoji: '🍳',          label: "Brock's Kitchen" },
-  fishing:  { icon: null, emoji: '🎣',          label: "Misty's Fishing"},
+  cooking:        { icon: null, emoji: '🍳', label: "Brock's Kitchen"   },
+  fishing:        { icon: null, emoji: '🎣', label: "Misty's Fishing"   },
+  jigglypuff_node:{ icon: null, emoji: '🎵', label: 'Jigglypuff Song'   },
+  surge_node:     { icon: null, emoji: '⚡', label: 'Surge Quiz'         },
+  erika_node:     { icon: null, emoji: '🧪', label: 'Potion Lab'         },
+  ninja_node:     { icon: null, emoji: '🥷', label: 'Ninja Memory'       },
+  sabrina_node:   { icon: null, emoji: '🔮', label: 'Sabrina Jigsaw'     },
+  blaine_node:    { icon: null, emoji: '🔥', label: 'Battle Lab'         },
 };
 
 // Builds an inline SVG directional chevron for nav arrows.
@@ -3969,8 +4055,14 @@ const MapEngine = {
       case 'shop':     ShopEngine.start(node);          break;
       case 'boss':     BossEngine.start(node);                 break;
       case 'mystery':  MysteryEngine.start(node);              break;
-      case 'cooking':  CookingEngine.start(node);              break;
-      case 'fishing':  FishingEngine.start(node);               break;
+      case 'cooking':         CookingEngine.start(node);        break;
+      case 'fishing':         FishingEngine.start(node);         break;
+      case 'jigglypuff_node': JigglypuffEngine.start(node);      break;
+      case 'surge_node':      SurgeEngine.start(node);           break;
+      case 'erika_node':      ErikaEngine.start(node);           break;
+      case 'ninja_node':      NinjaMemoryEngine.start(node);     break;
+      case 'sabrina_node':    SabrinaEngine.start(node);         break;
+      case 'blaine_node':     BlaineEngine.start(node);          break;
     }
   },
 
@@ -4332,8 +4424,69 @@ const BattleEngine = {
       this._logPlayer(`🍽️ Brock's meal! ${GameState.cookingShield} dmg shield active!`);
       GameState.cookingShield = 0;
     }
+
+    // Apply pending player statuses from mini-game losses (Jigglypuff, Surge etc.)
+    const pendingStatuses = GameState.pendingPlayerStatuses || [];
+    if (pendingStatuses.length > 0) {
+      pendingStatuses.forEach(s => {
+        if (s === 'sleep_0energy') {
+          // Jigglypuff loss: sleep + 0 energy first turn
+          addStatus(this.state, 'player', 'sleep');
+          this.state.energy = 0;
+          this._logEnemy(`💤 ${playerPoke.name} starts the battle asleep! (Jigglypuff's revenge)`);
+        } else if (s === 'confuse') {
+          addStatus(this.state, 'player', 'confuse');
+          this._logEnemy(`😵 ${playerPoke.name} is confused! (Jigglypuff's doing)`);
+        } else if (s === 'burn') {
+          addStatus(this.state, 'player', 'burn');
+          this._logEnemy(`🔥 ${playerPoke.name} starts Burned! (Erika's failed potion)`);
+        } else if (s === 'party_poison') {
+          // Koga loss: whole party poisoned (applied to active only since only one in battle)
+          addStatus(this.state, 'player', 'poison');
+          this._logEnemy(`☠️ ${playerPoke.name} starts Poisoned! (Koga's punishment)`);
+        } else {
+          addStatus(this.state, 'player', s);
+        }
+      });
+      GameState.pendingPlayerStatuses = [];
+    }
+
+    // Apply pending battle effects (Surge briefing, Clarity buff, etc.)
+    const fx = GameState.pendingPlayerEffects || {};
+    if (fx.briefedDmgBonus) {
+      this._briefedBonus = fx.briefedDmgBonus;
+      this._logPlayer(`⚡ BRIEFED! +${Math.round((fx.briefedDmgBonus - 1) * 100)}% damage this battle! (Surge's intel)`);
+    }
+    if (fx.clarityBuff) {
+      this._clarityBuff = true;
+      this._logPlayer(`🥷 Clarity! Status durations halved this battle. (Ninja focus)`);
+    }
+    if (fx.typeAnnotations) {
+      this._typeAnnotations = true;
+      this._logPlayer(`🔬 Blaine's analysis: type hints active on your cards this battle!`);
+    }
+    if (fx.typeConfusion) {
+      this._typeConfusion = true;
+      // Flag a random card in the opening hand after deal
+      this._typeConfusionPending = true;
+    }
+    if (fx.battleHp) {
+      // Jigglypuff win: free mid-battle revive stored for use when player faints
+      this._jigglypuffRevive = fx.battleHp;
+      this._logPlayer(`💤 Jigglypuff's lullaby — auto-revive ready if you faint!`);
+    }
+    GameState.pendingPlayerEffects = {};
+
     this._dealHand(5);
     this._render();
+
+    // Type confusion (Blaine loss) — mark one random opening card as misfiring
+    if (this._typeConfusionPending && this.state.hand.length > 0) {
+      this._typeConfusionPending = false;
+      const confIdx = Math.floor(Math.random() * this.state.hand.length);
+      this.state.hand[confIdx]._typeConfused = true;
+      this._logEnemy(`🔀 Type Confusion! One card in your hand will misfire! (Blaine's experiment)`);
+    }
     this._logSystem(
       this._isTrainerBattle
         ? `Trainer sent out <b>${oppPoke.name}</b>!`
@@ -4647,6 +4800,30 @@ const BattleEngine = {
     }
     st.energy -= cost;
     st.cardsPlayedCount = (st.cardsPlayedCount || 0) + 1;
+
+    // Type confusion (Blaine loss) — flagged card misfires: deals self-damage
+    if (card._typeConfused) {
+      delete card._typeConfused;
+      const selfDmg = 15 + (card.power || 0) * 0.15 | 0;
+      st.player.hp = Math.max(0, st.player.hp - selfDmg);
+      this._logEnemy(`🔀 ${card.name} misfired! Type confused — ${logDmgTaken(selfDmg)} HP self-damage!`);
+      if (this.isBoss) BossEngine._syncFromBattleState(st);
+      this._checkDefeated();
+      return;
+    }
+
+    // Confusion — 30% chance card backfires and damages self instead
+    if (hasStatus(st, 'player', 'confuse') && Math.random() < 0.3) {
+      const selfDmg = 20 + (card.power || 0) * 0.2 | 0;
+      st.player.hp = Math.max(0, st.player.hp - selfDmg);
+      this._logEnemy(`${st.player.name} is confused and hurt itself! (${logDmgTaken(selfDmg)} HP)`);
+      // Remove confuse after it triggers
+      st.statusEffects.player = (st.statusEffects.player || []).filter(s => s !== 'confuse');
+      if (this.isBoss) BossEngine._syncFromBattleState(st);
+      this._checkDefeated();
+      return; // card effect doesn't fire
+    }
+
     this._applyCardEffect(card);
     if (this.isBoss) BossEngine._syncFromBattleState(st);
     this._checkDefeated();
@@ -4679,6 +4856,19 @@ const BattleEngine = {
       this._logPlayer(`🎣 Misty's lure! ${card.type} +30%!`);
       GameState.fishingBuff = null;
       saveGame();
+    }
+
+    // ── Clarity buff (Ninja Memory win) — halve incoming status effect duration ─
+    // Applied by consuming after first status attempt — handled in addStatus wrapper.
+    // Psychic/Ghost boost
+    if (dmg > 0 && this._clarityBuff && (card.type === 'psychic' || card.type === 'ghost')) {
+      const boost = GameState.pendingPlayerEffects?.clarityTypeBoost || 1.3;
+      dmg = Math.round(dmg * boost);
+    }
+
+    // ── Surge BRIEFED damage bonus ────────────────────────────────────────────
+    if (dmg > 0 && this._briefedBonus > 1) {
+      dmg = Math.round(dmg * this._briefedBonus);
     }
 
     // Rain boost
@@ -4916,13 +5106,35 @@ const BattleEngine = {
     this._chargeBonus = 0;
     this._itemUsedThisTurn = false;
 
+    // ── Player status enforcement ─────────────────────────────────────────────
+    // Sleep — skip turn entirely (0 energy, auto-end)
+    if (hasStatus(st, 'player', 'sleep')) {
+      st.energy = 0;
+      // Remove sleep after 1 turn
+      st.statusEffects.player = st.statusEffects.player.filter(s => s !== 'sleep');
+      this._logEnemy(`${st.player.name} is fast asleep! Turn skipped!`);
+      this._dealHand(5);
+      this._render();
+      setTimeout(() => this.endTurn(), 1200);
+      return;
+    }
+
+    // Paralysis — 40% chance to skip turn
+    if (hasStatus(st, 'player', 'para') && Math.random() < 0.4) {
+      st.energy = 0;
+      this._logEnemy(`${st.player.name} is paralysed and can't move!`);
+      this._dealHand(5);
+      this._render();
+      setTimeout(() => this.endTurn(), 1200);
+      return;
+    }
+
     // Leftovers
     const leftoversMsg = ItemEngine.checkLeftovers(st);
     if (leftoversMsg) this._logPlayer(leftoversMsg);
 
     this._dealHand(5);
     this._render();
-    // 'Your turn' message removed — energy orbs show state
   },
 
   _oppAttack() {
@@ -5020,6 +5232,15 @@ const BattleEngine = {
       return true;
     }
     if (st.player.hp <= 0) {
+      // Jigglypuff lullaby revive — triggers once if active
+      if (this._jigglypuffRevive > 0) {
+        const reviveHp = this._jigglypuffRevive;
+        this._jigglypuffRevive = 0;
+        st.player.hp = reviveHp;
+        this._logPlayer(`💤 Jigglypuff's lullaby! ${st.player.name} woke up with ${reviveHp} HP!`);
+        this._render();
+        return false;
+      }
       const activeIdx = GameState.activePokemonIndex;
 
       // Focus Sash — survive with 1 HP
@@ -5919,46 +6140,53 @@ const SurgeEngine = {
   },
 
   _finish() {
-    // Reset state immediately so stale flags don't intercept future challenge-continue-btn clicks
     this._answered = false;
     this._round    = 0;
     document.getElementById('screen-challenge').classList.remove('surge-active');
     const score = this._score;
-    const party = GameState.party.filter(p => p.hp > 0);
+
+    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
 
     let headline, detail, quote;
     if (score === 3) {
+      // Perfect: +25% damage for 2 battles
+      GameState.pendingPlayerEffects.briefedDmgBonus  = 1.25;
+      GameState.pendingPlayerEffects.briefedBattles   = 2;
       const evos = levelUpParty('surge');
-      headline = '⚡ Perfect Score!';
-      detail   = 'All Pokémon gained +1 level!';
+      headline = '⚡ PERFECT BRIEFING!';
+      detail   = `All Pokémon +1 level!\n\n⚡ BRIEFED: +25% damage for 2 battles!`;
       quote    = 'Perfect. You may just survive out there. DISMISSED.';
       saveGame();
-      if (evos.length > 0) {
-        runEvolutions(evos, () => showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
-          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }));
-      } else {
-        showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
-          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
-      }
+      const cb = () => showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+      evos.length > 0 ? runEvolutions(evos, cb) : cb();
     } else if (score >= 1) {
+      // Partial win: +15% damage for 1 battle
+      GameState.pendingPlayerEffects.briefedDmgBonus  = 1.15;
+      GameState.pendingPlayerEffects.briefedBattles   = 1;
       const evos = levelUpParty('surge');
-      headline = `⚡ ${score}/3 Correct`;
-      detail   = 'Active Pokémon gained +1 level.';
-      quote    = score === 2
-        ? 'Two out of three. Not bad. Study the weak spot.' 
-        : 'One out of three. Barely passing. Hit the training room.';
+      headline = `⚡ ${score}/3 — BRIEFED`;
+      detail   = `Active Pokémon +1 level!\n\n⚡ BRIEFED: +15% damage next battle!`;
+      quote    = score === 2 ? 'Two out of three. Study the weak spot.' : 'One. Barely passing.';
       saveGame();
-      if (evos.length > 0) {
-        runEvolutions(evos, () => showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
-          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }));
-      } else {
-        showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
-          () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
-      }
+      const cb = () => showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+      evos.length > 0 ? runEvolutions(evos, cb) : cb();
     } else {
+      // Loss: confiscate most recently acquired card
+      const deck = GameState.party[GameState.activePokemonIndex]?.deck || GameState.deck;
+      let confiscatedName = '';
+      if (deck && deck.length > 1) {
+        const removed = deck.splice(deck.length - 1, 1)[0];
+        confiscatedName = removed?.name || 'a card';
+        if (!GameState.confiscatedCards) GameState.confiscatedCards = [];
+        GameState.confiscatedCards.push(removed);
+      }
       headline = '⚡ 0/3 — FAIL';
-      detail   = 'No reward. Study your type chart, soldier.';
-      quote    = 'Zero out of three. I\'ve seen Magikarp with better battle sense. DISMISSED.';
+      detail   = confiscatedName
+        ? `"${confiscatedName}" CONFISCATED from your deck!\n\nScore perfectly in a future Surge quiz to recover it.`
+        : 'No reward. Study your type chart, soldier.';
+      quote    = 'Zero out of three. DISGRACEFUL. I\'m keeping that card until you prove yourself.';
       saveGame();
       showModal(headline, `${detail}\n\n"${quote}" — Lt. Surge`,
         () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
@@ -6094,6 +6322,7 @@ const ErikaEngine = {
     this._poured            = [];
     this._totalPoured       = 0;
     this._pourOutCommented  = false;
+    this._resetUsed         = false;
     const tier      = GameState.difficultyTier || 2;
     this._puzzle    = _buildErikaPuzzle(tier);
 
@@ -6367,6 +6596,7 @@ const ErikaEngine = {
     this._poured            = [];
     this._totalPoured       = 0;
     this._pourOutCommented  = false;
+    this._resetUsed         = true;  // tracks perfect-attempt status
 
     // Reset flask
     const flaskLiq = document.getElementById('erika-flask-liquid');
@@ -6445,27 +6675,47 @@ const ErikaEngine = {
 
     const resultEl = document.getElementById('challenge-result');
     const isRight  = resultEl && resultEl.classList.contains('result-correct');
-    const goldBase = 30 + (GameState.bossesDefeated || 0) * 5;
-    const goldReward = isRight ? goldBase : Math.floor(goldBase * 0.3);
 
-    GameState.gold = (GameState.gold || 0) + goldReward;
+    // Detect if perfect (no reset used, correct on first submit)
+    const isPerfect = isRight && !this._resetUsed;
 
-    if (isRight) {
+    if (!isRight) {
+      // Loss: lead Burned + takes 15 dmg (Erika's failed potion)
       const lead = GameState.party.find(p => p.hp > 0);
-      if (lead) { lead.hp = Math.min(lead.maxHp, lead.hp + 30); }
-      SoundEngine.playFanfare();
+      if (lead) lead.hp = Math.max(1, lead.hp - 15);
+      if (!GameState.pendingPlayerStatuses) GameState.pendingPlayerStatuses = [];
+      GameState.pendingPlayerStatuses.push('burn');
+      saveGame();
+      showModal('🌿 Potion Exploded!',
+        `The failed mixture splashed your lead Pokémon!\n-15 HP + they start the next battle Burned.\n\n"...Ah. That mixture is not stable. Please step back." — Erika`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+      return;
     }
+
+    // Win: create a potion item based on the colour mixed
+    const colorToPotion = {
+      green:  { id:'green_potion',  name:'Grass Potion',   effect:'heal40pct',  desc:'+40% max HP to lead'   },
+      purple: { id:'purple_potion', name:'Poison Potion',  effect:'poison_aura',desc:'Poisons opp on first hit'},
+      orange: { id:'orange_potion', name:'Fire Tonic',     effect:'fire_boost', desc:'Fire cards +50% this battle'},
+      pink:   { id:'pink_potion',   name:'Blossom Tonic',  effect:'party_heal15',desc:'+15 HP to all party'  },
+      cyan:   { id:'cyan_potion',   name:'Ice Potion',     effect:'freeze_first',desc:'Opp first turn Frozen' },
+      red:    { id:'red_potion',    name:'Fire Essence',   effect:'fire_boost', desc:'Fire cards +30% this battle'},
+      blue:   { id:'blue_potion',   name:'Aqua Essence',   effect:'heal40pct',  desc:'+40% max HP to lead'   },
+    };
+    const mixedColor  = mixColors(this._poured);
+    const potion      = colorToPotion[mixedColor] || colorToPotion.green;
+    const doses       = isPerfect ? 2 : 1;
+    const goldBase    = 30 + (GameState.bossesDefeated || 0) * 5;
+
+    GameState.gold = (GameState.gold || 0) + goldBase;
+    // Store potion in bag — reuse item system
+    if (!GameState.erikaPotions) GameState.erikaPotions = [];
+    for (let i = 0; i < doses; i++) GameState.erikaPotions.push({ ...potion });
+
     saveGame();
-
-    const headline = isRight ? '🌸 Potion Complete!' : '🌿 Keep Practising';
-    const detail   = isRight
-      ? `+${goldReward}💰 · Your lead Pokémon recovered 30 HP!\n\n"Beautiful work." — Erika`
-      : `+${goldReward}💰 consolation gold.\n\n"Study the mix rules. Try again next time." — Erika`;
-
-    showModal(headline, detail, () => {
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
-    });
+    showModal('🌸 Potion Brewed!',
+      `+${goldBase}💰 · You brewed: ${doses}× ${potion.name}!\n📦 Effect: ${potion.desc}\n${isPerfect ? '✨ Perfect mix — double dose!' : ''}\n\n"Beautiful. This is how all medicine begins." — Erika`,
+      () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
   },
 };
 // ─── NINJA MEMORY ENGINE — Koga's Card Grid ──────────────────────────────────
@@ -6758,27 +7008,36 @@ const NinjaMemoryEngine = {
     cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
 
     const goldBase = 25 + (GameState.bossesDefeated || 0) * 6;
+    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+    if (!GameState.pendingPlayerStatuses) GameState.pendingPlayerStatuses = [];
+
     let goldReward = 0, levelReward = 0, title = '', msg = '';
 
     if (!won) {
+      // Loss: whole party poisoned at start of next battle
+      GameState.pendingPlayerStatuses.push('party_poison');
       title = '🥷 Focus Lost.';
-      msg   = `Too many mismatches.\n\n${KOGA_COMMENTS.fail}`;
+      msg   = `Too many mismatches.\n\n☠️ Koga's punishment: your active Pokémon starts the next battle POISONED.\n\n${KOGA_COMMENTS.fail}`;
     } else if (this._misses === 0) {
+      // Perfect: clarity buff + Psychic/Ghost boost
       goldReward = goldBase; levelReward = 3;
+      GameState.pendingPlayerEffects.clarityBuff       = true;
+      GameState.pendingPlayerEffects.clarityTypeBoost  = 1.3;  // psychic+ghost 1.3×
       title = '🥷 Perfect Memory!';
-      msg   = `Flawless. Not a single miss.\n+${goldReward}💰 gold · +3 levels\n\n${KOGA_COMMENTS.done}`;
+      msg   = `Flawless. Not a single miss.\n+${goldReward}💰 · +3 levels\n\n🧠 Clarity: status durations halved + Psychic/Ghost cards deal 1.3× next battle!\n\n${KOGA_COMMENTS.done}`;
     } else if (this._misses <= 2) {
       goldReward = Math.floor(goldBase * 0.8); levelReward = 2;
+      GameState.pendingPlayerEffects.clarityBuff = true;
       title = '🥷 Impressive, Ninja.';
-      msg   = `${this._misses} mismatch${this._misses > 1 ? 'es' : ''}.\n+${goldReward}💰 gold · +2 levels\n\n${KOGA_COMMENTS.done}`;
+      msg   = `${this._misses} mismatch${this._misses > 1 ? 'es' : ''}.\n+${goldReward}💰 · +2 levels\n\n🧠 Clarity: opponent status effects halved next battle!\n\n${KOGA_COMMENTS.done}`;
     } else if (this._misses <= this._budget) {
       goldReward = Math.floor(goldBase * 0.5); levelReward = 1;
       title = '🥷 You Passed.';
-      msg   = `${this._misses} mismatches — within budget.\n+${goldReward}💰 gold · +1 level\n\n${KOGA_COMMENTS.done}`;
+      msg   = `${this._misses} mismatches.\n+${goldReward}💰 · +1 level\n\n${KOGA_COMMENTS.done}`;
     } else {
       goldReward = Math.floor(goldBase * 0.2);
       title = '🥷 Over Budget.';
-      msg   = `${this._misses} mismatches — reward reduced.\n+${goldReward}💰 gold\n\n${KOGA_COMMENTS.done}`;
+      msg   = `${this._misses} mismatches — reward reduced.\n+${goldReward}💰\n\n${KOGA_COMMENTS.done}`;
     }
 
     GameState.gold = (GameState.gold || 0) + goldReward;
@@ -7190,23 +7449,34 @@ const BlaineEngine = {
     const goldBase   = 30 + (GameState.bossesDefeated || 0) * 5;
     const goldReward = isRight ? goldBase : Math.floor(goldBase * 0.3);
 
+    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+
     GameState.gold = (GameState.gold || 0) + goldReward;
+
     if (isRight) {
-      const poke = GameState.party[GameState.activePokemonIndex];
-      if (poke) { poke.level++; poke.maxHp += 8; poke.hp = Math.min(poke.maxHp, poke.hp + 8); }
+      // Win: type annotations on cards shown next boss battle
+      GameState.pendingPlayerEffects.typeAnnotations = true;
+      // Tier 3 perfect: permanently boost one random card
+      if (tier >= 3) {
+        const deck = GameState.party[GameState.activePokemonIndex]?.deck || GameState.deck;
+        if (deck?.length > 0) {
+          const card = deck[Math.floor(Math.random() * deck.length)];
+          if (card) { card.power = Math.round((card.power || 0) * 1.1 + 3); card.improved = (card.improved || 0) + 1; }
+        }
+      }
+      SoundEngine.playFanfare();
+      saveGame();
+      showModal('🔥 Correct!',
+        `+${goldReward}💰${tier >= 3 ? ' · A card was permanently upgraded!' : ''}\n\n🔬 ANALYSED: Type effectiveness hints shown on your cards next boss battle!\n\n"Knowledge IS power — and you have both!" — Blaine`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+    } else {
+      // Loss: type confusion — one opening hand card misfires next battle
+      GameState.pendingPlayerEffects.typeConfusion = true;
+      saveGame();
+      showModal('🔥 Study up!',
+        `+${goldReward}💰 consolation.\n\n🔀 Type Confusion: one card in your opening hand next battle will misfire!\n\n"Fwa ha ha! That's what SCIENCE looks like when it goes wrong!" — Blaine`,
+        () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
     }
-    saveGame();
-
-    const titleStr = isRight ? '🔥 Correct!' : '🔥 Study up!';
-    const msg      = isRight
-      ? `+${goldReward}💰 · +1 level!\n\n"Knowledge IS power — and you have both!" — Blaine`
-      : `+${goldReward}💰 consolation gold.\n\n"Failure is just data. Come back stronger!" — Blaine`;
-
-    if (isRight) SoundEngine.playFanfare();
-    showModal(titleStr, msg, () => {
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
-    });
   },
 };
 // ─── LEGENDARY ENCOUNTER ENGINE ──────────────────────────────────────────────
@@ -7824,20 +8094,53 @@ const JigglypuffEngine = {
   },
 
   _finish() {
-    const goldReward = 20 + (GameState.bossesDefeated || 0) * 5;
-    GameState.gold   = (GameState.gold || 0) + goldReward;
-    const activePoke = GameState.party[GameState.activePokemonIndex];
-    if (activePoke) { activePoke.level++; activePoke.maxHp += 8; activePoke.hp = Math.min(activePoke.maxHp, activePoke.hp + 8); }
-    saveGame();
+    const goldBase   = 20 + (GameState.bossesDefeated || 0) * 5;
+    const allCorrect = this._sequence.every((_, i) => {
+      const dot = document.getElementById(`jiggly-dot-${i}`);
+      return dot && dot.classList.contains('jiggly-dot-correct');
+    });
+    const isRight  = this._playerPos >= this._sequence.length;
+
+    let goldReward = 0, title = '', msg = '';
+
+    if (!isRight) {
+      // Loss: sleep + 0 energy next battle
+      if (!GameState.pendingPlayerStatuses) GameState.pendingPlayerStatuses = [];
+      GameState.pendingPlayerStatuses.push('sleep_0energy');
+      goldReward = Math.floor(goldBase * 0.2);
+      title = '🎵 Jigglypuff is upset!';
+      msg   = `+${goldReward}💰\n\n💤 Your lead Pokémon will start the next battle ASLEEP with 0 energy — Jigglypuff's revenge!\n\n"La… la… la…" — Jigglypuff (disappointed)`;
+    } else if (allCorrect) {
+      // Perfect: all party get auto-revive effect
+      goldReward = goldBase;
+      if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+      GameState.pendingPlayerEffects.battleHp = Math.floor(
+        GameState.party[GameState.activePokemonIndex]?.maxHp * 0.5 || 40
+      );
+      title = '🎵 ★ Perfect Song! ★';
+      msg   = `+${goldReward}💰 · +1 level!\n\n💤 Jigglypuff's lullaby grants your lead an auto-revive for the next battle!\n\n"La la LA la la~" — Jigglypuff (overjoyed)`;
+    } else {
+      // Normal win: just the auto-revive
+      goldReward = Math.floor(goldBase * 0.7);
+      if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+      GameState.pendingPlayerEffects.battleHp = Math.floor(
+        GameState.party[GameState.activePokemonIndex]?.maxHp * 0.35 || 25
+      );
+      title = '🎵 Song Complete!';
+      msg   = `+${goldReward}💰 · +1 level!\n\n💤 Jigglypuff sang your lead to sleep — they'll auto-revive once if they faint next battle!\n\n"La la la la la~" — Jigglypuff`;
+    }
+
+    GameState.gold = (GameState.gold || 0) + goldReward;
+    if (isRight) {
+      const poke = GameState.party[GameState.activePokemonIndex];
+      if (poke) { poke.level++; poke.maxHp += 8; poke.hp = Math.min(poke.maxHp, poke.hp + 8); }
+    }
 
     document.getElementById('screen-challenge').classList.remove('jigglypuff-active');
     const cv = document.getElementById('challenge-coin-visual');
     cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
-
-    showModal('🎵 Song Complete!',
-      `You sang with Jigglypuff!\n+${goldReward}💰 gold · +1 level!\n"La la la la la~" — Jigglypuff`,
-      () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
-    );
+    saveGame();
+    showModal(title, msg, () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
   },
 };
 
