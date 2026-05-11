@@ -7334,3 +7334,168 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   100% { height: 24px; opacity: 0;  transform: scaleY(1) translateY(4px); transform-origin: top; }
 }
 .erika-stream-out { animation: erika-stream-out-anim .5s ease-out forwards; }
+
+/* ═══════════════════════════════════════════
+   FISHING MINI-GAME — Misty's Mystery Catch
+   Revamped: bobber, float-up clues,
+   sprite choice cards.
+═══════════════════════════════════════════ */
+
+/* Rod + water area */
+.fishing-rod-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: .2rem;
+}
+.fishing-water {
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(90deg,
+    rgba(30,120,200,.4) 0%, rgba(60,160,240,.6) 50%, rgba(30,120,200,.4) 100%);
+  border-radius: 5px;
+  animation: water-ripple 2.5s ease-in-out infinite;
+}
+@keyframes water-ripple {
+  0%,100% { transform: scaleX(1);    opacity: .7; }
+  50%      { transform: scaleX(1.02); opacity: 1;  }
+}
+.fishing-bobber {
+  font-size: 1.3rem;
+  animation: bobber-float 1.8s ease-in-out infinite;
+  cursor: default;
+}
+@keyframes bobber-float {
+  0%,100% { transform: translateY(0);    }
+  50%      { transform: translateY(-5px); }
+}
+@keyframes bobber-dip-anim {
+  0%   { transform: translateY(0);    }
+  40%  { transform: translateY(8px);  }
+  70%  { transform: translateY(12px); }
+  100% { transform: translateY(0);    }
+}
+.bobber-dip { animation: bobber-dip-anim .6s ease-in-out forwards !important; }
+
+/* Clue bubbles */
+.fishing-bubbles-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: .3rem;
+  width: 100%;
+}
+.fishing-bubble {
+  background: rgba(20,80,140,.55);
+  border: 1px solid rgba(80,160,220,.4);
+  border-radius: 10px;
+  padding: .35rem .5rem;
+  font-size: .44rem;
+  color: #c8e8ff;
+  line-height: 1.5;
+}
+.fishing-bubble-float {
+  animation: bubble-float-up .4s cubic-bezier(0,.8,.4,1) forwards;
+  opacity: 0;
+}
+@keyframes bubble-float-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.fishing-bubble-shown { opacity: 1; }
+.fishing-next-btn {
+  align-self: center;
+  font-size: .38rem !important;
+  padding: .3rem .6rem !important;
+  margin-top: .15rem;
+}
+
+/* ── Sprite choice cards ── */
+.fishing-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+.fishing-choice-card {
+  background: rgba(20,60,120,.5);
+  border: 2px solid rgba(80,160,220,.35);
+  border-radius: 10px;
+  padding: .4rem .3rem .3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: border-color .12s, transform .1s, background .12s;
+}
+.fishing-choice-card:hover {
+  border-color: rgba(120,200,255,.7);
+  background: rgba(40,100,180,.5);
+  transform: translateY(-2px);
+}
+.fishing-card-sprite-wrap {
+  width: 60px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+}
+.fishing-card-silhouette {
+  font-size: 1.8rem;
+  opacity: .4;
+  width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+}
+.fishing-card-img {
+  width: 60px; height: 60px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.4));
+  animation: card-img-reveal .35s ease forwards;
+}
+@keyframes card-img-reveal {
+  from { opacity: 0; transform: scale(.85); }
+  to   { opacity: 1; transform: scale(1);   }
+}
+.fishing-card-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem;
+  color: #a8d0f8;
+  text-align: center;
+}
+/* Correct/wrong card states */
+.fishing-choice-card.card-correct {
+  border-color: #80ee80;
+  background: rgba(40,140,60,.4);
+  box-shadow: 0 0 12px 3px rgba(100,220,100,.5);
+}
+.fishing-choice-card.card-wrong {
+  border-color: #ee6060;
+  background: rgba(140,40,40,.3);
+  animation: wrong-shake .4s ease;
+}
+
+/* Type / habitat answer grid */
+.fishing-type-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  justify-content: center;
+  width: 100%;
+}
+.fishing-habitat-btn {
+  font-size: .4rem !important;
+  padding: .4rem .6rem !important;
+}
+.fishing-habitat-name { font-size: .38rem; }
+
+/* Buff notice */
+.fishing-buff-notice {
+  display: block;
+  margin-top: .3rem;
+  font-size: .38rem;
+  color: #80f0a0;
+  background: rgba(0,80,40,.3);
+  border-radius: 6px;
+  padding: .2rem .4rem;
+}

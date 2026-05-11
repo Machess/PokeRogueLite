@@ -4454,6 +4454,9 @@ const BattleEngine = {
         } else if (s === 'burn') {
           addStatus(this.state, 'player', 'burn');
           this._logEnemy(`🔥 ${playerPoke.name} starts Burned! (Erika's failed potion)`);
+        } else if (s === 'opp_poison_start') {
+          addStatus(this.state, 'opp', 'poison');
+          this._logPlayer(`☠️ Opponent starts Poisoned! (Misty's catch)`);
         } else if (s === 'party_poison') {
           // Koga loss: whole party poisoned (applied to active only since only one in battle)
           addStatus(this.state, 'player', 'poison');
@@ -10401,188 +10404,231 @@ const TYPE_ICONS = {
 };
 
 // ─── FISHING PUZZLES DATA ─────────────────────────────────────────────────────
+// mode: 'identify' — pick the correct Pokémon from 4 sprite cards
+// mode: 'weakness' — given type, pick what beats it
+// mode: 'habitat'  — given location description, pick who lives there
+// buffType determines the reward applied on correct answer
+
 const FISHING_PUZZLES = [
-  // ── Tier 1 ─────────────────────────────────────────────────────────────────
+  // ══ TIER 1 — identify only, 2 clues, 3 choices ════════════════════════════
   {
-    tier: 1,
-    pokemonName: 'Magikarp',
-    clues: [
-      'It splashes around helplessly near the surface.',
-      'It has bright orange and gold scales.',
-      'It is very common and not very strong.',
-    ],
-    summary: 'A weak, splashing, brightly-coloured fish near the surface.',
-    question: 'What type of Pokémon is this?',
-    hint_t1:  'It is a Water type. Which one matches?',
-    correctTypes: ['water'],
-    mode: 'type',
-    explanation: 'Magikarp is a pure Water type. Famous for being helpless — until it evolves into the fearsome Gyarados.',
-    mistyFluff_right: 'Exactly! Even a Magikarp deserves respect. It evolves into something fearsome.',
-    mistyFluff_wrong: 'Nope! Magikarp is a Water type. It splashes at the surface — classic Water behaviour.',
+    tier:1, mode:'identify', pokemonName:'Magikarp', pokemonId:129, buffType:'water',
+    clues:['It splashes uselessly near the surface.','Its bright orange and gold scales flash in the sun.'],
+    summary:'A helpless, bright-scaled fish that just keeps splashing.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Magikarp','Goldeen','Horsea'],
+    explanation:'Magikarp is famous for being almost completely useless — until it evolves into the fearsome Gyarados!',
+    mistyFluff_right:'YES! Even I almost tossed it back. Never underestimate a Magikarp!',
+    mistyFluff_wrong:'Those orange scales and hopeless splashing — that\'s Magikarp all over!',
   },
   {
-    tier: 1,
-    pokemonName: 'Goldeen',
-    clues: [
-      'It has a flowing white tail like a veil.',
-      'It swims gracefully and has a pointed horn.',
-      'It lives in clear rivers and ponds.',
-    ],
-    summary: 'A graceful, horn-bearing fish with a flowing tail in clear water.',
-    question: 'What type of Pokémon is this?',
-    hint_t1:  'This elegant swimmer is a Water type.',
-    correctTypes: ['water'],
-    mode: 'type',
-    explanation: 'Goldeen is a Water type known for its graceful movement and the sharp horn on its forehead.',
-    mistyFluff_right: 'Yes! Goldeen is one of my favourites. Graceful, elegant, powerful.',
-    mistyFluff_wrong: 'Wrong! Goldeen is a Water type. Flowing fins and clear water are the giveaway.',
+    tier:1, mode:'identify', pokemonName:'Goldeen', pokemonId:118, buffType:'water',
+    clues:['It has a flowing white tail like a bridal veil.','A sharp pointed horn sits on its forehead.'],
+    summary:'A graceful, horn-bearing fish gliding through clear water.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Seaking','Goldeen','Magikarp'],
+    explanation:'Goldeen is called the Water Queen for its elegant swimming and beautiful veil-like tail.',
+    mistyFluff_right:'That\'s my favourite! Goldeen is grace and power combined.',
+    mistyFluff_wrong:'That veil tail and that horn — that\'s Goldeen! The Water Queen!',
   },
   {
-    tier: 1,
-    pokemonName: 'Slowpoke',
-    clues: [
-      'It dangles its tail in the water lazily.',
-      'It has a pink body and a vacant expression.',
-      'It rarely notices when its tail is bitten.',
-    ],
-    summary: 'A pink, dopey creature that uses its tail as bait.',
-    question: 'What type of Pokémon is this?',
-    hint_t1:  'This dreamy Pokémon is Water and Psychic type.',
-    correctTypes: ['water', 'psychic'],
-    mode: 'type',
-    explanation: 'Slowpoke is Water and Psychic type. It processes everything very slowly — but it does have psychic sensitivity.',
-    mistyFluff_right: 'Right! Water and Psychic. Slowpoke proves you can be powerful without being in a hurry.',
-    mistyFluff_wrong: 'Not quite! Slowpoke is Water AND Psychic. That dopey face hides a psychic mind somewhere.',
-  },
-  // ── Tier 2 ─────────────────────────────────────────────────────────────────
-  {
-    tier: 2,
-    pokemonName: 'Tentacool',
-    clues: [
-      'It floats near the surface and is almost transparent.',
-      'It has two red crystal-like eyes and long tentacles.',
-      'Its tentacles can sting and cause paralysis.',
-    ],
-    summary: 'A transparent, stinging jellyfish with red eye-crystals near the surface.',
-    question: 'What types is this Pokémon?',
-    correctTypes: ['water', 'poison'],
-    mode: 'type',
-    explanation: 'Tentacool is Water and Poison type. Its transparent body lets it drift unseen, and its tentacles deliver a toxic sting.',
-    mistyFluff_right: 'Correct! Water and Poison. Tentacool looks harmless until those tentacles wrap around you.',
-    mistyFluff_wrong: 'Wrong! Tentacool is Water AND Poison — the paralysing sting is the Poison-type giveaway.',
+    tier:1, mode:'identify', pokemonName:'Psyduck', pokemonId:54, buffType:'psychic',
+    clues:['It holds its head with both hands — it always has a headache.','It looks confused but releases psychic power when in pain.'],
+    summary:'A yellow duck with a permanent headache hiding psychic power.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Psyduck','Slowpoke','Poliwag'],
+    explanation:'Psyduck is Water and Psychic type. Its constant headaches are suppressed psychic energy looking for release.',
+    mistyFluff_right:'Ugh — PSYDUCK! Of course it ended up on my line. Story of my life.',
+    mistyFluff_wrong:'That confused face and head-holding — that\'s Psyduck! My problem Pokémon.',
   },
   {
-    tier: 2,
-    pokemonName: 'Shellder',
-    clues: [
-      'It hides inside a rough, spiky shell.',
-      'It clamps tightly and rarely lets go.',
-      'It prefers cold ocean floors and is hard to spot.',
-    ],
-    summary: 'A spiky-shelled, clamping creature from cold ocean floors.',
-    question: 'What type is this Pokémon?',
-    correctTypes: ['water'],
-    mode: 'type',
-    explanation: 'Shellder is a pure Water type. Its hard shell and powerful clamp protect it — the same shell can protect Slowpoke too.',
-    mistyFluff_right: 'Yes! Shellder is a Water type. Life on the cold ocean floor is a Water-type lifestyle.',
-    mistyFluff_wrong: 'No! Shellder is a Water type. Cold ocean floors and clamping shut — pure Water.',
+    tier:1, mode:'identify', pokemonName:'Poliwag', pokemonId:60, buffType:'water',
+    clues:['Its round body is almost see-through.','A spiral swirls clearly on its belly.'],
+    summary:'A round translucent tadpole with a spiral on its belly.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Poliwag','Shellder','Seel'],
+    explanation:'Poliwag is pure Water type. The spiral on its belly is its intestines visible through its transparent skin.',
+    mistyFluff_right:'Poliwag! Those tiny legs and that spiral are unmistakable.',
+    mistyFluff_wrong:'Transparent body, spiral belly — that\'s Poliwag! A classic pond Pokémon.',
+  },
+  // ══ TIER 2 — identify + weakness + habitat, 4 choices, 3 clues ════════════
+  {
+    tier:2, mode:'identify', pokemonName:'Tentacool', pokemonId:72, buffType:'poison',
+    clues:['Almost completely transparent — nearly invisible in water.','Two red crystal eyes float above long trailing tentacles.','Its sting causes paralysis.'],
+    summary:'A near-invisible jellyfish whose toxic tentacles paralyse prey.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Tentacool','Shellder','Seel','Horsea'],
+    explanation:'Tentacool is Water and Poison type. It absorbs sunlight through its crystal eyes and uses it as energy.',
+    mistyFluff_right:'Tentacool! Transparent, tentacled, toxic — hard to spot but hard to forget.',
+    mistyFluff_wrong:'Crystal eyes and paralysing tentacles — that\'s Tentacool, Water and Poison type!',
   },
   {
-    tier: 2,
-    pokemonName: 'Krabby',
-    clues: [
-      'It has oversized claws compared to its body.',
-      'It lives on sandy beaches and near the water\'s edge.',
-      'It uses foam from its mouth to build nests.',
-    ],
-    summary: 'A foamy, claw-heavy creature on sandy beaches.',
-    question: 'What type is this Pokémon?',
-    correctTypes: ['water'],
-    mode: 'type',
-    explanation: 'Krabby is a pure Water type. Its enormous claws help it burrow in sand and defend territory. The foam it produces signals good health.',
-    mistyFluff_right: 'Right! Krabby is a Water type. Claws, foam, sandy beaches — pure Water habitat.',
-    mistyFluff_wrong: 'Nope! Krabby is a Water type. Sandy beaches and ocean edges are classic Water territory.',
-  },
-  // ── Tier 3 ─────────────────────────────────────────────────────────────────
-  {
-    tier: 3,
-    pokemonName: 'Gyarados',
-    clues: [
-      'It is enormous and serpentine with a fearsome roar.',
-      'It has blue scales and a massive, gaping maw.',
-      'It is known to destroy entire cities in a rage.',
-    ],
-    summary: 'A massive, terrifying serpent that evolved from something much weaker.',
-    question: 'What types is this Pokémon? (pick the two correct types)',
-    correctTypes: ['water', 'flying'],
-    mode: 'type',
-    explanation: 'Gyarados is Water and Flying type — not Dragon as most trainers assume. Its rage is said to last a whole month once triggered.',
-    mistyFluff_right: 'YES! Water and Flying — not Dragon despite everything. Gyarados is the ultimate surprise. My personal favourite.',
-    mistyFluff_wrong: 'Wrong! Gyarados is Water AND Flying — not Dragon. The type chart is full of surprises like this.',
+    tier:2, mode:'identify', pokemonName:'Slowpoke', pokemonId:79, buffType:'psychic',
+    clues:['It dangles its tail as bait without realising.','Pink, pudgy, and completely unaware of its surroundings.','It has psychic power but is too slow to notice it.'],
+    summary:'A dopey pink creature that is unknowingly psychic.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Slowpoke','Psyduck','Poliwhirl','Jigglypuff'],
+    explanation:'Slowpoke is Water and Psychic type. It takes 5 seconds for pain to register. Its tail is a Shellder magnet.',
+    mistyFluff_right:'Slowpoke! It probably hasn\'t noticed it\'s been caught yet.',
+    mistyFluff_wrong:'Pink, dopey, oblivious — that\'s Slowpoke, Water and Psychic!',
   },
   {
-    tier: 3,
-    pokemonName: 'Lapras',
-    clues: [
-      'It has a long neck and a hard shell on its back.',
-      'It is gentle and often carries people across water.',
-      'It can communicate telepathically and sings at night.',
-    ],
-    summary: 'A large, gentle, long-necked ferry Pokémon that sings at night.',
-    question: 'What types is this Pokémon?',
-    correctTypes: ['water', 'ice'],
-    mode: 'type',
-    explanation: 'Lapras is Water and Ice type. Its gentle nature and large size make it a natural transport Pokémon from cold northern seas.',
-    mistyFluff_right: 'Correct! Water and Ice. Lapras is one of the rarest and kindest Pokémon in the ocean.',
-    mistyFluff_wrong: 'No! Lapras is Water AND Ice. Cold northern seas and icy temperament — Ice type is key.',
+    tier:2, mode:'weakness', pokemonName:'Gyarados', pokemonId:130, buffType:'electric',
+    clues:['It is enormous, serpentine, and absolutely furious.','It destroys cities when enraged.','Surprisingly — it is NOT a Dragon type.'],
+    summary:'A terrifying sea serpent that is Water and Flying — not Dragon.',
+    question:'What type hits Gyarados hardest?',
+    choices:['electric','grass','fire','rock'],
+    explanation:'Gyarados is Water AND Flying — so Electric deals 4× damage! Most trainers expect Dragon and use Ice instead.',
+    mistyFluff_right:'YES! Electric hits Gyarados for 4×. Flying type is the surprise. Don\'t forget it!',
+    mistyFluff_wrong:'Gyarados is Water AND Flying — Electric hits both for 4× total. Dragon instinct was wrong!',
   },
   {
-    tier: 3,
-    pokemonName: 'Seadra',
-    clues: [
-      'It has a snout like a pipe and a coiled tail.',
-      'It can swim backwards as fast as forwards.',
-      'Its fins are sharp enough to cause injury.',
-    ],
-    summary: 'A sharp-finned, pipe-snouted seahorse that swims in reverse.',
-    question: 'What type is this Pokémon?',
-    correctTypes: ['water'],
-    mode: 'type',
-    explanation: 'Seadra is a pure Water type. Its backwards swimming speed and sharp spines make it a dangerous catch despite being small.',
-    mistyFluff_right: 'Right! Pure Water type. Seadra is deceptively tough — those fins are sharper than they look.',
-    mistyFluff_wrong: 'Wrong! Seadra is a Water type. Seahorse, ocean dweller, sharp fins — pure Water.',
+    tier:2, mode:'identify', pokemonName:'Horsea', pokemonId:116, buffType:'water',
+    clues:['It squirts ink when threatened.','It wraps its tail around coral to avoid being swept away.','Small, blue-scaled, with a curled snout.'],
+    summary:'A small blue seahorse that anchors itself and stuns prey with ink.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Horsea','Seadra','Goldeen','Staryu'],
+    explanation:'Horsea is pure Water type. It uses its snout like a jet to propel itself rapidly through water.',
+    mistyFluff_right:'Horsea! So tiny but so fast in the water. Adorable and fierce.',
+    mistyFluff_wrong:'Blue scales, curled snout, ink jet — that\'s Horsea! Pure Water type.',
+  },
+  {
+    tier:2, mode:'habitat', pokemonName:'Zubat', pokemonId:41, buffType:'poison',
+    clues:['I was fishing in a dark underground water cave.','Something flew at me — no eyes, uses sound to navigate.','It hangs upside down in the dark when resting.'],
+    summary:'A blind, cave-dwelling flier found near underground water.',
+    question:'What did Misty find in the cave?',
+    choices:['Zubat','Tentacool','Seel','Gastly'],
+    explanation:'Zubat is Poison and Flying type, found in dark caves near water all across Kanto. It has no eyes at all.',
+    mistyFluff_right:'Zubat! Not what I was fishing for AT ALL. This cave is infested with them.',
+    mistyFluff_wrong:'Dark cave, no eyes, sonar — that\'s Zubat! Poison and Flying, not a water type at all.',
+  },
+  {
+    tier:2, mode:'identify', pokemonName:'Krabby', pokemonId:98, buffType:'water',
+    clues:['Its claws are comically oversized for its body.','It builds foam nests on sandy beaches.','It lives at the water\'s edge and guards its territory fiercely.'],
+    summary:'A foam-building, oversized-claw crab at the water\'s edge.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Krabby','Kingler','Shellder','Poliwag'],
+    explanation:'Krabby is pure Water type. Its enormous claws help it burrow in sand. The foam it produces signals good health.',
+    mistyFluff_right:'Krabby! Those claws are twice its body size. Classic beach Pokémon.',
+    mistyFluff_wrong:'Oversized claws, foam nests, sandy beaches — that\'s Krabby! Pure Water type.',
+  },
+  // ══ TIER 3 — all modes, subtle clues, 4 choices, clever decoys ══════════════
+  {
+    tier:3, mode:'identify', pokemonName:'Dratini', pokemonId:147, buffType:'dragon',
+    clues:['It sheds its skin continuously as it grows — reportedly metres long.','It lives deep underwater and was thought to be a myth for decades.','Pure white and serpentine, with a small white horn.'],
+    summary:'A legendary deep-water serpent once thought to be fictional.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Dratini','Horsea','Seadra','Dragonair'],
+    explanation:'Dratini is pure Dragon type — not Water! It lives in deep whirlpools, rarely seen above 1,800m depth.',
+    mistyFluff_right:'DRATINI! I\'ve fished for one of these for YEARS. This is a legendary catch!',
+    mistyFluff_wrong:'Deep water, serpentine, constantly shedding — that\'s Dratini! A Dragon type, not Water!',
+  },
+  {
+    tier:3, mode:'weakness', pokemonName:'Lapras', pokemonId:131, buffType:'electric',
+    clues:['It is Water and Ice type, gentle, and loves carrying people.','Near-extinct from overhunting — extremely rare.','It communicates telepathically and sings haunting songs at night.'],
+    summary:'A gentle Water/Ice ferry Pokémon, nearly extinct.',
+    question:'Which type hits Lapras most effectively?',
+    choices:['electric','fire','fighting','rock'],
+    explanation:'Lapras is Water AND Ice. Electric is 2× effective and cleanly targets both types without confusion.',
+    mistyFluff_right:'Electric! Water AND Ice — Electric is reliable against both. Protect these Pokémon.',
+    mistyFluff_wrong:'Lapras is Water AND Ice — Electric hits both types reliably. Fire only gets the Ice half.',
+  },
+  {
+    tier:3, mode:'identify', pokemonName:'Starmie', pokemonId:121, buffType:'psychic',
+    clues:['Its core glows with a red light no scientist can explain.','It rotates to swim in any direction at extremely high speed.','It transmits unknown signals into the night sky.'],
+    summary:'A rotating star with a glowing core that signals into space.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Starmie','Staryu','Jolteon','Cloyster'],
+    explanation:'Starmie is Water and Psychic type. Its glowing core may be communicating with something beyond Earth.',
+    mistyFluff_right:'STARMIE! My strongest Pokémon. If you know Starmie you know me.',
+    mistyFluff_wrong:'Rotating star, glowing core, space signals — that\'s Starmie! Water AND Psychic.',
+  },
+  {
+    tier:3, mode:'habitat', pokemonName:'Jynx', pokemonId:124, buffType:'ice',
+    clues:['I found this near a frozen underwater cave in the far north.','It walks with a hypnotic swaying rhythm, as if dancing.','It communicates only through song and gesture — no spoken language.'],
+    summary:'A dancing, singing humanoid from frozen northern water caves.',
+    question:'What did Misty find in the frozen cave?',
+    choices:['Jynx','Dewgong','Lapras','Seel'],
+    explanation:'Jynx is Ice and Psychic type — found near frozen caves and northern waterways. Its dance is complex communication.',
+    mistyFluff_right:'Jynx! Ice and Psychic. I was NOT expecting that from an underwater cave.',
+    mistyFluff_wrong:'Dancing, singing, frozen cave — that\'s Jynx! Ice and Psychic, not Water at all.',
+  },
+  {
+    tier:3, mode:'identify', pokemonName:'Dewgong', pokemonId:87, buffType:'ice',
+    clues:['It loves to sleep on ice floes in sub-zero water.','The colder the temperature, the faster it swims — opposite of most.','Smooth, white, perfectly streamlined.'],
+    summary:'A streamlined white seal that thrives in freezing water.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Dewgong','Seel','Lapras','Cloyster'],
+    explanation:'Dewgong is Water and Ice type. It stores thermal energy and converts it to speed in colder temperatures.',
+    mistyFluff_right:'Dewgong! Beautiful swimmer. It actually speeds up in colder water — fascinating Pokémon.',
+    mistyFluff_wrong:'Smooth white body, ice-lover, speeds up in cold — that\'s Dewgong! Water and Ice.',
+  },
+  {
+    tier:3, mode:'weakness', pokemonName:'Tentacruel', pokemonId:73, buffType:'electric',
+    clues:['It has 80 tentacles and can expand them to trap an entire ship.','It is Water and Poison type.','It leads entire shoals of Tentacool with psychic signals.'],
+    summary:'A giant poisonous jellyfish commanding shoals with psychic control.',
+    question:'What type hits Tentacruel hardest?',
+    choices:['electric','psychic','ground','fire'],
+    explanation:'Tentacruel is Water and Poison. Electric is 2× on Water. Ground has zero effect on its Flying-adjacent profile — don\'t be fooled.',
+    mistyFluff_right:'Electric! Tentacruel is Water/Poison — Electric hits the Water side cleanly.',
+    mistyFluff_wrong:'Tentacruel is Water AND Poison — Electric hits the Water type. Ground does nothing here.',
+  },
+  {
+    tier:3, mode:'identify', pokemonName:'Cloyster', pokemonId:91, buffType:'ice',
+    clues:['Its shell is harder than any known material — nothing can crack it.','It opens only to attack, firing spikes as high-velocity projectiles.','Inside the impenetrable shell is a second, fragile black inner shell.'],
+    summary:'An impenetrable spike-shooter hiding a second shell within.',
+    question:'Which Pokémon did Misty hook?',
+    choices:['Cloyster','Shellder','Kingler','Dewgong'],
+    explanation:'Cloyster is Water and Ice type. No modern technology can crack its outer shell. The inner black shell is its actual body.',
+    mistyFluff_right:'Cloyster! Incredible defence. Nobody and nothing cracks that shell.',
+    mistyFluff_wrong:'Indestructible shell, spike projectiles, inner black shell — that\'s Cloyster! Water and Ice.',
   },
 ];
 
-const FishingEngine = {
-  _isActive:  false,
-  _node:      null,
-  _puzzle:    null,
-  _clueIdx:   0,      // which clue we're on (0-based)
-  _answered:  false,
+const FISHING_BUFF_MAP = {
+  water:    { apply: () => { GameState.fishingBuff = { type:'water',    mult:1.3 }; },
+              desc:'Water-type moves deal +30% damage next battle!' },
+  electric: { apply: () => { GameState.fishingBuff = { type:'electric', mult:1.3 }; },
+              desc:'Electric-type moves deal +30% damage next battle!' },
+  psychic:  { apply: () => {
+                if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+                GameState.pendingPlayerEffects.clarityBuff = true; },
+              desc:'Status durations halved next battle! (Psychic clarity)' },
+  poison:   { apply: () => {
+                if (!GameState.pendingPlayerStatuses) GameState.pendingPlayerStatuses = [];
+                GameState.pendingPlayerStatuses.push('opp_poison_start'); },
+              desc:'Opponent starts the next battle Poisoned!' },
+  ice:      { apply: () => {
+                if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+                GameState.pendingPlayerEffects.freezeFirst = true; },
+              desc:"Opponent's first move next battle is skipped! (Frozen)" },
+  dragon:   { apply: () => {
+                if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+                GameState.pendingPlayerEffects.dragonPower = true; },
+              desc:'All card costs −1 next battle! (Dragon power)' },
+};
 
-  // ── Entry: show boss-screen intro then transition to challenge screen ──────
+const FishingEngine = {
+  _isActive:   false,
+  _node:       null,
+  _puzzle:     null,
+  _clueIdx:    0,
+  _answered:   false,
+
   start(node) {
     this._node     = node;
     this._isActive = true;
     this._answered = false;
+    this._clueIdx  = 0;
 
-    // Pick a puzzle for this tier — fallback to any tier if pool is empty
-    const tier    = GameState.difficultyTier || 2;
-    let pool      = FISHING_PUZZLES.filter(p => p.tier === tier);
-    if (!pool.length) pool = FISHING_PUZZLES; // fallback to all tiers
-    this._puzzle  = pool[Math.floor(Math.random() * pool.length)] || null;
-    if (!this._puzzle) {
-      // No puzzles at all — skip gracefully
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
-      return;
-    }
-    this._clueIdx = 0;
+    const tier = GameState.difficultyTier || 2;
+    let pool   = FISHING_PUZZLES.filter(p => p.tier === tier);
+    if (!pool.length) pool = FISHING_PUZZLES;
+    this._puzzle = pool[Math.floor(Math.random() * pool.length)] || null;
+    if (!this._puzzle) { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); return; }
 
-    // Use boss-screen intro: Misty's portrait + opening line
     showScreen('boss');
-    BossEngine._isRocket = false;
+    BossEngine._isRocket    = false;
     CookingEngine._isActive = false;
 
     const bgImg = document.querySelector('#screen-boss .battle-bg-img');
@@ -10592,28 +10638,32 @@ const FishingEngine = {
     document.getElementById('boss-battle-area').style.display = 'none';
     document.getElementById('boss-party-bar').innerHTML       = '';
 
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) startBtn.textContent = 'Start Fishing! 🎣';
-
-    // Show Misty's portrait with opening line
-    const img = document.getElementById('boss-trainer-sprite');
-    if (img) img.src = 'assets/misty.png';
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/misty.png';
     document.getElementById('dialogue-name').textContent = 'Misty';
     document.getElementById('dialogue-text').textContent = '';
 
-    const openLine = `${GameState.trainerName || 'Trainer'}! I spotted something interesting in the water. Let me describe it — you figure out the best lure!`;
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Start Fishing! 🎣'; }
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const name = GameState.trainerName || 'Trainer';
+    const INTROS = [
+      `${name}! Something took the bait — but it's not what I expected! Read my clues carefully and tell me what I hooked!`,
+      `${name}! I've been out here all morning and just got a bite. Let me describe what I see — you figure out what it is!`,
+      `Oh! ${name}! Perfect timing. Something's on my line right now. Listen carefully — what do you think it is?`,
+    ];
+    const openLine = INTROS[Math.floor(Math.random() * INTROS.length)];
     let ci = 0;
     const iv = setInterval(() => {
       document.getElementById('dialogue-text').textContent += openLine[ci++];
       if (ci >= openLine.length) {
         clearInterval(iv);
         if (startBtn) startBtn.style.display = '';
-        document.getElementById('btn-dialogue-next').style.display = 'none';
       }
-    }, 28);
+    }, 26);
   },
 
-  // ── Called by btn-start-boss-battle when FishingEngine._isActive ──────────
   startGame() {
     this._isActive = false;
     const startBtn = document.getElementById('btn-start-boss-battle');
@@ -10622,240 +10672,242 @@ const FishingEngine = {
     this._showClueStage();
   },
 
-  // ── Show challenge screen with clue reveal ────────────────────────────────
   _showClueStage() {
-    // Reuse challenge screen
-    const tier = GameState.difficultyTier || 2;
-    const p    = this._puzzle;
+    const p = this._puzzle;
 
-    // Header
     const img = document.getElementById('challenge-character-img');
     if (img) { img.src = 'assets/misty.png'; img.style.display = ''; }
-    document.getElementById('challenge-badge').textContent   = '🎣 Misty\'s Fishing Challenge';
-    document.getElementById('challenge-intro').textContent   = 'Read the clues carefully, then pick your lure!';
-    document.getElementById('challenge-coin-visual').style.display  = 'none';
-    const _jwd = document.getElementById('jessie-word-display');
-    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
+    document.getElementById('challenge-badge').textContent = '🎣 Misty\'s Mystery Catch';
+    document.getElementById('challenge-intro').textContent =
+      p.mode === 'weakness' ? 'What type hits it hardest?' :
+      p.mode === 'habitat'  ? 'What lives in that location?' :
+                              'Which Pokémon did Misty hook?';
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-question').style.display     = 'none';
     document.getElementById('challenge-answer-btns').innerHTML      = '';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
 
-    // Build clue bubbles area inside challenge-coin-visual (repurposed)
-    const clueArea = document.getElementById('challenge-coin-visual');
-    clueArea.style.display = 'block';
-    clueArea.className     = 'fishing-clue-area';
-    this._renderClues(clueArea);
-
-    // Question — hidden until all clues shown
-    const qEl = document.getElementById('challenge-question');
-    qEl.style.display = this._clueIdx >= p.clues.length ? '' : 'none';
-    qEl.textContent   = '';
+    // Fishing rod + water visual
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'fishing-clue-area';
+    cv.innerHTML     = `
+      <div class="fishing-rod-area">
+        <div class="fishing-water"></div>
+        <div class="fishing-bobber" id="fishing-bobber">🎣</div>
+      </div>
+      <div class="fishing-bubbles-wrap" id="fishing-bubbles-wrap"></div>`;
 
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('fishing-active');
     SoundEngine.playBGM('pallet_town_theme.mp3');
+
     this._renderCurrentClue();
   },
 
-  // ── Render all revealed clues as speech bubbles ───────────────────────────
-  _renderClues(container) {
-    const p   = this._puzzle;
-    const all = this._clueIdx >= p.clues.length;
-    let html  = '';
-
-    // Speech bubbles for clues revealed so far
-    for (let i = 0; i < Math.min(this._clueIdx, p.clues.length); i++) {
-      html += `<div class="fishing-bubble fishing-bubble-shown">${p.clues[i]}</div>`;
-    }
-
-    if (all) {
-      // Full summary paragraph
-      html += `<div class="fishing-summary">${p.summary}</div>`;
-    }
-
-    container.innerHTML = html;
-  },
-
-  // ── Render the current clue being typed out, plus Next / question ─────────
   _renderCurrentClue() {
-    const p   = this._puzzle;
-    const qEl = document.getElementById('challenge-question');
-    const btnArea = document.getElementById('challenge-answer-btns');
-
-    if (this._clueIdx < p.clues.length) {
-      // Still revealing clues — show the current one with typewriter
-      const clueArea = document.getElementById('challenge-coin-visual');
-      const bubbleEl = document.createElement('div');
-      bubbleEl.className = 'fishing-bubble fishing-bubble-typing';
-      clueArea.appendChild(bubbleEl);
-
-      const text = p.clues[this._clueIdx];
-      let ci = 0;
-      const iv = setInterval(() => {
-        bubbleEl.textContent += text[ci++];
-        if (ci >= text.length) {
-          clearInterval(iv);
-          bubbleEl.className = 'fishing-bubble fishing-bubble-shown';
-          this._clueIdx++;
-
-          if (this._clueIdx < p.clues.length) {
-            // More clues — show Next button
-            qEl.style.display   = 'none';
-            btnArea.innerHTML   = '';
-            const nb = document.createElement('button');
-            nb.className        = 'btn-pixel btn-secondary fishing-next-btn';
-            nb.textContent      = 'Next clue ▶';
-            nb.onclick          = () => { btnArea.innerHTML = ''; this._renderCurrentClue(); };
-            btnArea.appendChild(nb);
-          } else {
-            // All clues done — show summary + question
-            this._renderClues(clueArea);
-            this._showQuestion();
-          }
-        }
-      }, 32);
-
-    } else {
-      // All clues already revealed (re-entering)
-      this._showQuestion();
-    }
-  },
-
-  // ── Show the question + answer buttons ────────────────────────────────────
-  _showQuestion() {
-    const p    = this._puzzle;
-    const tier = GameState.difficultyTier || 2;
-    const qEl  = document.getElementById('challenge-question');
-
-    // For Tier 1 Mode not_effective, show extra hint
-    let questionText = p.question;
-    if (tier === 1 && p.mode === 'not_effective' && p.hint_t1) {
-      questionText = p.hint_t1;
-    }
-    qEl.textContent  = questionText;
-    qEl.style.display = '';
-
-    // Build 4 answer choices: all correctTypes + enough decoys to reach 4
-    const allTypes = Object.keys(TYPE_ICONS);
-    const decoyPool = allTypes.filter(t => !p.correctTypes.includes(t));
-    const decoys    = decoyPool.sort(() => Math.random() - 0.5).slice(0, 4 - p.correctTypes.length);
-    // Tier 1: always include exactly 1 correct type and 3 decoys
-    const choices   = [...p.correctTypes.slice(0, tier === 1 ? 1 : p.correctTypes.length), ...decoys]
-      .sort(() => Math.random() - 0.5);
-
+    const p       = this._puzzle;
+    const wrap    = document.getElementById('fishing-bubbles-wrap');
     const btnArea = document.getElementById('challenge-answer-btns');
     btnArea.innerHTML = '';
-    choices.forEach(type => {
-      const b = document.createElement('button');
-      b.className   = `challenge-answer-btn fishing-type-btn type-btn-${type}`;
-      b.innerHTML   = `${TYPE_ICONS[type] || ''} <span class="hud-type-badge type-${type}">${type}</span>`;
-      b.dataset.type = type;
-      b.addEventListener('click', () => this._answer(type));
-      btnArea.appendChild(b);
+
+    if (this._clueIdx < p.clues.length) {
+      // Bobber dips first
+      const bobber = document.getElementById('fishing-bobber');
+      if (bobber) {
+        bobber.classList.add('bobber-dip');
+        setTimeout(() => bobber.classList.remove('bobber-dip'), 600);
+      }
+
+      setTimeout(() => {
+        const bubble = document.createElement('div');
+        bubble.className   = 'fishing-bubble fishing-bubble-float';
+        bubble.textContent = '';
+        wrap.appendChild(bubble);
+
+        const text = p.clues[this._clueIdx];
+        let ci = 0;
+        const iv = setInterval(() => {
+          bubble.textContent += text[ci++];
+          if (ci >= text.length) {
+            clearInterval(iv);
+            bubble.className = 'fishing-bubble fishing-bubble-shown';
+            this._clueIdx++;
+
+            if (this._clueIdx < p.clues.length) {
+              const nb = document.createElement('button');
+              nb.className   = 'btn-pixel btn-secondary fishing-next-btn';
+              nb.textContent = `Next clue ▶ (${this._clueIdx}/${p.clues.length})`;
+              nb.onclick     = () => this._renderCurrentClue();
+              btnArea.appendChild(nb);
+            } else {
+              this._showChoices();
+            }
+          }
+        }, 30);
+      }, 400);
+    } else {
+      this._showChoices();
+    }
+  },
+
+  async _showChoices() {
+    const p       = this._puzzle;
+    const qEl     = document.getElementById('challenge-question');
+    const btnArea = document.getElementById('challenge-answer-btns');
+    qEl.textContent   = p.question;
+    qEl.style.display = '';
+    btnArea.innerHTML = '';
+
+    if (p.mode === 'weakness' || p.mode === 'habitat') {
+      const grid = document.createElement('div');
+      grid.className = 'fishing-type-grid';
+      p.choices.forEach(val => {
+        const b = document.createElement('button');
+        b.className      = p.mode === 'weakness'
+          ? 'challenge-answer-btn fishing-type-btn'
+          : 'challenge-answer-btn fishing-habitat-btn';
+        b.innerHTML      = p.mode === 'weakness'
+          ? `${TYPE_ICONS[val] || ''} <span class="hud-type-badge type-${val}">${val}</span>`
+          : `<span class="fishing-habitat-name">${val}</span>`;
+        b.dataset.answer = val;
+        b.addEventListener('click', () => this._answer(val));
+        grid.appendChild(b);
+      });
+      btnArea.appendChild(grid);
+      return;
+    }
+
+    // Identify mode — 2×2 sprite card grid
+    const cardGrid = document.createElement('div');
+    cardGrid.className = 'fishing-card-grid';
+    cardGrid.id        = 'fishing-card-grid';
+
+    const cardEls = p.choices.map((name, i) => {
+      const card = document.createElement('div');
+      card.className   = 'fishing-choice-card';
+      card.dataset.name = name;
+      card.innerHTML   = `
+        <div class="fishing-card-sprite-wrap">
+          <div class="fishing-card-silhouette">?</div>
+        </div>
+        <div class="fishing-card-name">${name}</div>`;
+      card.addEventListener('click', () => this._answerPokemon(name));
+      cardGrid.appendChild(card);
+      return card;
+    });
+    btnArea.appendChild(cardGrid);
+
+    // Load sprites in parallel — update each card as it arrives
+    p.choices.forEach(async (name, i) => {
+      try {
+        const data = await fetchPoke(name.toLowerCase());
+        const url  = data?.sprites?.front_default || getSpriteUrl(data) || '';
+        if (url && cardEls[i]) {
+          const silEl = cardEls[i].querySelector('.fishing-card-silhouette');
+          if (silEl) silEl.innerHTML =
+            `<img src="${url}" alt="${name}" class="fishing-card-img"
+              onerror="this.onerror=null;this.style.display='none'"/>`;
+        }
+      } catch(e) { /* stays as ? */ }
     });
   },
 
-  // ── Handle answer ─────────────────────────────────────────────────────────
-  _answer(chosenType) {
+  _answerPokemon(chosenName) {
     if (this._answered) return;
     this._answered = true;
-
     const p       = this._puzzle;
-    const name    = GameState.trainerName || 'Trainer';
-    const isRight = p.correctTypes.includes(chosenType);
+    const isRight = chosenName === p.pokemonName;
 
-    // Disable all buttons, highlight correct/wrong
-    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
-      b.disabled = true;
-      if (p.correctTypes.includes(b.dataset.type)) b.classList.add('answer-correct');
-      else if (b.dataset.type === chosenType && !isRight) b.classList.add('answer-wrong');
+    document.querySelectorAll('.fishing-choice-card').forEach(card => {
+      card.style.pointerEvents = 'none';
+      if (card.dataset.name === p.pokemonName)           card.classList.add('card-correct');
+      else if (card.dataset.name === chosenName && !isRight) card.classList.add('card-wrong');
     });
 
+    this._showResult(isRight);
+  },
+
+  _answer(chosen) {
+    if (this._answered) return;
+    this._answered = true;
+    const p       = this._puzzle;
+    // First entry in choices array is always the correct answer
+    const correct = p.choices[0];
+    const isRight = chosen === correct;
+
+    document.querySelectorAll('.challenge-answer-btn').forEach(b => {
+      b.disabled = true;
+      if (b.dataset.answer === correct)                  b.classList.add('answer-correct');
+      else if (b.dataset.answer === chosen && !isRight)  b.classList.add('answer-wrong');
+    });
+
+    this._showResult(isRight);
+  },
+
+  _showResult(isRight) {
+    const p         = this._puzzle;
+    const name      = GameState.trainerName || 'Trainer';
+    const goldReward = isRight ? 10 + (GameState.bossesDefeated || 0) * 2 : 3;
+    const buffEntry  = FISHING_BUFF_MAP[p.buffType] || FISHING_BUFF_MAP.water;
+
+    if (isRight) { buffEntry.apply(); SoundEngine.playFanfare(); }
+    GameState.gold = (GameState.gold || 0) + goldReward;
+    saveGame();
+
     const resultEl = document.getElementById('challenge-result');
+    resultEl.className = isRight ? 'challenge-result result-correct' : 'challenge-result result-wrong';
+    resultEl.innerHTML = isRight
+      ? `✅ <strong>Correct, ${name}!</strong><br>${p.explanation}<br>
+         <em>"${p.mistyFluff_right}"</em><br>
+         <span class="fishing-buff-notice">🎣 ${buffEntry.desc} +${goldReward}💰</span>`
+      : `❌ <strong>It was ${p.pokemonName}!</strong><br>${p.explanation}<br>
+         <em>"${p.mistyFluff_wrong}"</em><br>
+         <span style="opacity:.7;font-size:.8em">+${goldReward}💰 consolation</span>`;
     resultEl.style.display = 'block';
 
-    if (isRight) {
-      // Apply buff
-      const buffType = chosenType;
-      GameState.fishingBuff = { type: buffType, mult: 1.3 };
-      const goldReward = 8 + (GameState.bossesDefeated || 0) * 2;
-      GameState.gold = (GameState.gold || 0) + goldReward;
-      saveGame();
-      resultEl.className = 'challenge-result result-correct';
-      resultEl.innerHTML =
-        `✅ <strong>Correct, ${name}!</strong><br>` +
-        `${p.explanation}<br>` +
-        `<em>"${p.mistyFluff_right}"</em><br>` +
-        `<span class="fishing-buff-notice">🎣 ${TYPE_ICONS[buffType]} ${buffType.charAt(0).toUpperCase()+buffType.slice(1)}-type moves deal <strong>+30% damage</strong> in your next battle! +${goldReward}💰</span>`;
-      SoundEngine.playFanfare();
-    } else {
-      saveGame();
-      resultEl.className = 'challenge-result result-wrong';
-      resultEl.innerHTML =
-        `❌ <strong>The answer is: ${p.correctTypes[0]}</strong><br>` +
-        `${p.explanation}<br>` +
-        `<em>"${p.mistyFluff_wrong}"</em>`;
-    }
-
-    // Reveal Pokémon after result
     this._revealPokemon();
-
     document.getElementById('challenge-continue-btn').style.display = 'block';
     document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';
   },
 
-  // ── Reveal the Pokémon being described ───────────────────────────────────
   async _revealPokemon() {
-    const p    = this._puzzle;
+    const p     = this._puzzle;
     const revEl = document.getElementById('jessie-word-display');
     revEl.style.display = 'flex';
     revEl.className     = 'fishing-reveal';
 
     const wordEl = document.getElementById('jessie-word');
     const typeEl = document.getElementById('jessie-word-type');
-    // Show name immediately from local data — no API needed
-    wordEl.textContent = p.pokemonName || 'Unknown Pokémon';
-    typeEl.innerHTML   = (p.correctTypes || []).map(t =>
-      `<span class="hud-type-badge type-${t}">${t}</span>`
-    ).join(' ');
+    wordEl.textContent = p.pokemonName;
+    typeEl.innerHTML   = '';
 
-    // Try to load sprite from API — gracefully skip if unavailable
     try {
-      const data      = await fetchPoke(p.pokemonName.toLowerCase());
-      const spriteUrl = data?.sprites?.front_default || getSpriteUrl(data) || '';
-      if (spriteUrl) {
-        wordEl.innerHTML = `<img src="${spriteUrl}" alt="${p.pokemonName}"
-          class="fishing-reveal-sprite" onerror="this.onerror=null;this.style.display='none'" />${p.pokemonName}`;
-      }
-      // Update types from API if available (more accurate)
+      const data = await fetchPoke(p.pokemonName.toLowerCase());
+      const url  = data?.sprites?.front_default || getSpriteUrl(data) || '';
+      if (url) wordEl.innerHTML = `<img src="${url}" alt="${p.pokemonName}"
+        class="fishing-reveal-sprite" onerror="this.onerror=null;this.style.display='none'"/>
+        ${p.pokemonName}`;
       const types = (data?.types || []).map(t => t.type.name);
-      if (types.length) {
-        typeEl.innerHTML = types.map(t =>
-          `<span class="hud-type-badge type-${t}">${t}</span>`
-        ).join(' ');
-      }
-    } catch(e) {
-      // API unavailable — text fallback already set above, nothing to do
-    }
+      if (types.length) typeEl.innerHTML = types.map(t =>
+        `<span class="hud-type-badge type-${t}">${t}</span>`).join(' ');
+    } catch(e) { /* text fallback already shown */ }
   },
 
-  // ── Continue button — complete node and go back to map ───────────────────
   finish() {
     this._isActive = false;
     document.getElementById('screen-challenge').classList.remove('fishing-active');
-    document.getElementById('challenge-continue-btn').textContent = 'Continue ▶';
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },
 };
 
-// ── FISHING MINI-GAME END ─────────────────────────────────────────────────────
-// ══════════════════════════════════════════════════════════════════════════════
 
 const HealEngine = {
   start(node) {
-    showScreen('heal');
     // Apply heal center background
     const healBg = document.getElementById('heal-bg');
     if (healBg) {
