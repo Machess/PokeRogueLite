@@ -10366,6 +10366,133 @@ const TYPE_ICONS = {
   dark:'🌑', steel:'⚙️', fairy:'✨',
 };
 
+// ─── FISHING PUZZLES DATA ─────────────────────────────────────────────────────
+const FISHING_PUZZLES = [
+  // ── Tier 1 ─────────────────────────────────────────────────────────────────
+  {
+    tier: 1,
+    pokemonName: 'Magikarp',
+    clues: [
+      'It splashes around helplessly near the surface.',
+      'It has bright orange and gold scales.',
+      'It is very common and not very strong.',
+    ],
+    summary: 'A weak, splashing, brightly-coloured fish near the surface.',
+    question: 'What type of Pokémon is this?',
+    hint_t1:  'It is a Water type. Which one matches?',
+    correctTypes: ['water'],
+    mode: 'type',
+  },
+  {
+    tier: 1,
+    pokemonName: 'Goldeen',
+    clues: [
+      'It has a flowing white tail like a veil.',
+      'It swims gracefully and has a pointed horn.',
+      'It lives in clear rivers and ponds.',
+    ],
+    summary: 'A graceful, horn-bearing fish with a flowing tail in clear water.',
+    question: 'What type of Pokémon is this?',
+    hint_t1:  'This elegant swimmer is a Water type.',
+    correctTypes: ['water'],
+    mode: 'type',
+  },
+  {
+    tier: 1,
+    pokemonName: 'Slowpoke',
+    clues: [
+      'It dangles its tail in the water lazily.',
+      'It has a pink body and a vacant expression.',
+      'It rarely notices when its tail is bitten.',
+    ],
+    summary: 'A pink, dopey creature that uses its tail as bait.',
+    question: 'What type of Pokémon is this?',
+    hint_t1:  'This dreamy Pokémon is Water and Psychic type.',
+    correctTypes: ['water', 'psychic'],
+    mode: 'type',
+  },
+  // ── Tier 2 ─────────────────────────────────────────────────────────────────
+  {
+    tier: 2,
+    pokemonName: 'Tentacool',
+    clues: [
+      'It floats near the surface and is almost transparent.',
+      'It has two red crystal-like eyes and long tentacles.',
+      'Its tentacles can sting and cause paralysis.',
+    ],
+    summary: 'A transparent, stinging jellyfish with red eye-crystals near the surface.',
+    question: 'What types is this Pokémon?',
+    correctTypes: ['water', 'poison'],
+    mode: 'type',
+  },
+  {
+    tier: 2,
+    pokemonName: 'Shellder',
+    clues: [
+      'It hides inside a rough, spiky shell.',
+      'It clamps tightly and rarely lets go.',
+      'It prefers cold ocean floors and is hard to spot.',
+    ],
+    summary: 'A spiky-shelled, clamping creature from cold ocean floors.',
+    question: 'What type is this Pokémon?',
+    correctTypes: ['water'],
+    mode: 'type',
+  },
+  {
+    tier: 2,
+    pokemonName: 'Krabby',
+    clues: [
+      'It has oversized claws compared to its body.',
+      'It lives on sandy beaches and near the water\'s edge.',
+      'It uses foam from its mouth to build nests.',
+    ],
+    summary: 'A foamy, claw-heavy creature on sandy beaches.',
+    question: 'What type is this Pokémon?',
+    correctTypes: ['water'],
+    mode: 'type',
+  },
+  // ── Tier 3 ─────────────────────────────────────────────────────────────────
+  {
+    tier: 3,
+    pokemonName: 'Gyarados',
+    clues: [
+      'It is enormous and serpentine with a fearsome roar.',
+      'It has blue scales and a massive, gaping maw.',
+      'It is known to destroy entire cities in a rage.',
+    ],
+    summary: 'A massive, terrifying serpent that evolved from something much weaker.',
+    question: 'What types is this Pokémon? (pick the two correct types)',
+    correctTypes: ['water', 'flying'],
+    mode: 'type',
+  },
+  {
+    tier: 3,
+    pokemonName: 'Lapras',
+    clues: [
+      'It has a long neck and a hard shell on its back.',
+      'It is gentle and often carries people across water.',
+      'It can communicate telepathically and sings at night.',
+    ],
+    summary: 'A large, gentle, long-necked ferry Pokémon that sings at night.',
+    question: 'What types is this Pokémon?',
+    correctTypes: ['water', 'ice'],
+    mode: 'type',
+  },
+  {
+    tier: 3,
+    pokemonName: 'Seadra',
+    clues: [
+      'It has a snout like a pipe and a coiled tail.',
+      'It can swim backwards as fast as forwards.',
+      'Its fins are sharp enough to cause injury.',
+    ],
+    summary: 'A sharp-finned, pipe-snouted seahorse that swims in reverse.',
+    question: 'What type is this Pokémon?',
+    correctTypes: ['water'],
+    mode: 'type',
+  },
+];
+
 const FishingEngine = {
   _isActive:  false,
   _node:      null,
