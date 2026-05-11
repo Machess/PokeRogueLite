@@ -10506,10 +10506,17 @@ const FishingEngine = {
     this._isActive = true;
     this._answered = false;
 
-    // Pick a puzzle for this tier
+    // Pick a puzzle for this tier — fallback to any tier if pool is empty
     const tier    = GameState.difficultyTier || 2;
-    const pool    = FISHING_PUZZLES.filter(p => p.tier === tier);
-    this._puzzle  = pool[Math.floor(Math.random() * pool.length)];
+    let pool      = FISHING_PUZZLES.filter(p => p.tier === tier);
+    if (!pool.length) pool = FISHING_PUZZLES; // fallback to all tiers
+    this._puzzle  = pool[Math.floor(Math.random() * pool.length)] || null;
+    if (!this._puzzle) {
+      // No puzzles at all — skip gracefully
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+      return;
+    }
     this._clueIdx = 0;
 
     // Use boss-screen intro: Misty's portrait + opening line
