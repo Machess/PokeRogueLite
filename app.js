@@ -2765,11 +2765,14 @@ const ProfileEngine = {
           ${!meta.starterSprite ? `<div class="profile-sprite-placeholder">?</div>` : ''}
         </div>
         <div class="profile-name">${meta.name}</div>
+        <div class="profile-tier-row">${this._tierLabel(meta.difficultyTier, meta.trainerAge)}</div>
         ${badgeBar}
         <div class="profile-last-saved">${this._timeAgo(meta.lastSaved)}</div>
         <div class="profile-actions">
           <button class="btn-pixel btn-primary profile-play-btn"
                   data-key="${meta.key}">▶ Play</button>
+          <button class="btn-pixel btn-secondary profile-age-btn"
+                  data-key="${meta.key}" title="Change difficulty">✏️</button>
           <button class="btn-pixel btn-danger profile-delete-btn"
                   data-key="${meta.key}">🗑</button>
         </div>
@@ -2778,6 +2781,10 @@ const ProfileEngine = {
       card.querySelector('.profile-play-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         this._selectProfile(meta.key);
+      });
+      card.querySelector('.profile-age-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this._changeAge(meta);
       });
       card.querySelector('.profile-delete-btn').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -2802,6 +2809,18 @@ const ProfileEngine = {
     // Back button — only show if there's at least one profile (can't go back with nothing)
     const backBtn = document.getElementById('btn-profiles-back');
     if (backBtn) backBtn.style.display = profiles.length > 0 ? '' : 'none';
+  },
+
+  _tierLabel(tier, age) {
+    const t = tier || 2;
+    const map = {
+      1: { emoji:'🌱', label:'Starter',  cls:'tier-pill-1' },
+      2: { emoji:'⚡', label:'Explorer', cls:'tier-pill-2' },
+      3: { emoji:'🔥', label:'Advanced', cls:'tier-pill-3' },
+    };
+    const { emoji, label, cls } = map[t] || map[2];
+    const ageRange = t === 1 ? '6–7' : t === 2 ? '8–9' : '10+';
+    return `<span class="tier-pill ${cls}">${emoji} Age ${ageRange} · ${label}</span>`;
   },
 
   _selectProfile(key) {
@@ -2863,10 +2882,11 @@ const ProfileEngine = {
       if (nameEl)   nameEl.textContent   = meta.name;
       if (spriteEl) { spriteEl.src = meta.starterSprite || ''; spriteEl.style.display = meta.starterSprite ? '' : 'none'; }
       if (detailEl) {
+        const tierStr = `${this._tierLabel(meta.difficultyTier, meta.trainerAge)}`;
         if (meta.hasActiveSave) {
-          detailEl.textContent = `${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`;
+          detailEl.innerHTML = `${tierStr} &nbsp;·&nbsp; ${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`;
         } else {
-          detailEl.textContent = 'No active run';
+          detailEl.innerHTML = `${tierStr} &nbsp;·&nbsp; No active run`;
         }
       }
     }
@@ -2881,6 +2901,115 @@ const ProfileEngine = {
         ? `◈ Continue · ${meta.bossesDefeated}/8`
         : '◈ No Save';
     }
+
+    // Age/tier pill + edit button in banner
+    let ageRow = document.getElementById('apb-age-row');
+    if (!ageRow) {
+      ageRow = document.createElement('div');
+      ageRow.id        = 'apb-age-row';
+      ageRow.className = 'apb-age-row';
+      const infoEl = document.querySelector('.apb-info');
+      if (infoEl) infoEl.appendChild(ageRow);
+    }
+    if (ageRow) {
+      ageRow.innerHTML = `
+        ${this._tierLabel(meta.difficultyTier, meta.trainerAge)}
+        <button class="apb-edit-age-btn" id="apb-edit-age-btn" title="Change difficulty">✏️</button>`;
+      const editBtn = document.getElementById('apb-edit-age-btn');
+      if (editBtn) editBtn.onclick = () => ProfileEngine._changeAge(meta);
+    }
+  },
+
+  // ── Age change modal ──────────────────────────────────────────────────────
+  _changeAge(meta) {
+    // Remove any existing modal
+    document.getElementById('age-change-modal')?.remove();
+
+    const currentTier = meta.difficultyTier || 2;
+    const currentAge  = meta.trainerAge     || (currentTier === 1 ? 7 : currentTier === 2 ? 9 : 11);
+
+    const AGES = [6, 7, 8, 9, 10, 11];
+    const overlay = document.createElement('div');
+    overlay.id        = 'age-change-modal';
+    overlay.className = 'age-modal-overlay';
+    overlay.innerHTML = `
+      <div class="age-modal">
+        <div class="age-modal-title">Change Difficulty</div>
+        <div class="age-modal-name">for ${meta.name}</div>
+        <div class="age-modal-hint">Select an age group:</div>
+        <div class="age-modal-btns" id="age-modal-btns">
+          ${AGES.map(a => `
+            <button class="age-modal-age-btn${a === currentAge ? ' age-modal-selected' : ''}"
+                    data-age="${a}">${a === 11 ? '11+' : a}</button>
+          `).join('')}
+        </div>
+        <div class="age-modal-tier-preview" id="age-modal-preview">
+          ${this._tierLabel(currentTier, currentAge)}
+        </div>
+        <div class="age-modal-warning" id="age-modal-warning"></div>
+        <div class="age-modal-actions">
+          <button class="btn-pixel btn-secondary" id="age-modal-cancel">Cancel</button>
+          <button class="btn-pixel btn-primary"   id="age-modal-confirm">✓ Confirm</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    let selectedAge = currentAge;
+
+    // Age button interactions
+    overlay.querySelectorAll('.age-modal-age-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        overlay.querySelectorAll('.age-modal-age-btn').forEach(b => b.classList.remove('age-modal-selected'));
+        btn.classList.add('age-modal-selected');
+        selectedAge = parseInt(btn.dataset.age);
+        const newTier    = selectedAge <= 7 ? 1 : selectedAge <= 9 ? 2 : 3;
+        const preview    = document.getElementById('age-modal-preview');
+        const warning    = document.getElementById('age-modal-warning');
+        if (preview) preview.innerHTML = this._tierLabel(newTier, selectedAge);
+        if (warning) {
+          if (newTier > currentTier) {
+            warning.textContent = '⚠️ Difficulty increase — puzzles will be harder from the next map.';
+            warning.className   = 'age-modal-warning age-modal-warn-up';
+          } else if (newTier < currentTier) {
+            warning.textContent = '✓ Difficulty lowered — puzzles will be simpler from the next map.';
+            warning.className   = 'age-modal-warning age-modal-warn-down';
+          } else {
+            warning.textContent = '';
+            warning.className   = 'age-modal-warning';
+          }
+        }
+      });
+    });
+
+    // Cancel
+    document.getElementById('age-modal-cancel').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+
+    // Confirm
+    document.getElementById('age-modal-confirm').addEventListener('click', () => {
+      const newTier = selectedAge <= 7 ? 1 : selectedAge <= 9 ? 2 : 3;
+
+      // Update profile meta
+      const profiles = loadProfiles();
+      const idx = profiles.findIndex(p => p.key === meta.key);
+      if (idx >= 0) {
+        profiles[idx].trainerAge     = selectedAge;
+        profiles[idx].difficultyTier = newTier;
+        saveProfiles(profiles);
+      }
+
+      // If this is the active profile and there's a live GameState, update it too
+      if (meta.key === getActiveProfile() && GameState) {
+        GameState.trainerAge     = selectedAge;
+        GameState.difficultyTier = newTier;
+        saveGame();
+      }
+
+      overlay.remove();
+      // Re-render to show updated pill
+      ProfileEngine.renderProfiles();
+      ProfileEngine._updateStartScreen();
+    });
   },
 
   _timeAgo(ts) {

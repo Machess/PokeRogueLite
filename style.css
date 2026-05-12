@@ -7514,3 +7514,158 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   from { opacity: 0; transform: scale(.7); }
   to   { opacity: 1; transform: scale(1);  }
 }
+
+/* ═══════════════════════════════════════════
+   TIER PILL — profile cards + banner
+═══════════════════════════════════════════ */
+.tier-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem;
+  padding: 2px 6px;
+  border-radius: 20px;
+  white-space: nowrap;
+  letter-spacing: .02em;
+}
+.tier-pill-1 { background: rgba(60,160,60,.25);  color: #80ee80; border: 1px solid rgba(80,200,80,.4); }
+.tier-pill-2 { background: rgba(200,160,0,.2);   color: #ffe060; border: 1px solid rgba(220,180,0,.4); }
+.tier-pill-3 { background: rgba(220,80,0,.2);    color: #ff9050; border: 1px solid rgba(240,100,20,.4); }
+
+/* Profile card tier row */
+.profile-tier-row {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0 3px;
+}
+
+/* Profile action row — 3 buttons */
+.profile-actions {
+  display: flex;
+  gap: 4px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.profile-age-btn {
+  font-size: .32rem !important;
+  padding: .25rem .35rem !important;
+  min-width: 0 !important;
+}
+
+/* ── Active profile banner age row ── */
+.apb-age-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+.apb-edit-age-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px;
+  color: rgba(255,255,255,.6);
+  font-size: .6rem;
+  line-height: 1;
+  padding: 1px 4px;
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+}
+.apb-edit-age-btn:hover {
+  border-color: rgba(255,255,255,.5);
+  color: #fff;
+}
+
+/* ═══════════════════════════════════════════
+   AGE CHANGE MODAL
+═══════════════════════════════════════════ */
+.age-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fade-in .15s ease;
+}
+.age-modal {
+  background: var(--col-surface, #1a1a2e);
+  border: 2px solid rgba(255,255,255,.15);
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+  min-width: 260px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.6);
+  animation: modal-pop .2s cubic-bezier(0,.8,.3,1.2);
+}
+@keyframes modal-pop {
+  from { transform: scale(.85); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+.age-modal-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem;
+  color: var(--col-text, #fff);
+  text-align: center;
+}
+.age-modal-name {
+  font-size: .38rem;
+  color: rgba(255,255,255,.6);
+  text-align: center;
+}
+.age-modal-hint {
+  font-size: .35rem;
+  color: rgba(255,255,255,.5);
+  text-align: center;
+}
+.age-modal-btns {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.age-modal-age-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .4rem;
+  width: 36px; height: 36px;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.05);
+  color: rgba(255,255,255,.7);
+  cursor: pointer;
+  transition: background .1s, border-color .1s, transform .1s;
+}
+.age-modal-age-btn:hover {
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.4);
+  transform: scale(1.08);
+}
+.age-modal-selected {
+  background: rgba(100,180,255,.25) !important;
+  border-color: #60b8ff !important;
+  color: #60b8ff !important;
+  transform: scale(1.08);
+}
+.age-modal-tier-preview {
+  display: flex;
+  justify-content: center;
+  min-height: 1.2rem;
+}
+.age-modal-warning {
+  font-size: .33rem;
+  text-align: center;
+  min-height: .8rem;
+  padding: 0 .2rem;
+}
+.age-modal-warn-up   { color: #ffaa44; }
+.age-modal-warn-down { color: #88ee88; }
+.age-modal-actions {
+  display: flex;
+  gap: .5rem;
+  justify-content: center;
+  margin-top: .2rem;
+}
