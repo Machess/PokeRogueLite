@@ -5264,8 +5264,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   image-rendering: pixelated; object-fit: contain;
   filter: drop-shadow(0 0 6px rgba(42,160,200,.4));
 }
-#jessie-word.fishing-reveal {
-  font-size: .65rem; color: #4fc3e8; font-weight: 700;
+.fishing-reveal-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: #4fc3e8;
+  display: flex; align-items: center; gap: 6px;
+}
+.fishing-reveal-types {
+  display: flex; gap: 4px; flex-wrap: wrap; align-items: center;
 }
 
 

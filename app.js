@@ -11126,23 +11126,27 @@ const FishingEngine = {
     revEl.style.display = 'flex';
     revEl.className     = 'fishing-reveal';
 
-    // Rebuild children — _setHeader may have cleared innerHTML
+    // Set text immediately as fallback — no child divs needed
     revEl.innerHTML = `
-      <div class="jessie-word" id="jessie-word">${p.pokemonName}</div>
-      <div class="jessie-word-type" id="jessie-word-type"></div>`;
-
-    const wordEl = document.getElementById('jessie-word');
-    const typeEl = document.getElementById('jessie-word-type');
+      <span class="fishing-reveal-name">${p.pokemonName}</span>
+      <span class="fishing-reveal-types" id="fishing-reveal-types"></span>`;
 
     try {
       const data = await fetchPoke(p.pokemonName.toLowerCase());
       const url  = data?.sprites?.front_default || getSpriteUrl(data) || '';
-      if (url && wordEl) wordEl.innerHTML = `<img src="${url}" alt="${p.pokemonName}"
-        class="fishing-reveal-sprite" onerror="this.onerror=null;this.style.display='none'"/>
-        ${p.pokemonName}`;
+      const nameEl  = revEl.querySelector('.fishing-reveal-name');
+      const typesEl = document.getElementById('fishing-reveal-types');
+
+      if (url && nameEl) {
+        nameEl.innerHTML = `<img src="${url}" alt="${p.pokemonName}"
+          class="fishing-reveal-sprite" onerror="this.onerror=null;this.style.display='none'"/>
+          ${p.pokemonName}`;
+      }
       const types = (data?.types || []).map(t => t.type.name);
-      if (types.length && typeEl) typeEl.innerHTML = types.map(t =>
-        `<span class="hud-type-badge type-${t}">${t}</span>`).join(' ');
+      if (types.length && typesEl) {
+        typesEl.innerHTML = types.map(t =>
+          `<span class="hud-type-badge type-${t}">${t}</span>`).join(' ');
+      }
     } catch(e) { /* text fallback already shown */ }
   },
 
