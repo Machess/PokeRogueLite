@@ -7712,3 +7712,43 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   width: 100%;
   margin-top: auto;
 }
+
+/* ═══════════════════════════════════════════
+   SHOP UPGRADES SECTION
+═══════════════════════════════════════════ */
+.shop-upgrade-item {
+  border-color: rgba(255,215,0,.2) !important;
+}
+.shop-upgrade-can-afford {
+  border-color: rgba(255,215,0,.5) !important;
+  box-shadow: 0 0 10px rgba(255,215,0,.15);
+  animation: upgrade-pulse 2.5s ease-in-out infinite;
+}
+@keyframes upgrade-pulse {
+  0%,100% { box-shadow: 0 0 8px rgba(255,215,0,.12); }
+  50%      { box-shadow: 0 0 18px rgba(255,215,0,.4); }
+}
+.shop-upgrade-header {
+  display: flex; flex-direction: column; gap: 1px;
+}
+.shop-upgrade-holder {
+  font-size: .3rem; color: var(--col-text-dim);
+}
+.shop-upgrade-effect-row {
+  display: flex; align-items: center; gap: 4px;
+  flex-wrap: wrap; margin: .15rem 0;
+}
+.shop-upgrade-now  { font-size: .36rem; color: var(--col-text-dim); }
+.shop-upgrade-arrow { font-size: .38rem; color: #ffd700; }
+.shop-upgrade-next  { font-size: .36rem; color: #80ee80; font-weight: bold; }
+.shop-upgrade-stars { font-size: .36rem; color: #ffd700; margin-bottom: .1rem; }
+.shop-price-unafford { color: #ee6060; }
+.item-upgrade-shop-hint {
+  font-size: .38rem;
+  color: #ffd700;
+  text-align: center;
+  margin-top: .3rem;
+  padding: .2rem .4rem;
+  background: rgba(255,215,0,.08);
+  border-radius: 6px;
+}

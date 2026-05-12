@@ -731,47 +731,47 @@ const SHOP_ITEMS = [
   // ── Held Items (equipped to a Pokémon) ───────────────────────────────────
   {
     id: 'shell_bell',     name: 'Shell Bell',        icon: '🔔', category: 'held',
-    description: 'Holder heals 5 HP whenever they deal damage.',
+    description: 'Heals 5 HP per hit dealt. Upgradeable to ★★★.',
     price: 40, maxStack: 1, trigger: 'held',
   },
   {
     id: 'lucky_egg',      name: 'Lucky Egg',         icon: '🥚', category: 'held',
-    description: 'Holder gains +2 levels per battle instead of +1.',
+    description: '+1 level per battle win. Upgradeable to ★★★.',
     price: 50, maxStack: 1, trigger: 'held',
   },
   {
     id: 'amulet_coin',    name: 'Amulet Coin',       icon: '🪙', category: 'held',
-    description: 'Holder doubles gold earned from battles.',
+    description: 'Doubles gold from battles. Upgradeable to ★★★.',
     price: 55, maxStack: 1, trigger: 'held',
   },
   {
     id: 'focus_sash',     name: 'Focus Sash',        icon: '🎗', category: 'held',
-    description: 'Holder survives one KO hit with 1 HP. One use per battle.',
+    description: 'Survive one KO hit at 1 HP. Upgradeable to ★★★.',
     price: 60, maxStack: 1, trigger: 'held',
   },
   {
     id: 'charcoal',       name: 'Charcoal',          icon: '🪵', category: 'held',
-    description: 'Boosts Fire-type moves by 20%.',
+    description: 'Fire moves +20%. Upgradeable to ★★★.',
     price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'mystic_water',   name: 'Mystic Water',      icon: '💦', category: 'held',
-    description: 'Boosts Water-type moves by 20%.',
+    description: 'Water moves +20%. Upgradeable to ★★★.',
     price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'miracle_seed',   name: 'Miracle Seed',      icon: '🌱', category: 'held',
-    description: 'Boosts Grass-type moves by 20%.',
+    description: 'Grass moves +20%. Upgradeable to ★★★.',
     price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'magnet',         name: 'Magnet',             icon: '🧲', category: 'held',
-    description: 'Boosts Electric-type moves by 20%.',
+    description: 'Electric moves +20%. Upgradeable to ★★★.',
     price: 30, maxStack: 1, trigger: 'held',
   },
   {
     id: 'leftovers',      name: 'Leftovers',          icon: '🍖', category: 'held',
-    description: 'Holder heals 5 HP at the start of every turn.',
+    description: 'Heals 5 HP per turn start. Upgradeable to ★★★.',
     price: 45, maxStack: 1, trigger: 'held',
   },
   // ── Evolution Stones (Eevee only) ────────────────────────────────────────
@@ -823,7 +823,10 @@ function goldForWildBattle() {
   let earned   = t.wildMin + Math.floor(Math.random() * (t.wildMax - t.wildMin + 1));
   // Amulet Coin — double gold if active Pokémon holds it
   const active = GameState.party?.[GameState.activePokemonIndex];
-  if (active?.heldItem?.id === 'amulet_coin') earned *= 2;
+  if (active?.heldItem?.id === 'amulet_coin') {
+    const tier = active.heldItem.tier || 1;
+    earned *= HELD_ITEM_TIERS.amulet_coin.values[tier - 1] || 2;
+  }
   return earned;
 }
 function goldForBoss() {
@@ -2655,7 +2658,10 @@ function levelUpParty(source) {
     // Apply ALL level increments BEFORE the evolution check so Lucky Egg
     // level-ups through a threshold are caught in the same call.
     p.level++;
-    if (p.heldItem?.id === 'lucky_egg') p.level++;
+    if (p.heldItem?.id === 'lucky_egg') {
+      const tier = p.heldItem.tier || 1;
+      p.level += HELD_ITEM_TIERS.lucky_egg.values[tier - 1] || 1;
+    }
     p.maxHp += 8;
     p.hp     = Math.min(p.hp + 8, p.maxHp);
     levelled.push(i);
@@ -9352,6 +9358,58 @@ const CatchEngine = {
 
 // ─── ITEM ENGINE ─────────────────────────────────────────────────────────────
 
+// ─── HELD ITEM TIER DEFINITIONS ──────────────────────────────────────────────
+// Single source of truth for all tier effects. Used by ItemEngine effects
+// AND by the shop upgrade preview UI.
+const HELD_ITEM_TIERS = {
+  shell_bell:   {
+    effects: ['Heal 5 HP per hit', 'Heal 10 HP per hit', 'Heal 18 HP per hit'],
+    values:  [5, 10, 18],
+  },
+  leftovers:    {
+    effects: ['Heal 5 HP per turn', 'Heal 10 HP per turn', 'Heal 18 HP per turn'],
+    values:  [5, 10, 18],
+  },
+  lucky_egg:    {
+    effects: ['+1 level per win', '+2 levels per win', '+3 levels per win'],
+    values:  [1, 2, 3],
+  },
+  amulet_coin:  {
+    effects: ['Gold ×2', 'Gold ×2.5', 'Gold ×3'],
+    values:  [2, 2.5, 3],
+  },
+  focus_sash:   {
+    effects: ['Survive KO at 1 HP', 'Survive KO + heal 15 HP', 'Survive KO + heal 30 HP'],
+    values:  [0, 15, 30],
+  },
+  charcoal:     {
+    effects: ['Fire +20%', 'Fire +35%', 'Fire +50%'],
+    values:  [1.20, 1.35, 1.50],
+  },
+  mystic_water: {
+    effects: ['Water +20%', 'Water +35%', 'Water +50%'],
+    values:  [1.20, 1.35, 1.50],
+  },
+  miracle_seed: {
+    effects: ['Grass +20%', 'Grass +35%', 'Grass +50%'],
+    values:  [1.20, 1.35, 1.50],
+  },
+  magnet:       {
+    effects: ['Electric +20%', 'Electric +35%', 'Electric +50%'],
+    values:  [1.20, 1.35, 1.50],
+  },
+};
+
+// Upgrade cost formula: base = item.price, scales by tier and boss progress
+function heldItemUpgradeCost(itemId, currentTier) {
+  const def = SHOP_ITEMS.find(i => i.id === itemId);
+  const base = def?.price || 30;
+  const bi   = GameState.bossesDefeated || 0;
+  return currentTier === 1
+    ? Math.round(base * 1.5) + bi * 5
+    : Math.round(base * 2.5) + bi * 8;
+}
+
 const ItemEngine = {
 
   // ── Show a toast notification over the battle screen ────────────────────
@@ -9653,7 +9711,9 @@ const ItemEngine = {
     if (!poke || !poke.heldItem || poke.heldItem.id !== 'focus_sash') return false;
     if (battleObj._focusSashUsed) return false;
     if (st[who].hp <= 0) {
-      st[who].hp = 1;
+      const tier   = poke.heldItem.tier || 1;
+      const healAmt = HELD_ITEM_TIERS.focus_sash.values[tier - 1] || 0;
+      st[who].hp = 1 + healAmt;
       battleObj._focusSashUsed = true;
       return true;
     }
@@ -9664,7 +9724,8 @@ const ItemEngine = {
   checkShellBell(st, battleObj) {
     const poke = GameState.party[GameState.activePokemonIndex];
     if (!poke?.heldItem || poke.heldItem.id !== 'shell_bell') return null;
-    const heal = 5;
+    const tier = poke.heldItem.tier || 1;
+    const heal = HELD_ITEM_TIERS.shell_bell.values[tier - 1] || 5;
     st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
     return `🔔 Shell Bell! ${st.player.name} healed ${logHeal(heal)} HP!`;
   },
@@ -9673,7 +9734,8 @@ const ItemEngine = {
   checkLeftovers(st) {
     const poke = GameState.party[GameState.activePokemonIndex];
     if (!poke?.heldItem || poke.heldItem.id !== 'leftovers') return null;
-    const heal = 5;
+    const tier = poke.heldItem.tier || 1;
+    const heal = HELD_ITEM_TIERS.leftovers.values[tier - 1] || 5;
     st.player.hp = Math.min(st.player.maxHp, st.player.hp + heal);
     return `🍖 Leftovers! ${st.player.name} healed ${logHeal(heal)} HP!`;
   },
@@ -9682,29 +9744,24 @@ const ItemEngine = {
   getTypeboost(poke, cardType) {
     if (!poke?.heldItem) return 1;
     const BOOST_TYPES = {
-      charcoal:     'fire',
-      mystic_water: 'water',
-      miracle_seed: 'grass',
-      magnet:       'electric',
+      charcoal: 'fire', mystic_water: 'water',
+      miracle_seed: 'grass', magnet: 'electric',
     };
     const boostType = BOOST_TYPES[poke.heldItem.id];
     if (!boostType || boostType !== cardType) return 1;
-    // Tier 1 = 1.20, Tier 2 = 1.35, Tier 3 = 1.50
     const tier = poke.heldItem.tier || 1;
-    return tier === 3 ? 1.50 : tier === 2 ? 1.35 : 1.20;
+    const tierData = HELD_ITEM_TIERS[poke.heldItem.id];
+    return tierData ? tierData.values[tier - 1] : 1.20;
   },
 
-  // Upgrade a held item to the next tier (costs gold, max tier 3)
+  // Upgrade a held item to the next tier (costs gold, max tier 3, all 9 items)
   upgradeHeldItem(pokeIdx) {
     const poke = GameState.party[pokeIdx];
     if (!poke?.heldItem) return null;
-    const UPGRADEABLE = ['charcoal','mystic_water','miracle_seed','magnet'];
-    if (!UPGRADEABLE.includes(poke.heldItem.id)) return null;
+    if (!HELD_ITEM_TIERS[poke.heldItem.id]) return null;
     const tier = poke.heldItem.tier || 1;
     if (tier >= 3) return null;
-    const cost = tier === 1
-      ? 40 + (GameState.bossesDefeated || 0) * 8
-      : 80 + (GameState.bossesDefeated || 0) * 12;
+    const cost = heldItemUpgradeCost(poke.heldItem.id, tier);
     if ((GameState.gold || 0) < cost) return { error: 'Not enough gold', cost };
     GameState.gold -= cost;
     poke.heldItem.tier = tier + 1;
@@ -10044,6 +10101,78 @@ const ShopEngine = {
         grid.appendChild(div);
       });
     });
+    // ── Upgrades section — all owned held items that can still be upgraded ────
+    const upgradeable = GameState.party
+      .filter(p => p.heldItem && HELD_ITEM_TIERS[p.heldItem.id] && (p.heldItem.tier || 1) < 3)
+      .map(p => ({ poke: p, pokeIdx: GameState.party.indexOf(p), item: p.heldItem }));
+
+    if (upgradeable.length > 0) {
+      const upHeader = document.createElement('div');
+      upHeader.className = 'shop-section-header';
+      upHeader.textContent = '⬆ Upgrades';
+      grid.appendChild(upHeader);
+
+      upgradeable.forEach(({ poke, pokeIdx, item }) => {
+        const tier      = item.tier || 1;
+        const tierData  = HELD_ITEM_TIERS[item.id];
+        const cost      = heldItemUpgradeCost(item.id, tier);
+        const canAfford = (GameState.gold || 0) >= cost;
+        const stars     = (t) => '★'.repeat(t) + '☆'.repeat(3 - t);
+
+        const div = document.createElement('div');
+        div.className = 'shop-item shop-upgrade-item' + (canAfford ? ' shop-upgrade-can-afford' : '');
+        div.innerHTML = `
+          <div class="shop-item-icon">${item.icon}</div>
+          <div class="shop-upgrade-header">
+            <span class="shop-item-name">${item.name}</span>
+            <span class="shop-upgrade-holder">on ${poke.name}</span>
+          </div>
+          <div class="shop-upgrade-effect-row">
+            <span class="shop-upgrade-now">${tierData.effects[tier - 1]}</span>
+            <span class="shop-upgrade-arrow">→</span>
+            <span class="shop-upgrade-next">${tierData.effects[tier]}</span>
+          </div>
+          <div class="shop-upgrade-stars">${stars(tier)} → ${stars(tier + 1)}</div>
+          <div class="shop-item-footer">
+            <span class="shop-item-price ${canAfford ? '' : 'shop-price-unafford'}">💰 ${cost}g</span>
+            <button class="btn-pixel btn-primary shop-buy-btn" ${canAfford ? '' : 'disabled'}
+                    data-pokeidx="${pokeIdx}">
+              ${canAfford ? '⬆ Upgrade' : 'Need gold'}
+            </button>
+          </div>`;
+        if (canAfford) {
+          div.querySelector('.shop-buy-btn').onclick = () => {
+            const result = ItemEngine.upgradeHeldItem(pokeIdx);
+            if (result?.success) {
+              showModal(`✨ ${item.icon} Upgraded!`,
+                `${item.name} on ${poke.name} is now ${stars(result.newTier)}!\n\n${tierData.effects[result.newTier - 1]}`,
+                () => this._render());
+            }
+          };
+        }
+        grid.appendChild(div);
+      });
+    }
+
+    // ── Inline equip prompt helper ────────────────────────────────────────────
+    // Called after buying a held item: offers to equip immediately
+    this._lastBoughtHeld = null;
+  },
+
+  _showEquipPrompt(itemId) {
+    const def  = SHOP_ITEMS.find(i => i.id === itemId);
+    const open = GameState.party.filter(p => !p.heldItem && p.hp > 0);
+    if (!open.length) return; // everyone already has something
+    const names = open.map((p, i) => `${p.name}`).join(' / ');
+    showModal(
+      `${def?.icon || '🏅'} Equip ${def?.name || itemId}?`,
+      `Who should hold this?\n\n${open.map(p => p.name).join('  ·  ')}\n\nOr equip later from the party screen.`,
+      () => {
+        // Build quick-pick buttons via re-render with equip mode
+        this._equipPromptId = itemId;
+        this._render();
+      }
+    );
   },
 
   buy(id) {
@@ -10052,7 +10181,7 @@ const ShopEngine = {
     const scaledPrice = getScaledPrice(item.price);
     if ((GameState.gold || 0) < scaledPrice) return;
 
-    // Stone items need a confirmation modal — permanent choice, map-only use
+    // Stone items need a confirmation modal
     if (item.category === 'stone') {
       const target = item.stoneTarget;
       showModal(
@@ -10072,22 +10201,47 @@ const ShopEngine = {
     GameState.gold -= scaledPrice;
 
     if (item.category === 'held') {
-      const active = GameState.party[GameState.activePokemonIndex];
-      if (active && !active.heldItem) {
-        active.heldItem = { ...item };
+      // Find first party member without a held item
+      const freeSlot = GameState.party.find(p => !p.heldItem);
+      if (freeSlot) {
+        // Store in bag, then show equip prompt
+        ItemEngine.addItem(id);
+        saveGame();
+        SoundEngine.playFanfare();
+        this._render();
+        // Inline equip prompt — show after render
+        const open = GameState.party.filter(p => !p.heldItem && p.hp > 0);
+        if (open.length > 0) {
+          const pickHtml = open.map((p, i) =>
+            `<button class="btn-pixel btn-primary" onclick="
+              ItemEngine.equipItem(GameState.party[${GameState.party.indexOf(p)}],'${id}');
+              document.getElementById('overlay').classList.add('hidden');
+              ShopEngine._render();
+            ">${p.name}</button>`).join(' ');
+          document.getElementById('modal-title').textContent = `${item.icon} Who holds ${item.name}?`;
+          document.getElementById('modal-body').innerHTML = `Pick a Pokémon to equip it now:<br><br>${pickHtml}<br><br><small>Or equip later from the party screen.</small>`;
+          document.getElementById('modal-ok').textContent = 'Skip for now';
+          document.getElementById('modal-ok').onclick = () => {
+            document.getElementById('overlay').classList.add('hidden');
+          };
+          document.getElementById('overlay').classList.remove('hidden');
+        }
       } else {
         ItemEngine.addItem(id);
-        showModal('Item Stored', `${item.icon} ${item.name} added to your bag. Open Party to equip it.`, () => {});
+        showModal('Stored in Bag', `${item.icon} ${item.name} added to bag.\nEquip from the party screen.`, () => {});
+        SoundEngine.playFanfare();
+        saveGame();
+        this._render();
       }
     } else {
       ItemEngine.addItem(id);
+      SoundEngine.playFanfare();
+      saveGame();
+      this._render();
     }
 
     if (id === 'master_ball') GameState.masterBallUsed = true;
     if (id === 'lure') GameState.lureActive = true;
-    SoundEngine.playFanfare();
-    saveGame();
-    this._render();
   },
 
   finish() {
@@ -10378,62 +10532,36 @@ const TrainingEngine = {
   _renderItemUpgrade() {
     const poke  = GameState.party[this._trainingPokeIdx];
     const panel = document.getElementById('training-item-panel');
-    const UPGRADEABLE = { charcoal:'fire', mystic_water:'water', miracle_seed:'grass', magnet:'electric' };
-    const ITEM_ICONS  = { charcoal:'🪵', mystic_water:'💦', miracle_seed:'🌱', magnet:'🧲' };
-    const ITEM_NAMES  = { charcoal:'Charcoal', mystic_water:'Mystic Water', miracle_seed:'Miracle Seed', magnet:'Magnet' };
     const heldItem = poke?.heldItem;
-    if (!heldItem || !UPGRADEABLE[heldItem.id]) {
+    const tierData = heldItem ? HELD_ITEM_TIERS[heldItem.id] : null;
+    if (!heldItem || !tierData) {
       panel.innerHTML = `<div class="item-upgrade-empty">
-        <div style="font-size:2rem">💎</div>
-        <div style="font-size:.48rem;color:var(--col-text-dim);margin-top:.5rem;text-align:center;line-height:1.6">
-          ${poke?.name || 'This Pokémon'} has no upgradeable item.<br>
-          Equip Charcoal, Mystic Water, Miracle Seed or Magnet from the shop.
+        <div style="font-size:2rem">🏅</div>
+        <div style="font-size:.44rem;color:var(--col-text-dim);margin-top:.5rem;text-align:center;line-height:1.6">
+          ${poke?.name || 'This Pokémon'} has no held item.<br>
+          Equip one from the party screen.
         </div></div>`;
       return;
     }
-    const tier      = heldItem.tier || 1;
-    const maxed     = tier >= 3;
-    const cost      = tier === 1
-      ? 40 + (GameState.bossesDefeated || 0) * 8
-      : 80 + (GameState.bossesDefeated || 0) * 12;
-    const canAfford = (GameState.gold || 0) >= cost;
-    const boostNow  = tier === 3 ? 50 : tier === 2 ? 35 : 20;
-    const boostNext = (tier+1) === 3 ? 50 : 35;
+    const tier  = heldItem.tier || 1;
+    const maxed = tier >= 3;
     panel.innerHTML = `
       <div class="item-upgrade-card">
-        <div class="item-upgrade-icon">${ITEM_ICONS[heldItem.id]}</div>
-        <div class="item-upgrade-name">${ITEM_NAMES[heldItem.id]}</div>
-        <div class="item-upgrade-type">Boosts ${UPGRADEABLE[heldItem.id]} moves on ${poke.name}</div>
+        <div class="item-upgrade-icon">${heldItem.icon}</div>
+        <div class="item-upgrade-name">${heldItem.name}</div>
         <div class="item-upgrade-tiers">
           ${[1,2,3].map(t=>`<span class="item-tier-pip${t<=tier?' filled':''}">${['★','★★','★★★'][t-1]}</span>`).join('')}
         </div>
         <div class="item-upgrade-stats">
-          <div class="item-stat-row">Current boost: <span class="item-stat-val">+${boostNow}%</span></div>
-          ${!maxed?`
-          <div class="item-stat-row">After upgrade: <span class="item-stat-val upgrade-preview">+${boostNext}%</span></div>
-          <div class="item-stat-row">Cost: <span class="item-stat-val ${canAfford?'':'item-cost-unafford'}">💰 ${cost}g</span>
-            <span style="font-size:.34rem;color:var(--col-text-dim)">&nbsp;(have ${GameState.gold||0}g)</span></div>`:''}
+          <div class="item-stat-row">Current: <span class="item-stat-val">${tierData.effects[tier-1]}</span></div>
+          ${!maxed?`<div class="item-stat-row">Next: <span class="item-stat-val upgrade-preview">${tierData.effects[tier]}</span></div>`:''}
         </div>
         ${maxed
-          ? `<div class="item-upgrade-maxed">✨ MAX TIER — +50% boost active!</div>`
-          : `<button class="btn-pixel btn-primary item-upgrade-btn" id="btn-do-item-upgrade"${canAfford?'':' disabled'}>
-               Upgrade to ${'★'.repeat(tier+1)} (+${boostNext}%) — ${cost}g
-             </button>`}
-        <div class="item-upgrade-msg" id="item-upgrade-msg"></div>
+          ? `<div class="item-upgrade-maxed">✨ MAX TIER</div>`
+          : `<div class="item-upgrade-shop-hint">⬆ Upgrade available in the <strong>Shop</strong></div>`}
       </div>`;
-    document.getElementById('btn-do-item-upgrade')?.addEventListener('click', () => {
-      const result = ItemEngine.upgradeHeldItem(this._trainingPokeIdx);
-      const msg    = document.getElementById('item-upgrade-msg');
-      if (result?.success) {
-        msg.textContent = `✅ Upgraded to Tier ${result.newTier}! (+${result.newTier===3?50:35}% boost)`;
-        msg.style.color = '#80e080';
-        setTimeout(() => this._renderItemUpgrade(), 800);
-      } else {
-        msg.textContent = `❌ Need ${result?.cost || '?'}g`;
-        msg.style.color = '#e08080';
-      }
-    });
   },
+
 
   toggleSelect(idx) {
     const maxSel = this.mode === 'upgrade' ? 2 : 1;
