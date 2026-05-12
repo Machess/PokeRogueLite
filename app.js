@@ -1419,7 +1419,7 @@ function hideLoading() { document.getElementById('loading-overlay').classList.ad
 
 function showModal(title, body, cb) {
   document.getElementById('modal-title').textContent = title;
-  document.getElementById('modal-body').innerHTML = body;
+  document.getElementById('modal-body').innerHTML = (body || '').replace(/\n/g, '<br>');
   document.getElementById('overlay').classList.remove('hidden');
   document.getElementById('modal-ok').onclick = () => {
     document.getElementById('overlay').classList.add('hidden');
@@ -9359,7 +9359,7 @@ const ItemEngine = {
     const id  = isBoss ? 'boss-battle-item-toast' : 'battle-item-toast';
     const el  = document.getElementById(id);
     if (!el) return;
-    el.textContent = msg;
+    el.innerHTML = msg;  // allow emoji + span formatting
     el.classList.remove('toast-show');
     void el.offsetWidth;
     el.classList.add('toast-show');
@@ -9419,9 +9419,72 @@ const ItemEngine = {
 
       bar.appendChild(pill);
     });
+    // ── Erika's custom potions ────────────────────────────────────────────────
+    (GameState.erikaPotions || []).forEach((potion, idx) => {
+      const pill = document.createElement('div');
+      pill.className = 'bag-pill bag-pill-erika';
+      pill.innerHTML = `
+        <span class="bag-pill-icon">🌸</span>
+        <span class="bag-pill-label">${potion.name}</span>
+        <button class="btn-pixel bag-erika-use-btn" data-idx="${idx}">Use</button>`;
+      pill.title = potion.desc;
+      pill.querySelector('.bag-erika-use-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        showModal(`🌸 Use ${potion.name}?`,
+          `Effect: ${potion.desc}\n\nUse this potion now (outside of battle)?`,
+          () => ItemEngine.applyErikaPotion(idx));
+      });
+      bar.appendChild(pill);
+    });
   },
 
-  // ── Held item helpers ────────────────────────────────────────────────────
+  // Apply an Erika potion by index — works both in and out of battle
+  applyErikaPotion(idx, st = null, isBoss = false) {
+    const potions = GameState.erikaPotions || [];
+    const potion  = potions[idx];
+    if (!potion) return null;
+
+    GameState.erikaPotions = potions.filter((_, i) => i !== idx);
+
+    const lead = st ? null : GameState.party.find(p => p.hp > 0);
+    let msg = `🌸 ${potion.name} used!`;
+
+    switch (potion.effect) {
+      case 'heal40pct': {
+        const target = st?.player || lead;
+        if (target) {
+          const heal = Math.floor((target.maxHp || 60) * 0.4);
+          target.hp = Math.min(target.maxHp, (target.hp || 0) + heal);
+          msg = `🌸 ${potion.name}! ${target.name} recovered ${heal} HP!`;
+        }
+        break;
+      }
+      case 'party_heal15':
+        GameState.party.forEach(p => { p.hp = Math.min(p.maxHp, (p.hp || 0) + 15); });
+        msg = `🌸 ${potion.name}! All Pokémon healed 15 HP!`;
+        break;
+      case 'poison_aura':
+        if (!GameState.pendingPlayerStatuses) GameState.pendingPlayerStatuses = [];
+        GameState.pendingPlayerStatuses.push('opp_poison_start');
+        msg = `🌸 ${potion.name}! Opponent will start next battle Poisoned!`;
+        break;
+      case 'fire_boost':
+        GameState.fishingBuff = { type: 'fire', mult: 1.5 };
+        msg = `🌸 ${potion.name}! Fire cards deal +50% next battle!`;
+        break;
+      case 'freeze_first':
+        if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+        GameState.pendingPlayerEffects.freezeFirst = true;
+        msg = `🌸 ${potion.name}! Opponent's first move next battle skipped!`;
+        break;
+    }
+
+    saveGame();
+    this.renderBagBar();
+    if (st) this.showBattleToast(msg, isBoss);
+    return { msg };
+  },
+
   getHeldItem(pokemon)  { return pokemon?.heldItem || null; },
 
   equipItem(pokemon, itemId) {
@@ -9468,7 +9531,7 @@ const ItemEngine = {
       if (berries[0].count <= 0)
         GameState.items = GameState.items.filter(i => !(i.id === 'oran_berry' && i.count <= 0));
       this.renderBagBar();
-      const msg = `🍊 Oran Berry! ${st[who].name} healed ${logHeal(20)} HP!`;
+      const msg = `🍊 Oran Berry! ${st[who].name} healed ${logHeal(heal)} HP!`;
       this.showBattleToast(msg, isBoss);
       return msg;
     }
@@ -9494,8 +9557,9 @@ const ItemEngine = {
     this.renderBagBar();
     saveGame();
 
-    const icon = item.id === 'super_potion' ? '💉' : '💊';
-    const msg  = `${icon} ${item.id === 'super_potion' ? 'Super Potion' : 'Potion'}! ${st.player.name} healed ${logHeal(actual)} HP!`;
+    const icon    = item.id === 'super_potion' ? '💉' : '💊';
+    const label   = item.id === 'super_potion' ? 'Super Potion' : 'Potion';
+    const msg     = `${icon} ${label}! ${st.player.name} healed ${logHeal(actual)} HP!`;
     this.showBattleToast(msg, isBoss);
     return { healed: actual, msg };
   },
@@ -9518,7 +9582,7 @@ const ItemEngine = {
       (i.id === 'potion' || i.id === 'super_potion') && i.count > 0
     );
 
-    if (usable.length === 0) {
+    if (usable.length === 0 && !(GameState.erikaPotions?.length > 0)) {
       picker.innerHTML = '<div class="item-picker-empty">No usable items!</div>';
       picker.style.display = 'block';
       setTimeout(() => { picker.style.display = 'none'; }, 1200);
@@ -9536,6 +9600,20 @@ const ItemEngine = {
       btn.onclick = () => {
         picker.style.display = 'none';
         onUse(item.id);
+      };
+      picker.appendChild(btn);
+    });
+
+    // Erika's custom potions
+    (GameState.erikaPotions || []).forEach((potion, idx) => {
+      const btn = document.createElement('button');
+      btn.className = 'item-picker-btn item-picker-erika';
+      btn.innerHTML = `<span class="item-picker-icon">🌸</span>
+                       <span class="item-picker-name">${potion.name}</span>
+                       <span class="item-picker-count erika-potion-desc">${potion.desc}</span>`;
+      btn.onclick = () => {
+        picker.style.display = 'none';
+        onUse('erika_' + idx);
       };
       picker.appendChild(btn);
     });
@@ -12573,11 +12651,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-use-item').addEventListener('click', () => {
     if (BattleEngine._battleOver || BattleEngine._itemUsedThisTurn) return;
     ItemEngine.renderItemPicker(false, (itemId) => {
-      const result = ItemEngine.usePotion(BattleEngine.state, false);
-      if (result) {
-        BattleEngine._itemUsedThisTurn = true;
-        BattleEngine._log(result.msg);
-        BattleEngine._render();
+      if (itemId.startsWith('erika_')) {
+        const idx    = parseInt(itemId.replace('erika_', ''));
+        const result = ItemEngine.applyErikaPotion(idx, BattleEngine.state, false);
+        if (result) { BattleEngine._itemUsedThisTurn = true; BattleEngine._log(result.msg); BattleEngine._render(); }
+      } else {
+        const result = ItemEngine.usePotion(BattleEngine.state, false);
+        if (result) { BattleEngine._itemUsedThisTurn = true; BattleEngine._log(result.msg); BattleEngine._render(); }
       }
     });
   });
@@ -12617,11 +12697,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-boss-use-item').addEventListener('click', () => {
     if (BossEngine._isOver || BattleEngine._itemUsedThisTurn) return;
     ItemEngine.renderItemPicker(true, (itemId) => {
-      const result = ItemEngine.usePotion(BossEngine.bState, true);
-      if (result) {
-        BattleEngine._itemUsedThisTurn = true;
-        BossEngine._log(result.msg);
-        BossEngine._render();
+      if (itemId.startsWith('erika_')) {
+        const idx    = parseInt(itemId.replace('erika_', ''));
+        const result = ItemEngine.applyErikaPotion(idx, BossEngine.bState, true);
+        if (result) { BattleEngine._itemUsedThisTurn = true; BossEngine._log(result.msg); BossEngine._render(); }
+      } else {
+        const result = ItemEngine.usePotion(BossEngine.bState, true);
+        if (result) { BattleEngine._itemUsedThisTurn = true; BossEngine._log(result.msg); BossEngine._render(); }
       }
     });
   });
