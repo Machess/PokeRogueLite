@@ -2444,7 +2444,9 @@ const TeamRocketChallenge = {
       cv.style.display = 'flex';
     }
 
-    document.getElementById('challenge-question').textContent = this._challenge.question;
+    const _mqEl = document.getElementById('challenge-question');
+    _mqEl.textContent  = this._challenge.question;
+    _mqEl.style.display = '';
 
     this._renderAnswerBtns(this._challenge.choices, (val) => {
       const correct  = this._challenge.correct;
@@ -6284,7 +6286,9 @@ const SurgeEngine = {
     if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
-    document.getElementById('challenge-question').textContent       = sc.question;
+    const qEl = document.getElementById('challenge-question');
+    qEl.textContent  = sc.question;
+    qEl.style.display = '';
 
     const btnArea = document.getElementById('challenge-answer-btns');
     btnArea.innerHTML = '';
@@ -11355,6 +11359,7 @@ const FishingEngine = {
 
 const HealEngine = {
   start(node) {
+    showScreen('heal');
     // Apply heal center background
     const healBg = document.getElementById('heal-bg');
     if (healBg) {
