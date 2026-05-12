@@ -2882,11 +2882,10 @@ const ProfileEngine = {
       if (nameEl)   nameEl.textContent   = meta.name;
       if (spriteEl) { spriteEl.src = meta.starterSprite || ''; spriteEl.style.display = meta.starterSprite ? '' : 'none'; }
       if (detailEl) {
-        const tierStr = `${this._tierLabel(meta.difficultyTier, meta.trainerAge)}`;
         if (meta.hasActiveSave) {
-          detailEl.innerHTML = `${tierStr} &nbsp;·&nbsp; ${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`;
+          detailEl.textContent = `${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`;
         } else {
-          detailEl.innerHTML = `${tierStr} &nbsp;·&nbsp; No active run`;
+          detailEl.textContent = 'No active run';
         }
       }
     }
