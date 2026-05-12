@@ -3022,7 +3022,7 @@ const ProfileEngine = {
       }
 
       overlay.remove();
-      // Re-render to show updated pill
+      // Re-render with fresh meta from storage
       ProfileEngine._render();
       ProfileEngine._updateStartScreen();
     });

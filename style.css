@@ -4537,37 +4537,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
    PROFILE SYSTEM
 ═══════════════════════════════════════════ */
 
-/* ── Active profile banner on start screen ── */
-.active-profile-banner {
-  position: relative; z-index: var(--z-content);
-  display: flex; align-items: center; justify-content: space-between;
-  background: rgba(0,0,0,.55);
-  border: 2px solid var(--col-yellow);
-  border-radius: var(--r-lg);
-  padding: .5rem .8rem;
-  width: 100%; max-width: 300px;
-  gap: .6rem;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 0 12px rgba(255,215,0,.2);
-}
-.apb-left {
-  display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0;
-}
-.apb-sprite {
-  width: 44px; height: 44px;
-  image-rendering: pixelated; object-fit: contain; flex-shrink: 0;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.6));
-}
-.apb-info { min-width: 0; }
-.apb-name {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .48rem; color: var(--col-yellow);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.apb-detail {
-  font-size: .52rem; color: var(--col-text-dim);
-  margin-top: .15rem; white-space: nowrap;
-}
+/* ── Active profile banner on start screen (see base rules above) ── */
 .apb-switch-btn {
   font-size: .35rem !important;
   padding: .4em .7em !important;
@@ -4733,35 +4703,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* ═══════════════════════════════════════════
    ACTIVE PROFILE BANNER (start screen)
 ═══════════════════════════════════════════ */
-.active-profile-banner {
-  position: relative; z-index: var(--z-content);
-  display: flex; align-items: center; justify-content: space-between;
-  gap: .8rem;
-  background: rgba(0,0,0,.55);
-  border: 2px solid var(--col-yellow);
-  border-radius: var(--r-lg);
-  padding: .5rem .8rem;
-  width: 88%; max-width: 320px;
-  backdrop-filter: blur(6px);
-  box-shadow: 0 0 16px rgba(255,215,0,.2), 0 4px 12px rgba(0,0,0,.5);
-}
-.apb-left {
-  display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0;
-}
-.apb-sprite {
-  width: 40px; height: 40px;
-  object-fit: contain; image-rendering: pixelated; flex-shrink: 0;
-}
-.apb-info { min-width: 0; }
-.apb-name {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .45rem; color: var(--col-yellow);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-.apb-detail {
-  font-size: .55rem; color: var(--col-text-dim);
-  margin-top: .15rem;
-}
 .apb-switch-btn {
   font-size: .32rem !important; padding: .4em .7em !important;
   flex-shrink: 0;
