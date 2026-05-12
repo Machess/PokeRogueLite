@@ -7898,34 +7898,118 @@ function playWrongBuzz() {
   } catch(e) {}
 }
 
+// ─── KNOWN SONGS FOR JIGGLYPUFF ──────────────────────────────────────────────
+// Notes mapped to JIGGLYPUFF_NOTES indices: C=0 D=1 E=2 G=3 A=4 C'=5 D'=6
+// All transposed to fit the pentatonic scale C D E G A C' D'.
+// durations[] optional — note hold time in seconds (defaults to 0.45).
+const JIGGLYPUFF_SONGS = [
+  {
+    name:    'Twinkle Twinkle',
+    tier:    1,
+    notes:   [0, 0, 3, 3, 4, 4, 3],          // C C G G A A G
+    durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.7],
+    intro:   'La la la~ ♪ You know this one!',
+  },
+  {
+    name:    'Mary Had a Little Lamb',
+    tier:    1,
+    notes:   [2, 1, 0, 1, 2, 2, 2],           // E D C D E E E
+    durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.7],
+    intro:   'La la la~ ♪ Sing it with me!',
+  },
+  {
+    name:    'Hot Cross Buns',
+    tier:    1,
+    notes:   [2, 1, 0, 2, 1, 0],              // E D C E D C
+    durations:[0.45,0.45,0.7,0.45,0.45,0.7],
+    intro:   'La la la~ ♪ Short and sweet!',
+  },
+  {
+    name:    'Row Your Boat',
+    tier:    1,
+    notes:   [0, 0, 0, 1, 2],                 // C C C D E
+    durations:[0.4,0.4,0.6,0.3,0.7],
+    intro:   'La la la~ ♪ Can you row along?',
+  },
+  {
+    name:    'Ode to Joy',
+    tier:    2,
+    notes:   [2, 2, 3, 5, 5, 3, 2, 1, 0],    // E E G C' C' G E D C (simplified)
+    durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.7],
+    intro:   'La la la~ ♪ A famous one!',
+  },
+  {
+    name:    'London Bridge',
+    tier:    2,
+    notes:   [3, 4, 3, 2, 3, 4, 3],           // G A G E G A G
+    durations:[0.4,0.4,0.4,0.7,0.4,0.4,0.7],
+    intro:   'La la la~ ♪ Is it falling down?',
+  },
+  {
+    name:    'Happy Birthday',
+    tier:    2,
+    notes:   [3, 3, 4, 3, 5, 4],             // G G A G C' A (simplified)
+    durations:[0.3,0.3,0.45,0.45,0.45,0.7],
+    intro:   'La la la~ ♪ Happy happy!',
+  },
+  {
+    name:    'Jingle Bells (hook)',
+    tier:    2,
+    notes:   [2, 2, 2, 2, 2, 2, 2, 3, 0, 1, 2], // E E E E E E E G C D E
+    durations:[0.35,0.35,0.55,0.35,0.35,0.55,0.35,0.35,0.35,0.35,0.7],
+    intro:   'La la la~ ♪ Jingle all the way!',
+  },
+];
+
 const JigglypuffEngine = {
-  _node:       null,
-  _sequence:   [],   // array of note indices
-  _playerPos:  0,    // which position the player is currently filling
-  _noteCount:  0,    // length of sequence this round
+  _node:          null,
+  _sequence:      [],
+  _playerPos:     0,
+  _noteCount:     0,
   _replayPenalty: false,
+  _songName:      null,   // name of known song, null = random
+  _songDurations: null,   // per-note durations for known songs
 
   start(node) {
-    this._node     = node;
-    this._playerPos = 0;
-    const tier     = GameState.difficultyTier || 2;
-    const beaten   = GameState.bossesDefeated || 0;
-    const notePool = tier <= 1 ? 5 : tier === 2 ? 6 : 7;
-    const seqLen   = tier <= 1 ? (beaten < 2 ? 3 : 4)
-                   : tier === 2 ? (beaten < 5 ? 4 : 5)
-                   : Math.min(4 + Math.floor(beaten / 2), 7);
+    this._node        = node;
+    this._playerPos   = 0;
+    this._songName    = null;
+    this._songDurations = null;
+    const tier        = GameState.difficultyTier || 2;
+    const beaten      = GameState.bossesDefeated || 0;
+    const notePool    = tier <= 1 ? 5 : tier === 2 ? 6 : 7;
+    const seqLen      = tier <= 1 ? (beaten < 2 ? 3 : 4)
+                      : tier === 2 ? (beaten < 5 ? 4 : 5)
+                      : Math.min(4 + Math.floor(beaten / 2), 7);
     this._replayPenalty = tier >= 3;
 
-    // Build random sequence
-    this._sequence = [];
-    for (let i = 0; i < seqLen; i++) {
-      this._sequence.push(Math.floor(Math.random() * notePool));
+    // ── Song vs random ────────────────────────────────────────────────────────
+    // Tier 1: always a known song
+    // Tier 2: 50% known song, 50% random
+    // Tier 3: always random (no crutch)
+    const songPool = JIGGLYPUFF_SONGS.filter(s => s.tier <= tier);
+    const useSong  = tier <= 1 || (tier === 2 && Math.random() < 0.5);
+
+    if (useSong && songPool.length > 0) {
+      const song           = songPool[Math.floor(Math.random() * songPool.length)];
+      this._sequence       = [...song.notes];
+      this._songName       = song.name;
+      this._songDurations  = song.durations || null;
+      this._songIntro      = song.intro;
+    } else {
+      this._sequence = [];
+      for (let i = 0; i < seqLen; i++) {
+        this._sequence.push(Math.floor(Math.random() * notePool));
+      }
+      this._songIntro = 'La la la~ ♪ Listen carefully — this one\'s all mine!';
     }
 
     // Set up challenge screen
     const img = document.getElementById('challenge-character-img');
     if (img) { img.src = 'assets/jigglypuff.png'; img.style.display = ''; }
-    document.getElementById('challenge-badge').textContent   = '🎵 Jigglypuff\'s Song!';
+    document.getElementById('challenge-badge').textContent   = this._songName
+      ? `🎵 ${this._songName}`
+      : '🎵 Jigglypuff\'s Song!';
     document.getElementById('challenge-intro').textContent   = 'Listen carefully and sing along!';
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
@@ -7942,8 +8026,9 @@ const JigglypuffEngine = {
       <div class="jigglypuff-sprite-area" id="jiggly-sprite-area">
         <img src="assets/jiglypuff.png" class="jiggly-img" id="jiggly-img"
              onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/39.png'" alt="Jigglypuff"/>
-        <div class="jiggly-listen-msg" id="jiggly-msg">🎵 Listen…</div>
+        <div class="jiggly-listen-msg" id="jiggly-msg">${this._songIntro || '🎵 Listen…'}</div>
       </div>
+      ${this._songName ? `<div class="jiggly-song-label" id="jiggly-song-label">♪ ${this._songName}</div>` : ''}
       <div class="jiggly-seq-bar" id="jiggly-seq-bar"></div>`;
 
     this._buildSeqBar();
@@ -7993,15 +8078,17 @@ const JigglypuffEngine = {
       // Jigglypuff puff animation
       if (jiggly) { jiggly.classList.add('jiggly-puff'); }
 
-      // Play the note
-      playNoteFreq(note.freq, 0.45);
+      // Play the note — use song-specific duration if available
+      const dur = (this._songDurations && this._songDurations[i]) ? this._songDurations[i] : 0.45;
+      playNoteFreq(note.freq, dur);
+      const holdMs = Math.round(dur * 1000) + 35;
 
       setTimeout(() => {
         if (dot) dot.classList.remove('jiggly-dot-playing');
         if (jiggly) jiggly.classList.remove('jiggly-puff');
         i++;
         setTimeout(playNext, 150);
-      }, 480);
+      }, holdMs);
     };
     playNext();
   },
@@ -8142,7 +8229,7 @@ const JigglypuffEngine = {
         GameState.party[GameState.activePokemonIndex]?.maxHp * 0.5 || 40
       );
       title = '🎵 ★ Perfect Song! ★';
-      msg   = `+${goldReward}💰 · +1 level!\n\n💤 Jigglypuff's lullaby grants your lead an auto-revive for the next battle!\n\n"La la LA la la~" — Jigglypuff (overjoyed)`;
+      msg   = `+${goldReward}💰 · +1 level!\n\n💤 Jigglypuff's lullaby grants your lead an auto-revive for the next battle!${this._songName ? `\n\nYou sang "${this._songName}" perfectly!` : ''}\n\n"La la LA la la~" — Jigglypuff (overjoyed)`;
     } else {
       // Normal win: just the auto-revive
       goldReward = Math.floor(goldBase * 0.7);
@@ -8151,7 +8238,7 @@ const JigglypuffEngine = {
         GameState.party[GameState.activePokemonIndex]?.maxHp * 0.35 || 25
       );
       title = '🎵 Song Complete!';
-      msg   = `+${goldReward}💰 · +1 level!\n\n💤 Jigglypuff sang your lead to sleep — they'll auto-revive once if they faint next battle!\n\n"La la la la la~" — Jigglypuff`;
+      msg   = `+${goldReward}💰 · +1 level!\n\n💤 Jigglypuff sang your lead to sleep — they'll auto-revive once if they faint next battle!${this._songName ? `\n\nThat was "${this._songName}" — well done!` : ''}\n\n"La la la la la~" — Jigglypuff`;
     }
 
     GameState.gold = (GameState.gold || 0) + goldReward;
