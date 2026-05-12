@@ -11122,22 +11122,26 @@ const FishingEngine = {
   async _revealPokemon() {
     const p     = this._puzzle;
     const revEl = document.getElementById('jessie-word-display');
+    if (!revEl) return;
     revEl.style.display = 'flex';
     revEl.className     = 'fishing-reveal';
 
+    // Rebuild children — _setHeader may have cleared innerHTML
+    revEl.innerHTML = `
+      <div class="jessie-word" id="jessie-word">${p.pokemonName}</div>
+      <div class="jessie-word-type" id="jessie-word-type"></div>`;
+
     const wordEl = document.getElementById('jessie-word');
     const typeEl = document.getElementById('jessie-word-type');
-    wordEl.textContent = p.pokemonName;
-    typeEl.innerHTML   = '';
 
     try {
       const data = await fetchPoke(p.pokemonName.toLowerCase());
       const url  = data?.sprites?.front_default || getSpriteUrl(data) || '';
-      if (url) wordEl.innerHTML = `<img src="${url}" alt="${p.pokemonName}"
+      if (url && wordEl) wordEl.innerHTML = `<img src="${url}" alt="${p.pokemonName}"
         class="fishing-reveal-sprite" onerror="this.onerror=null;this.style.display='none'"/>
         ${p.pokemonName}`;
       const types = (data?.types || []).map(t => t.type.name);
-      if (types.length) typeEl.innerHTML = types.map(t =>
+      if (types.length && typeEl) typeEl.innerHTML = types.map(t =>
         `<span class="hud-type-badge type-${t}">${t}</span>`).join(' ');
     } catch(e) { /* text fallback already shown */ }
   },
