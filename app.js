@@ -3135,6 +3135,15 @@ const Game = {
       return;
     }
     GameState = saved;
+
+    // Always override age/tier from profile meta — user may have changed
+    // them in the profile picker since this save was last written.
+    const _contProfiles = loadProfiles();
+    const _contMeta     = _contProfiles.find(p => p.key === getActiveProfile());
+    if (_contMeta) {
+      if (_contMeta.trainerAge     != null) GameState.trainerAge     = _contMeta.trainerAge;
+      if (_contMeta.difficultyTier != null) GameState.difficultyTier = _contMeta.difficultyTier;
+    }
     // Sanitise fields that can get stuck across save/load cycles
     GameState.starterId         = Number(GameState.starterId);
     (GameState.party || []).forEach(p => {
