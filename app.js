@@ -2876,18 +2876,52 @@ const ProfileEngine = {
     if (nudge)  nudge.style.display  = 'none';
     if (banner) {
       banner.style.display = '';
-      const nameEl   = document.getElementById('apb-name');
-      const detailEl = document.getElementById('apb-detail');
+
+      const tier = meta.difficultyTier || 2;
+      const TIER_COLORS = {
+        1: { border:'#66cc66', glow:'rgba(80,200,80,.35)',  tint:'rgba(60,160,60,.25)'  },
+        2: { border:'#ffd700', glow:'rgba(255,215,0,.25)',  tint:'rgba(180,140,0,.2)'   },
+        3: { border:'#ff8c40', glow:'rgba(255,140,40,.35)', tint:'rgba(200,80,20,.25)'  },
+      };
+      const tc = TIER_COLORS[tier] || TIER_COLORS[2];
+
+      // Border + glow colour reflects tier
+      banner.style.borderColor = tc.border;
+      banner.style.boxShadow   = `0 0 16px ${tc.glow}`;
+
+      // Sprite wrap background tint
+      const wrapEl = document.getElementById('apb-sprite-wrap');
+      if (wrapEl) wrapEl.style.background = tc.tint;
+
+      // Name
+      const nameEl = document.getElementById('apb-name');
+      if (nameEl) nameEl.textContent = meta.name;
+
+      // Sprite
       const spriteEl = document.getElementById('apb-sprite');
-      if (nameEl)   nameEl.textContent   = meta.name;
-      if (spriteEl) { spriteEl.src = meta.starterSprite || ''; spriteEl.style.display = meta.starterSprite ? '' : 'none'; }
-      if (detailEl) {
-        if (meta.hasActiveSave) {
-          detailEl.textContent = `${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`;
-        } else {
-          detailEl.textContent = 'No active run';
-        }
+      if (spriteEl) {
+        spriteEl.src = meta.starterSprite || '';
+        spriteEl.style.display = meta.starterSprite ? '' : 'none';
       }
+
+      // Inline tier pill
+      const tierInline = document.getElementById('apb-tier-inline');
+      if (tierInline) tierInline.innerHTML = this._tierLabel(tier, meta.trainerAge);
+
+      // Detail line — badge progress + timestamp
+      const detailEl = document.getElementById('apb-detail');
+      if (detailEl) {
+        detailEl.textContent = meta.hasActiveSave
+          ? `${meta.bossesDefeated}/8 badges · ${this._timeAgo(meta.lastSaved)}`
+          : 'No active run';
+      }
+
+      // Edit button — wire up (button already in HTML, just re-bind)
+      const editBtn = document.getElementById('apb-edit-age-btn');
+      if (editBtn) editBtn.onclick = () => ProfileEngine._changeAge(meta);
+
+      // Remove any old dynamically-appended age row (legacy cleanup)
+      document.getElementById('apb-age-row')?.remove();
     }
 
     // Enable/disable buttons
@@ -2899,23 +2933,6 @@ const ProfileEngine = {
       contBtn.textContent = hasSave
         ? `◈ Continue · ${meta.bossesDefeated}/8`
         : '◈ No Save';
-    }
-
-    // Age/tier pill + edit button in banner
-    let ageRow = document.getElementById('apb-age-row');
-    if (!ageRow) {
-      ageRow = document.createElement('div');
-      ageRow.id        = 'apb-age-row';
-      ageRow.className = 'apb-age-row';
-      const infoEl = document.querySelector('.apb-info');
-      if (infoEl) infoEl.appendChild(ageRow);
-    }
-    if (ageRow) {
-      ageRow.innerHTML = `
-        ${this._tierLabel(meta.difficultyTier, meta.trainerAge)}
-        <button class="apb-edit-age-btn" id="apb-edit-age-btn" title="Change difficulty">✏️</button>`;
-      const editBtn = document.getElementById('apb-edit-age-btn');
-      if (editBtn) editBtn.onclick = () => ProfileEngine._changeAge(meta);
     }
   },
 

@@ -4316,21 +4316,55 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .apb-left {
   display: flex; align-items: center; gap: .6rem; flex: 1; min-width: 0;
 }
-.apb-sprite {
+.apb-sprite-wrap {
   width: 44px; height: 44px;
-  object-fit: contain; image-rendering: pixelated;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  transition: background .3s ease;
+}
+.apb-sprite {
+  width: 40px; height: 40px;
+  object-fit: contain; image-rendering: pixelated;
 }
 .apb-info { flex: 1; min-width: 0; }
+.apb-name-row {
+  display: flex; align-items: center; gap: 5px;
+  flex-wrap: wrap;
+}
 .apb-name {
   font-family: 'Press Start 2P', monospace;
   font-size: .48rem; color: var(--col-yellow);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.apb-detail {
-  font-size: .55rem; color: var(--col-text-dim);
+.apb-tier-inline .tier-pill {
+  font-size: .24rem;
+  padding: 1px 5px;
+}
+.apb-detail-row {
+  display: flex; align-items: center; gap: 5px;
   margin-top: .2rem;
+}
+.apb-detail {
+  font-size: .34rem; color: var(--col-text-dim);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1;
+}
+.apb-edit-age-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 6px;
+  color: rgba(255,255,255,.6);
+  font-size: .6rem;
+  line-height: 1;
+  padding: 1px 4px;
+  cursor: pointer;
+  transition: border-color .12s, color .12s;
+  flex-shrink: 0;
+}
+.apb-edit-age-btn:hover {
+  border-color: rgba(255,255,255,.5);
+  color: #fff;
 }
 .apb-switch-btn {
   font-size: .32rem !important; padding: .4em .6em !important;
@@ -7553,28 +7587,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   min-width: 0 !important;
 }
 
-/* ── Active profile banner age row ── */
-.apb-age-row {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  margin-top: 2px;
-}
-.apb-edit-age-btn {
-  background: none;
-  border: 1px solid rgba(255,255,255,.2);
-  border-radius: 6px;
-  color: rgba(255,255,255,.6);
-  font-size: .6rem;
-  line-height: 1;
-  padding: 1px 4px;
-  cursor: pointer;
-  transition: border-color .12s, color .12s;
-}
-.apb-edit-age-btn:hover {
-  border-color: rgba(255,255,255,.5);
-  color: #fff;
-}
+/* apb-age-row removed — edit btn now inline in detail row */
 
 /* ═══════════════════════════════════════════
    AGE CHANGE MODAL
