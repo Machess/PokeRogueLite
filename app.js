@@ -231,6 +231,7 @@ const CHALLENGE_CLASSES = [
   'meowth-active','jessie-active','james-active',
   'surge-active','erika-active','koga-active',
   'blaine-active','sabrina-active','fishing-active','jigglypuff-active',
+  'challenge-select-active',
 ];
 
 const NODE_ICONS = {
@@ -238,6 +239,7 @@ const NODE_ICONS = {
   boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣',
   jigglypuff_node: '🎵', surge_node: '⚡', erika_node: '🧪',
   ninja_node: '🥷', sabrina_node: '🔮', blaine_node: '🔥',
+  challenge: '🎮',
 };
 const NODE_MYSTERY_ICON = '❓';
 
@@ -1211,7 +1213,28 @@ function generateMap(bossIndex) {
     }
   }
 
-  // ── Inject legendary encounter at step 7 on maps bi >= 6 ─────────────────
+  // ── CHALLENGE NODE — player-choice mini-game, once per map ──────────────
+  // Appears at row 5 from bi>=3 (at least 2 mini-games unlocked).
+  // On returning runs also injects a second one at row 8.
+  {
+    const unlocks     = loadUnlocks();
+    const isReturning = (unlocks.completedWith?.length || 0) > 0;
+    const SPECIAL     = ['cooking','fishing','boss','challenge',
+                         'jigglypuff_node','surge_node','erika_node',
+                         'ninja_node','sabrina_node','blaine_node'];
+
+    const injectChallenge = (row) => {
+      const cands = nodes.filter(n => n.row === row && !SPECIAL.includes(n.type));
+      if (cands.length > 0) {
+        cands[Math.floor(Math.random() * cands.length)].type = 'challenge';
+      }
+    };
+
+    if (bi >= 3) {
+      injectChallenge(5);
+      if (isReturning) injectChallenge(8);
+    }
+  }
   // Uses a regular catch node with 'legendary' rarity — no separate engine needed.
   if (bi >= 6) {
     const step7nodes = nodes.filter(n => n.row === 7);
@@ -3899,6 +3922,7 @@ const ARROW_LABELS = {
   ninja_node:     { icon: null, emoji: '🥷', label: 'Ninja Memory'       },
   sabrina_node:   { icon: null, emoji: '🔮', label: 'Sabrina Jigsaw'     },
   blaine_node:    { icon: null, emoji: '🔥', label: 'Battle Lab'         },
+  challenge:      { icon: null, emoji: '🎮', label: 'Your Choice'        },
 };
 
 // Builds an inline SVG directional chevron for nav arrows.
@@ -4235,6 +4259,7 @@ const MapEngine = {
       case 'ninja_node':      NinjaMemoryEngine.start(node);     break;
       case 'sabrina_node':    SabrinaEngine.start(node);         break;
       case 'blaine_node':     BlaineEngine.start(node);          break;
+      case 'challenge':       ChallengeSelectEngine.start(node); break;
     }
   },
 
@@ -8410,6 +8435,175 @@ const JigglypuffEngine = {
     cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
     saveGame();
     showModal(title, msg, () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+  },
+};
+
+// ─── CHALLENGE SELECT ENGINE — player picks which mini-game to play ──────────
+
+const CHALLENGE_SELECT_MENU = [
+  {
+    key:    'jigglypuff',
+    type:   'jigglypuff_node',
+    emoji:  '🎵',
+    name:   "Jigglypuff's Song",
+    desc:   'Memory music game',
+    reward: '💤 Auto-revive if lead faints',
+    engine: () => JigglypuffEngine,
+  },
+  {
+    key:    'fishing',
+    type:   'fishing',
+    emoji:  '🎣',
+    name:   "Misty's Mystery Catch",
+    desc:   'Identify the Pokémon',
+    reward: '🎣 Type damage buff or status',
+    engine: () => FishingEngine,
+  },
+  {
+    key:    'surge',
+    type:   'surge_node',
+    emoji:  '⚡',
+    name:   "Surge's Type Quiz",
+    desc:   'Answer type questions',
+    reward: '⚡ +15–25% damage next battle',
+    engine: () => SurgeEngine,
+  },
+  {
+    key:    'erika',
+    type:   'erika_node',
+    emoji:  '🧪',
+    name:   "Erika's Potion Lab",
+    desc:   'Colour mixing puzzle',
+    reward: '🌸 Custom potion item',
+    engine: () => ErikaEngine,
+  },
+  {
+    key:    'ninja',
+    type:   'ninja_node',
+    emoji:  '🥷',
+    name:   "Koga's Ninja Memory",
+    desc:   'Card matching game',
+    reward: '🧠 Status durations halved',
+    engine: () => NinjaMemoryEngine,
+  },
+  {
+    key:    'sabrina',
+    type:   'sabrina_node',
+    emoji:  '🔮',
+    name:   "Sabrina's Jigsaw",
+    desc:   'Psychic puzzle',
+    reward: '🔮 Reveals map nodes ahead',
+    engine: () => SabrinaEngine,
+  },
+  {
+    key:    'blaine',
+    type:   'blaine_node',
+    emoji:  '🔥',
+    name:   "Blaine's Battle Lab",
+    desc:   'Type matchup simulator',
+    reward: '🔬 Type hints on cards',
+    engine: () => BlaineEngine,
+  },
+];
+
+const ChallengeSelectEngine = {
+  _node: null,
+
+  start(node) {
+    this._node = node;
+    const tier      = GameState.difficultyTier || 2;
+    const unlocks   = loadUnlocks();
+    const isReturn  = (unlocks.completedWith?.length || 0) > 0;
+    const bi        = GameState.bossesDefeated || 0;
+
+    // Build available options: unlocked mini-games for this profile
+    const MG_MIN_BI = { jigglypuff:2, fishing:2, surge:3, erika:4, ninja:5, sabrina:6, blaine:7 };
+    const available = CHALLENGE_SELECT_MENU.filter(m => {
+      if (bi < (MG_MIN_BI[m.key] || 0)) return false;
+      return isReturn || unlocks.miniGamesUnlocked.includes(m.key) || m.key === 'fishing';
+    });
+
+    // How many to offer: tier 1 = 2, tier 2 = 3, tier 3 = 4 (capped by available)
+    const maxOffer  = tier <= 1 ? 2 : tier === 2 ? 3 : 4;
+    const offered   = shuffle([...available]).slice(0, maxOffer);
+
+    // Build challenge screen
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = ''; img.style.display = 'none'; }
+    document.getElementById('challenge-badge').textContent   = '🎮 Choose Your Challenge';
+    document.getElementById('challenge-intro').textContent   =
+      'Pick a mini-game. Each one has a unique reward!';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
+    const _jwd = document.getElementById('jessie-word-display');
+    if (_jwd) { _jwd.style.display = 'none'; _jwd.innerHTML = ''; _jwd.className = 'jessie-word-display'; }
+
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'cs-wrap';
+    cv.innerHTML     = '';
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
+    document.getElementById('screen-challenge').classList.add('challenge-select-active');
+
+    // Build game cards
+    const grid = document.createElement('div');
+    grid.className = 'cs-grid';
+    cv.appendChild(grid);
+
+    offered.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'cs-card';
+      card.innerHTML = `
+        <div class="cs-card-emoji">${m.emoji}</div>
+        <div class="cs-card-name">${m.name}</div>
+        <div class="cs-card-desc">${m.desc}</div>
+        <div class="cs-card-reward">${m.reward}</div>
+        <button class="btn-pixel btn-primary cs-play-btn">▶ Play</button>`;
+      card.querySelector('.cs-play-btn').addEventListener('click', () => {
+        this._launch(m);
+      });
+      grid.appendChild(card);
+    });
+
+    // Skip option
+    const skipCard = document.createElement('div');
+    skipCard.className = 'cs-card cs-skip-card';
+    const skipGold = 8 + bi * 2;
+    skipCard.innerHTML = `
+      <div class="cs-card-emoji">💰</div>
+      <div class="cs-card-name">Skip</div>
+      <div class="cs-card-desc">Take gold and move on</div>
+      <div class="cs-card-reward">+${skipGold}💰 guaranteed</div>
+      <button class="btn-pixel btn-secondary cs-play-btn">Take Gold</button>`;
+    skipCard.querySelector('.cs-play-btn').addEventListener('click', () => {
+      this._skip(skipGold);
+    });
+    grid.appendChild(skipCard);
+  },
+
+  _launch(menuItem) {
+    // Clean up select screen classes, then start the chosen engine
+    document.getElementById('screen-challenge').classList.remove('challenge-select-active');
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
+
+    // Pass through the original node so completeNode fires correctly inside the engine
+    menuItem.engine().start(this._node);
+  },
+
+  _skip(gold) {
+    GameState.gold = (GameState.gold || 0) + gold;
+    saveGame();
+    document.getElementById('screen-challenge').classList.remove('challenge-select-active');
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
+    showModal('💰 Challenge Skipped',
+      `+${gold}💰 gold.\n\n"Maybe next time." `,
+      () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
   },
 };
 

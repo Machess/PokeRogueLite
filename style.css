@@ -7628,3 +7628,87 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   justify-content: center;
   margin-top: .2rem;
 }
+
+/* ═══════════════════════════════════════════
+   CHALLENGE SELECT ENGINE
+   Player picks which mini-game to play.
+═══════════════════════════════════════════ */
+#screen-challenge.challenge-select-active {
+  background: linear-gradient(160deg, #0d0d1a 0%, #12102a 60%, #0d0d1a 100%);
+}
+#screen-challenge.challenge-select-active .challenge-badge {
+  color: #c8a0ff;
+}
+#screen-challenge.challenge-select-active .challenge-intro {
+  color: rgba(180,150,255,.75);
+}
+
+.cs-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  width: 100%;
+  gap: .3rem !important;
+}
+.cs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 7px;
+  width: 100%;
+}
+.cs-card {
+  background: rgba(80,50,140,.25);
+  border: 2px solid rgba(160,100,255,.3);
+  border-radius: 10px;
+  padding: .45rem .4rem .4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  transition: border-color .12s, background .12s, transform .1s;
+}
+.cs-card:hover {
+  border-color: rgba(200,150,255,.6);
+  background: rgba(100,60,180,.3);
+  transform: translateY(-2px);
+}
+.cs-skip-card {
+  background: rgba(40,40,40,.3);
+  border-color: rgba(150,150,150,.3);
+}
+.cs-skip-card:hover {
+  border-color: rgba(220,180,0,.5);
+  background: rgba(80,70,0,.25);
+}
+.cs-card-emoji {
+  font-size: 1.4rem;
+  line-height: 1;
+}
+.cs-card-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem;
+  color: #d0b0ff;
+  text-align: center;
+  line-height: 1.4;
+}
+.cs-card-desc {
+  font-size: .32rem;
+  color: rgba(200,180,240,.6);
+  text-align: center;
+}
+.cs-card-reward {
+  font-size: .3rem;
+  color: #a0e0a0;
+  text-align: center;
+  background: rgba(0,80,40,.25);
+  border-radius: 5px;
+  padding: 2px 5px;
+  margin: 1px 0 3px;
+  width: 100%;
+}
+.cs-play-btn {
+  font-size: .3rem !important;
+  padding: .3rem .5rem !important;
+  width: 100%;
+  margin-top: auto;
+}
