@@ -3088,16 +3088,17 @@ const Game = {
     const profiles     = loadProfiles();
     const meta         = profiles.find(p => p.key === getActiveProfile());
 
-    const carriedName = existingSave?.trainerName
-                     || meta?.trainerName
+    const carriedName = meta?.trainerName
                      || meta?.name
+                     || existingSave?.trainerName
                      || '';
-    const carriedAge  = existingSave?.trainerAge
-                     || meta?.trainerAge
-                     || 10;
-    // Use nullish coalescing — tier can be 1 (falsy-adjacent in old || 2 guard)
-    const carriedTier = existingSave?.difficultyTier
-                     ?? meta?.difficultyTier
+    // Meta takes priority for age/tier — user may have changed it in the profile picker
+    // after the last save, so the save's value could be stale.
+    const carriedAge  = meta?.trainerAge
+                     ?? existingSave?.trainerAge
+                     ?? 10;
+    const carriedTier = meta?.difficultyTier
+                     ?? existingSave?.difficultyTier
                      ?? 2;
 
     deleteSave();
@@ -4048,8 +4049,11 @@ const MapEngine = {
       el.appendChild(d);
     });
     const bi   = GameState.map?._bossIndex ?? GameState.bossesDefeated ?? 0;
+    const tier      = GameState.difficultyTier || 2;
+    const tierEmoji = tier === 1 ? '🌱' : tier === 3 ? '🔥' : '⚡';
+    const tierLabel = tier === 1 ? 'Starter' : tier === 3 ? 'Advanced' : 'Explorer';
     document.getElementById('map-meta').textContent =
-      `💰 ${GameState.gold || 0}g  |  Party: ${GameState.party.length}/6`;
+      `💰 ${GameState.gold || 0}g  |  ${tierEmoji} ${tierLabel}  |  Party: ${GameState.party.length}/6`;
 
     // ── Catch-all evolution repair ───────────────────────────────────────────
     // If the starter's level has passed a threshold but evolutionStage is behind
