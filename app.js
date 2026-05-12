@@ -3007,7 +3007,7 @@ const ProfileEngine = {
 
       overlay.remove();
       // Re-render to show updated pill
-      ProfileEngine.renderProfiles();
+      ProfileEngine._render();
       ProfileEngine._updateStartScreen();
     });
   },
