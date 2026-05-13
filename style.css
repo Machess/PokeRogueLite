@@ -6789,41 +6789,233 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ── Piano keys ── */
+/* ── Instrument picker ── */
+.jiggly-instrument-picker {
+  display: flex; gap: 8px; justify-content: center; padding: .3rem 0;
+}
+.jiggly-inst-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  background: rgba(255,255,255,.07);
+  border: 2px solid rgba(255,255,255,.15);
+  border-radius: 10px;
+  padding: .5rem .6rem;
+  cursor: pointer;
+  transition: border-color .12s, background .12s, transform .1s;
+  min-width: 60px;
+}
+.jiggly-inst-btn:hover { border-color: rgba(255,180,220,.5); transform: translateY(-2px); }
+.jiggly-inst-active {
+  border-color: #ff88cc !important;
+  background: rgba(255,100,180,.2) !important;
+  box-shadow: 0 0 12px rgba(255,100,180,.4);
+}
+.jiggly-inst-icon  { font-size: 1.5rem; }
+.jiggly-inst-label { font-family: 'Press Start 2P', monospace; font-size: .28rem; color: #ffaadd; }
+
+/* ── Phrase progress bar ── */
+.jiggly-phrase-bar { display: flex; gap: 5px; justify-content: center; margin: .15rem 0; }
+.jiggly-phrase-pip {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,180,220,.3);
+  background: rgba(255,255,255,.07);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem;
+  color: rgba(255,255,255,.4);
+  display: flex; align-items: center; justify-content: center;
+}
+.jiggly-phrase-active {
+  border-color: #ff88cc;
+  color: #ff88cc;
+  box-shadow: 0 0 8px rgba(255,100,180,.5);
+}
+.jiggly-phrase-done {
+  border-color: #80ee80;
+  background: rgba(60,200,80,.2);
+  color: #80ee80;
+}
+
+/* ══════════════════════════════════════
+   REAL PIANO LAYOUT
+══════════════════════════════════════ */
+.jiggly-piano-wrap {
+  position: relative;
+  display: inline-block;
+  padding: 0 2px;
+}
 .jiggly-piano {
   display: flex;
   gap: 4px;
   justify-content: center;
-  flex-wrap: wrap;
-  padding: .3rem 0;
+  padding: .3rem 0 0;
+  position: relative;
+  z-index: 1;
 }
-.jiggly-key {
-  width: 44px; height: 68px;
-  background: var(--key-color);
-  border: none;
-  border-radius: 6px;
+/* White keys */
+.jiggly-white-key {
+  width: 44px; height: 110px;
+  background: #f5f0e8;
+  border: 1.5px solid #bbb;
+  border-radius: 0 0 8px 8px;
   cursor: pointer;
   display: flex; align-items: flex-end; justify-content: center;
-  padding-bottom: .4rem;
-  box-shadow: 0 4px 0 rgba(0,0,0,.4), 0 0 10px 2px var(--key-color);
+  padding-bottom: .45rem;
+  box-shadow: 0 4px 0 rgba(0,0,0,.35);
   transition: transform .08s, box-shadow .08s;
   position: relative;
-  overflow: hidden;
 }
-.jiggly-key:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 7px 0 rgba(0,0,0,.4), 0 0 18px 4px var(--key-color); }
-.jiggly-key:active { transform: translateY(2px); box-shadow: 0 2px 0 rgba(0,0,0,.4); }
-.jiggly-key::before {
+.jiggly-key-playable {
+  background: linear-gradient(180deg, #fff 0%, #f0ebe0 100%);
+}
+.jiggly-key-playable::after {
   content: '';
-  position: absolute; top: 0; left: 0; right: 0;
-  height: 40%;
-  background: rgba(255,255,255,.25);
-  border-radius: 6px 6px 0 0;
+  position: absolute; bottom: 28%; left: 10%; right: 10%; height: 4px;
+  background: var(--key-color);
+  border-radius: 2px;
+  opacity: .75;
+  box-shadow: 0 0 6px var(--key-color);
 }
+.jiggly-key-inactive {
+  background: #d8d4c8;
+  cursor: default;
+  opacity: .7;
+}
+.jiggly-key-playable:hover {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(0,0,0,.35), 0 0 16px 3px var(--key-color);
+}
+.jiggly-key-playable:active { transform: translateY(4px); box-shadow: 0 1px 0 rgba(0,0,0,.4); }
 .jiggly-key-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem;
-  color: #fff;
-  text-shadow: 0 1px 3px rgba(0,0,0,.6);
+  font-size: .36rem;
+  color: #444;
+  position: relative; z-index: 2;
+}
+/* Black keys — decorative overlay */
+.jiggly-black-keys {
+  position: absolute;
+  top: .3rem; left: 2px;
+  pointer-events: none;
+  z-index: 2;
+}
+.jiggly-black-key {
+  position: absolute;
+  width: 28px; height: 66px;
+  background: linear-gradient(180deg, #2a2a2a 0%, #111 100%);
+  border-radius: 0 0 5px 5px;
+  border: 1px solid #000;
+  box-shadow: 2px 4px 6px rgba(0,0,0,.6);
+  top: 0;
+}
+
+/* ══════════════════════════════════════
+   GUITAR STRINGS
+══════════════════════════════════════ */
+.jiggly-guitar {
+  display: flex; flex-direction: column;
+  gap: 5px; width: 100%; padding: .2rem 0;
+  background: linear-gradient(90deg, #2a1a08 0%, #3d2510 40%, #2a1a08 100%);
+  border-radius: 10px;
+  padding: .4rem .5rem;
+  border: 2px solid #5a3a18;
+}
+.jiggly-string {
+  position: relative;
+  width: 100%; height: 36px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center;
+  padding: 0 .3rem;
+  border-radius: 6px;
+  transition: background .08s;
+}
+.jiggly-string:hover { background: rgba(255,255,255,.05); }
+.jiggly-string-line {
+  position: absolute; left: 0; right: 0; top: 50%;
+  height: 3px;
+  background: var(--str-color);
+  box-shadow: 0 0 8px var(--str-color);
+  transform: translateY(-50%);
+  border-radius: 2px;
+  transition: box-shadow .08s;
+}
+.jiggly-string:hover .jiggly-string-line {
+  box-shadow: 0 0 18px 4px var(--str-color);
+}
+.jiggly-string-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem;
+  color: rgba(255,255,255,.75);
   position: relative; z-index: 1;
+  background: rgba(0,0,0,.5);
+  padding: 1px 5px; border-radius: 4px;
+}
+@keyframes string-pluck {
+  0%   { transform: translateY(-50%); }
+  15%  { transform: translateY(calc(-50% - 4px)); }
+  35%  { transform: translateY(calc(-50% + 3px)); }
+  55%  { transform: translateY(calc(-50% - 2px)); }
+  75%  { transform: translateY(calc(-50% + 1px)); }
+  100% { transform: translateY(-50%); }
+}
+.jiggly-string-pluck .jiggly-string-line {
+  animation: string-pluck .5s ease-out;
+  box-shadow: 0 0 24px 6px var(--str-color);
+}
+
+/* ══════════════════════════════════════
+   CELLO STRINGS
+══════════════════════════════════════ */
+.jiggly-cello {
+  display: flex;
+  gap: 5px;
+  justify-content: center;
+  padding: .3rem;
+  background: linear-gradient(180deg, #1a0e04 0%, #2e1a08 100%);
+  border-radius: 12px;
+  border: 2px solid #4a2e10;
+  min-height: 100px;
+}
+.jiggly-cello-string {
+  position: relative;
+  width: 44px; height: 100px;
+  background: none; border: none; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  padding-bottom: .3rem;
+  border-radius: 8px;
+  overflow: hidden;
+  transition: background .08s;
+}
+.jiggly-cello-string:hover { background: rgba(255,255,255,.04); }
+.jiggly-cello-line {
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 4px;
+  background: var(--str-color);
+  transform: translateX(-50%);
+  box-shadow: 0 0 8px var(--str-color);
+  border-radius: 2px;
+  opacity: .8;
+}
+.jiggly-cello-bow-glow {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 0%;
+  background: linear-gradient(180deg, var(--str-color) 0%, transparent 100%);
+  opacity: 0;
+  transition: none;
+}
+@keyframes cello-bow {
+  0%   { height: 0%; opacity: .8; top: 0; }
+  60%  { height: 100%; opacity: .5; top: 0; }
+  100% { height: 100%; opacity: 0; top: 0; }
+}
+.jiggly-cello-bowing .jiggly-cello-bow-glow {
+  animation: cello-bow .7s ease-out forwards;
+}
+.jiggly-cello-bowing .jiggly-cello-line {
+  box-shadow: 0 0 20px 5px var(--str-color);
 }
 
 /* ── Replay button ── */
