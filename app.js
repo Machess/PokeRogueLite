@@ -9427,73 +9427,189 @@ const ItemEngine = {
 
   // ── Bag bar (map header) ─────────────────────────────────────────────────
   renderBagBar() {
-    const bar = document.getElementById('bag-bar');
-    if (!bar) return;
-    bar.innerHTML = '';
+    // ── Lure pill — always-visible passive status ─────────────────────────────
+    const lurePill = document.getElementById('lure-pill');
+    if (lurePill) lurePill.style.display = GameState.lureActive ? '' : 'none';
 
-    // Lure active indicator
-    if (GameState.lureActive) {
-      const pill = document.createElement('div');
-      pill.className = 'bag-pill bag-pill-lure';
-      pill.innerHTML = `<span class="bag-pill-icon">🎣</span><span class="bag-pill-label">Lure</span>`;
-      pill.title = 'Lure active — Rare encounters boosted this map';
-      bar.appendChild(pill);
+    // ── Bag button — count badge ──────────────────────────────────────────────
+    const bagBtn   = document.getElementById('bag-btn');
+    const bagBadge = document.getElementById('bag-count-badge');
+    if (!bagBtn) return;
+
+    const itemCount    = (GameState.items || []).reduce((s, i) => s + (i.count || 0), 0);
+    const erikaCount   = (GameState.erikaPotions || []).length;
+    const totalCount   = itemCount + erikaCount;
+
+    if (bagBadge) {
+      bagBadge.textContent = totalCount;
+      bagBadge.style.display = totalCount > 0 ? '' : 'none';
+    }
+    bagBtn.classList.toggle('bag-btn-empty', totalCount === 0);
+
+    // Wire click — only once (remove old listener via clone)
+    const newBtn = bagBtn.cloneNode(true);
+    bagBtn.parentNode.replaceChild(newBtn, bagBtn);
+    newBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this._toggleBagPanel(newBtn);
+    });
+  },
+
+  _toggleBagPanel(anchor) {
+    // Close if already open
+    const existing = document.getElementById('bag-panel');
+    if (existing) { existing.remove(); return; }
+
+    const panel = document.createElement('div');
+    panel.id        = 'bag-panel';
+    panel.className = 'bag-panel';
+
+    const itemCount  = (GameState.items || []).reduce((s, i) => s + (i.count || 0), 0);
+    const erikaCount = (GameState.erikaPotions || []).length;
+
+    if (itemCount === 0 && erikaCount === 0) {
+      panel.innerHTML = `<div class="bag-panel-empty">🎒<br>Bag is empty.<br><span>Buy items at the Shop.</span></div>`;
+    } else {
+      panel.innerHTML = this._buildBagPanelHTML();
+      // Wire Erika potion use buttons
+      panel.querySelectorAll('.bag-slot-use-btn').forEach(btn => {
+        const idx = parseInt(btn.dataset.idx);
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          panel.remove();
+          const potion = (GameState.erikaPotions || [])[idx];
+          if (!potion) return;
+          showModal(`🌸 Use ${potion.name}?`,
+            `Effect: ${potion.desc}\n\nUse now?`,
+            () => ItemEngine.applyErikaPotion(idx));
+        });
+      });
+      // Wire stone use buttons
+      panel.querySelectorAll('.bag-stone-btn').forEach(btn => {
+        const id = btn.dataset.stone;
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          panel.remove();
+          const def = SHOP_ITEMS.find(s => s.id === id);
+          const target = def?.stoneTarget;
+          if (!target) return;
+          showModal(`${def.icon} Use ${def.name}?`,
+            `Eevee will evolve into ${target.name} (${target.type}-type).\n\nThis cannot be undone.`,
+            () => stoneEvolve(id));
+        });
+      });
     }
 
-    const consumables = (GameState.items || []).filter(i => {
+    document.body.appendChild(panel);
+
+    // Position below the bag button
+    const rect = anchor.getBoundingClientRect();
+    const panelW = 220;
+    let left = rect.right - panelW;
+    if (left < 6) left = 6;
+    panel.style.top  = (rect.bottom + 6) + 'px';
+    panel.style.left = left + 'px';
+
+    // Close on outside click
+    const close = (e) => { if (!panel.contains(e.target)) { panel.remove(); document.removeEventListener('click', close); } };
+    setTimeout(() => document.addEventListener('click', close), 50);
+  },
+
+  _buildBagPanelHTML() {
+    const items    = GameState.items || [];
+    const erika    = GameState.erikaPotions || [];
+    const bi       = GameState.bossesDefeated || 0;
+
+    // Category colours
+    const TINT = {
+      potion:       'rgba(60,100,200,.25)',
+      super_potion: 'rgba(60,100,200,.35)',
+      revive_potion:'rgba(140,60,200,.25)',
+      oran_berry:   'rgba(200,100,20,.2)',
+      ultra_ball:   'rgba(200,170,0,.2)',
+      master_ball:  'rgba(140,0,200,.25)',
+    };
+
+    let html = '';
+
+    // ── Consumable potions + revives ─────────────────────────────────────────
+    const potions = items.filter(i => {
       const def = SHOP_ITEMS.find(s => s.id === i.id);
-      return def && def.category !== 'held' && def.category !== 'ball' && i.count > 0;
+      return def && (def.category === 'consumable') && i.id !== 'lure' && i.count > 0;
     });
-    consumables.forEach(item => {
-      if (item.id === 'lure') return;
-      const def = SHOP_ITEMS.find(s => s.id === item.id);
-      const isStone = def?.category === 'stone';
-      // Only show Use button for stones, and only if Eevee hasn't evolved yet
-      const showUse = isStone && !GameState.eeveeEvolution;
-
-      const pill = document.createElement('div');
-      pill.className = 'bag-pill' + (isStone ? ' bag-pill-stone' : '');
-      pill.innerHTML = `
-        <span class="bag-pill-icon">${item.icon || def?.icon || '📦'}</span>
-        <span class="bag-pill-label">${isStone ? (def?.name || item.id) : ''}</span>
-        ${showUse
-          ? `<button class="btn-pixel bag-stone-use-btn" data-stone="${item.id}">Use</button>`
-          : (item.count > 1 ? `<span class="bag-pill-count">×${item.count}</span>` : '')
-        }
-      `;
-      pill.title = def ? `${def.name} — ${def.description}` : item.id;
-
-      if (showUse) {
-        pill.querySelector('.bag-stone-use-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          const target = def.stoneTarget;
-          showModal(
-            `${def.icon} Use ${def.name}?`,
-            `Eevee will evolve into ${target.name} (${target.type}-type) right now.\n\nYour deck will be rebuilt. This cannot be undone.`,
-            () => stoneEvolve(item.id)
-          );
-        });
-      }
-
-      bar.appendChild(pill);
-    });
-    // ── Erika's custom potions ────────────────────────────────────────────────
-    (GameState.erikaPotions || []).forEach((potion, idx) => {
-      const pill = document.createElement('div');
-      pill.className = 'bag-pill bag-pill-erika';
-      pill.innerHTML = `
-        <span class="bag-pill-icon">🌸</span>
-        <span class="bag-pill-label">${potion.name}</span>
-        <button class="btn-pixel bag-erika-use-btn" data-idx="${idx}">Use</button>`;
-      pill.title = potion.desc;
-      pill.querySelector('.bag-erika-use-btn').addEventListener('click', (e) => {
-        e.stopPropagation();
-        showModal(`🌸 Use ${potion.name}?`,
-          `Effect: ${potion.desc}\n\nUse this potion now (outside of battle)?`,
-          () => ItemEngine.applyErikaPotion(idx));
+    if (potions.length > 0) {
+      html += `<div class="bag-section-label">💊 Items</div><div class="bag-slot-grid">`;
+      potions.forEach(item => {
+        const def  = SHOP_ITEMS.find(s => s.id === item.id);
+        const tint = TINT[item.id] || 'rgba(255,255,255,.08)';
+        html += `
+          <div class="bag-slot" style="background:${tint}" title="${def?.description || ''}">
+            <span class="bag-slot-count">×${item.count}</span>
+            <span class="bag-slot-icon">${item.icon || def?.icon || '📦'}</span>
+            <span class="bag-slot-name">${def?.name || item.id}</span>
+            <span class="bag-slot-hint">Use in battle</span>
+          </div>`;
       });
-      bar.appendChild(pill);
+      html += `</div>`;
+    }
+
+    // ── Erika potions — usable on map ────────────────────────────────────────
+    if (erika.length > 0) {
+      html += `<div class="bag-section-label">🌸 Brewed Potions</div><div class="bag-slot-grid">`;
+      erika.forEach((potion, idx) => {
+        html += `
+          <div class="bag-slot bag-slot-erika" title="${potion.desc}">
+            <span class="bag-slot-count">×1</span>
+            <span class="bag-slot-icon">🌸</span>
+            <span class="bag-slot-name">${potion.name}</span>
+            <button class="bag-slot-use-btn" data-idx="${idx}">Use</button>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+
+    // ── Balls ────────────────────────────────────────────────────────────────
+    const balls = items.filter(i => {
+      const def = SHOP_ITEMS.find(s => s.id === i.id);
+      return def?.category === 'ball' && i.count > 0;
     });
+    if (balls.length > 0) {
+      html += `<div class="bag-section-label">🔵 Poké Balls</div><div class="bag-slot-grid">`;
+      balls.forEach(item => {
+        const def  = SHOP_ITEMS.find(s => s.id === item.id);
+        const tint = TINT[item.id] || 'rgba(255,255,255,.08)';
+        html += `
+          <div class="bag-slot" style="background:${tint}" title="${def?.description || ''}">
+            <span class="bag-slot-count">×${item.count}</span>
+            <span class="bag-slot-icon">${item.icon || def?.icon || '🔵'}</span>
+            <span class="bag-slot-name">${def?.name || item.id}</span>
+            <span class="bag-slot-hint">Used in catch</span>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+
+    // ── Evolution stones ─────────────────────────────────────────────────────
+    const stones = items.filter(i => {
+      const def = SHOP_ITEMS.find(s => s.id === i.id);
+      return def?.category === 'stone' && i.count > 0 && !GameState.eeveeEvolution;
+    });
+    if (stones.length > 0) {
+      html += `<div class="bag-section-label">💎 Stones</div><div class="bag-slot-grid">`;
+      stones.forEach(item => {
+        const def = SHOP_ITEMS.find(s => s.id === item.id);
+        html += `
+          <div class="bag-slot bag-slot-stone" title="${def?.description || ''}">
+            <span class="bag-slot-count">×${item.count}</span>
+            <span class="bag-slot-icon">${item.icon || def?.icon || '💎'}</span>
+            <span class="bag-slot-name">${def?.name || item.id}</span>
+            <button class="bag-stone-btn" data-stone="${item.id}">Use</button>
+          </div>`;
+      });
+      html += `</div>`;
+    }
+
+    return html || '<div class="bag-panel-empty">Nothing to show.</div>';
   },
 
   // Apply an Erika potion by index — works both in and out of battle

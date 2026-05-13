@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=70" />
+  <link rel="stylesheet" href="style.css?v=75" />
 </head>
 <body>
 
@@ -243,7 +243,12 @@
   <div class="map-header">
     <div class="map-party" id="map-party" title="Click to manage party"></div>
     <div class="map-meta" id="map-meta"></div>
-    <div class="bag-bar" id="bag-bar"></div>
+    <div class="bag-bar" id="bag-bar">
+      <div class="lure-pill" id="lure-pill" style="display:none">🎣 Lure</div>
+      <button class="bag-btn" id="bag-btn" title="Open bag">
+        🎒<span class="bag-count-badge" id="bag-count-badge" style="display:none">0</span>
+      </button>
+    </div>
     <button class="btn-pixel btn-map-menu" id="btn-map-menu" title="Back to Main Menu">⌂</button>
     <button class="mute-btn" id="btn-mute" title="Toggle music">🔊</button>
   </div>
@@ -881,6 +886,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=112"></script>
+<script src="app.js?v=123"></script>
 </body>
 </html>
