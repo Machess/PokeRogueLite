@@ -6789,28 +6789,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 
 /* ── Piano keys ── */
-/* ── Instrument picker ── */
-.jiggly-instrument-picker {
-  display: flex; gap: 8px; justify-content: center; padding: .3rem 0;
-}
-.jiggly-inst-btn {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  background: rgba(255,255,255,.07);
-  border: 2px solid rgba(255,255,255,.15);
-  border-radius: 10px;
-  padding: .5rem .6rem;
-  cursor: pointer;
-  transition: border-color .12s, background .12s, transform .1s;
-  min-width: 60px;
-}
-.jiggly-inst-btn:hover { border-color: rgba(255,180,220,.5); transform: translateY(-2px); }
-.jiggly-inst-active {
-  border-color: #ff88cc !important;
-  background: rgba(255,100,180,.2) !important;
-  box-shadow: 0 0 12px rgba(255,100,180,.4);
-}
-.jiggly-inst-icon  { font-size: 1.5rem; }
-.jiggly-inst-label { font-family: 'Press Start 2P', monospace; font-size: .28rem; color: #ffaadd; }
+/* instrument picker removed — instrument assigned per song */
 
 /* ── Phrase progress bar ── */
 .jiggly-phrase-bar { display: flex; gap: 5px; justify-content: center; margin: .15rem 0; }
@@ -6878,7 +6857,15 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .jiggly-key-inactive {
   background: #d8d4c8;
   cursor: default;
-  opacity: .7;
+  opacity: .55;
+}
+.jiggly-key-locked {
+  background: #e8e0d4;
+  cursor: default;
+  opacity: .35;
+}
+.jiggly-key-locked::after {
+  display: none;
 }
 .jiggly-key-playable:hover {
   transform: translateY(2px);

@@ -8175,22 +8175,20 @@ function playWrongBuzz() {
 // All transposed to fit the pentatonic scale C D E G A C' D'.
 // durations[] optional — note hold time in seconds (defaults to 0.45).
 const JIGGLYPUFF_SONGS = [
-  // ── Tier 1 songs (phrases = shorter chunks for young players) ──────────────
+  // ── Tier 1 — Piano songs (clean, educational) ─────────────────────────────
   {
-    name: 'Twinkle Twinkle', tier: 1,
-    // Full melody split into 3 phrases
+    name: 'Twinkle Twinkle', tier: 1, instrument: 'piano',
     phrases: [
       { notes:[0,0,3,3,4,4,3],        durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
       { notes:[1,1,2,2,1,1,0],        durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
       { notes:[3,3,1,1,2,2,1],        durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
     ],
-    // Flat version for simple mode (first phrase only)
     notes:[0,0,3,3,4,4,3],
     durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.7],
     intro: 'La la la~ ♪ You know this one!',
   },
   {
-    name: 'Mary Had a Little Lamb', tier: 1,
+    name: 'Mary Had a Little Lamb', tier: 1, instrument: 'piano',
     phrases: [
       { notes:[2,1,0,1,2,2,2,2],      durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
       { notes:[1,1,1,1,2,4,4,4],      durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
@@ -8201,7 +8199,7 @@ const JIGGLYPUFF_SONGS = [
     intro: 'La la la~ ♪ Sing it with me!',
   },
   {
-    name: 'Hot Cross Buns', tier: 1,
+    name: 'Hot Cross Buns', tier: 1, instrument: 'piano',
     phrases: [
       { notes:[2,1,0,0,0,0,0,0],      durations:[0.45,0.45,0.7,0.25,0.25,0.25,0.25,0.7] },
       { notes:[2,1,0],                durations:[0.45,0.45,0.8] },
@@ -8211,7 +8209,7 @@ const JIGGLYPUFF_SONGS = [
     intro: 'La la la~ ♪ Short and sweet!',
   },
   {
-    name: 'Row Your Boat', tier: 1,
+    name: 'Row Your Boat', tier: 1, instrument: 'guitar',
     phrases: [
       { notes:[0,0,0,1,2],            durations:[0.4,0.4,0.6,0.3,0.7] },
       { notes:[2,1,2,3,4],            durations:[0.3,0.3,0.3,0.3,0.7] },
@@ -8221,19 +8219,19 @@ const JIGGLYPUFF_SONGS = [
     durations:[0.4,0.4,0.5,0.3,0.4,0.25,0.3,0.3,0.3,0.7],
     intro: 'La la la~ ♪ Row along!',
   },
-  // ── Tier 2 songs ──────────────────────────────────────────────────────────
+  // ── Tier 2 ────────────────────────────────────────────────────────────────
   {
-    name: 'Ode to Joy', tier: 2,
+    name: 'Ode to Joy', tier: 2, instrument: 'piano',
     phrases: [
       { notes:[2,2,3,5,5,3,2,1,0,0,1,2], durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
       { notes:[2,1,1,1,2,3,4,5,5,3,2,1], durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.7] },
     ],
     notes:[2,2,3,5,5,3,2,1,0,0,1,2],
     durations:[0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.4,0.7],
-    intro: 'La la la~ ♪ A famous one!',
+    intro: 'La la la~ ♪ Beethoven!',
   },
   {
-    name: 'London Bridge', tier: 2,
+    name: 'London Bridge', tier: 2, instrument: 'guitar',
     phrases: [
       { notes:[3,4,3,2,3,4,3],        durations:[0.4,0.4,0.4,0.7,0.4,0.4,0.7] },
       { notes:[2,3,2,1,2,0],          durations:[0.4,0.4,0.4,0.4,0.4,0.8] },
@@ -8244,7 +8242,7 @@ const JIGGLYPUFF_SONGS = [
     intro: 'La la la~ ♪ Is it falling down?',
   },
   {
-    name: 'Happy Birthday', tier: 2,
+    name: 'Happy Birthday', tier: 2, instrument: 'piano',
     phrases: [
       { notes:[3,3,4,3,5,4],          durations:[0.3,0.3,0.45,0.45,0.45,0.7] },
       { notes:[3,3,4,3,5,5],          durations:[0.3,0.3,0.45,0.45,0.45,0.7] },
@@ -8254,7 +8252,7 @@ const JIGGLYPUFF_SONGS = [
     intro: 'La la la~ ♪ Happy happy!',
   },
   {
-    name: 'Jingle Bells', tier: 2,
+    name: 'Jingle Bells', tier: 2, instrument: 'guitar',
     phrases: [
       { notes:[2,2,2,2,2,2,2,3,0,1,2],   durations:[0.35,0.35,0.55,0.35,0.35,0.55,0.35,0.35,0.35,0.35,0.7] },
       { notes:[1,1,1,1,1,2,3,4,0,0,1,2,1], durations:[0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.35,0.7] },
@@ -8263,8 +8261,49 @@ const JIGGLYPUFF_SONGS = [
     durations:[0.35,0.35,0.55,0.35,0.35,0.55,0.35,0.35,0.35,0.35,0.7],
     intro: 'La la la~ ♪ Jingle all the way!',
   },
+  {
+    name: 'Greensleeves', tier: 2, instrument: 'cello',
+    phrases: [
+      { notes:[4,0,1,2,4,3,2,0],      durations:[0.4,0.5,0.3,0.5,0.5,0.3,0.5,0.8] },
+      { notes:[4,3,4,5,4,3,2,0],      durations:[0.4,0.5,0.3,0.5,0.5,0.3,0.5,0.8] },
+    ],
+    notes:[4,0,1,2,4,3,2,0,4,3,4,5,4,3,2,0],
+    durations:[0.4,0.5,0.3,0.5,0.5,0.3,0.5,0.5,0.4,0.5,0.3,0.5,0.5,0.3,0.5,0.8],
+    intro: 'La la la~ ♪ An old melody…',
+  },
+  // ── Tier 3 — Classical ─────────────────────────────────────────────────────
+  {
+    name: 'New World Symphony', tier: 3, instrument: 'cello',
+    phrases: [
+      { notes:[2,3,5,4,3,2,0,3,2],     durations:[0.5,0.3,0.6,0.5,0.3,0.5,0.3,0.5,0.8] },
+      { notes:[2,3,5,4,3,2,0,0,3,2,0], durations:[0.5,0.3,0.6,0.5,0.3,0.5,0.3,0.3,0.5,0.3,0.9] },
+    ],
+    notes:[2,3,5,4,3,2,0,3,2],
+    durations:[0.5,0.3,0.6,0.5,0.3,0.5,0.3,0.5,0.8],
+    intro: 'La la la~ ♪ Dvořák…',
+  },
+  {
+    name: 'Bach — Air', tier: 3, instrument: 'cello',
+    phrases: [
+      { notes:[3,5,4,3,2,1,0,1,2],    durations:[0.6,0.3,0.3,0.5,0.3,0.3,0.5,0.3,0.7] },
+      { notes:[3,4,5,3,4,5,4,3,2],    durations:[0.4,0.3,0.5,0.4,0.3,0.5,0.3,0.3,0.8] },
+    ],
+    notes:[3,5,4,3,2,1,0,1,2],
+    durations:[0.6,0.3,0.3,0.5,0.3,0.3,0.5,0.3,0.7],
+    intro: 'La la la~ ♪ Bach…',
+  },
+  {
+    name: 'Eine Kleine Nachtmusik', tier: 3, instrument: 'piano',
+    phrases: [
+      { notes:[3,3,3,1,3,5,3,1],       durations:[0.3,0.2,0.2,0.3,0.3,0.3,0.2,0.7] },
+      { notes:[4,4,4,3,4,5,4,3],       durations:[0.3,0.2,0.2,0.3,0.3,0.3,0.2,0.7] },
+      { notes:[5,3,4,0,5,3,1,0],       durations:[0.3,0.3,0.3,0.5,0.3,0.3,0.3,0.8] },
+    ],
+    notes:[3,3,3,1,3,5,3,1],
+    durations:[0.3,0.2,0.2,0.3,0.3,0.3,0.2,0.7],
+    intro: 'La la la~ ♪ Mozart!',
+  },
 ];
-
 const JigglypuffEngine = {
   _node:          null,
   _sequence:      [],
@@ -8307,19 +8346,24 @@ const JigglypuffEngine = {
       const song = songPool[Math.floor(Math.random() * songPool.length)];
       this._songName   = song.name;
       this._songIntro  = song.intro;
+      this._instrument = song.instrument || 'piano';  // assigned per song
 
-      // Use phrase mode if multiple phrases exist
       if (song.phrases && song.phrases.length > 1) {
         this._phraseMode    = true;
         this._phrases       = song.phrases;
         this._phraseIdx     = 0;
         this._sequence      = [...song.phrases[0].notes];
         this._songDurations = [...song.phrases[0].durations];
+        // Store full song for final celebration
+        this._allPhrases    = song.phrases;
       } else {
         this._sequence      = [...song.notes];
         this._songDurations = song.durations || null;
+        this._allPhrases    = null;
       }
     } else {
+      this._instrument = 'piano';  // random sequences always piano
+      this._allPhrases = null;
       this._sequence = [];
       for (let i = 0; i < seqLen; i++) {
         this._sequence.push(Math.floor(Math.random() * notePool));
@@ -8361,38 +8405,8 @@ const JigglypuffEngine = {
     document.getElementById('screen-challenge').classList.add('jigglypuff-active');
     SoundEngine.stopBGM();
 
-    // Show instrument picker first, then play sequence after pick
-    setTimeout(() => this._showInstrumentPicker(), 300);
-  },
-
-  // ── Instrument picker ─────────────────────────────────────────────────────
-  _showInstrumentPicker() {
-    const btnArea = document.getElementById('challenge-answer-btns');
-    btnArea.innerHTML = '';
-    const wrap = document.createElement('div');
-    wrap.className = 'jiggly-instrument-picker';
-    const INSTRUMENTS = [
-      { id:'piano',  icon:'🎹', label:'Piano'  },
-      { id:'guitar', icon:'🎸', label:'Guitar' },
-      { id:'cello',  icon:'🎻', label:'Cello'  },
-    ];
-    INSTRUMENTS.forEach(inst => {
-      const btn = document.createElement('button');
-      btn.className = 'jiggly-inst-btn' + (this._instrument === inst.id ? ' jiggly-inst-active' : '');
-      btn.innerHTML = `<span class="jiggly-inst-icon">${inst.icon}</span><span class="jiggly-inst-label">${inst.label}</span>`;
-      btn.addEventListener('click', () => {
-        this._instrument = inst.id;
-        _getAudioCtx();
-        // Play a preview note on the selected instrument
-        playNoteForInstrument(JIGGLYPUFF_NOTES[2].freq, 0.5);
-        wrap.querySelectorAll('.jiggly-inst-btn').forEach(b => b.classList.remove('jiggly-inst-active'));
-        btn.classList.add('jiggly-inst-active');
-        // Start after brief delay so the player hears the preview
-        setTimeout(() => this._playSequence(() => this._showInstrument()), 600);
-      });
-      wrap.appendChild(btn);
-    });
-    btnArea.appendChild(wrap);
+    // Play sequence after brief intro delay — no picker
+    setTimeout(() => this._playSequence(() => this._showInstrument()), 900);
   },
 
   // ── Phrase bar (shows song structure) ────────────────────────────────────
@@ -8476,26 +8490,27 @@ const JigglypuffEngine = {
     const tier     = GameState.difficultyTier || 2;
     const notePool = tier <= 1 ? 5 : tier === 2 ? 6 : 7;
 
-    // ── Real piano layout ─────────────────────────────────────────────────────
-    // White keys: C D E F G A B C' D'  (positions 0-8)
-    // Black keys: C# D#  F# G# A#  C#' (between white keys)
-    // Our playable notes: C=0 D=1 E=2 G=3 A=4 C'=5 D'=6
-    // Map note index to white key position
-    const NOTE_TO_WHITE = { 0:0, 1:1, 2:2, 3:4, 4:5, 5:7, 6:8 };
-    // White keys to show (always show full octave for visual authenticity)
+    // Full piano octave — always 9 white keys for visual consistency.
+    // noteIdx -1 = non-playable white key (F or B)
+    // noteIdx >= notePool = locked (visible but dimmed, not yet unlocked)
     const WHITE_KEYS = [
-      { pos:0, noteIdx:0  },  // C
-      { pos:1, noteIdx:1  },  // D
-      { pos:2, noteIdx:2  },  // E
-      { pos:3, noteIdx:-1 },  // F  (not playable)
-      { pos:4, noteIdx:3  },  // G
-      { pos:5, noteIdx:4  },  // A
-      { pos:6, noteIdx:-1 },  // B  (not playable)
-      { pos:7, noteIdx:5  },  // C'
-      { pos:8, noteIdx:6  },  // D'
+      { pos:0, noteIdx:0  },  // C  ← playable
+      { pos:1, noteIdx:1  },  // D  ← playable
+      { pos:2, noteIdx:2  },  // E  ← playable
+      { pos:3, noteIdx:-1 },  // F  ← not in pentatonic, inactive
+      { pos:4, noteIdx:3  },  // G  ← playable
+      { pos:5, noteIdx:4  },  // A  ← playable
+      { pos:6, noteIdx:-1 },  // B  ← not in pentatonic, inactive
+      { pos:7, noteIdx:5  },  // C' ← playable (tier 2+)
+      { pos:8, noteIdx:6  },  // D' ← playable (tier 3)
     ];
-    // Black keys between white keys (shown for realism, not playable)
-    const BLACK_GAPS = [0,1,3,4,5,7]; // after white positions 0,1,3,4,5,7
+
+    // Black key positions: always 6 black keys for a full octave
+    // placed after white key positions 0,1, skip 2 (E-F gap), 3,4,5, skip 6 (B-C gap)
+    const BLACK_AFTER_POS = [0, 1, 3, 4, 5]; // C# D# F# G# A# — 5 black keys per octave
+
+    const KEY_W  = 44; // white key width
+    const KEY_GAP = 4; // gap between white keys
 
     const pianoWrap = document.createElement('div');
     pianoWrap.className = 'jiggly-piano-wrap';
@@ -8503,14 +8518,20 @@ const JigglypuffEngine = {
     const pianoEl = document.createElement('div');
     pianoEl.className = 'jiggly-piano';
 
-    // White keys
+    // Always render all 9 white keys
     WHITE_KEYS.forEach(wk => {
-      if (wk.noteIdx >= notePool) return; // skip notes beyond current pool
-      const note     = wk.noteIdx >= 0 ? JIGGLYPUFF_NOTES[wk.noteIdx] : null;
-      const playable = note !== null;
-      const btn      = document.createElement('button');
-      btn.className  = 'jiggly-key jiggly-white-key' + (playable ? ' jiggly-key-playable' : ' jiggly-key-inactive');
-      if (playable) {
+      const note      = wk.noteIdx >= 0 ? JIGGLYPUFF_NOTES[wk.noteIdx] : null;
+      const inPool    = note !== null && wk.noteIdx < notePool;
+      const inactive  = note === null;   // F or B — not in pentatonic
+      const locked    = note !== null && wk.noteIdx >= notePool; // beyond current tier
+
+      const btn = document.createElement('button');
+      if (inactive) {
+        btn.className = 'jiggly-key jiggly-white-key jiggly-key-inactive';
+      } else if (locked) {
+        btn.className = 'jiggly-key jiggly-white-key jiggly-key-locked';
+      } else {
+        btn.className = 'jiggly-key jiggly-white-key jiggly-key-playable';
         btn.style.setProperty('--key-color', note.color);
         btn.dataset.noteIdx = wk.noteIdx;
         btn.innerHTML = `<span class="jiggly-key-label">${tier <= 2 ? note.label : note.labelFull}</span>`;
@@ -8519,15 +8540,17 @@ const JigglypuffEngine = {
       pianoEl.appendChild(btn);
     });
 
-    // Overlay black keys
+    // Overlay black keys — always 5 per octave, anchored to white key positions
     const blackEl = document.createElement('div');
     blackEl.className = 'jiggly-black-keys';
-    BLACK_GAPS.forEach(afterPos => {
+    BLACK_AFTER_POS.forEach(afterPos => {
       const bk = document.createElement('div');
       bk.className = 'jiggly-black-key';
-      bk.style.left = ((afterPos + 0.65) * (44 + 4)) + 'px';
+      // Each white key occupies (KEY_W + KEY_GAP) px. Black key centres between two whites.
+      bk.style.left = ((afterPos + 1) * (KEY_W + KEY_GAP) - 14) + 'px';
       blackEl.appendChild(bk);
     });
+
     pianoWrap.appendChild(pianoEl);
     pianoWrap.appendChild(blackEl);
     btnArea.appendChild(pianoWrap);
@@ -8659,36 +8682,58 @@ const JigglypuffEngine = {
       this._buildSeqBar();
       this._buildPhraseBar();
 
-      // Celebrate current phrase then play next
+      // Quick celebration of completed phrase, then play next
       let ci = 0;
-      const celebrate = () => {
+      const celebPhrase = () => {
         if (ci >= this._sequence.length) {
           setTimeout(() => this._playSequence(() => this._showInstrument()), 500);
           return;
         }
         playNoteForInstrument(JIGGLYPUFF_NOTES[this._sequence[ci]].freq, 0.28);
-        ci++; setTimeout(celebrate, 260);
+        ci++; setTimeout(celebPhrase, 260);
       };
-      setTimeout(celebrate, 300);
+      setTimeout(celebPhrase, 300);
       return;
     }
 
-    // ── All phrases done / single sequence complete ───────────────────────────
-    if (msgEl) msgEl.textContent = '🎵 ★ Perfect! ★';
+    // ── All done — play FULL SONG then show victory ───────────────────────────
+    if (msgEl) msgEl.textContent = '🎵 ★ Complete! ★';
+    if (jiggly) { jiggly.classList.add('jiggly-spin'); setTimeout(() => jiggly.classList.remove('jiggly-spin'), 800); }
 
-    // Play full sequence as celebration
-    let i = 0;
-    const celebrate = () => {
-      if (i >= this._sequence.length) { setTimeout(() => this._finish(), 600); return; }
-      playNoteForInstrument(JIGGLYPUFF_NOTES[this._sequence[i]].freq, 0.35);
-      i++; setTimeout(celebrate, 320);
-    };
-    celebrate();
-
+    // Mark all current dots as complete
     this._sequence.forEach((_, i) => {
       const dot = document.getElementById(`jiggly-dot-${i}`);
       if (dot) dot.classList.add('jiggly-dot-complete');
     });
+
+    // Build the full celebration sequence — all phrases concatenated
+    let fullNotes = [];
+    let fullDurs  = [];
+    if (this._allPhrases && this._allPhrases.length > 1) {
+      this._allPhrases.forEach(p => {
+        fullNotes = fullNotes.concat(p.notes);
+        fullDurs  = fullDurs.concat(p.durations || p.notes.map(() => 0.38));
+      });
+      if (msgEl) setTimeout(() => { if (msgEl) msgEl.textContent = '🎵 Full song…'; }, 400);
+    } else {
+      fullNotes = [...this._sequence];
+      fullDurs  = this._songDurations || fullNotes.map(() => 0.38);
+    }
+
+    // Play the full song, then show modal
+    let fi = 0;
+    const playFull = () => {
+      if (fi >= fullNotes.length) {
+        setTimeout(() => this._finish(), 500);
+        return;
+      }
+      const note = JIGGLYPUFF_NOTES[fullNotes[fi]];
+      if (note) playNoteForInstrument(note.freq, fullDurs[fi] || 0.38);
+      const holdMs = Math.round((fullDurs[fi] || 0.38) * 1000) + 60;
+      fi++;
+      setTimeout(playFull, holdMs);
+    };
+    setTimeout(playFull, 600);
   },
 
   _finish() {
