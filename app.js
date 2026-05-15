@@ -231,7 +231,7 @@ const CHALLENGE_CLASSES = [
   'meowth-active','jessie-active','james-active',
   'surge-active','erika-active','koga-active',
   'blaine-active','sabrina-active','fishing-active','jigglypuff-active',
-  'challenge-select-active',
+  'challenge-select-active','giovanni-active',
 ];
 
 const NODE_ICONS = {
@@ -239,7 +239,7 @@ const NODE_ICONS = {
   boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣',
   jigglypuff_node: '🎵', surge_node: '⚡', erika_node: '🧪',
   ninja_node: '🥷', sabrina_node: '🔮', blaine_node: '🔥',
-  challenge: '🎮',
+  challenge: '🎮', giovanni_node: '🃏',
 };
 const NODE_MYSTERY_ICON = '❓';
 
@@ -1236,6 +1236,14 @@ function generateMap(bossIndex) {
     if (bi >= 3) {
       injectChallenge(5);
       if (isReturning) injectChallenge(8);
+    }
+
+    // ── GIOVANNI NODE — Power Rankings math game, from bi>=8 ─────────────────
+    if (bi >= 8 || isReturning) {
+      const SPEC2 = [...SPECIAL, 'challenge'];
+      const gcands = nodes.filter(n => n.row === 6 && !SPEC2.includes(n.type));
+      if (gcands.length > 0)
+        gcands[Math.floor(Math.random() * gcands.length)].type = 'giovanni_node';
     }
   }
   // Uses a regular catch node with 'legendary' rarity — no separate engine needed.
@@ -3402,6 +3410,7 @@ const Game = {
       4: 'ninja',        // After Erika
       5: 'sabrina',      // After Koga
       6: 'blaine',       // After Sabrina
+      7: 'giovanni',     // After Blaine
     };
     if (MINIGAME_UNLOCK_SCHEDULE[defeated]) {
       const unlocks = loadUnlocks();
@@ -3931,6 +3940,7 @@ const ARROW_LABELS = {
   sabrina_node:   { icon: null, emoji: '🔮', label: 'Sabrina Jigsaw'     },
   blaine_node:    { icon: null, emoji: '🔥', label: 'Battle Lab'         },
   challenge:      { icon: null, emoji: '🎮', label: 'Your Choice'        },
+  giovanni_node:  { icon: null, emoji: '🃏', label: 'Power Rankings'     },
 };
 
 // Builds an inline SVG directional chevron for nav arrows.
@@ -4267,6 +4277,7 @@ const MapEngine = {
       case 'ninja_node':      NinjaMemoryEngine.start(node);     break;
       case 'sabrina_node':    SabrinaEngine.start(node);         break;
       case 'blaine_node':     BlaineEngine.start(node);          break;
+      case 'giovanni_node':   GiovanniEngine.start(node);        break;
       case 'challenge':       ChallengeSelectEngine.start(node); break;
     }
   },
@@ -4679,9 +4690,15 @@ const BattleEngine = {
       this._typeConfusionPending = true;
     }
     if (fx.battleHp) {
-      // Jigglypuff win: free mid-battle revive stored for use when player faints
       this._jigglypuffRevive = fx.battleHp;
       this._logPlayer(`💤 Jigglypuff's lullaby — auto-revive ready if you faint!`);
+    }
+    if (fx.giovanniEndorsement) {
+      this._giovanniEndorsement = true;
+      this._logPlayer(`⭐ Giovanni's Endorsement — first card played deals +5 bonus damage!`);
+    }
+    if (fx.giovanniDisinfo) {
+      this._giovanniDisinfoPending = true;
     }
     GameState.pendingPlayerEffects = {};
 
@@ -4694,6 +4711,13 @@ const BattleEngine = {
       const confIdx = Math.floor(Math.random() * this.state.hand.length);
       this.state.hand[confIdx]._typeConfused = true;
       this._logEnemy(`🔀 Type Confusion! One card in your hand will misfire! (Blaine's experiment)`);
+    }
+    // Giovanni Disinformation — one card shows false power value
+    if (this._giovanniDisinfoPending && this.state.hand.length > 0) {
+      this._giovanniDisinfoPending = false;
+      const dIdx = Math.floor(Math.random() * this.state.hand.length);
+      this.state.hand[dIdx]._disinfoCard = true;
+      this._logEnemy(`🃏 Disinformation planted! One card shows false power. (Giovanni's revenge)`);
     }
     this._logSystem(
       this._isTrainerBattle
@@ -4847,10 +4871,12 @@ const BattleEngine = {
     const actualDmg = previewDamage(card, st);
     let powerDisplay;
     if (card.power <= 0) {
-      // Utility card — show what effect it applies
       powerDisplay = '✦';
+    } else if (card._disinfoCard) {
+      // Giovanni disinformation — show inflated fake value
+      const fakePower = card.power + Math.floor(Math.random() * 8) + 5;
+      powerDisplay = `<span style="color:#ff9944">${fakePower}</span>`;
     } else if (actualDmg !== null && actualDmg !== card.power) {
-      // Actual differs from base — show base → actual with colour
       const previewColor = actualDmg > card.power ? '#80ee80' : '#ee8880';
       powerDisplay = `<span class="card-power-base">${card.power}</span> → <span style="color:${previewColor};font-weight:bold">${actualDmg}</span>`;
     } else {
@@ -5077,6 +5103,13 @@ const BattleEngine = {
     // ── Surge BRIEFED damage bonus ────────────────────────────────────────────
     if (dmg > 0 && this._briefedBonus > 1) {
       dmg = Math.round(dmg * this._briefedBonus);
+    }
+
+    // ── Giovanni Endorsement — first card gets +5 flat bonus ────────────────
+    if (dmg > 0 && this._giovanniEndorsement) {
+      dmg += 5;
+      this._giovanniEndorsement = false;
+      this._logPlayer(`⭐ Giovanni's Endorsement! +5 bonus damage!`);
     }
 
     // Rain boost
@@ -8853,6 +8886,15 @@ const CHALLENGE_SELECT_MENU = [
     reward: '🔬 Type hints on cards',
     engine: () => BlaineEngine,
   },
+  {
+    key:    'giovanni',
+    type:   'giovanni_node',
+    emoji:  '🃏',
+    name:   "Giovanni's Power Rankings",
+    desc:   'Math card strategy game',
+    reward: '⭐ Card power bonus or intel',
+    engine: () => GiovanniEngine,
+  },
 ];
 
 const ChallengeSelectEngine = {
@@ -8866,7 +8908,7 @@ const ChallengeSelectEngine = {
     const bi        = GameState.bossesDefeated || 0;
 
     // Build available options: unlocked mini-games for this profile
-    const MG_MIN_BI = { jigglypuff:2, fishing:2, surge:3, erika:4, ninja:5, sabrina:6, blaine:7 };
+    const MG_MIN_BI = { jigglypuff:2, fishing:2, surge:3, erika:4, ninja:5, sabrina:6, blaine:7, giovanni:8 };
     const available = CHALLENGE_SELECT_MENU.filter(m => {
       if (bi < (MG_MIN_BI[m.key] || 0)) return false;
       return isReturn || unlocks.miniGamesUnlocked.includes(m.key) || m.key === 'fishing';
@@ -8953,6 +8995,380 @@ const ChallengeSelectEngine = {
     showModal('💰 Challenge Skipped',
       `+${gold}💰 gold.\n\n"Maybe next time." `,
       () => { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); });
+  },
+};
+
+// ─── GIOVANNI ENGINE — Power Rankings Math Card Game ─────────────────────────
+
+// Pokémon pool with sprite IDs and assigned values
+const GIOVANNI_POKEMON_POOL = [
+  { name:'Bulbasaur',  id:1,   val:3  }, { name:'Charmander', id:4,   val:4  },
+  { name:'Squirtle',   id:7,   val:4  }, { name:'Caterpie',   id:10,  val:1  },
+  { name:'Pidgey',     id:16,  val:2  }, { name:'Rattata',    id:19,  val:2  },
+  { name:'Pikachu',    id:25,  val:5  }, { name:'Clefairy',   id:35,  val:3  },
+  { name:'Vulpix',     id:37,  val:4  }, { name:'Meowth',     id:52,  val:3  },
+  { name:'Psyduck',    id:54,  val:4  }, { name:'Growlithe',  id:58,  val:5  },
+  { name:'Poliwag',    id:60,  val:3  }, { name:'Abra',       id:63,  val:5  },
+  { name:'Machop',     id:66,  val:6  }, { name:'Geodude',    id:74,  val:4  },
+  { name:'Gastly',     id:92,  val:5  }, { name:'Onix',       id:95,  val:6  },
+  { name:'Drowzee',    id:96,  val:4  }, { name:'Krabby',     id:98,  val:3  },
+  { name:'Magnemite',  id:81,  val:4  }, { name:'Eevee',      id:133, val:5  },
+  { name:'Snorlax',    id:143, val:8  }, { name:'Dratini',    id:147, val:7  },
+  { name:'Lapras',     id:131, val:7  }, { name:'Kangaskhan', id:115, val:6  },
+  { name:'Tauros',     id:128, val:7  }, { name:'Rhyhorn',    id:111, val:6  },
+  { name:'Nidoking',   id:34,  val:8  }, { name:'Nidoqueen',  id:31,  val:8  },
+  { name:'Rhydon',     id:112, val:9  }, { name:'Persian',    id:53,  val:6  },
+  { name:'Dugtrio',    id:51,  val:5  }, { name:'Marowak',    id:105, val:6  },
+];
+
+// Operator sequences per tier — shown upfront so player can plan
+const GIOVANNI_OP_SEQUENCES = {
+  1: [['+','+','+','−','+']],                                            // Tier 1: 5 rounds
+  2: [['+','+','×','−','+','÷','×'],                                     // Tier 2: 7 rounds
+      ['+','×','+','−','÷','+','×']],
+  3: [['+','×','×','−','÷','+','×','−','×'],                             // Tier 3: 9 rounds
+      ['×','+','÷','×','−','×','+','÷','×'],
+      ['+','×','−','×','÷','×','+','−','×']],
+};
+
+// Commentary by Giovanni — keyed by situation
+const GIOVANNI_LINES = {
+  correct_add:  `"Numbers are power. You chose correctly."`,
+  correct_sub:  `"Precise. You protected your score."`,
+  correct_mul:  `"Intelligent leverage. Exactly what I expected."`,
+  correct_div:  `"Good. Minimise losses. Basic strategy."`,
+  wrong_add:    `"You left points on the table. Unacceptable."`,
+  wrong_sub:    `"You subtracted more than necessary. Careless."`,
+  wrong_mul:    `"Multiplying a smaller number. Disappointing."`,
+  wrong_div:    `"A larger divisor. You weakened yourself."`,
+  round_final:  `"Last round. Make it count."`,
+  win:          `"Impressive. You have the makings of a Rocket executive."`,
+  lose:         `"You had the tools. You lacked the strategy. Dismissed."`,
+};
+
+const GiovanniEngine = {
+  _node:       null,
+  _score:      0,
+  _startCard:  null,
+  _operators:  [],
+  _roundIdx:   0,
+  _target:     0,
+  _tier:       1,
+  _pool:       [],
+  _roundCount: 0,
+  _isActive:   false,
+
+  start(node) {
+    this._node      = node;
+    this._isActive  = true;
+    this._tier      = GameState.difficultyTier || 2;
+    this._roundIdx  = 0;
+    this._roundCount = this._tier <= 1 ? 5 : this._tier === 2 ? 7 : 9;
+
+    // Pick operator sequence
+    const seqs = GIOVANNI_OP_SEQUENCES[this._tier] || GIOVANNI_OP_SEQUENCES[2];
+    this._operators = [...seqs[Math.floor(Math.random() * seqs.length)]];
+
+    // Shuffle pool and pick starting card
+    this._pool = shuffle([...GIOVANNI_POKEMON_POOL]);
+    const startPoke = this._pool.shift();
+    const startVal  = this._tier <= 1
+      ? Math.floor(Math.random() * 4) + 1   // 1-4
+      : this._tier === 2
+      ? Math.floor(Math.random() * 6) + 2   // 2-7
+      : Math.floor(Math.random() * 7) + 3;  // 3-9
+
+    this._startCard = {
+      ...startPoke,
+      val: startVal,
+      spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${startPoke.id}.png`,
+    };
+    this._score = startVal;
+
+    // Target: set to average-play achievable score — simulate average choices
+    // Average card value by tier
+    const avgCard = this._tier <= 1 ? 2.5 : this._tier === 2 ? 5 : 7;
+    let simScore  = startVal;
+    this._operators.forEach(op => {
+      if (op === '+') simScore += avgCard;
+      else if (op === '−') simScore = Math.max(0, simScore - 1.5); // assume player picks small
+      else if (op === '×') simScore = Math.round(simScore * (avgCard * 0.7));
+      else if (op === '÷') simScore = Math.max(1, Math.floor(simScore / 2));
+    });
+    // Target = 70% of simulated average score, minimum of startVal + roundCount
+    this._target = Math.max(
+      Math.round(simScore * 0.7),
+      startVal + this._roundCount
+    );
+
+    // Boss-screen intro — same pattern as NinjaMemoryEngine/BlaineEngine
+    showScreen('boss');
+    BossEngine._isRocket = false;
+
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl) {
+      bgEl.style.background = GYM_FALLBACKS[7] || 'linear-gradient(160deg,#1a1a1a,#0a0a0a)';
+      if (imgEl) { imgEl.style.opacity = '0'; }
+    }
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/giovanni.png';
+    document.getElementById('dialogue-name').textContent = 'Giovanni';
+    document.getElementById('dialogue-text').textContent = '';
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Begin ▶'; }
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const intro = `${GameState.trainerName || 'Trainer'}. I am conducting Power Rankings — a tournament to find the strongest Pokémon. You will make ${this._roundCount} choices. Reach ${this._target} or higher to impress me.`;
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += intro[ci++];
+      if (ci >= intro.length) { clearInterval(iv); if (startBtn) startBtn.style.display = ''; }
+    }, 22);
+  },
+
+  startGame() {
+    this._isActive = false;
+    document.getElementById('trainer-intro').style.display = 'none';
+    this._showRound();
+  },
+
+  _showRound() {
+    const op = this._operators[this._roundIdx];
+    const isLast = this._roundIdx === this._roundCount - 1;
+
+    // Setup challenge screen
+    document.getElementById('challenge-badge').textContent = '🃏 Power Rankings';
+    document.getElementById('challenge-intro').textContent =
+      `Round ${this._roundIdx + 1} of ${this._roundCount}  ·  Target: ${this._target}`;
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    const qEl = document.getElementById('challenge-question');
+    qEl.style.display = 'none'; qEl.textContent = '';
+    document.getElementById('challenge-answer-btns').innerHTML = '';
+    const jwd = document.getElementById('jessie-word-display');
+    if (jwd) { jwd.style.display='none'; jwd.innerHTML=''; jwd.className='jessie-word-display'; }
+
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.style.display = 'block';
+    cv.className     = 'giovanni-wrap';
+    cv.innerHTML     = '';
+
+    showScreen('challenge');
+    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
+    document.getElementById('screen-challenge').classList.add('giovanni-active');
+    if (this._roundIdx === 0) SoundEngine.playBGM('mini_game.mp3');
+
+    // Operator sequence bar
+    const seqBar = document.createElement('div');
+    seqBar.className = 'gio-seq-bar';
+    this._operators.forEach((o, i) => {
+      const pip = document.createElement('div');
+      pip.className = 'gio-seq-pip' +
+        (i === this._roundIdx ? ' gio-seq-current' : i < this._roundIdx ? ' gio-seq-done' : '');
+      pip.textContent = i < this._roundIdx ? '✓' : o;
+      seqBar.appendChild(pip);
+    });
+    cv.appendChild(seqBar);
+
+    // Score bar
+    const scoreBar = document.createElement('div');
+    scoreBar.className = 'gio-score-bar';
+    scoreBar.innerHTML = `
+      <span class="gio-score-label">Score</span>
+      <span class="gio-score-val" id="gio-score-val">${this._score}</span>
+      <span class="gio-score-target">/ ${this._target} needed</span>`;
+    cv.appendChild(scoreBar);
+
+    if (isLast) setTimeout(() => this._showGiovanniComment('round_final'), 200);
+
+    // Pick two random Pokémon
+    const picks = [this._pool.shift(), this._pool.shift()];
+    // Re-add to back so pool never runs out
+    picks.forEach(p => this._pool.push(p));
+
+    // Scale values by tier
+    const scaleVal = (base) => {
+      if (this._tier <= 1) return Math.min(Math.max(Math.round(base * 0.6), 1), 5);
+      if (this._tier === 2) return Math.min(Math.max(base, 1), 9);
+      return Math.min(Math.max(base, 1), 12);
+    };
+    const cards = picks.map(p => ({
+      ...p,
+      val: scaleVal(p.val),
+      spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`,
+    }));
+
+    // Choice area — two cards top
+    const choiceArea = document.createElement('div');
+    choiceArea.className = 'gio-choice-area';
+    choiceArea.id = 'gio-choice-area';
+
+    const cardEls = cards.map((card, ci) => {
+      const el = this._makeCard(card, true);
+      el.addEventListener('click', () => this._pick(card, cards, op, el));
+      // Preview on hover — Tier 1 always, Tier 2 hover, Tier 3 hidden
+      if (this._tier <= 1) {
+        el.title = this._calcPreview(this._score, op, card.val);
+      } else if (this._tier === 2) {
+        el.addEventListener('mouseenter', () => {
+          el.querySelector('.gio-card-preview').textContent = this._calcPreview(this._score, op, card.val);
+        });
+        el.addEventListener('mouseleave', () => {
+          el.querySelector('.gio-card-preview').textContent = '';
+        });
+      }
+      choiceArea.appendChild(el);
+      return el;
+    });
+
+    cv.appendChild(choiceArea);
+
+    // Operator badge
+    const opBadge = document.createElement('div');
+    opBadge.className = 'gio-operator-badge';
+    opBadge.textContent = op;
+    cv.appendChild(opBadge);
+
+    // Player's card — bottom
+    const playerArea = document.createElement('div');
+    playerArea.className = 'gio-player-area';
+    const playerCard = this._makeCard(this._startCard, false);
+    playerCard.classList.add('gio-player-card');
+    playerArea.appendChild(playerCard);
+    cv.appendChild(playerArea);
+
+    // Giovanni portrait + comment area
+    const gioRow = document.createElement('div');
+    gioRow.className = 'gio-giovanni-row';
+    gioRow.innerHTML = `
+      <img src="assets/giovanni.png" class="gio-portrait"
+           onerror="this.style.display='none'" alt="Giovanni"/>
+      <div class="gio-comment" id="gio-comment"></div>`;
+    cv.appendChild(gioRow);
+  },
+
+  _makeCard(card, isChoice) {
+    const el = document.createElement('div');
+    el.className = 'gio-card' + (isChoice ? ' gio-choice-card' : '');
+    el.innerHTML = `
+      <div class="gio-card-inner">
+        <img class="gio-card-sprite" src="${card.spriteUrl}"
+             alt="${card.name}"
+             onerror="this.style.opacity='0'"/>
+        <div class="gio-card-name">${card.name}</div>
+        <div class="gio-card-val">${card.val}</div>
+        ${isChoice ? '<div class="gio-card-preview"></div>' : ''}
+      </div>`;
+    return el;
+  },
+
+  _calcPreview(score, op, val) {
+    const res = this._applyOp(score, op, val);
+    return `${score} ${op} ${val} = ${res}`;
+  },
+
+  _applyOp(score, op, val) {
+    if (op === '+') return score + val;
+    if (op === '−') return Math.max(0, score - val);
+    if (op === '×') return score * val;
+    if (op === '÷') return Math.max(1, Math.floor(score / Math.max(1, val)));
+    return score;
+  },
+
+  _bestChoice(score, op, a, b) {
+    // Returns which value gives a better result
+    const ra = this._applyOp(score, op, a);
+    const rb = this._applyOp(score, op, b);
+    return ra >= rb ? a : b;
+  },
+
+  _pick(chosen, both, op, chosenEl) {
+    const other     = both.find(c => c !== chosen);
+    const best      = this._bestChoice(this._score, op, chosen.val, other.val);
+    const isCorrect = chosen.val === best;
+    const newScore  = this._applyOp(this._score, op, chosen.val);
+
+    // Visual feedback
+    document.querySelectorAll('.gio-choice-card').forEach(c => {
+      c.style.pointerEvents = 'none';
+    });
+    chosenEl.classList.add('gio-card-chosen');
+
+    // Animate score change on player card
+    const valEl = document.querySelector('.gio-player-card .gio-card-val');
+    if (valEl) {
+      valEl.classList.add(newScore > this._score ? 'gio-score-up' : 'gio-score-down');
+      setTimeout(() => { valEl.textContent = newScore; valEl.classList.remove('gio-score-up','gio-score-down'); }, 350);
+    }
+    const scoreEl = document.getElementById('gio-score-val');
+    if (scoreEl) setTimeout(() => { scoreEl.textContent = newScore; }, 400);
+
+    // Giovanni reacts
+    const commentKey = (isCorrect ? 'correct_' : 'wrong_') +
+      ({'+':'add','−':'sub','×':'mul','÷':'div'}[op] || 'add');
+    this._showGiovanniComment(commentKey);
+
+    this._score = newScore;
+    // Update score but preserve all other fields including spriteUrl
+    this._startCard = { ...this._startCard, val: newScore };
+    this._roundIdx++;
+
+    if (this._roundIdx >= this._roundCount) {
+      setTimeout(() => this._finish(), 1000);
+    } else {
+      setTimeout(() => this._showRound(), 1100);
+    }
+  },
+
+  _showGiovanniComment(key) {
+    const el = document.getElementById('gio-comment');
+    if (!el) return;
+    el.textContent = GIOVANNI_LINES[key] || '';
+    el.classList.remove('gio-comment-show');
+    void el.offsetWidth; // reflow to restart animation
+    el.classList.add('gio-comment-show');
+    setTimeout(() => el.classList.remove('gio-comment-show'), 2800);
+  },
+
+  _finish() {
+    const won        = this._score >= this._target;
+    const bi         = GameState.bossesDefeated || 0;
+    const goldReward = won ? 15 + bi * 3 : 5;
+
+    GameState.gold = (GameState.gold || 0) + goldReward;
+    SoundEngine.stopBGM();
+
+    if (won) {
+      // Endorsement — first card in deck gets +5 bonus damage flag
+      if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+      GameState.pendingPlayerEffects.giovanniEndorsement = true;
+      SoundEngine.playFanfare();
+    } else {
+      // Disinformation — one opening-hand card shows false power next battle
+      if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+      GameState.pendingPlayerEffects.giovanniDisinfo = true;
+    }
+
+    saveGame();
+    document.getElementById('screen-challenge').classList.remove('giovanni-active');
+    const cv = document.getElementById('challenge-coin-visual');
+    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
+
+    const resultLine = won ? GIOVANNI_LINES.win : GIOVANNI_LINES.lose;
+    const title = won ? `🃏 Giovanni is Impressed` : `🃏 Giovanni is Disappointed`;
+    const body  = won
+      ? `Score: ${this._score} / Target: ${this._target} ✅\n+${goldReward}💰\n\n⭐ One of your cards receives Giovanni's Endorsement — +5 bonus damage next battle!\n\n${resultLine}`
+      : `Score: ${this._score} / Target: ${this._target} ❌\n+${goldReward}💰\n\n🃏 Giovanni planted Disinformation — one card next battle shows false power.\n\n${resultLine}`;
+
+    showModal(title, body, () => {
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+    });
   },
 };
 
@@ -13261,6 +13677,8 @@ document.addEventListener('DOMContentLoaded', () => {
       NinjaMemoryEngine.startGame();
     } else if (SabrinaEngine._isActive) {
       SabrinaEngine.startGame();
+    } else if (GiovanniEngine._isActive) {
+      GiovanniEngine.startGame();
     } else if (TrainerBattleEngine._isActive) {
       TrainerBattleEngine.startBattle();
     } else if (BossEngine._isRocket) {
