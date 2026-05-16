@@ -9081,7 +9081,8 @@ const GiovanniEngine = {
     this._startCard = {
       ...startPoke,
       val: startVal,
-      spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${startPoke.id}.png`,
+      spriteUrl:  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${startPoke.id}.png`,
+      artworkUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${startPoke.id}.png`,
     };
     this._score = startVal;
 
@@ -9142,6 +9143,8 @@ const GiovanniEngine = {
     const isLast = this._roundIdx === this._roundCount - 1;
 
     // Setup challenge screen
+    const charImg = document.getElementById('challenge-character-img');
+    if (charImg) { charImg.src = 'assets/giovanni.png'; charImg.style.display = ''; }
     document.getElementById('challenge-badge').textContent = '🃏 Power Rankings';
     document.getElementById('challenge-intro').textContent =
       `Round ${this._roundIdx + 1} of ${this._roundCount}  ·  Target: ${this._target}`;
@@ -9200,7 +9203,9 @@ const GiovanniEngine = {
     const cards = picks.map(p => ({
       ...p,
       val: scaleVal(p.val),
-      spriteUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`,
+      // Fast sprite loads instantly (~50ms), official artwork is slow (~500ms)
+      spriteUrl:  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
+      artworkUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`,
     }));
 
     // Choice area — two cards top
@@ -9264,6 +9269,15 @@ const GiovanniEngine = {
         <div class="gio-card-val">${card.val}</div>
         ${isChoice ? '<div class="gio-card-preview"></div>' : ''}
       </div>`;
+
+    // Progressive upgrade to official artwork once fast sprite has loaded
+    if (card.artworkUrl) {
+      const fastImg = el.querySelector('.gio-card-sprite');
+      const artwork = new Image();
+      artwork.onload = () => { if (fastImg) fastImg.src = card.artworkUrl; };
+      artwork.src = card.artworkUrl;
+    }
+
     return el;
   },
 
