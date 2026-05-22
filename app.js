@@ -2520,13 +2520,15 @@ const TeamRocketChallenge = {
     this._setHeader('assets/jessi.png', '✨ Jessie\'s Word Challenge!',
       `${name}! Jessie found a word she doesn't know. Help her impress the Boss! 💄`);
 
-    // Show the word big and proud
+    // Rebuild jessie-word and jessie-word-type inside the display
+    // (_setHeader clears jessie-word-display.innerHTML so child IDs are gone)
     const wordDisplayEl = document.getElementById('jessie-word-display');
-    if (wordDisplayEl) wordDisplayEl.style.display = 'flex';
-    const wordEl = document.getElementById('jessie-word');
-    if (wordEl) wordEl.textContent = entry.word.toUpperCase();
-    const wordTypeEl = document.getElementById('jessie-word-type');
-    if (wordTypeEl) wordTypeEl.textContent = `(${entry.pos})`;
+    if (wordDisplayEl) {
+      wordDisplayEl.style.display = 'flex';
+      wordDisplayEl.innerHTML = `
+        <div class="jessie-word" id="jessie-word">${entry.word.toUpperCase()}</div>
+        <div class="jessie-word-type" id="jessie-word-type">(${entry.pos})</div>`;
+    }
 
     const qEl = document.getElementById('challenge-question');
     if (qEl) qEl.textContent = `What does "${entry.word}" mean?`;
