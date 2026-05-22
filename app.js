@@ -856,11 +856,25 @@ function unlockKey(p)  { return `pokerogue_unlock_v1_${p}`; }
 function pokedexKey(p) { return `pokerogue_pokedex_v1_${p}`; }
 
 // ── Save / load run ───────────────────────────────────────────────────────────
-function saveGame() {
+let _saveDebounceTimer = null;
+function saveGame(immediate = false) {
   const p = getActiveProfile();
   if (!p) return;
-  try { localStorage.setItem(saveKey(p), JSON.stringify(GameState)); } catch(e) {}
-  _updateProfileMeta(p);
+  // Critical saves (end of battle, purchases) use immediate=true
+  if (immediate) {
+    clearTimeout(_saveDebounceTimer);
+    _saveDebounceTimer = null;
+    try { localStorage.setItem(saveKey(p), JSON.stringify(GameState)); } catch(e) {}
+    _updateProfileMeta(p);
+    return;
+  }
+  // In-battle and rapid saves are debounced — collapse multiple calls into one write
+  if (_saveDebounceTimer) return;
+  _saveDebounceTimer = setTimeout(() => {
+    _saveDebounceTimer = null;
+    try { localStorage.setItem(saveKey(p), JSON.stringify(GameState)); } catch(e) {}
+    _updateProfileMeta(p);
+  }, 400);
 }
 function loadGame() {
   const p = getActiveProfile();
@@ -1451,8 +1465,21 @@ async function fetchPoke(id) {
   const r = await fetch(`${POKEAPI}/pokemon/${id}`);
   const d = await r.json();
   _apiCache[id] = d;
+  // Persist cache to sessionStorage so page reload doesn't re-fetch
+  try {
+    const keys = Object.keys(_apiCache);
+    if (keys.length <= 200) {  // cap to prevent sessionStorage bloat
+      sessionStorage.setItem('poketrials_api_cache', JSON.stringify(_apiCache));
+    }
+  } catch(e) {}
   return d;
 }
+
+// Load persisted cache on startup
+try {
+  const saved = sessionStorage.getItem('poketrials_api_cache');
+  if (saved) Object.assign(_apiCache, JSON.parse(saved));
+} catch(e) {}
 
 function getSpriteUrl(data, front = true) {
   // Priority order: official artwork → home sprite → default sprite → gen-1 sprite
