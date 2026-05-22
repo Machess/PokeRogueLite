@@ -75,8 +75,8 @@ html, body {
   font-family: 'Nunito', sans-serif;
   font-weight: 700;
   image-rendering: auto;          /* removed global pixelated — applied per-sprite instead */
-  /* Scale entire UI proportionally on tablet screens */
-  font-size: clamp(14px, 2.2vw, 18px);
+  /* Scale entire UI — larger base makes every rem bigger across the whole game */
+  font-size: clamp(16px, 2.4vw, 20px);
   -webkit-tap-highlight-color: transparent;  /* suppress grey flash on tap */
   touch-action: manipulation;               /* suppress 300ms tap delay */
 }
@@ -199,7 +199,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   margin-bottom: 1rem;
 }
 .modal-body {
-  font-size: .9rem;
+  font-size: 1.0rem;
   color: var(--col-text);
   margin-bottom: 1.5rem;
   line-height: 1.6;
@@ -459,7 +459,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 .map-meta {
   font-family: 'Press Start 2P', monospace;
-  font-size: .4rem;
+  font-size: .52rem;
   color: var(--col-text-dim);
   text-align: right;
 }
@@ -591,13 +591,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .party-row-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
 .party-row-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .52rem;
+  font-size: .65rem;
   color: var(--col-text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .party-row-meta { display: flex; align-items: center; gap: .35rem; flex-wrap: wrap; }
 .party-row-type {
-  font-size: .45rem; font-weight: 800;
+  font-size: .55rem; font-weight: 800;
   padding: .1em .4em; border-radius: 3px;
   text-transform: uppercase;
 }
@@ -612,7 +612,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   height: 100%; border-radius: 3px;
   transition: width .4s ease, background .4s ease;
 }
-.party-row-hp-text { font-size: .5rem; color: var(--col-text-dim); }
+.party-row-hp-text { font-size: .60rem; color: var(--col-text-dim); }
 
 .party-row-cards-btn {
   flex-shrink: 0;
@@ -641,8 +641,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   z-index: 60;
   display: flex; align-items: center; justify-content: center;
   background: rgba(0,0,0,.7);
-  backdrop-filter: blur(4px);
-  padding: 1rem;
+    padding: 1rem;
 }
 .poke-detail-overlay.hidden { display: none; }
 
@@ -686,7 +685,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .poke-detail-info { flex: 1; display: flex; flex-direction: column; gap: .3rem; }
 .poke-detail-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .75rem; color: var(--col-yellow);
+  font-size: .88rem; color: var(--col-yellow);
 }
 .poke-detail-type {
   display: inline-block;
@@ -801,7 +800,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .nav-location-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .55rem; color: var(--col-yellow);
+  font-size: .65rem; color: var(--col-yellow);
   text-shadow: 0 0 8px rgba(255,215,0,.5);
 }
 .nav-location-sub {
@@ -969,6 +968,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 #map-canvas      { display: none; }
 #map-nodes-layer { display: none; }
 .map-node-btn {
+  will-change: transform, filter;
   position: absolute;
   width: 44px; height: 44px;   /* min 44×44 for reliable touch targets */
   border-radius: 50%;
@@ -1175,19 +1175,18 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-radius: var(--r-md);
   padding: .5rem .8rem;
   min-width: 170px;
-  backdrop-filter: blur(4px);
-}
+  }
 .hud-opponent { text-align: left; }
 .hud-player   { text-align: left; }
 
 .hud-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .55rem;
+  font-size: .68rem;
   color: var(--col-text);
   text-transform: uppercase;
 }
 .hud-level {
-  font-size: .6rem;
+  font-size: .72rem;
   color: var(--col-text-dim);
 }
 .hud-level-row {
@@ -1197,7 +1196,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   margin-bottom: .3rem;
 }
 .hud-type-badge {
-  font-size: .42rem;
+  font-size: .52rem;
   font-weight: 800;
   padding: .15em .45em;
   border-radius: 3px;
@@ -1220,7 +1219,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .hud-hp-text {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem;
+  font-size: .52rem;
   color: var(--col-text-dim);
 }
 
@@ -1231,13 +1230,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   left: 50%;
   transform: translateX(-50%);
   width: min(500px, 92vw);
-  background: rgba(8,8,22,.92);
+  background: rgba(8,8,22,.95);
   border: 2px solid var(--col-border);
   border-radius: var(--r-md);
   padding: .6rem .9rem;
   z-index: var(--z-ui);
-  backdrop-filter: blur(8px);
   overflow: hidden;
+  pointer-events: none;   /* log never intercepts taps on cards below */
 }
 .log-inner {
   font-size: .8rem;
@@ -1258,8 +1257,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   gap: .6rem;
   padding: .5rem .7rem;
   z-index: var(--z-ui);
-  backdrop-filter: blur(6px);
-}
+  }
 
 .pile-area {
   display: flex;
@@ -1299,9 +1297,29 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   align-items: center;
   overflow-x: auto;
   padding-bottom: .2rem;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  min-width: 0;
 }
-.hand-area::-webkit-scrollbar { height: 4px; }
-.hand-area::-webkit-scrollbar-thumb { background: var(--col-border); border-radius: 2px; }
+.hand-area::-webkit-scrollbar { display: none; }
+
+/* Fade right edge when hand overflows — signals more cards exist */
+.hand-area-wrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;        /* pass flex to inner hand-area */
+}
+.hand-area-wrap::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 44px;
+  background: linear-gradient(to right, transparent, rgba(10,10,26,.9));
+  pointer-events: none;
+  z-index: 2;
+}
 
 .card {
   flex-shrink: 0;
@@ -1317,6 +1335,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   text-align: center;
   min-height: 115px;
   display: flex; flex-direction: column;
+  scroll-snap-align: start;
+  will-change: transform;        /* promote to compositor layer for smooth hover/active */
 }
 .card::before {
   content: '';
@@ -1396,18 +1416,18 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .card-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem;
+  font-size: .50rem;
   color: var(--col-text);
   margin-bottom: .2rem;
   line-height: 1.3;
 }
 .card-power {
-  font-size: .6rem;
+  font-size: .75rem;
   font-weight: 900;
   color: var(--col-yellow);
 }
 .card-effect {
-  font-size: .5rem;
+  font-size: .62rem;
   color: var(--col-text-dim);
   margin-top: .15rem;
   line-height: 1.3;
@@ -1478,8 +1498,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-radius: var(--r-lg);
   padding: 1.2rem 1.4rem;
   max-width: 300px;
-  backdrop-filter: blur(6px);
-  display: flex; flex-direction: column; gap: .7rem;
+    display: flex; flex-direction: column; gap: .7rem;
 }
 .dialogue-name {
   font-family: 'Press Start 2P', monospace;
@@ -1487,7 +1506,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   color: var(--col-yellow);
 }
 .dialogue-text {
-  font-size: .85rem;
+  font-size: 1.0rem;
   color: var(--col-text);
   line-height: 1.6;
 }
@@ -1960,7 +1979,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .training-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem; color: var(--col-text);
+  font-size: .52rem; color: var(--col-text);
   margin-bottom: .15rem;
 }
 .training-poke-level {
@@ -2141,7 +2160,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .heal-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem;
+  font-size: .52rem;
   color: var(--col-text-dim);
   margin-top: .2rem;
 }
@@ -2348,7 +2367,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   display: flex; gap: .25rem; flex-wrap: wrap; margin-top: .25rem;
 }
 .status-badge {
-  font-size: .42rem;
+  font-size: .52rem;
   font-family: 'Press Start 2P', monospace;
   padding: .15em .4em;
   border-radius: 3px;
@@ -2367,8 +2386,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: fixed; inset: 0;
   z-index: 80;
   background: rgba(0,0,0,.8);
-  backdrop-filter: blur(6px);
-  display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
   padding: 1rem;
 }
 .card-reward-overlay.hidden { display: none; }
@@ -2418,7 +2436,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .cr-card-icon  { font-size: 1.6rem; line-height: 1; }
 .cr-card-name  {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem; color: var(--col-text);
+  font-size: .50rem; color: var(--col-text);
 }
 .cr-card-power { font-size: .62rem; color: var(--col-yellow); font-weight: 800; }
 .cr-card-effect{ font-size: .44rem; color: var(--col-text-dim); line-height: 1.4; }
@@ -2463,9 +2481,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   width: 100%; padding: .8rem 1rem .6rem;
   border-bottom: 2px solid rgba(255,210,80,.25);
   background: rgba(8,6,0,.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  flex-shrink: 0;
+      flex-shrink: 0;
 }
 .shop-gold-display {
   font-family: 'Press Start 2P', monospace;
@@ -2492,9 +2508,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   padding: .8rem;
   display: flex; flex-direction: column; gap: .4rem;
   transition: border-color .15s, background .15s;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
+    }
 .shop-item:not(.shop-item-disabled):hover {
   border-color: rgba(255,200,60,.7);
   background: rgba(20,24,12,.92);
@@ -2503,9 +2517,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .shop-item-icon { font-size: 1.8rem; text-align: center; }
 .shop-item-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .5rem; color: var(--col-text);
+  font-size: .62rem; color: var(--col-text);
 }
-.shop-item-desc { font-size: .6rem; color: var(--col-text-dim); line-height: 1.5; flex: 1; }
+.shop-item-desc { font-size: .70rem; color: var(--col-text-dim); line-height: 1.5; flex: 1; }
 .shop-item-footer { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
 .shop-item-price {
   font-family: 'Press Start 2P', monospace;
@@ -2525,15 +2539,13 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-bottom: 1px solid rgba(255,210,80,.2);
   margin-bottom: .1rem;
 }
-.shop-buy-btn { margin-left: auto; font-size: .42rem !important; padding: .4em .7em !important; }
+.shop-buy-btn { margin-left: auto; font-size: .52rem !important; padding: .4em .7em !important; }
 .shop-footer {
   position: relative; z-index: var(--z-content);
   padding: .8rem; display: flex; justify-content: center;
   border-top: 2px solid rgba(255,210,80,.2);
   background: rgba(8,6,0,.55);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  flex-shrink: 0;
+      flex-shrink: 0;
 }
 
 /* ═══════════════════════════════════════════
@@ -2935,12 +2947,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .challenge-header-text { flex: 1; }
 .challenge-badge {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem;
+  font-size: .62rem;
   color: var(--col-red);
   margin-bottom: .4rem;
 }
 .challenge-intro {
-  font-size: .8rem;
+  font-size: .90rem;
   color: var(--col-text);
   line-height: 1.5;
 }
@@ -2959,7 +2971,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 .challenge-question {
   font-family: 'Press Start 2P', monospace;
-  font-size: .6rem;
+  font-size: .72rem;
   color: var(--col-yellow);
   line-height: 2;
   white-space: pre-line;
@@ -3553,8 +3565,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .held-picker-overlay {
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,.75);
-  backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
+    display: flex; align-items: center; justify-content: center;
   padding: 1rem;
 }
 .held-picker-panel {
@@ -3568,7 +3579,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .held-picker-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: .55rem; color: var(--col-yellow);
+  font-size: .65rem; color: var(--col-yellow);
   text-align: center;
 }
 .held-picker-list { display: flex; flex-direction: column; gap: .4rem; }
@@ -3632,7 +3643,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .energy-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem;
+  font-size: .50rem;
   color: var(--col-text-dim);
   margin-right: .15rem;
 }
@@ -3662,7 +3673,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   line-height: 1;
 }
 .card-cost-pip {
-  font-size: .45rem;
+  font-size: .55rem;
   line-height: 1;
 }
 
@@ -3730,7 +3741,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Message text */
 .log-msg {
-  font-size: .6rem;
+  font-size: .72rem;
   line-height: 1.4;
   flex: 1;
   min-width: 0;
@@ -3743,10 +3754,10 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .log-dmg-dealt  { color: #FFD700; font-weight: 800; }
 .log-dmg-taken  { color: #FF6B6B; font-weight: 800; }
 .log-heal       { color: #6FCF97; font-weight: 800; }
-.log-eff-super  { color: #FFD700; font-size: .52rem; }
-.log-eff-weak   { color: #aaaaaa; font-size: .52rem; }
+.log-eff-super  { color: #FFD700; font-size: .62rem; }
+.log-eff-weak   { color: #aaaaaa; font-size: .62rem; }
 .log-shield     { color: #56A0E0; font-size: .52rem; }
-.log-sys        { color: var(--col-yellow); font-size: .54rem; }
+.log-sys        { color: var(--col-yellow); font-size: .65rem; }
 
 /* ═══════════════════════════════════════════
    CATCH SCREEN — ENVIRONMENT BACKDROPS
@@ -3834,7 +3845,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   margin-top: .4rem;
 }
 .catch-type-badge {
-  font-size: .42rem; font-weight: 800;
+  font-size: .52rem; font-weight: 800;
   padding: .2em .6em; border-radius: 4px;
   text-transform: uppercase;
 }
@@ -4415,7 +4426,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .item-picker-icon { font-size: 1.1rem; flex-shrink: 0; }
 .item-picker-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem; color: var(--col-text); flex: 1;
+  font-size: .50rem; color: var(--col-text); flex: 1;
 }
 .item-picker-count {
   font-size: .45rem; color: var(--col-text-dim);
@@ -4612,7 +4623,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 .profile-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem; color: var(--col-yellow);
+  font-size: .52rem; color: var(--col-yellow);
   margin-bottom: .4rem;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -5218,8 +5229,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: fixed; inset: 0; z-index: 200;
   background: rgba(0,0,0,.75);
   display: flex; align-items: center; justify-content: center;
-  backdrop-filter: blur(4px);
-}
+  }
 .cooking-math-card {
   background: var(--col-surface);
   border: 2px solid var(--col-yellow);
@@ -5707,7 +5717,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .blaine-pun {
   margin-top: .5rem;
-  font-size: .48rem;
+  font-size: .58rem;
   color: #f09060;
   font-style: italic;
   border-top: 1px solid rgba(220,90,20,.3);
@@ -5819,7 +5829,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
    KOGA — hint line + two-line choice buttons
 ═══════════════════════════════════════════ */
 .koga-hint-line {
-  font-size: .48rem;
+  font-size: .58rem;
   color: rgba(192,128,240,.8);
   font-style: italic;
   padding: .5rem .6rem;
@@ -6713,6 +6723,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   gap: .3rem;
 }
 .jiggly-img {
+  will-change: transform;
   width: 100px; height: 100px;
   object-fit: contain;
   image-rendering: pixelated;
@@ -6908,7 +6919,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .jiggly-key-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .36rem;
+  font-size: .48rem;
   color: #444;
   position: relative; z-index: 2;
 }
@@ -7218,7 +7229,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .blaine-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem;
+  font-size: .50rem;
   color: var(--col-text);
   text-align: center;
 }
@@ -7264,7 +7275,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .blaine-choice-btn {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem;
+  font-size: .50rem;
   padding: .5rem .7rem;
   background: rgba(255,80,0,.15);
   border: 2px solid rgba(255,120,40,.4);
@@ -7761,7 +7772,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .fishing-card-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .40rem;
+  font-size: .52rem;
   color: #a8d0f8;
   text-align: center;
 }
@@ -7889,7 +7900,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .age-modal-title {
   font-family: 'Press Start 2P', monospace;
-  font-size: .55rem;
+  font-size: .65rem;
   color: var(--col-text, #fff);
   text-align: center;
 }
@@ -8008,18 +8019,18 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .cs-card-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem;
+  font-size: .50rem;
   color: #d0b0ff;
   text-align: center;
   line-height: 1.4;
 }
 .cs-card-desc {
-  font-size: .38rem;
+  font-size: .50rem;
   color: rgba(200,180,240,.6);
   text-align: center;
 }
 .cs-card-reward {
-  font-size: .36rem;
+  font-size: .48rem;
   color: #a0e0a0;
   text-align: center;
   background: rgba(0,80,40,.25);
@@ -8029,7 +8040,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   width: 100%;
 }
 .cs-play-btn {
-  font-size: .38rem !important;
+  font-size: .50rem !important;
   padding: .3rem .5rem !important;
   width: 100%;
   margin-top: auto;
@@ -8129,11 +8140,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .38rem;
 }
 .gio-score-label { color: rgba(255,255,255,.4); }
-.gio-score-val   { font-size: .55rem; color: #ffd700; }
+.gio-score-val   { font-size: .72rem; color: #ffd700; }
 .gio-score-target{ color: rgba(255,255,255,.35); }
 
 /* ── Card base ── */
 .gio-card {
+  will-change: transform;
   position: relative;
   width: 110px;
   height: 140px;
@@ -8161,7 +8173,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .gio-card-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .36rem;
+  font-size: .48rem;
   color: rgba(255,255,255,.6);
   text-align: center;
   padding: 0 .2rem;
@@ -8197,6 +8209,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Choice cards — hoverable, clickable */
 .gio-choice-card {
+  will-change: transform, box-shadow;
   cursor: pointer;
   border-color: rgba(255,255,255,.2);
 }

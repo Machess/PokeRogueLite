@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=79" />
+  <link rel="stylesheet" href="style.css?v=82" />
 </head>
 <body>
 
@@ -396,8 +396,10 @@
         <div class="pile-label">Discard</div>
       </div>
     </div>
-    <div class="hand-area" id="hand-area">
-      <!-- Cards injected by JS -->
+    <div class="hand-area-wrap">
+      <div class="hand-area" id="hand-area">
+        <!-- Cards injected by JS -->
+      </div>
     </div>
     <div class="action-info">
       <div class="actions-left" id="actions-left"></div>
@@ -498,7 +500,9 @@
           <div class="pile-label">Discard</div>
         </div>
       </div>
-      <div class="hand-area" id="boss-hand-area"></div>
+      <div class="hand-area-wrap">
+        <div class="hand-area" id="boss-hand-area"></div>
+      </div>
       <div class="action-info">
         <div class="actions-left" id="boss-actions-left"></div>
         <div class="turn-btn-wrap">
@@ -891,6 +895,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=132"></script>
+<script src="app.js?v=135"></script>
 </body>
 </html>
