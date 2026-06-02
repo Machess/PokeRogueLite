@@ -9181,120 +9181,183 @@ const ChallengeSelectEngine = {
   },
 };
 
-// ─── GIOVANNI ENGINE — Power Rankings Math Card Game ─────────────────────────
+// ─── GIOVANNI ENGINE — Gallery Painting Game ─────────────────────────────────
 
-// Pokémon pool with sprite IDs and assigned values
-const GIOVANNI_POKEMON_POOL = [
-  { name:'Bulbasaur',  id:1,   val:3  }, { name:'Charmander', id:4,   val:4  },
-  { name:'Squirtle',   id:7,   val:4  }, { name:'Caterpie',   id:10,  val:1  },
-  { name:'Pidgey',     id:16,  val:2  }, { name:'Rattata',    id:19,  val:2  },
-  { name:'Pikachu',    id:25,  val:5  }, { name:'Clefairy',   id:35,  val:3  },
-  { name:'Vulpix',     id:37,  val:4  }, { name:'Meowth',     id:52,  val:3  },
-  { name:'Psyduck',    id:54,  val:4  }, { name:'Growlithe',  id:58,  val:5  },
-  { name:'Poliwag',    id:60,  val:3  }, { name:'Abra',       id:63,  val:5  },
-  { name:'Machop',     id:66,  val:6  }, { name:'Geodude',    id:74,  val:4  },
-  { name:'Gastly',     id:92,  val:5  }, { name:'Onix',       id:95,  val:6  },
-  { name:'Drowzee',    id:96,  val:4  }, { name:'Krabby',     id:98,  val:3  },
-  { name:'Magnemite',  id:81,  val:4  }, { name:'Eevee',      id:133, val:5  },
-  { name:'Snorlax',    id:143, val:8  }, { name:'Dratini',    id:147, val:7  },
-  { name:'Lapras',     id:131, val:7  }, { name:'Kangaskhan', id:115, val:6  },
-  { name:'Tauros',     id:128, val:7  }, { name:'Rhyhorn',    id:111, val:6  },
-  { name:'Nidoking',   id:34,  val:8  }, { name:'Nidoqueen',  id:31,  val:8  },
-  { name:'Rhydon',     id:112, val:9  }, { name:'Persian',    id:53,  val:6  },
-  { name:'Dugtrio',    id:51,  val:5  }, { name:'Marowak',    id:105, val:6  },
+// Type colour palette — matches CSS variables exactly
+const GIO_PALETTE = [
+  { num:1, type:'electric', hex:'#F8D030', label:'Electric', dark:false },
+  { num:2, type:'fire',     hex:'#F08030', label:'Fire',     dark:false },
+  { num:3, type:'water',    hex:'#6890F0', label:'Water',    dark:false },
+  { num:4, type:'grass',    hex:'#78C850', label:'Grass',    dark:false },
+  { num:5, type:'psychic',  hex:'#F85888', label:'Psychic',  dark:false },
+  { num:6, type:'normal',   hex:'#C8B878', label:'Cream',    dark:false },
+  { num:7, type:'poison',   hex:'#A040A0', label:'Poison',   dark:false },
+  { num:8, type:'ground',   hex:'#C8A040', label:'Ground',   dark:false },
 ];
 
-// Operator sequences per tier — shown upfront so player can plan
-const GIOVANNI_OP_SEQUENCES = {
-  1: [['+','+','+','−','+']],                                            // Tier 1: 5 rounds
-  2: [['+','+','×','−','+','÷','×'],                                     // Tier 2: 7 rounds
-      ['+','×','+','−','÷','+','×']],
-  3: [['+','×','×','−','÷','+','×','−','×'],                             // Tier 3: 9 rounds
-      ['×','+','÷','×','−','×','+','÷','×'],
-      ['+','×','−','×','÷','×','+','−','×']],
-};
+// Each painting: abstract geometric zones + the Pokémon hidden inside
+// Points are [x%, y%] percentage of a 200×200 viewBox
+const GIOVANNI_PAINTINGS = [
+  {
+    name:       'Storm Fragment',
+    intro:      '"Colour it precisely. I can tell when someone guesses."',
+    revealId:   25,
+    revealName: 'Pikachu',
+    revealType: 'electric',
+    palette:    [1,6,2],   // colour numbers available (tier 1 uses first 2, tier 2 first 3, tier 3 all)
+    zones: [
+      // Lightning bolt shards radiating from centre — all yellow/electric
+      { id:1,  num:1, points:[[100,20],[115,65],[100,55],[85,65]] },    // top spike
+      { id:2,  num:1, points:[[140,40],[165,80],[130,70],[120,50]] },   // right spike
+      { id:3,  num:1, points:[[60,40],[80,50],[70,70],[35,80]] },       // left spike
+      { id:4,  num:1, points:[[100,55],[115,65],[110,120],[90,120],[85,65]] }, // centre bolt
+      { id:5,  num:6, points:[[80,130],[90,120],[110,120],[120,130],[100,155]] }, // tail/cream base
+      { id:6,  num:6, points:[[60,90],[80,95],[85,65],[35,80]] },       // left fill
+      { id:7,  num:6, points:[[120,90],[165,80],[140,40],[115,65]] },   // right fill
+      { id:8,  num:2, points:[[45,140],[80,130],[100,155],[60,170]] },  // ground shadow left
+      { id:9,  num:2, points:[[155,140],[120,130],[100,155],[140,170]]}, // ground shadow right
+    ],
+  },
+  {
+    name:       'Ancient Flame',
+    intro:      '"Fire is not chaos. It has structure. Find it."',
+    revealId:   4,
+    revealName: 'Charmander',
+    revealType: 'fire',
+    palette:    [2,6,1,8],
+    zones: [
+      { id:1,  num:2, points:[[100,15],[120,50],[100,45],[80,50]] },     // flame tip
+      { id:2,  num:2, points:[[80,50],[100,45],[120,50],[130,90],[70,90]] }, // upper flame
+      { id:3,  num:2, points:[[60,90],[70,90],[80,130],[65,140],[45,110]] }, // left flame tongue
+      { id:4,  num:2, points:[[140,90],[130,90],[120,130],[135,140],[155,110]] }, // right flame tongue
+      { id:5,  num:6, points:[[70,90],[130,90],[125,145],[100,160],[75,145]] }, // body centre
+      { id:6,  num:1, points:[[75,145],[125,145],[120,175],[80,175]] },  // tail ember
+      { id:7,  num:8, points:[[45,150],[75,145],[80,175],[50,180]] },    // left base
+      { id:8,  num:8, points:[[155,150],[125,145],[120,175],[150,180]] },// right base
+    ],
+  },
+  {
+    name:       'Tidal Arc',
+    intro:      '"The ocean does not apologise. Neither should your brushwork."',
+    revealId:   7,
+    revealName: 'Squirtle',
+    revealType: 'water',
+    palette:    [3,6,1,8],
+    zones: [
+      { id:1,  num:3, points:[[20,60],[55,40],[70,70],[40,85]] },        // left wave crest
+      { id:2,  num:3, points:[[55,40],[100,25],[115,55],[70,70]] },      // top wave arc
+      { id:3,  num:3, points:[[100,25],[145,40],[130,70],[115,55]] },    // right top arc
+      { id:4,  num:3, points:[[130,70],[160,60],[180,90],[145,100]] },   // right wave
+      { id:5,  num:3, points:[[40,85],[70,70],[115,55],[145,100],[100,120],[55,110]] }, // main body water
+      { id:6,  num:6, points:[[55,110],[100,120],[95,160],[65,165]] },   // shell left
+      { id:7,  num:6, points:[[100,120],[145,100],[135,165],[105,160]] }, // shell right
+      { id:8,  num:1, points:[[65,165],[95,160],[105,160],[135,165],[100,185]] }, // base foam
+      { id:9,  num:8, points:[[20,120],[40,85],[55,110],[35,145]] },     // left shadow
+      { id:10, num:8, points:[[180,120],[145,100],[135,165],[165,155]] }, // right shadow
+    ],
+  },
+  {
+    name:       'Forest Spiral',
+    intro:      '"Growth follows a pattern. Show me you see it."',
+    revealId:   1,
+    revealName: 'Bulbasaur',
+    revealType: 'grass',
+    palette:    [4,6,3,8],
+    zones: [
+      { id:1,  num:4, points:[[100,15],[130,30],[125,65],[100,60],[75,65],[70,30]] },  // top canopy
+      { id:2,  num:4, points:[[60,55],[75,65],[70,100],[45,90]] },       // left leaf
+      { id:3,  num:4, points:[[140,55],[125,65],[130,100],[155,90]] },   // right leaf
+      { id:4,  num:4, points:[[70,100],[100,90],[130,100],[125,130],[75,130]] }, // lower canopy
+      { id:5,  num:6, points:[[75,130],[125,130],[120,165],[80,165]] },  // body
+      { id:6,  num:3, points:[[45,130],[75,130],[80,165],[50,175]] },    // left vine
+      { id:7,  num:3, points:[[155,130],[125,130],[120,165],[150,175]] }, // right vine
+      { id:8,  num:8, points:[[80,165],[120,165],[115,185],[85,185]] },  // ground
+    ],
+  },
+  {
+    name:       'Mind Fracture',
+    intro:      '"Psychic power crystallises in patterns. Recognise them."',
+    revealId:   63,
+    revealName: 'Abra',
+    revealType: 'psychic',
+    palette:    [5,6,1,3,8],
+    zones: [
+      { id:1,  num:5, points:[[100,10],[125,45],[100,40],[75,45]] },     // top crystal
+      { id:2,  num:5, points:[[150,25],[165,70],[135,65],[125,45]] },    // right top shard
+      { id:3,  num:5, points:[[50,25],[75,45],[65,65],[35,70]] },        // left top shard
+      { id:4,  num:5, points:[[125,45],[100,40],[75,45],[65,65],[100,75],[135,65]] }, // crown ring
+      { id:5,  num:6, points:[[65,65],[100,75],[135,65],[145,110],[100,120],[55,110]] }, // face zone
+      { id:6,  num:1, points:[[35,70],[65,65],[55,110],[20,100]] },      // left aura
+      { id:7,  num:1, points:[[165,70],[135,65],[145,110],[180,100]] },  // right aura
+      { id:8,  num:3, points:[[55,110],[100,120],[145,110],[140,155],[100,165],[60,155]] }, // body
+      { id:9,  num:8, points:[[60,155],[100,165],[140,155],[130,185],[70,185]] }, // base shadow
+    ],
+  },
+  {
+    name:       'Shadow Veil',
+    intro:      '"Darkness is not the absence of colour. It is a colour. Use it."',
+    revealId:   94,
+    revealName: 'Gengar',
+    revealType: 'ghost',
+    palette:    [7,5,6,3,1,8],
+    zones: [
+      { id:1,  num:7, points:[[100,15],[140,40],[135,75],[100,65],[65,75],[60,40]] },  // dark crown
+      { id:2,  num:7, points:[[40,55],[60,40],[65,75],[45,90],[20,80]] }, // left dark arc
+      { id:3,  num:7, points:[[160,55],[140,40],[135,75],[155,90],[180,80]] }, // right dark arc
+      { id:4,  num:5, points:[[65,75],[100,65],[135,75],[130,115],[100,125],[70,115]] }, // purple glow body
+      { id:5,  num:5, points:[[45,90],[65,75],[70,115],[50,130],[25,110]] }, // left mist
+      { id:6,  num:5, points:[[155,90],[135,75],[130,115],[150,130],[175,110]] }, // right mist
+      { id:7,  num:6, points:[[70,115],[100,125],[130,115],[128,155],[72,155]] }, // belly cream
+      { id:8,  num:1, points:[[50,155],[72,155],[68,180],[40,175]] },    // left glow
+      { id:9,  num:1, points:[[150,155],[128,155],[132,180],[160,175]] }, // right glow
+      { id:10, num:8, points:[[68,180],[132,180],[125,195],[75,195]] },  // ground
+    ],
+  },
+];
 
-// Commentary by Giovanni — keyed by situation
-const GIOVANNI_LINES = {
-  correct_add:  `"Numbers are power. You chose correctly."`,
-  correct_sub:  `"Precise. You protected your score."`,
-  correct_mul:  `"Intelligent leverage. Exactly what I expected."`,
-  correct_div:  `"Good. Minimise losses. Basic strategy."`,
-  wrong_add:    `"You left points on the table. Unacceptable."`,
-  wrong_sub:    `"You subtracted more than necessary. Careless."`,
-  wrong_mul:    `"Multiplying a smaller number. Disappointing."`,
-  wrong_div:    `"A larger divisor. You weakened yourself."`,
-  round_final:  `"Last round. Make it count."`,
-  win:          `"Impressive. You have the makings of a Rocket executive."`,
-  lose:         `"You had the tools. You lacked the strategy. Dismissed."`,
+// Giovanni commentary lines — painting-themed, never reveal the Pokémon
+const GIO_LINES = {
+  start:       '"Colour it precisely. Show me you understand the type."',
+  first_zone:  '"Good. You started with conviction."',
+  wrong_color: '"That colour does not belong there. Think again."',
+  change_mind: '"Changed your mind. Doubt or wisdom — I cannot tell yet."',
+  all_one_type:'"The [TYPE] zones. Consistent."',
+  examining:   '"..."',
+  grade_3:     '"Worthy of my collection."',
+  grade_2:     '"Acceptable. Not remarkable."',
+  grade_1:     '"You missed the point."',
+  grade_0:     '"Disappointing. Even a child could see the type."',
 };
 
 const GiovanniEngine = {
-  _node:       null,
-  _score:      0,
-  _startCard:  null,
-  _operators:  [],
-  _roundIdx:   0,
-  _target:     0,
-  _tier:       1,
-  _pool:       [],
-  _roundCount: 0,
-  _isActive:   false,
+  _node:        null,
+  _isActive:    false,
+  _painting:    null,
+  _filled:      {},     // { zoneId: colorNum }
+  _selectedColor: null,
+  _tier:        1,
+  _undoStack:   [],     // [{zoneId, prev}]
 
   start(node) {
     this._node      = node;
     this._isActive  = true;
     this._tier      = GameState.difficultyTier || 2;
-    this._roundIdx  = 0;
-    this._roundCount = this._tier <= 1 ? 5 : this._tier === 2 ? 7 : 9;
+    this._filled    = {};
+    this._undoStack = [];
+    this._selectedColor = null;
 
-    // Pick operator sequence
-    const seqs = GIOVANNI_OP_SEQUENCES[this._tier] || GIOVANNI_OP_SEQUENCES[2];
-    this._operators = [...seqs[Math.floor(Math.random() * seqs.length)]];
+    // Pick a random painting
+    this._painting = GIOVANNI_PAINTINGS[
+      Math.floor(Math.random() * GIOVANNI_PAINTINGS.length)
+    ];
 
-    // Shuffle pool and pick starting card
-    this._pool = shuffle([...GIOVANNI_POKEMON_POOL]);
-    const startPoke = this._pool.shift();
-    const startVal  = this._tier <= 1
-      ? Math.floor(Math.random() * 4) + 1   // 1-4
-      : this._tier === 2
-      ? Math.floor(Math.random() * 6) + 2   // 2-7
-      : Math.floor(Math.random() * 7) + 3;  // 3-9
-
-    this._startCard = {
-      ...startPoke,
-      val: startVal,
-      spriteUrl:  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${startPoke.id}.png`,
-      artworkUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${startPoke.id}.png`,
-    };
-    this._score = startVal;
-
-    // Target: set to average-play achievable score — simulate average choices
-    // Average card value by tier
-    const avgCard = this._tier <= 1 ? 2.5 : this._tier === 2 ? 5 : 7;
-    let simScore  = startVal;
-    this._operators.forEach(op => {
-      if (op === '+') simScore += avgCard;
-      else if (op === '−') simScore = Math.max(0, simScore - 1.5); // assume player picks small
-      else if (op === '×') simScore = Math.round(simScore * (avgCard * 0.7));
-      else if (op === '÷') simScore = Math.max(1, Math.floor(simScore / 2));
-    });
-    // Target = 70% of simulated average score, minimum of startVal + roundCount
-    this._target = Math.max(
-      Math.round(simScore * 0.7),
-      startVal + this._roundCount
-    );
-
-    // Boss-screen intro — same pattern as NinjaMemoryEngine/BlaineEngine
+    // Boss screen intro
     showScreen('boss');
     BossEngine._isRocket = false;
-
     const bgEl  = document.querySelector('#screen-boss .battle-bg');
     const imgEl = document.querySelector('#screen-boss .battle-bg-img');
-    if (bgEl) {
-      bgEl.style.background = GYM_FALLBACKS[7] || 'linear-gradient(160deg,#1a1a1a,#0a0a0a)';
-      if (imgEl) { imgEl.style.opacity = '0'; }
-    }
+    if (bgEl) { bgEl.style.background = GYM_FALLBACKS[7]; }
+    if (imgEl) { imgEl.style.opacity = '0'; }
 
     document.getElementById('trainer-intro').style.display    = 'flex';
     document.getElementById('boss-battle-area').style.display = 'none';
@@ -9303,11 +9366,12 @@ const GiovanniEngine = {
     if (trainerImg) trainerImg.src = 'assets/giovanni.png';
     document.getElementById('dialogue-name').textContent = 'Giovanni';
     document.getElementById('dialogue-text').textContent = '';
+
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Begin ▶'; }
     document.getElementById('btn-dialogue-next').style.display = 'none';
 
-    const intro = `${GameState.trainerName || 'Trainer'}. I am conducting Power Rankings — a tournament to find the strongest Pokémon. You will make ${this._roundCount} choices. Reach ${this._target} or higher to impress me.`;
+    const intro = `${GameState.trainerName || 'Trainer'}. I am expanding my collection. I have an unfinished work — "${this._painting.name}". Colour it by number. Impress me.`;
     let ci = 0;
     const iv = setInterval(() => {
       document.getElementById('dialogue-text').textContent += intro[ci++];
@@ -9318,24 +9382,33 @@ const GiovanniEngine = {
   startGame() {
     this._isActive = false;
     document.getElementById('trainer-intro').style.display = 'none';
-    this._showRound();
+    this._showPainting();
   },
 
-  _showRound() {
-    const op = this._operators[this._roundIdx];
-    const isLast = this._roundIdx === this._roundCount - 1;
+  _showPainting() {
+    const p    = this._painting;
+    const tier = this._tier;
+
+    // Which zones are visible (tier scales complexity)
+    const visibleZones = tier <= 1
+      ? p.zones.slice(0, Math.min(5, p.zones.length))
+      : tier === 2
+      ? p.zones.slice(0, Math.min(8, p.zones.length))
+      : p.zones;
+
+    // Which palette colours are available
+    const paletteNums = new Set(visibleZones.map(z => z.num));
+    const palette     = GIO_PALETTE.filter(c => paletteNums.has(c.num));
 
     // Setup challenge screen
     const charImg = document.getElementById('challenge-character-img');
     if (charImg) { charImg.src = 'assets/giovanni.png'; charImg.style.display = ''; }
-    document.getElementById('challenge-badge').textContent = '🃏 Power Rankings';
-    document.getElementById('challenge-intro').textContent =
-      `Round ${this._roundIdx + 1} of ${this._roundCount}  ·  Target: ${this._target}`;
+    document.getElementById('challenge-badge').textContent  = '🎨 Giovanni\'s Gallery';
+    document.getElementById('challenge-intro').textContent  = `"${p.name}"`;
     document.getElementById('challenge-result').style.display       = 'none';
     document.getElementById('challenge-continue-btn').style.display = 'none';
-    const qEl = document.getElementById('challenge-question');
-    qEl.style.display = 'none'; qEl.textContent = '';
-    document.getElementById('challenge-answer-btns').innerHTML = '';
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
     const jwd = document.getElementById('jessie-word-display');
     if (jwd) { jwd.style.display='none'; jwd.innerHTML=''; jwd.className='jessie-word-display'; }
 
@@ -9347,207 +9420,321 @@ const GiovanniEngine = {
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
     document.getElementById('screen-challenge').classList.add('giovanni-active');
-    if (this._roundIdx === 0) SoundEngine.playBGM('mini_game.mp3');
+    SoundEngine.playBGM('mini_game.mp3');
 
-    // Operator sequence bar
-    const seqBar = document.createElement('div');
-    seqBar.className = 'gio-seq-bar';
-    this._operators.forEach((o, i) => {
-      const pip = document.createElement('div');
-      pip.className = 'gio-seq-pip' +
-        (i === this._roundIdx ? ' gio-seq-current' : i < this._roundIdx ? ' gio-seq-done' : '');
-      pip.textContent = i < this._roundIdx ? '✓' : o;
-      seqBar.appendChild(pip);
+    // ── Build SVG canvas ─────────────────────────────────────────────────────
+    const canvasWrap = document.createElement('div');
+    canvasWrap.className = 'gio-canvas-wrap';
+
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg   = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('viewBox', '0 0 200 200');
+    svg.setAttribute('class', 'gio-canvas-svg');
+    svg.setAttribute('id', 'gio-svg');
+
+    // Background
+    const bg = document.createElementNS(svgNS, 'rect');
+    bg.setAttribute('width', '200'); bg.setAttribute('height', '200');
+    bg.setAttribute('fill', '#1a1a2a');
+    svg.appendChild(bg);
+
+    // Zones not in visibleZones are pre-filled grey (background)
+    const visibleIds = new Set(visibleZones.map(z => z.id));
+    p.zones.forEach(z => {
+      if (visibleIds.has(z.id)) return;
+      const poly = document.createElementNS(svgNS, 'polygon');
+      poly.setAttribute('points', z.points.map(([x,y]) => `${x*2},${y*2}`).join(' '));
+      poly.setAttribute('fill', '#2a2a3a');
+      poly.setAttribute('stroke', '#3a3a4a');
+      poly.setAttribute('stroke-width', '1');
+      svg.appendChild(poly);
     });
-    cv.appendChild(seqBar);
 
-    // Score bar
-    const scoreBar = document.createElement('div');
-    scoreBar.className = 'gio-score-bar';
-    scoreBar.innerHTML = `
-      <span class="gio-score-label">Score</span>
-      <span class="gio-score-val" id="gio-score-val">${this._score}</span>
-      <span class="gio-score-target">/ ${this._target} needed</span>`;
-    cv.appendChild(scoreBar);
+    // Visible zones
+    visibleZones.forEach(z => {
+      const poly = document.createElementNS(svgNS, 'polygon');
+      poly.setAttribute('id', `gio-zone-${z.id}`);
+      poly.setAttribute('points', z.points.map(([x,y]) => `${x*2},${y*2}`).join(' '));
+      poly.setAttribute('fill', '#2e2e40');
+      poly.setAttribute('stroke', '#888');
+      poly.setAttribute('stroke-width', '1.5');
+      poly.setAttribute('class', 'gio-zone');
+      poly.setAttribute('data-zone', z.id);
+      poly.setAttribute('data-correct', z.num);
+      poly.addEventListener('click', () => this._tapZone(z.id, poly));
+      svg.appendChild(poly);
 
-    if (isLast) setTimeout(() => this._showGiovanniComment('round_final'), 200);
-
-    // Pick two random Pokémon
-    const picks = [this._pool.shift(), this._pool.shift()];
-    // Re-add to back so pool never runs out
-    picks.forEach(p => this._pool.push(p));
-
-    // Scale values by tier
-    const scaleVal = (base) => {
-      if (this._tier <= 1) return Math.min(Math.max(Math.round(base * 0.6), 1), 5);
-      if (this._tier === 2) return Math.min(Math.max(base, 1), 9);
-      return Math.min(Math.max(base, 1), 12);
-    };
-    const cards = picks.map(p => ({
-      ...p,
-      val: scaleVal(p.val),
-      // Fast sprite loads instantly (~50ms), official artwork is slow (~500ms)
-      spriteUrl:  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
-      artworkUrl: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`,
-    }));
-
-    // Choice area — two cards top
-    const choiceArea = document.createElement('div');
-    choiceArea.className = 'gio-choice-area';
-    choiceArea.id = 'gio-choice-area';
-
-    const cardEls = cards.map((card, ci) => {
-      const el = this._makeCard(card, true);
-      el.addEventListener('click', () => this._pick(card, cards, op, el));
-      // Preview on hover — Tier 1 always, Tier 2 hover, Tier 3 hidden
-      if (this._tier <= 1) {
-        el.title = this._calcPreview(this._score, op, card.val);
-      } else if (this._tier === 2) {
-        el.addEventListener('mouseenter', () => {
-          el.querySelector('.gio-card-preview').textContent = this._calcPreview(this._score, op, card.val);
-        });
-        el.addEventListener('mouseleave', () => {
-          el.querySelector('.gio-card-preview').textContent = '';
-        });
+      // Number label — Tier 1 always visible, Tier 2 fades after 5s, Tier 3 hidden
+      if (tier <= 2) {
+        const bbox   = z.points;
+        const cx     = bbox.reduce((s,[x]) => s+x, 0) / bbox.length;
+        const cy     = bbox.reduce((s,[,y]) => s+y, 0) / bbox.length;
+        const text   = document.createElementNS(svgNS, 'text');
+        text.setAttribute('x', cx * 2);
+        text.setAttribute('y', cy * 2 + 4);
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('font-size', '10');
+        text.setAttribute('font-family', 'Press Start 2P, monospace');
+        text.setAttribute('fill', 'rgba(255,255,255,0.85)');
+        text.setAttribute('class', 'gio-zone-label');
+        text.setAttribute('id', `gio-label-${z.id}`);
+        text.setAttribute('pointer-events', 'none');
+        text.textContent = z.num;
+        svg.appendChild(text);
+        if (tier === 2) {
+          setTimeout(() => {
+            text.style.transition = 'opacity 1s';
+            text.style.opacity = '0';
+          }, 5000);
+        }
       }
-      choiceArea.appendChild(el);
-      return el;
     });
 
-    cv.appendChild(choiceArea);
+    canvasWrap.appendChild(svg);
+    cv.appendChild(canvasWrap);
 
-    // Operator badge
-    const opBadge = document.createElement('div');
-    opBadge.className = 'gio-operator-badge';
-    opBadge.textContent = op;
-    cv.appendChild(opBadge);
+    // ── Colour palette ────────────────────────────────────────────────────────
+    const paletteRow = document.createElement('div');
+    paletteRow.className = 'gio-palette';
+    paletteRow.id        = 'gio-palette';
+    palette.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = 'gio-palette-btn';
+      btn.id        = `gio-pal-${c.num}`;
+      btn.style.setProperty('--pal-color', c.hex);
+      btn.innerHTML = `<span class="gio-pal-num">${c.num}</span>`;
+      btn.title     = c.label;
+      btn.addEventListener('click', () => this._selectColor(c.num, btn));
+      paletteRow.appendChild(btn);
+    });
+    cv.appendChild(paletteRow);
 
-    // Player's card — bottom
-    const playerArea = document.createElement('div');
-    playerArea.className = 'gio-player-area';
-    const playerCard = this._makeCard(this._startCard, false);
-    playerCard.classList.add('gio-player-card');
-    playerArea.appendChild(playerCard);
-    cv.appendChild(playerArea);
+    // ── Selected colour indicator + undo ─────────────────────────────────────
+    const controlRow = document.createElement('div');
+    controlRow.className = 'gio-control-row';
+    controlRow.innerHTML = `
+      <div class="gio-selected-indicator" id="gio-sel-indicator">
+        <span>Select a colour</span>
+      </div>
+      <button class="gio-undo-btn" id="gio-undo-btn" disabled>↩ Undo</button>`;
+    cv.appendChild(controlRow);
+    document.getElementById('gio-undo-btn').addEventListener('click', () => this._undo());
 
-    // Giovanni portrait + comment area
+    // ── Submit button ─────────────────────────────────────────────────────────
+    const submitBtn = document.createElement('button');
+    submitBtn.className = 'btn-pixel btn-primary gio-submit-btn';
+    submitBtn.id        = 'gio-submit-btn';
+    submitBtn.textContent = '✓ Submit Artwork';
+    submitBtn.disabled  = true;
+    submitBtn.addEventListener('click', () => this._submit(visibleZones));
+    cv.appendChild(submitBtn);
+
+    // ── Giovanni comment row ─────────────────────────────────────────────────
     const gioRow = document.createElement('div');
     gioRow.className = 'gio-giovanni-row';
     gioRow.innerHTML = `
       <img src="assets/giovanni.png" class="gio-portrait"
            onerror="this.style.display='none'" alt="Giovanni"/>
-      <div class="gio-comment" id="gio-comment"></div>`;
+      <div class="gio-comment" id="gio-comment">${p.intro}</div>`;
     cv.appendChild(gioRow);
+    // Show intro then fade
+    const commentEl = document.getElementById('gio-comment');
+    commentEl.classList.add('gio-comment-show');
+    setTimeout(() => commentEl.classList.remove('gio-comment-show'), 3500);
   },
 
-  _makeCard(card, isChoice) {
-    const el = document.createElement('div');
-    el.className = 'gio-card' + (isChoice ? ' gio-choice-card' : '');
-    el.innerHTML = `
-      <div class="gio-card-inner">
-        <img class="gio-card-sprite" src="${card.spriteUrl}"
-             alt="${card.name}"
-             onerror="this.style.opacity='0'"/>
-        <div class="gio-card-name">${card.name}</div>
-        <div class="gio-card-val">${card.val}</div>
-        ${isChoice ? '<div class="gio-card-preview"></div>' : ''}
-      </div>`;
+  _selectColor(num, btn) {
+    this._selectedColor = num;
+    // Update palette selection state
+    document.querySelectorAll('.gio-palette-btn').forEach(b => b.classList.remove('gio-pal-active'));
+    btn.classList.add('gio-pal-active');
+    // Update indicator
+    const col = GIO_PALETTE.find(c => c.num === num);
+    const ind = document.getElementById('gio-sel-indicator');
+    if (ind && col) {
+      ind.innerHTML = `<span class="gio-sel-swatch" style="background:${col.hex}"></span>
+                       <span>${col.label}</span>`;
+    }
+  },
 
-    // Progressive upgrade to official artwork once fast sprite has loaded
-    if (card.artworkUrl) {
-      const fastImg = el.querySelector('.gio-card-sprite');
-      const artwork = new Image();
-      artwork.onload = () => { if (fastImg) fastImg.src = card.artworkUrl; };
-      artwork.src = card.artworkUrl;
+  _tapZone(zoneId, polyEl) {
+    if (this._selectedColor === null) {
+      this._showComment('"Select a colour first."');
+      return;
+    }
+    const prev = this._filled[zoneId] ?? null;
+    const col  = GIO_PALETTE.find(c => c.num === this._selectedColor);
+    if (!col) return;
+
+    // Push undo (max 1 step)
+    this._undoStack = [{ zoneId, prev }];
+    document.getElementById('gio-undo-btn').disabled = false;
+
+    this._filled[zoneId] = this._selectedColor;
+    polyEl.setAttribute('fill', col.hex);
+    polyEl.classList.add('gio-zone-filled');
+
+    // Commentary
+    if (Object.keys(this._filled).length === 1) {
+      this._showComment(GIO_LINES.first_zone);
+    } else if (prev !== null && prev !== this._selectedColor) {
+      this._showComment(GIO_LINES.change_mind);
     }
 
-    return el;
+    // Enable submit when all visible zones filled
+    const svg = document.getElementById('gio-svg');
+    const allFilled = svg
+      ? [...svg.querySelectorAll('.gio-zone')].every(z =>
+          this._filled[parseInt(z.dataset.zone)] !== undefined)
+      : false;
+    const submitBtn = document.getElementById('gio-submit-btn');
+    if (submitBtn) submitBtn.disabled = !allFilled;
   },
 
-  _calcPreview(score, op, val) {
-    const res = this._applyOp(score, op, val);
-    return `${score} ${op} ${val} = ${res}`;
-  },
+  _undo() {
+    if (!this._undoStack.length) return;
+    const { zoneId, prev } = this._undoStack.pop();
+    document.getElementById('gio-undo-btn').disabled = true;
 
-  _applyOp(score, op, val) {
-    if (op === '+') return score + val;
-    if (op === '−') return Math.max(0, score - val);
-    if (op === '×') return score * val;
-    if (op === '÷') return Math.max(1, Math.floor(score / Math.max(1, val)));
-    return score;
-  },
-
-  _bestChoice(score, op, a, b) {
-    // Returns which value gives a better result
-    const ra = this._applyOp(score, op, a);
-    const rb = this._applyOp(score, op, b);
-    return ra >= rb ? a : b;
-  },
-
-  _pick(chosen, both, op, chosenEl) {
-    const other     = both.find(c => c !== chosen);
-    const best      = this._bestChoice(this._score, op, chosen.val, other.val);
-    const isCorrect = chosen.val === best;
-    const newScore  = this._applyOp(this._score, op, chosen.val);
-
-    // Visual feedback
-    document.querySelectorAll('.gio-choice-card').forEach(c => {
-      c.style.pointerEvents = 'none';
-    });
-    chosenEl.classList.add('gio-card-chosen');
-
-    // Animate score change on player card
-    const valEl = document.querySelector('.gio-player-card .gio-card-val');
-    if (valEl) {
-      valEl.classList.add(newScore > this._score ? 'gio-score-up' : 'gio-score-down');
-      setTimeout(() => { valEl.textContent = newScore; valEl.classList.remove('gio-score-up','gio-score-down'); }, 350);
-    }
-    const scoreEl = document.getElementById('gio-score-val');
-    if (scoreEl) setTimeout(() => { scoreEl.textContent = newScore; }, 400);
-
-    // Giovanni reacts
-    const commentKey = (isCorrect ? 'correct_' : 'wrong_') +
-      ({'+':'add','−':'sub','×':'mul','÷':'div'}[op] || 'add');
-    this._showGiovanniComment(commentKey);
-
-    this._score = newScore;
-    // Update score but preserve all other fields including spriteUrl
-    this._startCard = { ...this._startCard, val: newScore };
-    this._roundIdx++;
-
-    if (this._roundIdx >= this._roundCount) {
-      setTimeout(() => this._finish(), 1000);
+    if (prev === null) {
+      delete this._filled[zoneId];
+      const polyEl = document.getElementById(`gio-zone-${zoneId}`);
+      if (polyEl) { polyEl.setAttribute('fill', '#2e2e40'); polyEl.classList.remove('gio-zone-filled'); }
     } else {
-      setTimeout(() => this._showRound(), 1100);
+      this._filled[zoneId] = prev;
+      const col = GIO_PALETTE.find(c => c.num === prev);
+      const polyEl = document.getElementById(`gio-zone-${zoneId}`);
+      if (polyEl && col) polyEl.setAttribute('fill', col.hex);
     }
+    const submitBtn = document.getElementById('gio-submit-btn');
+    if (submitBtn) submitBtn.disabled = true;
+    this._showComment(GIO_LINES.change_mind);
   },
 
-  _showGiovanniComment(key) {
+  _submit(visibleZones) {
+    let correct = 0;
+    visibleZones.forEach(z => {
+      if (this._filled[z.id] === z.num) correct++;
+    });
+    const pct   = correct / visibleZones.length;
+    const grade = pct >= 1.0 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
+
+    // Disable all interaction
+    document.querySelectorAll('.gio-zone').forEach(el => {
+      el.style.pointerEvents = 'none';
+    });
+    document.querySelectorAll('.gio-palette-btn, #gio-submit-btn, #gio-undo-btn')
+      .forEach(el => { el.disabled = true; });
+
+    // Step 1: flash wrong zones to correct colour
+    this._showComment(GIO_LINES.examining);
+    setTimeout(() => {
+      visibleZones.forEach(z => {
+        const polyEl = document.getElementById(`gio-zone-${z.id}`);
+        if (!polyEl) return;
+        const isRight = this._filled[z.id] === z.num;
+        if (!isRight) {
+          // Flash correct colour
+          const correctCol = GIO_PALETTE.find(c => c.num === z.num);
+          polyEl.classList.add('gio-zone-wrong-flash');
+          setTimeout(() => {
+            polyEl.setAttribute('fill', correctCol?.hex || '#888');
+            polyEl.classList.remove('gio-zone-wrong-flash');
+            polyEl.classList.add('gio-zone-corrected');
+          }, 400);
+        } else {
+          polyEl.classList.add('gio-zone-correct-pulse');
+        }
+      });
+
+      // Step 2: reveal Pokémon sprite after corrections settle
+      setTimeout(() => this._revealPokemon(grade, correct, visibleZones.length), 1200);
+    }, 800);
+  },
+
+  _revealPokemon(grade, correct, total) {
+    const p      = this._painting;
+    const svg    = document.getElementById('gio-svg');
+    const wrap   = document.querySelector('.gio-canvas-wrap');
+    if (!wrap) { this._finish(grade); return; }
+
+    // Fade SVG to dimmed
+    if (svg) { svg.style.transition = 'opacity .8s'; svg.style.opacity = '0.35'; }
+
+    // Reveal sprite centred on canvas
+    const revealImg = document.createElement('img');
+    revealImg.className   = 'gio-reveal-sprite';
+    revealImg.src         = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.revealId}.png`;
+    revealImg.alt         = p.revealName;
+    revealImg.onerror     = () => {
+      revealImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.revealId}.png`;
+    };
+    wrap.appendChild(revealImg);
+
+    // Name reveal below canvas
+    const nameEl = document.createElement('div');
+    nameEl.className   = 'gio-reveal-name';
+    nameEl.textContent = '';
+    wrap.appendChild(nameEl);
+
+    // Typewrite the name
+    setTimeout(() => {
+      let i = 0;
+      const tick = () => {
+        nameEl.textContent += p.revealName[i++];
+        if (i < p.revealName.length) setTimeout(tick, 60);
+      };
+      tick();
+    }, 800);
+
+    // Grade badge + Giovanni final comment
+    setTimeout(() => {
+      const gradeEmoji = ['❌','★','★★','★★★'][grade];
+      const gradeLabel = ['Dismissed','Below Expectations','Acceptable','Masterpiece'][grade];
+      const gradeComment = [
+        `"You missed the point. That was ${p.revealName}."`,
+        `"${p.revealName}. You found the type but not the depth."`,
+        `"${p.revealName}. Acceptable. Not remarkable."`,
+        `"${p.revealName}. You understood. It is worthy of my collection."`,
+      ][grade];
+
+      const gradeBadge = document.createElement('div');
+      gradeBadge.className = `gio-grade-badge gio-grade-${grade}`;
+      gradeBadge.innerHTML = `<span class="gio-grade-stars">${gradeEmoji}</span>
+                              <span class="gio-grade-label">${gradeLabel}</span>
+                              <span class="gio-grade-score">${correct}/${total} zones</span>`;
+      const cv = document.getElementById('challenge-coin-visual');
+      if (cv) cv.insertBefore(gradeBadge, cv.querySelector('.gio-giovanni-row'));
+
+      this._showComment(gradeComment);
+
+      // Finish after player sees the reveal
+      setTimeout(() => this._finish(grade), 3000);
+    }, 1500);
+  },
+
+  _showComment(text) {
     const el = document.getElementById('gio-comment');
     if (!el) return;
-    el.textContent = GIOVANNI_LINES[key] || '';
+    el.textContent = text;
     el.classList.remove('gio-comment-show');
-    void el.offsetWidth; // reflow to restart animation
+    void el.offsetWidth;
     el.classList.add('gio-comment-show');
-    setTimeout(() => el.classList.remove('gio-comment-show'), 2800);
+    setTimeout(() => el.classList.remove('gio-comment-show'), 3000);
   },
 
-  _finish() {
-    const won        = this._score >= this._target;
+  _finish(grade) {
     const bi         = GameState.bossesDefeated || 0;
-    const goldReward = won ? 15 + bi * 3 : 5;
+    const goldReward = [5, 8, 15 + bi * 2, 20 + bi * 3][grade];
 
     GameState.gold = (GameState.gold || 0) + goldReward;
     SoundEngine.stopBGM();
 
-    if (won) {
-      // Endorsement — first card in deck gets +5 bonus damage flag
-      if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+    if (grade >= 3) {
       GameState.pendingPlayerEffects.giovanniEndorsement = true;
       SoundEngine.playFanfare();
-    } else {
-      // Disinformation — one opening-hand card shows false power next battle
-      if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+    } else if (grade === 0) {
       GameState.pendingPlayerEffects.giovanniDisinfo = true;
     }
 
@@ -9556,19 +9743,20 @@ const GiovanniEngine = {
     const cv = document.getElementById('challenge-coin-visual');
     cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
 
-    const resultLine = won ? GIOVANNI_LINES.win : GIOVANNI_LINES.lose;
-    const title = won ? `🃏 Giovanni is Impressed` : `🃏 Giovanni is Disappointed`;
-    const body  = won
-      ? `Score: ${this._score} / Target: ${this._target} ✅\n+${goldReward}💰\n\n⭐ One of your cards receives Giovanni's Endorsement — +5 bonus damage next battle!\n\n${resultLine}`
-      : `Score: ${this._score} / Target: ${this._target} ❌\n+${goldReward}💰\n\n🃏 Giovanni planted Disinformation — one card next battle shows false power.\n\n${resultLine}`;
+    const titles   = ['🎨 Dismissed', '🎨 Below Expectations', '🎨 Acceptable', '🎨 Masterpiece'];
+    const outcomes = [
+      `+${goldReward}💰\n\n🃏 Giovanni planted Disinformation — one card next battle shows false power.`,
+      `+${goldReward}💰\n\nA poor result, but you tried.`,
+      `+${goldReward}💰\n\nA reasonable effort.`,
+      `+${goldReward}💰\n\n⭐ Giovanni's Endorsement — first card played next battle deals +5 bonus damage!`,
+    ];
 
-    showModal(title, body, () => {
+    showModal(titles[grade], outcomes[grade], () => {
       MapEngine.completeNode(GameState.currentNodeIndex);
       MapEngine.show();
     });
   },
 };
-
 const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;

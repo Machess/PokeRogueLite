@@ -8463,3 +8463,212 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   line-height: 1.6;
   max-width: 300px;
 }
+
+/* ═══════════════════════════════════════════
+   GIOVANNI — GALLERY PAINTING GAME
+═══════════════════════════════════════════ */
+#screen-challenge.giovanni-active {
+  background: linear-gradient(160deg, #0a0a10 0%, #10101c 60%, #0a0a14 100%);
+}
+#screen-challenge.giovanni-active .challenge-badge  {
+  color: #d4af70;
+  letter-spacing: .06em;
+}
+#screen-challenge.giovanni-active .challenge-intro  {
+  color: rgba(200,180,130,.6);
+  font-style: italic;
+}
+
+.giovanni-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: .35rem !important;
+  width: 100%;
+}
+
+/* ── Canvas ── */
+.gio-canvas-wrap {
+  position: relative;
+  width: min(260px, 80vw);
+  height: min(260px, 80vw);
+  flex-shrink: 0;
+}
+.gio-canvas-svg {
+  width: 100%; height: 100%;
+  border-radius: 10px;
+  border: 2px solid rgba(200,170,100,.3);
+  box-shadow: 0 4px 24px rgba(0,0,0,.6);
+}
+
+/* Zone states */
+.gio-zone {
+  cursor: pointer;
+  transition: filter .1s;
+}
+.gio-zone:hover   { filter: brightness(1.3); }
+.gio-zone-filled  { stroke: rgba(255,255,255,.4) !important; }
+@keyframes zone-wrong-flash {
+  0%,100% { filter: brightness(1); }
+  40%     { filter: brightness(2) saturate(2); }
+}
+.gio-zone-wrong-flash   { animation: zone-wrong-flash .5s ease; }
+@keyframes zone-correct-pulse {
+  0%,100% { filter: brightness(1); }
+  50%     { filter: brightness(1.4) drop-shadow(0 0 4px #fff); }
+}
+.gio-zone-correct-pulse { animation: zone-correct-pulse .6s ease; }
+.gio-zone-corrected     { stroke: rgba(255,255,255,.6) !important; }
+
+/* Reveal sprite */
+.gio-reveal-sprite {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70%; height: 70%;
+  object-fit: contain;
+  animation: gio-reveal-in .8s ease both;
+  filter: drop-shadow(0 0 16px rgba(255,215,0,.5));
+}
+@keyframes gio-reveal-in {
+  from { opacity:0; transform: translate(-50%,-50%) scale(.6); }
+  to   { opacity:1; transform: translate(-50%,-50%) scale(1); }
+}
+.gio-reveal-name {
+  position: absolute;
+  bottom: -1.6rem; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: #ffd700;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(255,215,0,.5);
+}
+
+/* ── Palette ── */
+.gio-palette {
+  display: flex; gap: 7px; justify-content: center; flex-wrap: wrap;
+  padding: .1rem 0;
+}
+.gio-palette-btn {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  border: 3px solid rgba(255,255,255,.2);
+  background: var(--pal-color);
+  cursor: pointer;
+  transition: transform .1s, border-color .1s, box-shadow .1s;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.gio-palette-btn:hover {
+  transform: scale(1.12);
+  border-color: rgba(255,255,255,.5);
+}
+.gio-palette-btn:active { transform: scale(.96); }
+.gio-pal-active {
+  border-color: #fff !important;
+  box-shadow: 0 0 0 3px rgba(255,255,255,.4), 0 0 16px var(--pal-color);
+  transform: scale(1.15) !important;
+}
+.gio-pal-num {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .30rem;
+  color: rgba(0,0,0,.7);
+  font-weight: 900;
+  text-shadow: 0 1px 0 rgba(255,255,255,.3);
+  pointer-events: none;
+}
+
+/* ── Controls ── */
+.gio-control-row {
+  display: flex; gap: .5rem; align-items: center; justify-content: center;
+}
+.gio-selected-indicator {
+  display: flex; align-items: center; gap: .3rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem;
+  color: rgba(255,255,255,.65);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 8px;
+  padding: .25rem .5rem;
+  min-width: 100px; text-align: center;
+}
+.gio-sel-swatch {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.4);
+  flex-shrink: 0;
+}
+.gio-undo-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem;
+  background: rgba(255,255,255,.07);
+  border: 1px solid rgba(255,255,255,.15);
+  border-radius: 8px;
+  color: rgba(255,255,255,.6);
+  padding: .25rem .5rem;
+  cursor: pointer;
+  transition: background .1s;
+}
+.gio-undo-btn:not(:disabled):hover { background: rgba(255,255,255,.14); }
+.gio-undo-btn:disabled { opacity: .3; cursor: default; }
+
+/* Submit */
+.gio-submit-btn {
+  font-size: .42rem !important;
+  padding: .5em 1.2em !important;
+}
+.gio-submit-btn:disabled { opacity: .3; cursor: not-allowed; filter: grayscale(1); }
+
+/* ── Grade badge ── */
+.gio-grade-badge {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: .4rem .8rem;
+  border-radius: 12px;
+  animation: grade-drop .5s cubic-bezier(.175,.885,.32,1.5) both;
+}
+@keyframes grade-drop {
+  from { opacity:0; transform: translateY(-20px) scale(.8); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+.gio-grade-0 { background:rgba(200,60,60,.2);   border: 2px solid rgba(200,60,60,.4); }
+.gio-grade-1 { background:rgba(200,160,60,.15); border: 2px solid rgba(200,160,60,.3); }
+.gio-grade-2 { background:rgba(100,180,100,.15);border: 2px solid rgba(100,180,100,.3); }
+.gio-grade-3 { background:rgba(255,215,0,.18);  border: 2px solid rgba(255,215,0,.5);
+               box-shadow: 0 0 20px rgba(255,215,0,.3); }
+.gio-grade-stars { font-size: 1rem; }
+.gio-grade-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .40rem;
+  color: #ffd700;
+}
+.gio-grade-score {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem;
+  color: rgba(255,255,255,.5);
+}
+
+/* ── Giovanni portrait + comment ── */
+.gio-giovanni-row {
+  display: flex; align-items: center; gap: .4rem;
+  width: 100%; padding: 0 .2rem;
+}
+.gio-portrait {
+  width: 36px; height: 36px;
+  object-fit: contain;
+  border-radius: 50%;
+  border: 2px solid rgba(200,160,60,.3);
+  flex-shrink: 0;
+}
+.gio-comment {
+  font-family: 'Nunito', sans-serif;
+  font-size: .55rem;
+  color: rgba(200,170,100,.0);
+  line-height: 1.4;
+  transition: color .3s;
+  font-style: italic;
+}
+.gio-comment-show { color: rgba(200,170,100,.85) !important; }
