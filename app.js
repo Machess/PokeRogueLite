@@ -9428,13 +9428,13 @@ const GiovanniEngine = {
 
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg   = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 200 200');
+    svg.setAttribute('viewBox', '0 0 400 400');
     svg.setAttribute('class', 'gio-canvas-svg');
     svg.setAttribute('id', 'gio-svg');
 
     // Background
     const bg = document.createElementNS(svgNS, 'rect');
-    bg.setAttribute('width', '200'); bg.setAttribute('height', '200');
+    bg.setAttribute('width', '400'); bg.setAttribute('height', '400');
     bg.setAttribute('fill', '#1a1a2a');
     svg.appendChild(bg);
 
@@ -9473,7 +9473,7 @@ const GiovanniEngine = {
         text.setAttribute('x', cx * 2);
         text.setAttribute('y', cy * 2 + 4);
         text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-size', '10');
+        text.setAttribute('font-size', '18');
         text.setAttribute('font-family', 'Press Start 2P, monospace');
         text.setAttribute('fill', 'rgba(255,255,255,0.85)');
         text.setAttribute('class', 'gio-zone-label');

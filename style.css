@@ -8096,14 +8096,6 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 #screen-challenge.giovanni-active .challenge-badge  { color: #c8a060; }
 #screen-challenge.giovanni-active .challenge-intro  { color: rgba(180,150,100,.65); }
 
-.giovanni-wrap {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: .3rem !important;
-  width: 100%;
-}
-
 /* ── Operator sequence bar ── */
 .gio-seq-bar {
   display: flex; gap: 5px; justify-content: center;
@@ -8483,15 +8475,32 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   display: flex !important;
   flex-direction: column !important;
   align-items: center !important;
-  gap: .35rem !important;
+  gap: .25rem !important;
   width: 100%;
+  padding: 0 !important;         /* remove coin-visual padding in gallery mode */
+}
+/* Strip coin-visual decoration in gallery mode */
+#screen-challenge.giovanni-active .challenge-coin-visual {
+  background: none !important;
+  border: none !important;
+  padding: .2rem 0 !important;
+}
+/* Reduce header gap in gallery mode to give canvas more room */
+#screen-challenge.giovanni-active .challenge-panel {
+  gap: .35rem !important;
+  padding-top: .5rem !important;
+  padding-bottom: .5rem !important;
+}
+#screen-challenge.giovanni-active .challenge-header {
+  padding: .4rem .6rem !important;
+  gap: .2rem !important;
 }
 
 /* ── Canvas ── */
 .gio-canvas-wrap {
   position: relative;
-  width: min(260px, 80vw);
-  height: min(260px, 80vw);
+  width: min(340px, 92vw);
+  height: min(340px, 92vw);
   flex-shrink: 0;
 }
 .gio-canvas-svg {
