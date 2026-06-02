@@ -9464,8 +9464,8 @@ const GiovanniEngine = {
       poly.addEventListener('click', () => this._tapZone(z.id, poly));
       svg.appendChild(poly);
 
-      // Number label — Tier 1 always visible, Tier 2 fades after 5s, Tier 3 hidden
-      if (tier <= 2) {
+      // Number label — always visible on all tiers
+      {
         const bbox   = z.points;
         const cx     = bbox.reduce((s,[x]) => s+x, 0) / bbox.length;
         const cy     = bbox.reduce((s,[,y]) => s+y, 0) / bbox.length;
@@ -9481,12 +9481,6 @@ const GiovanniEngine = {
         text.setAttribute('pointer-events', 'none');
         text.textContent = z.num;
         svg.appendChild(text);
-        if (tier === 2) {
-          setTimeout(() => {
-            text.style.transition = 'opacity 1s';
-            text.style.opacity = '0';
-          }, 5000);
-        }
       }
     });
 
