@@ -8279,3 +8279,187 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-style: italic;
 }
 .gio-comment-show { color: rgba(200,170,100,.85) !important; }
+
+/* ═══════════════════════════════════════════
+   BADGE CEREMONY SCREEN
+═══════════════════════════════════════════ */
+#screen-badge {
+  justify-content: center; align-items: center;
+}
+.badge-bg {
+  position: absolute; inset: 0;
+  background: #111;
+  transition: background .5s;
+}
+.badge-ceremony {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  width: 100%; max-width: 600px;
+}
+.badge-leader-portrait {
+  width: 110px; height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 16px rgba(0,0,0,.7));
+  flex-shrink: 0;
+  animation: badge-portrait-in .6s ease both;
+}
+@keyframes badge-portrait-in {
+  from { opacity:0; transform: translateX(-20px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+.badge-centre {
+  display: flex; flex-direction: column; align-items: center; gap: .6rem;
+  flex: 1;
+}
+.badge-title-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .65rem;
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255,215,0,.6);
+  text-align: center;
+  animation: badge-title-in .7s .2s ease both;
+}
+@keyframes badge-title-in {
+  from { opacity:0; transform: translateY(-10px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.badge-medallion {
+  font-size: 3rem;
+  animation: badge-pop .5s .5s cubic-bezier(.175,.885,.32,1.5) both;
+  filter: drop-shadow(0 0 18px rgba(255,215,0,.5));
+}
+@keyframes badge-pop {
+  from { opacity:0; transform: scale(0); }
+  to   { opacity:1; transform: scale(1); }
+}
+.badge-farewell {
+  font-family: 'Nunito', sans-serif;
+  font-size: .72rem;
+  color: rgba(255,255,255,.85);
+  text-align: center;
+  font-style: italic;
+  line-height: 1.5;
+  min-height: 1.8rem;
+}
+.badge-watching {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem;
+  color: rgba(200,180,100,.75);
+  text-align: center;
+  line-height: 1.6;
+  min-height: 1.4rem;
+}
+.badge-continue-btn {
+  margin-top: .4rem;
+  animation: badge-btn-in .3s ease both;
+}
+@keyframes badge-btn-in {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+
+/* ═══════════════════════════════════════════
+   MAP TITLE CARD SCREEN
+═══════════════════════════════════════════ */
+#screen-maptitle {
+  justify-content: center; align-items: center;
+}
+.maptitle-bg {
+  position: absolute; inset: 0;
+  background: #111;
+}
+.maptitle-centre {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column;
+  align-items: center; gap: .5rem;
+  text-align: center;
+  animation: maptitle-in .7s ease both;
+}
+@keyframes maptitle-in {
+  from { opacity:0; transform: translateY(16px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.maptitle-location {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.1rem;
+  color: #ffd700;
+  text-shadow: 0 0 30px rgba(255,215,0,.5);
+  letter-spacing: .1em;
+}
+.maptitle-leader {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .48rem;
+  color: rgba(255,255,255,.6);
+  letter-spacing: .05em;
+}
+.maptitle-flavour {
+  font-family: 'Nunito', sans-serif;
+  font-size: .75rem;
+  color: rgba(255,255,255,.5);
+  font-style: italic;
+  max-width: 320px;
+  line-height: 1.5;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+.maptitle-flavour-in { opacity: 1 !important; }
+
+/* ═══════════════════════════════════════════
+   GAMEOVER — RUN SUMMARY
+═══════════════════════════════════════════ */
+.gameover-pb-banner {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: #ffd700;
+  background: rgba(255,215,0,.12);
+  border: 1.5px solid rgba(255,215,0,.4);
+  border-radius: 8px;
+  padding: .35rem .7rem;
+  text-align: center;
+  animation: pb-pulse 1.5s ease-in-out infinite;
+}
+@keyframes pb-pulse {
+  0%,100% { box-shadow: 0 0 0 rgba(255,215,0,0); }
+  50%      { box-shadow: 0 0 16px rgba(255,215,0,.4); }
+}
+.gameover-run-summary {
+  width: 100%;
+  display: flex; flex-direction: column; align-items: center; gap: .35rem;
+  padding: .4rem 0;
+}
+.go-badge-row {
+  display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;
+}
+.go-badge-pip {
+  font-size: .9rem;
+  opacity: .2;
+  transition: opacity .3s;
+}
+.go-badge-earned { opacity: 1; }
+.go-party-row {
+  display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
+}
+.go-party-sprite {
+  width: 44px; height: 44px;
+  object-fit: contain;
+  filter: grayscale(40%) drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.go-mvp-line {
+  font-family: 'Nunito', sans-serif;
+  font-size: .60rem;
+  color: rgba(255,255,255,.65);
+  font-style: italic;
+  text-align: center;
+  max-width: 300px;
+}
+.go-taunt-line {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem;
+  color: rgba(200,170,100,.7);
+  text-align: center;
+  font-style: italic;
+  line-height: 1.6;
+  max-width: 300px;
+}

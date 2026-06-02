@@ -3528,43 +3528,197 @@ const Game = {
     }
 
     const nextBoss  = BOSS_TRAINERS[nextBossIdx];
-    const badgeMsg  = `${boss?.title ?? 'Badge'} earned!\n${nextBoss?.name ?? 'Next challenger'} awaits!`;
 
     saveGame();
 
-    const showBadgeModal = () => {
+    const showBadgeCeremony = () => {
       if (evolutions.length > 0) {
-        runEvolutions(evolutions, () => {
-          showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
-        });
+        runEvolutions(evolutions, () => BadgeCeremony.show(boss, nextBoss, defeated));
       } else {
-        showModal('Badge Earned! 🏅', badgeMsg, () => MapEngine.show());
+        BadgeCeremony.show(boss, nextBoss, defeated);
       }
     };
 
-    // After beating Brock (defeated===1) show his joining narrative first
     if (defeated === 1) {
       const name = GameState.trainerName || 'Trainer';
       showModal(
         '🧑‍🍳 Brock wants to join!',
         `That was an incredible battle, ${name}. Your Pokémon have real heart — I haven't seen that kind of bond in a long time.\n\nI can't just let you walk out of here. My team and I would like to travel with you for a while. At least until you reach the next gym.\n\nAnd don't worry — I'll cook for your Pokémon every chance we get. A well-fed team is a strong team!`,
-        () => showBadgeModal()
+        () => showBadgeCeremony()
       );
-    // After beating Misty (defeated===2) show her joining narrative first
     } else if (defeated === 2) {
       const name = GameState.trainerName || 'Trainer';
       showModal(
         '🎣 Misty wants to join!',
         `Okay, okay — you beat me fair and square, ${name}. I'll admit it. Your Pokémon were something else.\n\nBut don't get smug about it! I'm coming with you. Someone needs to keep an eye on you, and frankly the route ahead has some incredible water Pokémon I want to study.\n\nI'll test your type knowledge whenever I can. A trainer who doesn't know their matchups is a trainer who loses — and I won't have that on my watch.`,
-        () => showBadgeModal()
+        () => showBadgeCeremony()
       );
     } else {
-      showBadgeModal();
+      showBadgeCeremony();
     }
   },
 
   afterEvolve() {
     // handled by EvolveEngine callback
+  },
+};
+
+// ─── BADGE CEREMONY ──────────────────────────────────────────────────────────
+
+const BADGE_DATA = [
+  // index = defeated count (1-based)
+  {
+    badge: '🪨', medallion: '⬜',
+    farewell: '"Not bad. You earned that badge — now prove it means something."',
+    watching: 'Word is spreading. Misty in Cerulean has heard your name.',
+  },
+  {
+    badge: '💧', medallion: '🔵',
+    farewell: '"You\'re stronger than you look. I\'ll give you that much."',
+    watching: 'Lt. Surge in Vermilion is warming up his Pokémon. Don\'t keep him waiting.',
+  },
+  {
+    badge: '⚡', medallion: '🟡',
+    farewell: '"You\'ve got guts, kid. But guts alone won\'t cut it from here on."',
+    watching: 'Erika in Celadon already knows about you. She\'s been expecting a challenger.',
+  },
+  {
+    badge: '🌿', medallion: '🟢',
+    farewell: '"Lovely battle. You have a gentleness with your Pokémon that is… rare."',
+    watching: 'Koga of the Fuchsia Gym meditates in silence. He has already studied your strategy.',
+  },
+  {
+    badge: '💨', medallion: '🟣',
+    farewell: '"Fwa ha ha… you escaped my poison. This time."',
+    watching: 'Sabrina waits in Saffron. She already knows the outcome. Do you?',
+  },
+  {
+    badge: '🔮', medallion: '🟤',
+    farewell: '"I saw this result coming. That doesn\'t make it any less real."',
+    watching: 'Blaine\'s volcano burns brighter tonight. He calls it a welcome sign.',
+  },
+  {
+    badge: '🔥', medallion: '🔴',
+    farewell: '"Ha! You doused my flames — but the true test is still ahead!"',
+    watching: 'Giovanni of the Viridian Gym has cleared his schedule. Final challenge.',
+  },
+  {
+    badge: '🌍', medallion: '⬛',
+    farewell: '"Impressive. You have earned your place. Don\'t waste it."',
+    watching: 'The Indigo Plateau awaits. The Elite Four are ready.',
+  },
+];
+
+const BadgeCeremony = {
+  show(boss, nextBoss, defeatedCount) {
+    const data     = BADGE_DATA[Math.min(defeatedCount - 1, BADGE_DATA.length - 1)];
+    const bgGrad   = GYM_FALLBACKS[Math.min(defeatedCount - 1, GYM_FALLBACKS.length - 1)];
+
+    // Background
+    const bgEl = document.getElementById('badge-bg');
+    if (bgEl) bgEl.style.background = bgGrad;
+
+    // Leader portrait
+    const portrait = document.getElementById('badge-leader-portrait');
+    if (portrait) {
+      portrait.src = `assets/${boss.image}`;
+      portrait.alt = boss.name;
+    }
+
+    // Badge title + medallion
+    document.getElementById('badge-title-text').textContent = boss.title;
+    document.getElementById('badge-medallion').textContent  = data.badge;
+
+    // Farewell and watching lines — typewriter effect
+    const farewellEl = document.getElementById('badge-farewell');
+    const watchingEl = document.getElementById('badge-watching');
+    farewellEl.textContent = '';
+    watchingEl.textContent = '';
+
+    const continueBtn = document.getElementById('btn-badge-continue');
+    continueBtn.style.display = 'none';
+
+    showScreen('badge');
+
+    // Type out farewell, then watching line, then show button
+    this._typewrite(farewellEl, data.farewell, 28, () => {
+      setTimeout(() => {
+        this._typewrite(watchingEl, data.watching, 22, () => {
+          setTimeout(() => { continueBtn.style.display = ''; }, 300);
+        });
+      }, 500);
+    });
+
+    // Wire continue — show map title card then map
+    const newBtn = continueBtn.cloneNode(true);
+    continueBtn.parentNode.replaceChild(newBtn, continueBtn);
+    newBtn.style.display = 'none';
+    // Store reference so typewriter callback shows right button
+    document.getElementById('btn-badge-continue').style.display = 'none';
+    setTimeout(() => {
+      document.getElementById('btn-badge-continue').style.display = '';
+    }, (data.farewell.length + data.watching.length) * 25 + 900);
+
+    document.getElementById('btn-badge-continue').onclick = () => {
+      MapTitleCard.show(nextBoss, defeatedCount);
+    };
+  },
+
+  _typewrite(el, text, speed, onDone) {
+    let i = 0;
+    const tick = () => {
+      if (i < text.length) {
+        el.textContent += text[i++];
+        setTimeout(tick, speed);
+      } else if (onDone) {
+        onDone();
+      }
+    };
+    tick();
+  },
+};
+
+// ─── MAP TITLE CARD ───────────────────────────────────────────────────────────
+
+const MAP_LOCATIONS = [
+  { city: 'Pewter City',    flavour: 'Rocky paths. Strong foundations. Your journey begins.' },
+  { city: 'Cerulean City',  flavour: 'The scent of the sea. A gym by the cape.' },
+  { city: 'Vermilion City', flavour: 'The port town buzzes with electric energy.' },
+  { city: 'Celadon City',   flavour: 'Flowers in every window. Something stirs beneath the calm.' },
+  { city: 'Fuchsia City',   flavour: 'The night comes early here. Watch your step.' },
+  { city: 'Saffron City',   flavour: 'The largest city in Kanto. Psychic power saturates the air.' },
+  { city: 'Cinnabar Island',flavour: 'Volcanic rock underfoot. The heat is not just from the gym.' },
+  { city: 'Viridian City',  flavour: 'The final gym. The earth badge. Giovanni waits.' },
+  { city: 'Indigo Plateau', flavour: 'Beyond the mountain pass. The Elite Four. The Champion.' },
+];
+
+const MapTitleCard = {
+  show(nextBoss, defeatedCount) {
+    const loc  = MAP_LOCATIONS[Math.min(defeatedCount, MAP_LOCATIONS.length - 1)];
+    const bgGrad = GYM_FALLBACKS[Math.min(defeatedCount, GYM_FALLBACKS.length - 1)];
+
+    const bgEl = document.getElementById('maptitle-bg');
+    if (bgEl) bgEl.style.background = bgGrad;
+
+    document.getElementById('maptitle-location').textContent =
+      loc.city;
+    document.getElementById('maptitle-leader').textContent =
+      nextBoss ? `${nextBoss.name} · ${nextBoss.title}` : 'The Indigo Plateau';
+    document.getElementById('maptitle-flavour').textContent = '';
+
+    showScreen('maptitle');
+
+    // Fade in flavour line after a beat
+    setTimeout(() => {
+      document.getElementById('maptitle-flavour').textContent = loc.flavour;
+      document.getElementById('maptitle-flavour').classList.add('maptitle-flavour-in');
+    }, 600);
+
+    // Auto-advance to map after 2.8s
+    setTimeout(() => {
+      document.getElementById('maptitle-flavour').classList.remove('maptitle-flavour-in');
+      MapEngine.show();
+    }, 2800);
   },
 };
 
@@ -9620,30 +9774,87 @@ const RocketBattleEngine = {
 
 const GameOver = {
   show(defeatedBy) {
-    const stats = GameState.stats || {};
-    const party = GameState.party || [];
+    const stats   = GameState.stats || {};
+    const party   = GameState.party || [];
+    const beaten  = GameState.bossesDefeated || 0;
+    const name    = GameState.trainerName || 'Trainer';
 
-    // Favourite = party member with most battlesWon, fallback to starter
-    const fav = party.reduce((best, p) =>
-      (p.battlesWon || 0) >= (best.battlesWon || 0) ? p : best,
-      party[0] || null
-    );
+    // ── Personal best tracking ─────────────────────────────────────────────
+    const profiles  = loadProfiles();
+    const profIdx   = profiles.findIndex(p => p.key === getActiveProfile());
+    let   isNewBest = false;
+    if (profIdx >= 0) {
+      const prev = profiles[profIdx].bestBossesDefeated || 0;
+      if (beaten > prev) {
+        isNewBest = true;
+        profiles[profIdx].bestBossesDefeated = beaten;
+        saveProfiles(profiles);
+      }
+    }
+    const pbBanner = document.getElementById('gameover-pb-banner');
+    if (pbBanner) pbBanner.style.display = isNewBest ? '' : 'none';
 
-    // Populate stats — use cumulative fields that persist across maps
+    // ── Defeated-by line ──────────────────────────────────────────────────
     document.getElementById('gameover-defeated-by').textContent =
       `Defeated by ${defeatedBy}`;
+
+    // ── Stats ─────────────────────────────────────────────────────────────
     document.getElementById('go-battles-won').textContent =
       stats.totalBattlesWon    || stats.battlesWon   || 0;
     document.getElementById('go-caught').textContent =
       stats.pokemonCaught      || 0;
     document.getElementById('go-nodes').textContent =
       stats.totalNodesCompleted || GameState.completedNodes?.length || 0;
-    document.getElementById('go-bosses').textContent =
-      stats.totalBossesBeaten  || GameState.bossesDefeated || 0;
+    document.getElementById('go-bosses').textContent = beaten;
 
-    // Favourite Pokémon card
+    // ── Run summary card ──────────────────────────────────────────────────
+    const summaryEl = document.getElementById('gameover-run-summary');
+    if (summaryEl) {
+      // Badge progress row
+      const badgeEmojis = ['🪨','💧','⚡','🌿','💨','🔮','🔥','🌍'];
+      const badgeRow = badgeEmojis.map((b, i) =>
+        `<span class="go-badge-pip${i < beaten ? ' go-badge-earned' : ''}">${i < beaten ? b : '○'}</span>`
+      ).join('');
+
+      // Party farewell from MVP
+      const mvp = party.reduce((best, p) =>
+        (p.battlesWon || 0) >= (best.battlesWon || 0) ? p : best, party[0] || null);
+      const mvpLine = mvp
+        ? `${mvp.name} fought ${mvp.battlesWon || 0} battle${(mvp.battlesWon||0)!==1?'s':''} before going down. They gave everything.`
+        : '';
+
+      // Boss farewell line — from whichever boss stopped the run
+      const lastBoss = BOSS_TRAINERS[Math.min(beaten, BOSS_TRAINERS.length - 1)];
+      const BOSS_TAUNTS = [
+        `"Brock says: The Boulder Badge was just the beginning. Come back stronger."`,
+        `"Misty says: You almost had me. Almost."`,
+        `"Surge says: You couldn't cut it. Hit the gym — literally."`,
+        `"Erika says: Your Pokémon fought beautifully. Rest now."`,
+        `"Koga says: The shadows claimed you. As I knew they would."`,
+        `"Sabrina says: I foresaw this. Did you?"`,
+        `"Blaine says: Ha! You got this far — that's no small thing!"`,
+        `"Giovanni says: Disappointing. I expected more from someone who made it this far."`,
+      ];
+      const tauntLine = BOSS_TAUNTS[Math.min(beaten, BOSS_TAUNTS.length - 1)];
+
+      // Party sprites
+      const partySprites = party.map(p =>
+        `<img src="${p.spriteUrl}" alt="${p.name}" class="go-party-sprite pixel-sprite"
+              onerror="this.src='assets/sprites/${p.id}.png'">`
+      ).join('');
+
+      summaryEl.innerHTML = `
+        <div class="go-badge-row">${badgeRow}</div>
+        <div class="go-party-row">${partySprites}</div>
+        ${mvp ? `<div class="go-mvp-line">⭐ ${mvpLine}</div>` : ''}
+        <div class="go-taunt-line">${tauntLine}</div>`;
+    }
+
+    // ── Favourite Pokémon card ─────────────────────────────────────────────
+    const fav = party.reduce((best, p) =>
+      (p.battlesWon || 0) >= (best.battlesWon || 0) ? p : best, party[0] || null);
     const favEl = document.getElementById('gameover-fav');
-    if (fav) {
+    if (fav && favEl) {
       favEl.innerHTML = `
         <div class="gameover-fav-label">Your Favourite Partner</div>
         <div class="gameover-fav-card">
@@ -9651,21 +9862,20 @@ const GameOver = {
                onerror="this.src='assets/sprites/${fav.id}.png'"
                class="gameover-fav-sprite" />
           <div class="gameover-fav-name">${fav.name}</div>
-          <div class="gameover-fav-wins">${fav.battlesWon || 0} battle${(fav.battlesWon || 0) !== 1 ? 's' : ''} won</div>
-        </div>
-      `;
+          <div class="gameover-fav-wins">${fav.battlesWon || 0} battle${(fav.battlesWon||0)!==1?'s':''} won</div>
+        </div>`;
     }
 
-    // Spawn rain drops for atmosphere
+    // ── Rain atmosphere ───────────────────────────────────────────────────
     const rain = document.getElementById('gameover-rain');
     rain.innerHTML = '';
     for (let i = 0; i < 60; i++) {
       const drop = document.createElement('div');
       drop.className = 'rain-drop';
-      drop.style.left = Math.random() * 100 + '%';
-      drop.style.animationDelay = (Math.random() * 2) + 's';
-      drop.style.animationDuration = (0.4 + Math.random() * 0.5) + 's';
-      drop.style.height = (12 + Math.random() * 20) + 'px';
+      drop.style.left             = Math.random() * 100 + '%';
+      drop.style.animationDelay   = (Math.random() * 2) + 's';
+      drop.style.animationDuration= (0.4 + Math.random() * 0.5) + 's';
+      drop.style.height            = (12 + Math.random() * 20) + 'px';
       rain.appendChild(drop);
     }
 

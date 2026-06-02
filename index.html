@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=82" />
+  <link rel="stylesheet" href="style.css?v=83" />
 </head>
 <body>
 
@@ -238,6 +238,37 @@
 <!-- ═══════════════════════════════════════════
      SCREEN: MAP / NAVIGATION
 ═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════
+     SCREEN: BADGE CEREMONY
+═══════════════════════════════════════════ -->
+<div id="screen-badge" class="screen">
+  <div class="badge-bg" id="badge-bg"></div>
+  <div class="badge-ceremony">
+    <img class="badge-leader-portrait" id="badge-leader-portrait" src="" alt="">
+    <div class="badge-centre">
+      <div class="badge-title-text" id="badge-title-text">Boulder Badge</div>
+      <div class="badge-medallion" id="badge-medallion">🏅</div>
+      <div class="badge-farewell" id="badge-farewell"></div>
+      <div class="badge-watching" id="badge-watching"></div>
+      <button class="btn-pixel btn-primary badge-continue-btn" id="btn-badge-continue">
+        Continue ▶
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: MAP TITLE CARD
+═══════════════════════════════════════════ -->
+<div id="screen-maptitle" class="screen">
+  <div class="maptitle-bg" id="maptitle-bg"></div>
+  <div class="maptitle-centre">
+    <div class="maptitle-location" id="maptitle-location">Pewter City</div>
+    <div class="maptitle-leader" id="maptitle-leader">Brock · Boulder Badge</div>
+    <div class="maptitle-flavour" id="maptitle-flavour"></div>
+  </div>
+</div>
+
 <div id="screen-map" class="screen">
   <!-- Full-screen gym background image + fallback gradient -->
   <div class="nav-bg" id="nav-bg"></div>
@@ -527,6 +558,14 @@
     <div class="gameover-title">Game Over</div>
     <div class="gameover-defeated-by" id="gameover-defeated-by">Defeated by ???</div>
 
+    <!-- Personal best banner — shown if this run beat previous record -->
+    <div class="gameover-pb-banner" id="gameover-pb-banner" style="display:none">
+      🏆 New personal best — furthest run yet!
+    </div>
+
+    <!-- Run summary: party farewell + reached badge -->
+    <div class="gameover-run-summary" id="gameover-run-summary"></div>
+
     <div class="gameover-stats-card">
       <div class="gameover-stat">
         <span class="stat-icon">⚔️</span>
@@ -550,9 +589,7 @@
       </div>
     </div>
 
-    <div class="gameover-fav" id="gameover-fav">
-      <!-- Favourite Pokémon card, injected by JS -->
-    </div>
+    <div class="gameover-fav" id="gameover-fav"></div>
 
     <button class="btn-pixel btn-primary gameover-btn" id="btn-gameover-restart">
       ▶ Try Again
@@ -895,6 +932,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=135"></script>
+<script src="app.js?v=136"></script>
 </body>
 </html>
