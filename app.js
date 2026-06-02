@@ -63,103 +63,151 @@ const EVOLVE_NARRATIVES = {
   },
 };
 
-const BOSS_TRAINERS = [
-  // ── Kanto Gym Leaders ──────────────────────────────────────────────────────
+// ─── GYM DATA — single source of truth for all gym/boss data ─────────────────
+// Replaces: BOSS_TRAINERS, BADGE_DATA, MAP_LOCATIONS, GYM_BACKGROUNDS, GYM_FALLBACKS
+const GYM_DATA = [
   {
-    name: 'Brock',
-    title: 'Boulder Badge',
+    // Boss
+    name: 'Brock', title: 'Boulder Badge', image: 'brock.png',
     dialogue: "I've been the best gym leader since before you were hatched! Let's rock!",
     team: [74, 95],
-    image: 'brock.png',
+    // Badge ceremony
+    badge: '🪨', farewell: '"Not bad. You earned that badge — now prove it means something."',
+    watching: 'Word is spreading. Misty in Cerulean has heard your name.',
+    // Map title card
+    city: 'Pewter City', flavour: 'Rocky paths. Strong foundations. Your journey begins.',
+    // Visuals
+    bgImage:   'bg_0_brock.png',
+    bgFallback:'linear-gradient(180deg,#6a5a40 0%,#8a7250 40%,#5a4838 100%)',
   },
   {
-    name: 'Misty',
-    title: 'Cascade Badge',
+    name: 'Misty', title: 'Cascade Badge', image: 'misty.png',
     dialogue: "Don't go easy on me just 'cause I'm cute! My Pokémon are FIERCE!",
     team: [120, 121, 54],
-    image: 'misty.png',
+    badge: '💧', farewell: '"You\'re stronger than you look. I\'ll give you that much."',
+    watching: 'Lt. Surge in Vermilion is warming up his Pokémon. Don\'t keep him waiting.',
+    city: 'Cerulean City', flavour: 'The scent of the sea. A gym by the cape.',
+    bgImage:   'bg_1_misty.png',
+    bgFallback:'linear-gradient(180deg,#1a6a9a 0%,#2a7a3a 50%,#1a4a2a 100%)',
   },
   {
-    name: 'Lt. Surge',
-    title: 'Thunder Badge',
+    name: 'Lt. Surge', title: 'Thunder Badge', image: 'ltsurge.png',
     dialogue: "I was a war hero before I was a gym leader. You don't stand a chance, kid!",
     team: [100, 26, 125],
-    image: 'ltsurge.png',
+    badge: '⚡', farewell: '"You\'ve got guts, kid. But guts alone won\'t cut it from here on."',
+    watching: 'Erika in Celadon already knows about you. She\'s been expecting a challenger.',
+    city: 'Vermilion City', flavour: 'The port town buzzes with electric energy.',
+    bgImage:   'bg_2_surge.png',
+    bgFallback:'linear-gradient(180deg,#2a3a20 0%,#4a5a28 50%,#1a2810 100%)',
   },
   {
-    name: 'Erika',
-    title: 'Rainbow Badge',
+    name: 'Erika', title: 'Rainbow Badge', image: 'erika.png',
     dialogue: "Oh my… I almost fell asleep. Let me show you the power of Grass types.",
     team: [71, 114, 45],
-    image: 'erika.png',
+    badge: '🌿', farewell: '"Lovely battle. You have a gentleness with your Pokémon that is… rare."',
+    watching: 'Koga of the Fuchsia Gym meditates in silence. He has already studied your strategy.',
+    city: 'Celadon City', flavour: 'Flowers in every window. Something stirs beneath the calm.',
+    bgImage:   'bg_3_erika.png',
+    bgFallback:'linear-gradient(180deg,#1a5a1a 0%,#2a8a2a 50%,#0a3a0a 100%)',
   },
   {
-    name: 'Koga',
-    title: 'Soul Badge',
+    name: 'Koga', title: 'Soul Badge', image: 'koga.png',
     dialogue: "Fwa ha ha! My Pokémon use the art of ninja — you will never see it coming!",
     team: [109, 110, 89],
-    image: 'koga.png',
+    badge: '💨', farewell: '"Fwa ha ha… you escaped my poison. This time."',
+    watching: 'Sabrina waits in Saffron. She already knows the outcome. Do you?',
+    city: 'Fuchsia City', flavour: 'The night comes early here. Watch your step.',
+    bgImage:   'bg_4_koga.png',
+    bgFallback:'linear-gradient(180deg,#1a0a2a 0%,#2a1a4a 50%,#0e0618 100%)',
   },
   {
-    name: 'Sabrina',
-    title: 'Marsh Badge',
+    name: 'Sabrina', title: 'Marsh Badge', image: 'sabrina.png',
     dialogue: "I see your every move before you make it. Psychic power is absolute.",
     team: [64, 122, 65],
-    image: 'sabrina.png',
+    badge: '🔮', farewell: '"I saw this result coming. That doesn\'t make it any less real."',
+    watching: 'Blaine\'s volcano burns brighter tonight. He calls it a welcome sign.',
+    city: 'Saffron City', flavour: 'The largest city in Kanto. Psychic power saturates the air.',
+    bgImage:   'bg_5_sabrina.png',
+    bgFallback:'linear-gradient(180deg,#200828 0%,#4a2a6a 50%,#120416 100%)',
   },
   {
-    name: 'Blaine',
-    title: 'Volcano Badge',
+    name: 'Blaine', title: 'Volcano Badge', image: 'blaine.png',
     dialogue: "Hah! You need more than water to put out my burning passion for Pokémon!",
     team: [58, 77, 78],
-    image: 'blaine.png',
+    badge: '🔥', farewell: '"Ha! You doused my flames — but the true test is still ahead!"',
+    watching: 'Giovanni of the Viridian Gym has cleared his schedule. Final challenge.',
+    city: 'Cinnabar Island', flavour: 'Volcanic rock underfoot. The heat is not just from the gym.',
+    bgImage:   'bg_6_blaine.png',
+    bgFallback:'linear-gradient(180deg,#1a0800 0%,#3a1800 50%,#0a0400 100%)',
   },
   {
-    name: 'Giovanni',
-    title: 'Earth Badge',
+    name: 'Giovanni', title: 'Earth Badge', image: 'giovanni.png',
     dialogue: "Hmph. A child? No matter — my Pokémon shall crush yours like pebbles!",
     team: [111, 112, 68, 103],
-    image: 'giovanni.png',
+    badge: '🌍', farewell: '"Impressive. You have earned your place. Don\'t waste it."',
+    watching: 'The Indigo Plateau awaits. The Elite Four are ready.',
+    city: 'Viridian City', flavour: 'The final gym. The earth badge. Giovanni waits.',
+    bgImage:   'bg_7_giovanni.png',
+    bgFallback:'linear-gradient(180deg,#0a0a0a 0%,#1a1a1a 50%,#000000 100%)',
   },
-  // ── Elite Four ────────────────────────────────────────────────────────────
+  // ── Elite Four ──────────────────────────────────────────────────────────────
   {
-    name: 'Lorelei',
-    title: 'Elite Four',
+    name: 'Lorelei', title: 'Elite Four', image: 'giovanni.png',
     dialogue: "No one can best me when it comes to icy Pokémon! Freeze in your tracks!",
     team: [87, 91, 124, 131],
-    image: 'giovanni.png', // placeholder until asset added
+    badge: '❄️', farewell: '"Ice does not melt easily. Neither does defeat."',
+    watching: 'Bruno waits in the next chamber. He has not left in days.',
+    city: 'Indigo Plateau', flavour: 'Beyond the mountain pass. The Elite Four. The Champion.',
+    bgImage:   'bg_8_lorelei.png',
+    bgFallback:'linear-gradient(180deg,#3060a0 0%,#a0c8e8 50%,#205080 100%)',
   },
   {
-    name: 'Bruno',
-    title: 'Elite Four',
+    name: 'Bruno', title: 'Elite Four', image: 'brock.png',
     dialogue: "We will grind you down with the superior power of Fighting-type Pokémon!",
     team: [95, 107, 106, 68],
-    image: 'brock.png', // placeholder
+    badge: '🥊', farewell: '"You have strength. But strength alone is not mastery."',
+    watching: 'Agatha stirs in her chamber. She has felt your approach.',
+    city: 'Indigo Plateau', flavour: 'Stone and shadow. The battle never truly ends here.',
+    bgImage:   'bg_9_bruno.png',
+    bgFallback:'linear-gradient(180deg,#2a1008 0%,#6a3018 50%,#180808 100%)',
   },
   {
-    name: 'Agatha',
-    title: 'Elite Four',
+    name: 'Agatha', title: 'Elite Four', image: 'sabrina.png',
     dialogue: "Hehehe… Old-fashioned, am I? My Ghost Pokémon will give you nightmares!",
     team: [94, 93, 110, 93],
-    image: 'sabrina.png', // placeholder
+    badge: '👻', farewell: '"You survived. That is all I will say."',
+    watching: 'Lance awaits. His dragons are already restless.',
+    city: 'Indigo Plateau', flavour: 'The candles never go out. The spirits watch.',
+    bgImage:   'bg_10_agatha.png',
+    bgFallback:'linear-gradient(180deg,#06060e 0%,#1a1430 50%,#02020a 100%)',
   },
   {
-    name: 'Lance',
-    title: 'Elite Four',
+    name: 'Lance', title: 'Elite Four', image: 'giovanni.png',
     dialogue: "Dragonite is an extremely rare Pokémon. And I have three of them! Tremble!",
     team: [130, 148, 148, 149],
-    image: 'giovanni.png', // placeholder
+    badge: '🐉', farewell: '"Dragons bow to no one. Today they bowed to you."',
+    watching: 'Blue. The Champion. He already knows you are coming.',
+    city: 'Indigo Plateau', flavour: 'The final chamber. One more stands between you and the title.',
+    bgImage:   'bg_11_lance.png',
+    bgFallback:'linear-gradient(180deg,#060c20 0%,#0a1a40 50%,#020608 100%)',
   },
   {
-    name: 'Blue',
-    title: '★ Champion ★',
+    name: 'Blue', title: '★ Champion ★', image: 'giovanni.png',
     dialogue: "Smell ya later? No — you won't be going anywhere after I beat you!",
     team: [18, 59, 65, 112, 149, 6],
-    image: 'giovanni.png', // placeholder
+    badge: '🏆', farewell: '"…Fine. You\'re the Champion. Don\'t let it go to your head."',
+    watching: '',
+    city: 'Indigo Plateau', flavour: '',
+    bgImage:   'bg_12_blue.png',
+    bgFallback:'linear-gradient(180deg,#0e0202 0%,#2a0808 50%,#060000 100%)',
   },
 ];
 
-// ─── MAP THEMES ──────────────────────────────────────────────────────────────
+// ── Backwards-compatible accessors so existing code keeps working ─────────────
+const BOSS_TRAINERS   = GYM_DATA;
+const GYM_FALLBACKS   = GYM_DATA.map(g => g.bgFallback);
+const GYM_BACKGROUNDS = GYM_DATA.map(g => g.bgImage);
+
 const MAP_THEMES = [
   // 0: Brock
   { name:'Boulder Cave Trail', ocean:'#4a5a6a', land:'#8a7250', landHi:'#b09060', landShadow:'#3a2c1e',
@@ -1286,7 +1334,148 @@ function generateMap(bossIndex) {
   return nodes;
 }
 
-// ─── SCREEN MANAGER ──────────────────────────────────────────────────────────
+// ─── ACTIVE ENGINE REGISTRY ───────────────────────────────────────────────────
+// Single registry replaces the 9-item _isActive if-chain on btn-start-boss-battle.
+// Each mini-game engine calls ActiveEngine.set(this) in start() and
+// ActiveEngine.clear() in startGame(). The button handler calls ActiveEngine.go().
+const ActiveEngine = {
+  _current: null,
+  set(engine)  { this._current = engine; },
+  clear()      { this._current = null; },
+  // Called by btn-start-boss-battle — dispatches to registered engine or falls
+  // through to TrainerBattle / RocketBattle / BossEngine as before.
+  go() {
+    if (this._current) { this._current.startGame(); return true; }
+    return false;
+  },
+};
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+// Shared boss-screen intro — all mini-game engines use this instead of
+// repeating 20 identical lines of DOM setup.
+// opts: { gymIndex, portrait, name, introText, btnLabel, onReady }
+function showBossIntro(opts) {
+  showScreen('boss');
+  BossEngine._isRocket = false;
+
+  const bgEl  = document.querySelector('#screen-boss .battle-bg');
+  const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+  if (bgEl) {
+    bgEl.classList.add('boss-intro-mode');
+    bgEl.style.background = GYM_FALLBACKS[opts.gymIndex ?? 0];
+    if (imgEl) {
+      imgEl.style.opacity = '0';
+      imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
+      imgEl.onerror = () => { imgEl.style.opacity = '0'; };
+      imgEl.src = GYM_DATA[opts.gymIndex ?? 0]?.bgImage
+               ? `assets/backgrounds/${GYM_DATA[opts.gymIndex].bgImage}` : '';
+    }
+  }
+
+  document.getElementById('trainer-intro').style.display    = 'flex';
+  document.getElementById('boss-battle-area').style.display = 'none';
+  document.getElementById('boss-party-bar').innerHTML       = '';
+
+  const trainerImg = document.getElementById('boss-trainer-sprite');
+  if (trainerImg) trainerImg.src = `assets/${opts.portrait}`;
+  document.getElementById('dialogue-name').textContent = opts.name;
+  document.getElementById('dialogue-text').textContent = '';
+
+  const startBtn = document.getElementById('btn-start-boss-battle');
+  if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = opts.btnLabel || 'Begin ▶'; }
+  document.getElementById('btn-dialogue-next').style.display = 'none';
+
+  // Typewriter intro — calls opts.onReady when done
+  let ci = 0;
+  const iv = setInterval(() => {
+    document.getElementById('dialogue-text').textContent += opts.introText[ci++];
+    if (ci >= opts.introText.length) {
+      clearInterval(iv);
+      if (startBtn) startBtn.style.display = '';
+      if (opts.onReady) opts.onReady(startBtn);
+    }
+  }, 22);
+}
+
+// Shared challenge screen setup — all mini-game engines call this at the
+// start of their main game view instead of repeating 15 identical DOM lines.
+// opts: { portrait, badge, intro, wrapClass, screenClass, bgm, coinVisualEl? }
+function setupChallengeScreen(opts) {
+  const charImg = document.getElementById('challenge-character-img');
+  if (charImg && opts.portrait) { charImg.src = opts.portrait; charImg.style.display = ''; }
+
+  document.getElementById('challenge-badge').textContent            = opts.badge  || '';
+  document.getElementById('challenge-intro').textContent            = opts.intro  || '';
+  document.getElementById('challenge-result').style.display         = 'none';
+  document.getElementById('challenge-continue-btn').style.display   = 'none';
+  document.getElementById('challenge-question').style.display       = 'none';
+  document.getElementById('challenge-answer-btns').innerHTML        = '';
+
+  const jwd = document.getElementById('jessie-word-display');
+  if (jwd) { jwd.style.display = 'none'; jwd.innerHTML = ''; jwd.className = 'jessie-word-display'; }
+
+  const cv = document.getElementById('challenge-coin-visual');
+  cv.style.display = 'block';
+  cv.className     = opts.wrapClass || 'challenge-coin-visual';
+  cv.innerHTML     = '';
+
+  showScreen('challenge');
+  const scr = document.getElementById('screen-challenge');
+  scr.classList.remove(...CHALLENGE_CLASSES);
+  if (opts.screenClass) scr.classList.add(opts.screenClass);
+
+  if (opts.bgm !== false) SoundEngine.playBGM(opts.bgm || 'mini_game.mp3');
+
+  return cv;   // return cv so caller can append children immediately
+}
+
+// Shared finish flow — applies effects, awards gold, shows modal, returns to map.
+// opts: { screenClass, won, goldReward, effects?, statuses?,
+//         modalTitle, modalBody, onComplete? }
+function completeChallenge(opts) {
+  SoundEngine.stopBGM();
+
+  // Clean up screen class
+  if (opts.screenClass) {
+    document.getElementById('screen-challenge').classList.remove(opts.screenClass);
+  }
+  const cv = document.getElementById('challenge-coin-visual');
+  cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
+
+  // Apply effects
+  if (opts.effects && Object.keys(opts.effects).length > 0) {
+    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+    Object.assign(GameState.pendingPlayerEffects, opts.effects);
+  }
+  if (opts.statuses && opts.statuses.length > 0) {
+    if (!GameState.pendingPlayerStatuses) GameState.pendingPlayerStatuses = [];
+    GameState.pendingPlayerStatuses.push(...opts.statuses);
+  }
+
+  // Award gold
+  if (opts.goldReward) GameState.gold = (GameState.gold || 0) + opts.goldReward;
+
+  if (opts.won) SoundEngine.playFanfare();
+
+  saveGame();
+
+  showModal(opts.modalTitle, opts.modalBody, () => {
+    if (opts.onComplete) opts.onComplete();
+    else { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+  });
+}
+
+// ─── GAMESTATE ACCESSORS ─────────────────────────────────────────────────────
+// Thin helpers to avoid repeating GameState.party[GameState.activePokemonIndex]
+// and defensive defaults throughout the codebase.
+function getActivePokemon()  { return GameState.party?.[GameState.activePokemonIndex] ?? null; }
+function getParty()          { return GameState.party ?? []; }
+function getTier()           { return GameState.difficultyTier ?? 2; }
+function getBossCount()      { return GameState.bossesDefeated ?? 0; }
+function getGold()           { return GameState.gold ?? 0; }
+function addGold(amount)     { GameState.gold = getGold() + amount; }
+function getTrainerName()    { return GameState.trainerName || 'Trainer'; }
 
 const FADE_EXIT_MS  = 180; // fade-out duration
 const FADE_ENTER_MS = 220; // fade-in duration (map return uses 300ms)
@@ -3565,71 +3754,20 @@ const Game = {
 
 // ─── BADGE CEREMONY ──────────────────────────────────────────────────────────
 
-const BADGE_DATA = [
-  // index = defeated count (1-based)
-  {
-    badge: '🪨', medallion: '⬜',
-    farewell: '"Not bad. You earned that badge — now prove it means something."',
-    watching: 'Word is spreading. Misty in Cerulean has heard your name.',
-  },
-  {
-    badge: '💧', medallion: '🔵',
-    farewell: '"You\'re stronger than you look. I\'ll give you that much."',
-    watching: 'Lt. Surge in Vermilion is warming up his Pokémon. Don\'t keep him waiting.',
-  },
-  {
-    badge: '⚡', medallion: '🟡',
-    farewell: '"You\'ve got guts, kid. But guts alone won\'t cut it from here on."',
-    watching: 'Erika in Celadon already knows about you. She\'s been expecting a challenger.',
-  },
-  {
-    badge: '🌿', medallion: '🟢',
-    farewell: '"Lovely battle. You have a gentleness with your Pokémon that is… rare."',
-    watching: 'Koga of the Fuchsia Gym meditates in silence. He has already studied your strategy.',
-  },
-  {
-    badge: '💨', medallion: '🟣',
-    farewell: '"Fwa ha ha… you escaped my poison. This time."',
-    watching: 'Sabrina waits in Saffron. She already knows the outcome. Do you?',
-  },
-  {
-    badge: '🔮', medallion: '🟤',
-    farewell: '"I saw this result coming. That doesn\'t make it any less real."',
-    watching: 'Blaine\'s volcano burns brighter tonight. He calls it a welcome sign.',
-  },
-  {
-    badge: '🔥', medallion: '🔴',
-    farewell: '"Ha! You doused my flames — but the true test is still ahead!"',
-    watching: 'Giovanni of the Viridian Gym has cleared his schedule. Final challenge.',
-  },
-  {
-    badge: '🌍', medallion: '⬛',
-    farewell: '"Impressive. You have earned your place. Don\'t waste it."',
-    watching: 'The Indigo Plateau awaits. The Elite Four are ready.',
-  },
-];
-
 const BadgeCeremony = {
   show(boss, nextBoss, defeatedCount) {
-    const data     = BADGE_DATA[Math.min(defeatedCount - 1, BADGE_DATA.length - 1)];
-    const bgGrad   = GYM_FALLBACKS[Math.min(defeatedCount - 1, GYM_FALLBACKS.length - 1)];
+    const gymIdx = Math.min(defeatedCount - 1, GYM_DATA.length - 1);
+    const data   = GYM_DATA[gymIdx];
 
-    // Background
     const bgEl = document.getElementById('badge-bg');
-    if (bgEl) bgEl.style.background = bgGrad;
+    if (bgEl) bgEl.style.background = data.bgFallback;
 
-    // Leader portrait
     const portrait = document.getElementById('badge-leader-portrait');
-    if (portrait) {
-      portrait.src = `assets/${boss.image}`;
-      portrait.alt = boss.name;
-    }
+    if (portrait) { portrait.src = `assets/${boss.image}`; portrait.alt = boss.name; }
 
-    // Badge title + medallion
     document.getElementById('badge-title-text').textContent = boss.title;
     document.getElementById('badge-medallion').textContent  = data.badge;
 
-    // Farewell and watching lines — typewriter effect
     const farewellEl = document.getElementById('badge-farewell');
     const watchingEl = document.getElementById('badge-watching');
     farewellEl.textContent = '';
@@ -3640,7 +3778,6 @@ const BadgeCeremony = {
 
     showScreen('badge');
 
-    // Type out farewell, then watching line, then show button
     this._typewrite(farewellEl, data.farewell, 28, () => {
       setTimeout(() => {
         this._typewrite(watchingEl, data.watching, 22, () => {
@@ -3649,11 +3786,9 @@ const BadgeCeremony = {
       }, 500);
     });
 
-    // Wire continue — show map title card then map
     const newBtn = continueBtn.cloneNode(true);
     continueBtn.parentNode.replaceChild(newBtn, continueBtn);
     newBtn.style.display = 'none';
-    // Store reference so typewriter callback shows right button
     document.getElementById('btn-badge-continue').style.display = 'none';
     setTimeout(() => {
       document.getElementById('btn-badge-continue').style.display = '';
@@ -3667,12 +3802,8 @@ const BadgeCeremony = {
   _typewrite(el, text, speed, onDone) {
     let i = 0;
     const tick = () => {
-      if (i < text.length) {
-        el.textContent += text[i++];
-        setTimeout(tick, speed);
-      } else if (onDone) {
-        onDone();
-      }
+      if (i < text.length) { el.textContent += text[i++]; setTimeout(tick, speed); }
+      else if (onDone) onDone();
     };
     tick();
   },
@@ -3680,41 +3811,26 @@ const BadgeCeremony = {
 
 // ─── MAP TITLE CARD ───────────────────────────────────────────────────────────
 
-const MAP_LOCATIONS = [
-  { city: 'Pewter City',    flavour: 'Rocky paths. Strong foundations. Your journey begins.' },
-  { city: 'Cerulean City',  flavour: 'The scent of the sea. A gym by the cape.' },
-  { city: 'Vermilion City', flavour: 'The port town buzzes with electric energy.' },
-  { city: 'Celadon City',   flavour: 'Flowers in every window. Something stirs beneath the calm.' },
-  { city: 'Fuchsia City',   flavour: 'The night comes early here. Watch your step.' },
-  { city: 'Saffron City',   flavour: 'The largest city in Kanto. Psychic power saturates the air.' },
-  { city: 'Cinnabar Island',flavour: 'Volcanic rock underfoot. The heat is not just from the gym.' },
-  { city: 'Viridian City',  flavour: 'The final gym. The earth badge. Giovanni waits.' },
-  { city: 'Indigo Plateau', flavour: 'Beyond the mountain pass. The Elite Four. The Champion.' },
-];
-
 const MapTitleCard = {
   show(nextBoss, defeatedCount) {
-    const loc  = MAP_LOCATIONS[Math.min(defeatedCount, MAP_LOCATIONS.length - 1)];
-    const bgGrad = GYM_FALLBACKS[Math.min(defeatedCount, GYM_FALLBACKS.length - 1)];
+    const gymIdx = Math.min(defeatedCount, GYM_DATA.length - 1);
+    const data   = GYM_DATA[gymIdx];
 
     const bgEl = document.getElementById('maptitle-bg');
-    if (bgEl) bgEl.style.background = bgGrad;
+    if (bgEl) bgEl.style.background = data.bgFallback;
 
-    document.getElementById('maptitle-location').textContent =
-      loc.city;
-    document.getElementById('maptitle-leader').textContent =
+    document.getElementById('maptitle-location').textContent = data.city;
+    document.getElementById('maptitle-leader').textContent   =
       nextBoss ? `${nextBoss.name} · ${nextBoss.title}` : 'The Indigo Plateau';
-    document.getElementById('maptitle-flavour').textContent = '';
+    document.getElementById('maptitle-flavour').textContent  = '';
 
     showScreen('maptitle');
 
-    // Fade in flavour line after a beat
     setTimeout(() => {
-      document.getElementById('maptitle-flavour').textContent = loc.flavour;
+      document.getElementById('maptitle-flavour').textContent = data.flavour;
       document.getElementById('maptitle-flavour').classList.add('maptitle-flavour-in');
     }, 600);
 
-    // Auto-advance to map after 2.8s
     setTimeout(() => {
       document.getElementById('maptitle-flavour').classList.remove('maptitle-flavour-in');
       MapEngine.show();
@@ -4065,40 +4181,6 @@ const PartyOverview = {
 // ─── MAP ENGINE (Navigation View) ────────────────────────────────────────────
 
 // Background image filenames per boss index
-const GYM_BACKGROUNDS = [
-  'bg_0_brock.png',
-  'bg_1_misty.png',
-  'bg_2_surge.png',
-  'bg_3_erika.png',
-  'bg_4_koga.png',
-  'bg_5_sabrina.png',
-  'bg_6_blaine.png',
-  'bg_7_giovanni.png',
-  'bg_8_lorelei.png',
-  'bg_9_bruno.png',
-  'bg_10_agatha.png',
-  'bg_11_lance.png',
-  'bg_12_blue.png',
-];
-
-// Fallback CSS gradient per boss index (shown if image hasn't loaded)
-const GYM_FALLBACKS = [
-  'linear-gradient(180deg,#6a5a40 0%,#8a7250 40%,#5a4838 100%)',  // Brock
-  'linear-gradient(180deg,#1a6a9a 0%,#2a7a3a 50%,#1a4a2a 100%)', // Misty
-  'linear-gradient(180deg,#2a3a20 0%,#4a5a28 50%,#1a2810 100%)', // Surge
-  'linear-gradient(180deg,#1a5a1a 0%,#2a8a2a 50%,#0a3a0a 100%)', // Erika
-  'linear-gradient(180deg,#1a0a2a 0%,#2a1a4a 50%,#0e0618 100%)', // Koga
-  'linear-gradient(180deg,#200828 0%,#4a2a6a 50%,#120416 100%)', // Sabrina
-  'linear-gradient(180deg,#1a0800 0%,#3a1800 50%,#0a0400 100%)', // Blaine
-  'linear-gradient(180deg,#0a0a0a 0%,#1a1a1a 50%,#000000 100%)', // Giovanni
-  'linear-gradient(180deg,#3060a0 0%,#a0c8e8 50%,#205080 100%)', // Lorelei
-  'linear-gradient(180deg,#2a1008 0%,#6a3018 50%,#180808 100%)', // Bruno
-  'linear-gradient(180deg,#06060e 0%,#1a1430 50%,#02020a 100%)', // Agatha
-  'linear-gradient(180deg,#060c20 0%,#0a1a40 50%,#020608 100%)', // Lance
-  'linear-gradient(180deg,#0e0202 0%,#2a0808 50%,#060000 100%)', // Blue
-];
-
-// Arrow directions by number of choices
 const ARROW_DIRS = {
   1: ['straight'],
   2: ['left', 'right'],
@@ -4648,10 +4730,12 @@ const TrainerBattleEngine = {
     }, 30);
 
     this._isActive = true;
+    ActiveEngine.set(this);
   },
 
   startBattle() {
     this._isActive = false;
+    ActiveEngine.clear();
     document.getElementById('trainer-intro').style.display = 'none';
 
     const bgEl = document.querySelector('#screen-boss .battle-bg');
@@ -6435,6 +6519,7 @@ const SurgeEngine = {
   start(node) {
     this._node     = node;
     this._isActive = true;
+    ActiveEngine.set(this);
     this._answered = false;
     this._round    = 0;
     this._score    = 0;
@@ -6488,6 +6573,7 @@ const SurgeEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     // Clear intro bg
@@ -6746,6 +6832,7 @@ const ErikaEngine = {
   start(node) {
     this._node      = node;
     this._isActive  = true;
+    ActiveEngine.set(this);
     this._answered  = false;
     this._poured            = [];
     this._totalPoured       = 0;
@@ -6795,6 +6882,7 @@ const ErikaEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     const bgEl = document.querySelector('#screen-boss .battle-bg');
@@ -7193,6 +7281,7 @@ const NinjaMemoryEngine = {
   start(node) {
     this._node    = node;
     this._isActive = true;
+    ActiveEngine.set(this);
     this._first   = null;
     this._misses  = 0;
     this._matched = 0;
@@ -7258,6 +7347,7 @@ const NinjaMemoryEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     const bgEl = document.querySelector('#screen-boss .battle-bg');
@@ -7645,6 +7735,7 @@ const BlaineEngine = {
   start(node) {
     this._node     = node;
     this._isActive = true;
+    ActiveEngine.set(this);
     this._answered = false;
     this._matchup  = null;
 
@@ -7700,6 +7791,7 @@ const BlaineEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
     document.getElementById('trainer-intro').style.display = 'none';
@@ -7941,6 +8033,7 @@ const SabrinaEngine = {
   async start(node) {
     this._node    = node;
     this._isActive = true;
+    ActiveEngine.set(this);
     this._placed  = 0;
     this._selectedTray = null;
 
@@ -8011,6 +8104,7 @@ const SabrinaEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
     document.getElementById('trainer-intro').style.display = 'none';
@@ -9341,6 +9435,7 @@ const GiovanniEngine = {
   start(node) {
     this._node      = node;
     this._isActive  = true;
+    ActiveEngine.set(this);
     this._tier      = GameState.difficultyTier || 2;
     this._filled    = {};
     this._undoStack = [];
@@ -9381,6 +9476,7 @@ const GiovanniEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     document.getElementById('trainer-intro').style.display = 'none';
     this._showPainting();
   },
@@ -11553,6 +11649,7 @@ const ShopEngine = {
   finish() {
     this._answered = false;
     this._isActive = false;
+    ActiveEngine.clear();
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },
@@ -12089,6 +12186,7 @@ const CookingEngine = {
     this._selected = null;
     this._mathSlot = null;
     this._isActive = true;
+    ActiveEngine.set(this);
     this._script   = BROCK_COOKING_SCRIPTS[
       Math.floor(Math.random() * BROCK_COOKING_SCRIPTS.length)
     ];
@@ -12161,6 +12259,7 @@ const CookingEngine = {
   // Called when player taps "Let's Cook! ▶"
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     // Reset the start button label for future boss/rocket encounters
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
@@ -12573,6 +12672,7 @@ const FishingEngine = {
   start(node) {
     this._node     = node;
     this._isActive = true;
+    ActiveEngine.set(this);
     this._answered = false;
     this._clueIdx  = 0;
 
@@ -12621,6 +12721,7 @@ const FishingEngine = {
 
   startGame() {
     this._isActive = false;
+    ActiveEngine.clear();
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     document.getElementById('trainer-intro').style.display = 'none';
@@ -12862,6 +12963,7 @@ const FishingEngine = {
 
   finish() {
     this._isActive = false;
+    ActiveEngine.clear();
     document.getElementById('screen-challenge').classList.remove('fishing-active');
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
@@ -14098,29 +14200,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Boss screen ──
   document.getElementById('btn-start-boss-battle').addEventListener('click', () => {
-    if (CookingEngine._isActive) {
-      CookingEngine.startGame();
-    } else if (FishingEngine._isActive) {
-      FishingEngine.startGame();
-    } else if (SurgeEngine._isActive) {
-      SurgeEngine.startGame();
-    } else if (ErikaEngine._isActive) {
-      ErikaEngine.startGame();
-    } else if (BlaineEngine._isActive) {
-      BlaineEngine.startGame();
-    } else if (NinjaMemoryEngine._isActive) {
-      NinjaMemoryEngine.startGame();
-    } else if (SabrinaEngine._isActive) {
-      SabrinaEngine.startGame();
-    } else if (GiovanniEngine._isActive) {
-      GiovanniEngine.startGame();
-    } else if (TrainerBattleEngine._isActive) {
-      TrainerBattleEngine.startBattle();
-    } else if (BossEngine._isRocket) {
-      RocketBattleEngine.startBattle();
-    } else {
-      BossEngine.startBattle();
-    }
+    // ActiveEngine handles all mini-game engines (Surge, Erika, Ninja, etc.)
+    if (ActiveEngine.go()) return;
+    // Fall through to battle engines
+    if (TrainerBattleEngine._isActive) { TrainerBattleEngine.startBattle(); }
+    else if (BossEngine._isRocket)     { RocketBattleEngine.startBattle(); }
+    else                               { BossEngine.startBattle(); }
   });
   document.getElementById('btn-dialogue-next').addEventListener('click', () => {
     if (CookingEngine._isActive) {
