@@ -485,6 +485,32 @@ const CARD_TEMPLATES = {
     { id:'covet',        name:'Covet',        icon:'💝', type:'normal',  power:30, cost:1, effect:'Heal 10 HP',               special: 'heal_10' },
     { id:'hyper_voice',  name:'Hyper Voice',  icon:'📣', type:'normal',  power:90, cost:3, effect:'One use only.',            special: null, exhaust: true },
   ],
+  // ── Mew starter deck — random cross-type wildcard ───────────────────────
+  mew: [
+    { id:'transform',    name:'Transform',    icon:'✨', type:'psychic', power:0,  cost:0, effect:'Copy opp last move+50%', special: 'transform' },
+    { id:'metronome',    name:'Metronome',    icon:'🎵', type:'normal',  power:0,  cost:0, effect:'Draw 2, free',           special: 'metronome' },
+    { id:'ancient_power',name:'Ancient Power',icon:'💎', type:'psychic', power:50, cost:1, effect:'10% all stats +1',       special: 'ancient_power' },
+    { id:'psychic_m',    name:'Psychic',      icon:'🔮', type:'psychic', power:65, cost:2, effect:'ATK -10',                special: 'debuff_atk' },
+    { id:'barrier',      name:'Barrier',      icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 40 dmg',           special: 'shield_35' },
+    { id:'swift_m',      name:'Swift',        icon:'⭐', type:'normal',  power:40, cost:1, effect:'Never misses',           special: null },
+    { id:'soft_boiled',  name:'Soft-Boiled',  icon:'🥚', type:'normal',  power:0,  cost:2, effect:'Heal 45 HP',             special: 'heal_25_draw' },
+    { id:'pound_m',      name:'Pound',        icon:'👊', type:'normal',  power:35, cost:1, effect:'',                       special: null },
+    { id:'mega_punch',   name:'Mega Punch',   icon:'💥', type:'normal',  power:58, cost:2, effect:'High crit',              special: 'high_crit' },
+    { id:'minimize',     name:'Minimize',     icon:'🌀', type:'normal',  power:0,  cost:1, effect:'+1 energy + draw 1',     special: 'agility' },
+  ],
+  // ── Mewtwo starter deck — enhanced psychic powerhouse ───────────────────
+  mewtwo: [
+    { id:'psystrike',    name:'Psystrike',    icon:'🔮', type:'psychic', power:65, cost:1, effect:'Pierces shield',         special: 'psyshock' },
+    { id:'recover',      name:'Recover',      icon:'💜', type:'psychic', power:0,  cost:1, effect:'Heal 50 HP',             special: 'recover' },
+    { id:'psycho_cut',   name:'Psycho Cut',   icon:'✂️', type:'psychic', power:50, cost:1, effect:'High crit',              special: 'high_crit' },
+    { id:'amnesia',      name:'Amnesia',      icon:'💭', type:'psychic', power:0,  cost:1, effect:'+1 energy + draw 2',     special: 'agility' },
+    { id:'future_sight_m',name:'Future Sight',icon:'👁', type:'psychic', power:70, cost:2, effect:'Hits next turn',         special: 'future_sight' },
+    { id:'aura_sphere',  name:'Aura Sphere',  icon:'⚡', type:'psychic', power:55, cost:2, effect:'Never misses',           special: null },
+    { id:'disable',      name:'Disable',      icon:'🚫', type:'psychic', power:0,  cost:1, effect:'Opp utility blocked×2',  special: 'taunt' },
+    { id:'barrier_m',    name:'Barrier',      icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 55 dmg',           special: 'shield_50' },
+    { id:'confusion_m',  name:'Confusion',    icon:'🌀', type:'psychic', power:38, cost:1, effect:'20% ATK debuff',         special: 'debuff_atk' },
+    { id:'hyper_beam_m', name:'Hyper Beam',   icon:'💫', type:'psychic', power:110,cost:3, effect:'One use only.',          special: null, exhaust: true },
+  ],
 };
 
 // Standard cards for caught Pokémon — 5 cards, varied utility
@@ -604,32 +630,7 @@ const TYPE_SIGNATURE_CARDS = {
     { id:'moonblast',   name:'Moonblast',   icon:'🌕', type:'fairy',   power:62, cost:2, effect:'ATK -10',          special: 'debuff_atk' },
     { id:'dazzling_gleam',name:'Dazzling Gleam',icon:'💫',type:'fairy',power:55, cost:2, effect:'',                 special: null },
   ],
-  // ── Mew starter deck — random cross-type wildcard ───────────────────────
-  mew: [
-    { id:'transform',   name:'Transform',   icon:'✨', type:'psychic', power:0,  cost:0, effect:'Copy opp last move+50%', special: 'transform' },
-    { id:'metronome',   name:'Metronome',   icon:'🎵', type:'normal',  power:0,  cost:0, effect:'Draw 2, free',          special: 'metronome' },
-    { id:'ancient_power',name:'Ancient Power',icon:'💎',type:'psychic',power:50, cost:1, effect:'10% all stats +1',       special: 'ancient_power' },
-    { id:'psychic_m',   name:'Psychic',     icon:'🔮', type:'psychic', power:65, cost:2, effect:'ATK -10',               special: 'debuff_atk' },
-    { id:'barrier',     name:'Barrier',     icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 40 dmg',          special: 'shield_35' },
-    { id:'swift_m',     name:'Swift',       icon:'⭐', type:'normal',  power:40, cost:1, effect:'Never misses',          special: null },
-    { id:'soft_boiled', name:'Soft-Boiled', icon:'🥚', type:'normal',  power:0,  cost:2, effect:'Heal 45 HP',            special: 'heal_25_draw' },
-    { id:'pound_m',     name:'Pound',       icon:'👊', type:'normal',  power:35, cost:1, effect:'',                      special: null },
-    { id:'mega_punch',  name:'Mega Punch',  icon:'💥', type:'normal',  power:58, cost:2, effect:'High crit',             special: 'high_crit' },
-    { id:'minimize',    name:'Minimize',    icon:'🌀', type:'normal',  power:0,  cost:1, effect:'+1 energy + draw 1',    special: 'agility' },
-  ],
-  // ── Mewtwo starter deck — enhanced psychic powerhouse ───────────────────
-  mewtwo: [
-    { id:'psystrike',   name:'Psystrike',   icon:'🔮', type:'psychic', power:65, cost:1, effect:'Pierces shield',        special: 'psyshock' },
-    { id:'recover',     name:'Recover',     icon:'💜', type:'psychic', power:0,  cost:1, effect:'Heal 50 HP',            special: 'recover' },
-    { id:'psycho_cut',  name:'Psycho Cut',  icon:'✂️', type:'psychic', power:50, cost:1, effect:'High crit',             special: 'high_crit' },
-    { id:'amnesia',     name:'Amnesia',     icon:'💭', type:'psychic', power:0,  cost:1, effect:'+1 energy + draw 2',    special: 'agility' },
-    { id:'future_sight_m',name:'Future Sight',icon:'👁',type:'psychic',power:70, cost:2, effect:'Hits next turn',        special: 'future_sight' },
-    { id:'aura_sphere', name:'Aura Sphere', icon:'⚡', type:'psychic', power:55, cost:2, effect:'Never misses',          special: null },
-    { id:'disable',     name:'Disable',     icon:'🚫', type:'psychic', power:0,  cost:1, effect:'Opp utility blocked×2', special: 'taunt' },
-    { id:'barrier_m',   name:'Barrier',     icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 55 dmg',          special: 'shield_50' },
-    { id:'confusion_m', name:'Confusion',   icon:'🌀', type:'psychic', power:38, cost:1, effect:'20% ATK debuff',        special: 'debuff_atk' },
-    { id:'hyper_beam_m',name:'Hyper Beam',  icon:'💫', type:'psychic', power:110,cost:3, effect:'One use only.',         special: null, exhaust: true },
-  ],
+
   bug:      [
     { id:'bug_bite',    name:'Bug Bite',    icon:'🐛', type:'bug',      power:40, cost:1, effect:'',                 special: null },
     { id:'string_shot', name:'String Shot', icon:'🕸️', type:'bug',      power:0,  cost:0, effect:'Speed -1, draw 1',special: 'string_shot' },
@@ -637,6 +638,7 @@ const TYPE_SIGNATURE_CARDS = {
     { id:'x_scissor',   name:'X-Scissor',   icon:'✂️', type:'bug',      power:60, cost:2, effect:'',                 special: null },
     { id:'megahorn',    name:'Megahorn',    icon:'🦏', type:'bug',      power:70, cost:2, effect:'20 recoil',        special: 'recoil_15' },
   ],
+
 };
 
 // Build a deck for a caught (non-starter) Pokémon — 5 standard + 5 type-specific
@@ -1616,7 +1618,7 @@ const SoundEngine = {
   },
 
   playStarterCry(starterId) {
-    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3', 133: 'eevee.mp3' };
+    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3', 133: 'eevee.mp3', 151: 'mew.mp3' };
     const file = cryMap[starterId];
     if (file) this.playSFXDebounced(file, 0.8);
   },
@@ -3537,8 +3539,9 @@ const Game = {
     showLoading();
     if (s.id === 25)  SoundEngine.playPikachu2();
     if (s.id === 133) SoundEngine.playStarterCry(133);
-    const data   = await fetchPoke(s.id);
-    const sprite = getSpriteUrl(data);
+    if (s.id === 151) SoundEngine.playStarterCry(151);
+    const data   = await fetchPoke(s.id).catch(() => null);
+    const sprite = data ? getSpriteUrl(data) : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${s.id}.png`;
     // Mewtwo starts at level 10 and gets +40 HP (handled in makePokemon via id check)
     const startLevel = s.id === 150 ? 10 : 5;
     const pokemon = makePokemon(s.id, startLevel, sprite, s.name, s.type, true);
@@ -4861,10 +4864,10 @@ const BattleEngine = {
     const opp = makePokemon(oppId, level, oppSprite, oppName, oppType);
 
     const active = GameState.party[GameState.activePokemonIndex];
-    const playerData = await fetchPoke(active.id);
+    const playerData = await fetchPoke(active.id).catch(() => null);
     // Keep spriteUrl as front-facing; store back sprite separately for battle only
-    const backSprite = playerData.sprites?.back_default
-                    || playerData.sprites?.front_default
+    const backSprite = playerData?.sprites?.back_default
+                    || playerData?.sprites?.front_default
                     || active.spriteUrl;
     active.backSpriteUrl = backSprite;
 
