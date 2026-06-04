@@ -1345,7 +1345,11 @@ const ActiveEngine = {
   // Called by btn-start-boss-battle — dispatches to registered engine or falls
   // through to TrainerBattle / RocketBattle / BossEngine as before.
   go() {
-    if (this._current) { this._current.startGame(); return true; }
+    if (this._current && typeof this._current.startGame === 'function') {
+      this._current.startGame();
+      return true;
+    }
+    if (this._current) this._current = null; // stale non-minigame engine — clear it
     return false;
   },
 };
@@ -4730,12 +4734,12 @@ const TrainerBattleEngine = {
     }, 30);
 
     this._isActive = true;
-    ActiveEngine.set(this);
+    // TrainerBattleEngine does NOT register with ActiveEngine — it uses
+    // startBattle() not startGame(), so the btn handler handles it separately.
   },
 
   startBattle() {
     this._isActive = false;
-    ActiveEngine.clear();
     document.getElementById('trainer-intro').style.display = 'none';
 
     const bgEl = document.querySelector('#screen-boss .battle-bg');
