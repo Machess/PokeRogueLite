@@ -8681,3 +8681,14 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-style: italic;
 }
 .gio-comment-show { color: rgba(200,170,100,.85) !important; }
+
+/* ── Transform — copied card from opponent ── */
+.card[data-copied="true"] {
+  border-color: #ffd700 !important;
+  box-shadow: 0 0 10px rgba(255,215,0,.5), 0 0 20px rgba(255,215,0,.2);
+  animation: copied-shimmer 1.5s ease-in-out infinite;
+}
+@keyframes copied-shimmer {
+  0%,100% { box-shadow: 0 0 8px rgba(255,215,0,.4); }
+  50%     { box-shadow: 0 0 18px rgba(255,215,0,.8), 0 0 30px rgba(255,215,0,.3); }
+}

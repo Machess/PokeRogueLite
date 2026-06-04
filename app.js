@@ -487,7 +487,7 @@ const CARD_TEMPLATES = {
   ],
   // ── Mew starter deck — random cross-type wildcard ───────────────────────
   mew: [
-    { id:'transform',    name:'Transform',    icon:'✨', type:'psychic', power:0,  cost:0, effect:'Copy opp last move+50%', special: 'transform' },
+    { id:'transform',    name:'Transform',    icon:'✨', type:'psychic', power:0,  cost:0, effect:'Add opp move to hand',   special: 'transform' },
     { id:'metronome',    name:'Metronome',    icon:'🎵', type:'normal',  power:0,  cost:0, effect:'Draw 2, free',           special: 'metronome' },
     { id:'ancient_power',name:'Ancient Power',icon:'💎', type:'psychic', power:50, cost:1, effect:'10% all stats +1',       special: 'ancient_power' },
     { id:'psychic_m',    name:'Psychic',      icon:'🔮', type:'psychic', power:65, cost:2, effect:'ATK -10',                special: 'debuff_atk' },
@@ -5136,6 +5136,7 @@ const BattleEngine = {
       + (disabled ? ' disabled' : '')
       + (mult >= 2 ? ' card-super' : mult === 0 || mult <= 0.5 ? ' card-weak' : '');
     el.dataset.type = card.type;
+    if (card._copied) el.dataset.copied = 'true';
 
     const effBadge = effLabel
       ? `<div class="card-eff-badge" style="color:${effLabel.color}">${effLabel.text}</div>`
@@ -5509,7 +5510,28 @@ const BattleEngine = {
                             break;
       case 'spore':         st.oppSkipped = true; this._dealHand(1);
                             this._logPlayer(`Spore! Opp fell asleep + drew a card!`); break;
-    }
+      case 'transform': {
+        // Wild Card — copy a random move from the opponent's move pool
+        // and forge it into a one-time playable card added to hand
+        const movePool = st.opp.moves || OPPONENT_MOVES[st.opp.type] || OPPONENT_MOVES.normal;
+        const stolen   = movePool[Math.floor(Math.random() * movePool.length)];
+        const forged   = {
+          id:       'transform_copy',
+          name:     stolen.name,
+          icon:     '✨',
+          type:     st.opp.type || 'normal',
+          power:    stolen.power,
+          cost:     stolen.power > 50 ? 2 : 1,
+          effect:   'Copied from opp!',
+          special:  null,
+          _copied:  true,   // flag so UI can style it distinctly
+        };
+        st.hand.push(forged);
+        this._logPlayer(`✨ <b>Transform!</b> Mew copied ${st.opp.name}'s <b>${stolen.name}</b> into your hand!`);
+        this._render();
+        break;
+      }
+    }  // end switch
 
     // Oran Berry mid-battle check after taking/dealing damage
     const berryMsg = ItemEngine.checkBerryMidBattle(st, 'player', this.isBoss);
