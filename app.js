@@ -529,6 +529,7 @@ const STANDARD_CARDS = [
 ];
 
 // 5 type-specific cards per type — full identity for caught Pokémon
+// Cards at index 5+ are League-tier — only used in buildLeagueDeck
 const TYPE_SIGNATURE_CARDS = {
   fire:     [
     { id:'ember',        name:'Ember',       icon:'🔥', type:'fire',     power:40, cost:1, effect:'15% burn',         special: 'burn_chance' },
@@ -536,112 +537,175 @@ const TYPE_SIGNATURE_CARDS = {
     { id:'inferno',      name:'Inferno',     icon:'🌠', type:'fire',     power:35, cost:2, effect:'Burn guaranteed',  special: 'burn' },
     { id:'flame_charge', name:'Flame Charge',icon:'🫧', type:'fire',     power:35, cost:1, effect:'+1 energy next',  special: 'flame_charge' },
     { id:'smokescreen',  name:'Smokescreen', icon:'💨', type:'normal',   power:0,  cost:1, effect:'Acc -25%',         special: 'debuff_acc' },
+    // League-tier
+    { id:'fire_blast',   name:'Fire Blast',  icon:'🌟', type:'fire',     power:90, cost:3, effect:'20% burn. Once.',  special: 'burn_chance', exhaust: true },
+    { id:'heat_wave',    name:'Heat Wave',   icon:'♨️', type:'fire',     power:70, cost:2, effect:'Burn guaranteed',  special: 'burn' },
+    { id:'will_o_wisp',  name:'Will-O-Wisp', icon:'🕯️', type:'fire',     power:0,  cost:1, effect:'Burn guaranteed',  special: 'burn' },
   ],
   water:    [
-    { id:'water_gun',   name:'Water Gun',   icon:'💧', type:'water',    power:42, cost:1, effect:'',                 special: null },
-    { id:'bubble',      name:'Bubble',      icon:'🫧', type:'water',    power:30, cost:1, effect:'Slow opp',         special: 'slow_opp' },
-    { id:'withdraw',    name:'Withdraw',    icon:'🛡️', type:'water',    power:0,  cost:1, effect:'Block 30 dmg',    special: 'shield_35' },
-    { id:'surf',        name:'Surf',        icon:'🏄', type:'water',    power:62, cost:2, effect:'',                 special: null },
-    { id:'aqua_jet',    name:'Aqua Jet',    icon:'💦', type:'water',    power:50, cost:2, effect:'Always first',     special: null },
+    { id:'water_gun',    name:'Water Gun',   icon:'💧', type:'water',    power:42, cost:1, effect:'',                 special: null },
+    { id:'bubble',       name:'Bubble',      icon:'🫧', type:'water',    power:30, cost:1, effect:'Slow opp',         special: 'slow_opp' },
+    { id:'withdraw',     name:'Withdraw',    icon:'🛡️', type:'water',    power:0,  cost:1, effect:'Block 30 dmg',    special: 'shield_35' },
+    { id:'surf',         name:'Surf',        icon:'🏄', type:'water',    power:62, cost:2, effect:'',                 special: null },
+    { id:'aqua_jet',     name:'Aqua Jet',    icon:'💦', type:'water',    power:50, cost:2, effect:'Always first',     special: null },
+    // League-tier
+    { id:'hydro_pump',   name:'Hydro Pump',  icon:'🌊', type:'water',    power:90, cost:3, effect:'Massive pressure. Once.', special: null, exhaust: true },
+    { id:'rain_dance',   name:'Rain Dance',  icon:'🌧️', type:'water',    power:0,  cost:1, effect:'Water +20% for 3t', special: 'rain' },
+    { id:'liquidation',  name:'Liquidation', icon:'💦', type:'water',    power:72, cost:2, effect:'DEF -15',          special: 'debuff_def' },
   ],
   grass:    [
-    { id:'vine_whip',   name:'Vine Whip',   icon:'🌿', type:'grass',    power:45, cost:1, effect:'',                 special: null },
-    { id:'absorb',      name:'Absorb',      icon:'🌱', type:'grass',    power:25, cost:1, effect:'Heal 12 HP',       special: 'heal_10' },
-    { id:'sleep_powder',name:'Sleep Powder',icon:'💤', type:'grass',    power:0,  cost:1, effect:'Skip opp',         special: 'skip_opp' },
-    { id:'mega_drain',  name:'Mega Drain',  icon:'💚', type:'grass',    power:40, cost:2, effect:'Heal 20 HP',       special: 'mega_drain' },
-    { id:'leech_seed',  name:'Leech Seed',  icon:'🌾', type:'grass',    power:20, cost:2, effect:'Drain 20/turn×3', special: 'leech' },
+    { id:'vine_whip',    name:'Vine Whip',   icon:'🌿', type:'grass',    power:45, cost:1, effect:'',                 special: null },
+    { id:'absorb',       name:'Absorb',      icon:'🌱', type:'grass',    power:25, cost:1, effect:'Heal 12 HP',       special: 'heal_10' },
+    { id:'sleep_powder', name:'Sleep Powder',icon:'💤', type:'grass',    power:0,  cost:1, effect:'Skip opp',         special: 'skip_opp' },
+    { id:'mega_drain',   name:'Mega Drain',  icon:'💚', type:'grass',    power:40, cost:2, effect:'Heal 20 HP',       special: 'mega_drain' },
+    { id:'leech_seed',   name:'Leech Seed',  icon:'🌾', type:'grass',    power:20, cost:2, effect:'Drain 20/turn×3',  special: 'leech' },
+    // League-tier
+    { id:'solar_beam',   name:'Solar Beam',  icon:'☀️', type:'grass',    power:90, cost:3, effect:'Max power. Once.', special: null, exhaust: true },
+    { id:'petal_blizzard',name:'Petal Blizzard',icon:'🌸',type:'grass',  power:70, cost:2, effect:'High crit',        special: 'high_crit' },
+    { id:'spore',        name:'Spore',       icon:'🍄', type:'grass',    power:0,  cost:1, effect:'Sleep + draw 1',   special: 'spore' },
   ],
   electric: [
-    { id:'thundershock',name:'ThunderShock',icon:'⚡', type:'electric', power:40, cost:1, effect:'15% paralyse',    special: 'para_chance' },
-    { id:'spark',       name:'Spark',       icon:'🔆', type:'electric', power:45, cost:1, effect:'',                 special: null },
-    { id:'thunder_wave',name:'Thunder Wave',icon:'🌩️', type:'electric', power:0,  cost:1, effect:'Paralyse opp',   special: 'paralyse' },
-    { id:'thunderbolt', name:'Thunderbolt', icon:'☇',  type:'electric', power:65, cost:2, effect:'25% paralyse',   special: 'para_chance' },
-    { id:'discharge',   name:'Discharge',   icon:'🌐', type:'electric', power:50, cost:2, effect:'15 self dmg',     special: 'discharge' },
+    { id:'thundershock', name:'ThunderShock',icon:'⚡', type:'electric', power:40, cost:1, effect:'15% paralyse',    special: 'para_chance' },
+    { id:'spark',        name:'Spark',       icon:'🔆', type:'electric', power:45, cost:1, effect:'',                 special: null },
+    { id:'thunder_wave', name:'Thunder Wave',icon:'🌩️', type:'electric', power:0,  cost:1, effect:'Paralyse opp',   special: 'paralyse' },
+    { id:'thunderbolt',  name:'Thunderbolt', icon:'☇',  type:'electric', power:65, cost:2, effect:'25% paralyse',   special: 'para_chance' },
+    { id:'discharge',    name:'Discharge',   icon:'🌐', type:'electric', power:50, cost:2, effect:'15 self dmg',     special: 'discharge' },
+    // League-tier
+    { id:'thunder',      name:'Thunder',     icon:'🌩', type:'electric', power:90, cost:3, effect:'35% para. Once.', special: 'para_chance', exhaust: true },
+    { id:'wild_charge',  name:'Wild Charge', icon:'⚡', type:'electric', power:72, cost:2, effect:'15 recoil',       special: 'recoil_15' },
+    { id:'charge_beam',  name:'Charge Beam', icon:'🔋', type:'electric', power:38, cost:1, effect:'+1 energy+draw',  special: 'agility' },
   ],
   psychic:  [
-    { id:'confusion',   name:'Confusion',   icon:'🌀', type:'psychic',  power:38, cost:1, effect:'20% ATK debuff',  special: 'debuff_atk' },
-    { id:'psybeam',     name:'Psybeam',     icon:'💜', type:'psychic',  power:48, cost:1, effect:'',                 special: null },
-    { id:'psyshock',    name:'Psyshock',    icon:'🔮', type:'psychic',  power:55, cost:2, effect:'Pierces shield',   special: 'psyshock' },
-    { id:'calm_mind',   name:'Calm Mind',   icon:'🧘', type:'psychic',  power:0,  cost:1, effect:'Next move +30%',  special: 'calm_mind' },
-    { id:'future_sight',name:'Future Sight',icon:'👁', type:'psychic',  power:70, cost:2, effect:'Hits next turn',  special: 'future_sight' },
+    { id:'confusion',    name:'Confusion',   icon:'🌀', type:'psychic',  power:38, cost:1, effect:'20% ATK debuff',  special: 'debuff_atk' },
+    { id:'psybeam',      name:'Psybeam',     icon:'💜', type:'psychic',  power:48, cost:1, effect:'',                 special: null },
+    { id:'psyshock',     name:'Psyshock',    icon:'🔮', type:'psychic',  power:55, cost:2, effect:'Pierces shield',   special: 'psyshock' },
+    { id:'calm_mind',    name:'Calm Mind',   icon:'🧘', type:'psychic',  power:0,  cost:1, effect:'Next move +30%',  special: 'calm_mind' },
+    { id:'future_sight', name:'Future Sight',icon:'👁', type:'psychic',  power:70, cost:2, effect:'Hits next turn',  special: 'future_sight' },
+    // League-tier
+    { id:'psychic_lg',   name:'Psychic',     icon:'🔮', type:'psychic',  power:80, cost:2, effect:'ATK -15',         special: 'debuff_atk' },
+    { id:'psystrike_lg', name:'Psystrike',   icon:'💫', type:'psychic',  power:85, cost:3, effect:'Pierces shield. Once.', special: 'psyshock', exhaust: true },
+    { id:'telekinesis',  name:'Telekinesis', icon:'🌀', type:'psychic',  power:0,  cost:1, effect:'Block 45 dmg',    special: 'iron_defense' },
   ],
   rock:     [
-    { id:'rock_throw',  name:'Rock Throw',  icon:'🪨', type:'rock',     power:42, cost:1, effect:'',                 special: null },
-    { id:'rollout',     name:'Rollout',     icon:'⚙️', type:'rock',     power:35, cost:1, effect:'',                 special: null },
-    { id:'stealth_rock',name:'Stealth Rock',icon:'💎', type:'rock',     power:0,  cost:1, effect:'Chip 15/turn×3',  special: 'stealth_rock' },
-    { id:'rock_slide',  name:'Rock Slide',  icon:'🏔️', type:'rock',     power:58, cost:2, effect:'25% flinch',      special: 'flinch' },
-    { id:'stone_edge',  name:'Stone Edge',  icon:'🗿', type:'rock',     power:65, cost:2, effect:'High crit',        special: 'high_crit' },
+    { id:'rock_throw',   name:'Rock Throw',  icon:'🪨', type:'rock',     power:42, cost:1, effect:'',                 special: null },
+    { id:'rollout',      name:'Rollout',     icon:'⚙️', type:'rock',     power:35, cost:1, effect:'',                 special: null },
+    { id:'stealth_rock', name:'Stealth Rock',icon:'💎', type:'rock',     power:0,  cost:1, effect:'Chip 15/turn×3',  special: 'stealth_rock' },
+    { id:'rock_slide',   name:'Rock Slide',  icon:'🏔️', type:'rock',     power:58, cost:2, effect:'25% flinch',      special: 'flinch' },
+    { id:'stone_edge',   name:'Stone Edge',  icon:'🗿', type:'rock',     power:65, cost:2, effect:'High crit',        special: 'high_crit' },
+    // League-tier
+    { id:'rock_wrecker', name:'Rock Wrecker',icon:'💥', type:'rock',     power:95, cost:3, effect:'Massive hit. Once.', special: null, exhaust: true },
+    { id:'power_gem',    name:'Power Gem',   icon:'💎', type:'rock',     power:70, cost:2, effect:'High crit',        special: 'high_crit' },
+    { id:'smack_down',   name:'Smack Down',  icon:'⬇️', type:'rock',     power:48, cost:1, effect:'DEF -15',         special: 'debuff_def' },
   ],
   ground:   [
-    { id:'mud_slap',    name:'Mud Slap',    icon:'🟫', type:'ground',   power:28, cost:1, effect:'Acc -20%',         special: 'debuff_acc' },
-    { id:'sand_attack', name:'Sand Attack', icon:'🏜️', type:'ground',   power:0,  cost:0, effect:'Acc -30%, free',  special: 'debuff_acc' },
-    { id:'dig',         name:'Dig',         icon:'⛏️', type:'ground',   power:58, cost:2, effect:'',                 special: null },
-    { id:'earthquake',  name:'Earthquake',  icon:'🌋', type:'ground',   power:70, cost:2, effect:'15 recoil',        special: 'recoil_15' },
-    { id:'bulldoze',    name:'Bulldoze',    icon:'🚜', type:'ground',   power:40, cost:1, effect:'Opp speed -1',     special: 'slow_opp' },
+    { id:'mud_slap',     name:'Mud Slap',    icon:'🟫', type:'ground',   power:28, cost:1, effect:'Acc -20%',         special: 'debuff_acc' },
+    { id:'sand_attack',  name:'Sand Attack', icon:'🏜️', type:'ground',   power:0,  cost:0, effect:'Acc -30%, free',  special: 'debuff_acc' },
+    { id:'dig',          name:'Dig',         icon:'⛏️', type:'ground',   power:58, cost:2, effect:'',                 special: null },
+    { id:'earthquake',   name:'Earthquake',  icon:'🌋', type:'ground',   power:70, cost:2, effect:'15 recoil',        special: 'recoil_15' },
+    { id:'bulldoze',     name:'Bulldoze',    icon:'🚜', type:'ground',   power:40, cost:1, effect:'Opp speed -1',     special: 'slow_opp' },
+    // League-tier
+    { id:'precipice_blades',name:'Precipice Blades',icon:'⛰️',type:'ground',power:90,cost:3,effect:'Max force. Once.', special: null, exhaust: true },
+    { id:'earth_power',  name:'Earth Power', icon:'🌍', type:'ground',   power:72, cost:2, effect:'DEF -15',          special: 'debuff_def' },
+    { id:'shore_up',     name:'Shore Up',    icon:'🏔️', type:'ground',   power:0,  cost:2, effect:'Heal 40 HP',       special: 'roost' },
   ],
   poison:   [
-    { id:'poison_sting',name:'Poison Sting',icon:'☠️', type:'poison',   power:30, cost:1, effect:'35% poison',      special: 'poison' },
-    { id:'acid',        name:'Acid',        icon:'🧪', type:'poison',   power:38, cost:1, effect:'DEF -10',          special: 'debuff_def' },
-    { id:'toxic',       name:'Toxic',       icon:'💀', type:'poison',   power:0,  cost:1, effect:'Poison guaranteed', special: 'poison' },
-    { id:'sludge',      name:'Sludge',      icon:'🟢', type:'poison',   power:50, cost:2, effect:'50% poison',       special: 'poison' },
-    { id:'venoshock',   name:'Venoshock',   icon:'💉', type:'poison',   power:55, cost:2, effect:'×2 if poisoned',   special: 'venoshock' },
+    { id:'poison_sting', name:'Poison Sting',icon:'☠️', type:'poison',   power:30, cost:1, effect:'35% poison',      special: 'poison' },
+    { id:'acid',         name:'Acid',        icon:'🧪', type:'poison',   power:38, cost:1, effect:'DEF -10',          special: 'debuff_def' },
+    { id:'toxic',        name:'Toxic',       icon:'💀', type:'poison',   power:0,  cost:1, effect:'Poison guaranteed', special: 'poison' },
+    { id:'sludge',       name:'Sludge',      icon:'🟢', type:'poison',   power:50, cost:2, effect:'50% poison',       special: 'poison' },
+    { id:'venoshock',    name:'Venoshock',   icon:'💉', type:'poison',   power:55, cost:2, effect:'×2 if poisoned',   special: 'venoshock' },
+    // League-tier
+    { id:'sludge_bomb',  name:'Sludge Bomb', icon:'💣', type:'poison',   power:80, cost:2, effect:'Poison guaranteed', special: 'poison' },
+    { id:'gunk_shot',    name:'Gunk Shot',   icon:'🎯', type:'poison',   power:90, cost:3, effect:'Poison. Once.',    special: 'poison', exhaust: true },
+    { id:'poison_jab',   name:'Poison Jab',  icon:'💪', type:'poison',   power:60, cost:2, effect:'50% poison',       special: 'poison' },
   ],
   normal:   [
-    { id:'double_slap', name:'Double Slap', icon:'👋', type:'normal',   power:45, cost:1, effect:'',                 special: null },
-    { id:'swift',       name:'Swift',       icon:'⭐', type:'normal',   power:40, cost:1, effect:'Never misses',     special: null },
-    { id:'body_slam',   name:'Body Slam',   icon:'🏋️', type:'normal',   power:58, cost:2, effect:'25% para',        special: 'para_chance' },
-    { id:'hyper_voice', name:'Hyper Voice', icon:'📣', type:'normal',   power:55, cost:2, effect:'ATK -15',          special: 'debuff_atk' },
-    { id:'metronome',   name:'Metronome',   icon:'🎵', type:'normal',   power:0,  cost:0, effect:'Draw 2, free',     special: 'metronome' },
+    { id:'double_slap',  name:'Double Slap', icon:'👋', type:'normal',   power:45, cost:1, effect:'',                 special: null },
+    { id:'swift_n',      name:'Swift',       icon:'⭐', type:'normal',   power:40, cost:1, effect:'Never misses',     special: null },
+    { id:'body_slam',    name:'Body Slam',   icon:'🏋️', type:'normal',   power:58, cost:2, effect:'25% para',        special: 'para_chance' },
+    { id:'hyper_voice_n',name:'Hyper Voice', icon:'📣', type:'normal',   power:55, cost:2, effect:'ATK -15',          special: 'debuff_atk' },
+    { id:'metronome_n',  name:'Metronome',   icon:'🎵', type:'normal',   power:0,  cost:0, effect:'Draw 2, free',     special: 'metronome' },
+    // League-tier
+    { id:'hyper_beam_n', name:'Hyper Beam',  icon:'💫', type:'normal',   power:100,cost:3, effect:'Max power. Once.', special: null, exhaust: true },
+    { id:'extreme_speed',name:'ExtremeSpeed',icon:'💨', type:'normal',   power:65, cost:1, effect:'Always first',     special: null },
+    { id:'return_n',     name:'Return',      icon:'❤️', type:'normal',   power:70, cost:2, effect:'High crit',        special: 'high_crit' },
   ],
   flying:   [
-    { id:'gust',        name:'Gust',        icon:'🌬️', type:'flying',   power:38, cost:1, effect:'',                 special: null },
-    { id:'wing_attack', name:'Wing Attack', icon:'🦅', type:'flying',   power:48, cost:1, effect:'',                 special: null },
-    { id:'aerial_ace',  name:'Aerial Ace',  icon:'✈️', type:'flying',   power:45, cost:1, effect:'Never misses',     special: null },
-    { id:'roost',       name:'Roost',       icon:'🪺', type:'flying',   power:0,  cost:2, effect:'Heal 35 HP',       special: 'roost' },
-    { id:'air_slash',   name:'Air Slash',   icon:'🌪️', type:'flying',   power:58, cost:2, effect:'25% flinch',      special: 'flinch' },
+    { id:'gust',         name:'Gust',        icon:'🌬️', type:'flying',   power:38, cost:1, effect:'',                 special: null },
+    { id:'wing_attack',  name:'Wing Attack', icon:'🦅', type:'flying',   power:48, cost:1, effect:'',                 special: null },
+    { id:'aerial_ace',   name:'Aerial Ace',  icon:'✈️', type:'flying',   power:45, cost:1, effect:'Never misses',     special: null },
+    { id:'roost',        name:'Roost',       icon:'🪺', type:'flying',   power:0,  cost:2, effect:'Heal 35 HP',       special: 'roost' },
+    { id:'air_slash',    name:'Air Slash',   icon:'🌪️', type:'flying',   power:58, cost:2, effect:'25% flinch',      special: 'flinch' },
+    // League-tier
+    { id:'hurricane',    name:'Hurricane',   icon:'🌀', type:'flying',   power:80, cost:2, effect:'25% confuse',      special: 'debuff_atk' },
+    { id:'brave_bird',   name:'Brave Bird',  icon:'🦆', type:'flying',   power:85, cost:2, effect:'25 recoil',        special: 'close_combat' },
+    { id:'sky_attack',   name:'Sky Attack',  icon:'⚡', type:'flying',   power:90, cost:3, effect:'Max hit. Once.',   special: null, exhaust: true },
   ],
   ice:      [
-    { id:'ice_shard',   name:'Ice Shard',   icon:'❄️', type:'ice',      power:38, cost:1, effect:'Always first',     special: null },
-    { id:'icy_wind',    name:'Icy Wind',    icon:'🌬️', type:'ice',      power:40, cost:1, effect:'Opp speed -1',     special: 'slow_opp' },
-    { id:'hail',        name:'Hail',        icon:'🌨️', type:'ice',      power:0,  cost:1, effect:'Opp -12/turn×3',  special: 'hail' },
-    { id:'blizzard',    name:'Blizzard',    icon:'❄️', type:'ice',      power:65, cost:2, effect:'',                 special: null },
-    { id:'frost_breath',name:'Frost Breath',icon:'🥶', type:'ice',      power:52, cost:2, effect:'Always crits',     special: 'always_crit' },
+    { id:'ice_shard',    name:'Ice Shard',   icon:'❄️', type:'ice',      power:38, cost:1, effect:'Always first',     special: null },
+    { id:'icy_wind',     name:'Icy Wind',    icon:'🌬️', type:'ice',      power:40, cost:1, effect:'Opp speed -1',     special: 'slow_opp' },
+    { id:'hail',         name:'Hail',        icon:'🌨️', type:'ice',      power:0,  cost:1, effect:'Opp -12/turn×3',  special: 'hail' },
+    { id:'blizzard',     name:'Blizzard',    icon:'❄️', type:'ice',      power:65, cost:2, effect:'',                 special: null },
+    { id:'frost_breath', name:'Frost Breath',icon:'🥶', type:'ice',      power:52, cost:2, effect:'Always crits',     special: 'always_crit' },
+    // League-tier
+    { id:'sheer_cold',   name:'Sheer Cold',  icon:'🧊', type:'ice',      power:90, cost:3, effect:'Freeze chance. Once.', special: 'skip_opp', exhaust: true },
+    { id:'ice_beam',     name:'Ice Beam',    icon:'💠', type:'ice',      power:78, cost:2, effect:'20% slow',         special: 'slow_opp' },
+    { id:'aurora_veil',  name:'Aurora Veil', icon:'🌈', type:'ice',      power:0,  cost:1, effect:'Block 50 dmg',     special: 'iron_defense' },
   ],
   fighting: [
-    { id:'karate_chop', name:'Karate Chop', icon:'🥊', type:'fighting', power:45, cost:1, effect:'High crit',        special: 'high_crit' },
-    { id:'low_kick',    name:'Low Kick',    icon:'🦵', type:'fighting', power:40, cost:1, effect:'',                 special: null },
-    { id:'cross_chop',  name:'Cross Chop',  icon:'✊', type:'fighting', power:65, cost:2, effect:'High crit',        special: 'high_crit' },
-    { id:'close_combat',name:'Close Combat',icon:'💪', type:'fighting', power:80, cost:2, effect:'25 recoil',        special: 'close_combat' },
-    { id:'focus_punch', name:'Focus Punch', icon:'🎯', type:'fighting', power:75, cost:2, effect:'Miss if hit first', special: 'focus_punch' },
+    { id:'karate_chop',  name:'Karate Chop', icon:'🥊', type:'fighting', power:45, cost:1, effect:'High crit',        special: 'high_crit' },
+    { id:'low_kick',     name:'Low Kick',    icon:'🦵', type:'fighting', power:40, cost:1, effect:'',                 special: null },
+    { id:'cross_chop',   name:'Cross Chop',  icon:'✊', type:'fighting', power:65, cost:2, effect:'High crit',        special: 'high_crit' },
+    { id:'close_combat', name:'Close Combat',icon:'💪', type:'fighting', power:80, cost:2, effect:'25 recoil',        special: 'close_combat' },
+    { id:'focus_punch',  name:'Focus Punch', icon:'🎯', type:'fighting', power:75, cost:2, effect:'Miss if hit first', special: 'focus_punch' },
+    // League-tier
+    { id:'superpower',   name:'Superpower',  icon:'💥', type:'fighting', power:90, cost:3, effect:'Max force. Once.', special: 'close_combat', exhaust: true },
+    { id:'drain_punch',  name:'Drain Punch', icon:'🤜', type:'fighting', power:60, cost:2, effect:'Heal 30 HP',       special: 'mega_drain' },
+    { id:'bulk_up',      name:'Bulk Up',     icon:'🏋️', type:'fighting', power:0,  cost:1, effect:'Next move +30%',  special: 'calm_mind' },
   ],
   ghost:    [
-    { id:'lick',        name:'Lick',        icon:'👻', type:'ghost',    power:28, cost:1, effect:'35% para',         special: 'para_chance' },
-    { id:'shadow_sneak',name:'Shadow Sneak',icon:'🌑', type:'ghost',    power:38, cost:1, effect:'Always first',     special: null },
-    { id:'night_shade', name:'Night Shade', icon:'🌙', type:'ghost',    power:0,  cost:1, effect:'Dmg = opp level',  special: 'night_shade' },
-    { id:'curse',       name:'Curse',       icon:'💢', type:'ghost',    power:0,  cost:1, effect:'Opp -20/turn, you -10', special: 'curse' },
-    { id:'shadow_ball', name:'Shadow Ball', icon:'🌑', type:'ghost',    power:58, cost:2, effect:'DEF -15',          special: 'debuff_def' },
+    { id:'lick',         name:'Lick',        icon:'👻', type:'ghost',    power:28, cost:1, effect:'35% para',         special: 'para_chance' },
+    { id:'shadow_sneak', name:'Shadow Sneak',icon:'🌑', type:'ghost',    power:38, cost:1, effect:'Always first',     special: null },
+    { id:'night_shade',  name:'Night Shade', icon:'🌙', type:'ghost',    power:0,  cost:1, effect:'Dmg = opp level',  special: 'night_shade' },
+    { id:'curse_g',      name:'Curse',       icon:'💢', type:'ghost',    power:0,  cost:1, effect:'Opp -20/turn, you -10', special: 'curse' },
+    { id:'shadow_ball',  name:'Shadow Ball', icon:'🌑', type:'ghost',    power:58, cost:2, effect:'DEF -15',          special: 'debuff_def' },
+    // League-tier
+    { id:'shadow_force', name:'Shadow Force',icon:'💀', type:'ghost',    power:90, cost:3, effect:'Unstoppable. Once.', special: 'psyshock', exhaust: true },
+    { id:'hex',          name:'Hex',         icon:'🌀', type:'ghost',    power:65, cost:2, effect:'×2 if status',     special: 'venoshock' },
+    { id:'spite',        name:'Spite',       icon:'😈', type:'ghost',    power:0,  cost:1, effect:'ATK -25',          special: 'debuff_atk' },
   ],
   dragon:   [
-    { id:'twister',     name:'Twister',     icon:'🌪️', type:'dragon',  power:38, cost:1, effect:'25% flinch',       special: 'flinch' },
-    { id:'dragon_rage', name:'Dragon Rage', icon:'🐉', type:'dragon',  power:55, cost:2, effect:'',                 special: null },
-    { id:'dragon_breath',name:'Dragon Breath',icon:'💨',type:'dragon', power:52, cost:2, effect:'25% para',          special: 'para_chance' },
-    { id:'dragon_dance',name:'Dragon Dance',icon:'💃', type:'dragon',  power:0,  cost:2, effect:'+20% dmg forever', special: 'dragon_dance' },
-    { id:'outrage',     name:'Outrage',     icon:'😤', type:'dragon',  power:95, cost:3, effect:'20 recoil. Once.',  special: 'recoil_15', exhaust: true },
+    { id:'twister',      name:'Twister',     icon:'🌪️', type:'dragon',  power:38, cost:1, effect:'25% flinch',       special: 'flinch' },
+    { id:'dragon_rage',  name:'Dragon Rage', icon:'🐉', type:'dragon',  power:55, cost:2, effect:'',                 special: null },
+    { id:'dragon_breath',name:'Dragon Breath',icon:'💨',type:'dragon',  power:52, cost:2, effect:'25% para',          special: 'para_chance' },
+    { id:'dragon_dance', name:'Dragon Dance',icon:'💃', type:'dragon',  power:0,  cost:2, effect:'+20% dmg forever', special: 'dragon_dance' },
+    { id:'outrage',      name:'Outrage',     icon:'😤', type:'dragon',  power:95, cost:3, effect:'20 recoil. Once.',  special: 'recoil_15', exhaust: true },
+    // League-tier
+    { id:'draco_meteor', name:'Draco Meteor',icon:'☄️', type:'dragon',  power:100,cost:3, effect:'ATK -20. Once.',   special: 'debuff_atk', exhaust: true },
+    { id:'dragon_claw',  name:'Dragon Claw', icon:'🐲', type:'dragon',  power:72, cost:2, effect:'High crit',        special: 'high_crit' },
+    { id:'scale_shot',   name:'Scale Shot',  icon:'🦎', type:'dragon',  power:50, cost:1, effect:'High crit',        special: 'high_crit' },
   ],
   fairy:    [
-    { id:'fairy_wind',  name:'Fairy Wind',  icon:'🧚', type:'fairy',   power:38, cost:1, effect:'',                 special: null },
-    { id:'sweet_kiss',  name:'Sweet Kiss',  icon:'💋', type:'fairy',   power:0,  cost:1, effect:'ATK -25 for 1t',  special: 'debuff_atk' },
-    { id:'misty_terrain',name:'Misty Terrain',icon:'✨',type:'fairy',  power:0,  cost:1, effect:'Clears status',    special: 'misty_terrain' },
-    { id:'moonblast',   name:'Moonblast',   icon:'🌕', type:'fairy',   power:62, cost:2, effect:'ATK -10',          special: 'debuff_atk' },
-    { id:'dazzling_gleam',name:'Dazzling Gleam',icon:'💫',type:'fairy',power:55, cost:2, effect:'',                 special: null },
+    { id:'fairy_wind',   name:'Fairy Wind',  icon:'🧚', type:'fairy',   power:38, cost:1, effect:'',                 special: null },
+    { id:'sweet_kiss',   name:'Sweet Kiss',  icon:'💋', type:'fairy',   power:0,  cost:1, effect:'ATK -25 for 1t',  special: 'debuff_atk' },
+    { id:'misty_terrain',name:'Misty Terrain',icon:'✨',type:'fairy',   power:0,  cost:1, effect:'Clears status',    special: 'misty_terrain' },
+    { id:'moonblast',    name:'Moonblast',   icon:'🌕', type:'fairy',   power:62, cost:2, effect:'ATK -10',          special: 'debuff_atk' },
+    { id:'dazzling_gleam',name:'Dazzling Gleam',icon:'💫',type:'fairy', power:55, cost:2, effect:'',                 special: null },
+    // League-tier
+    { id:'moongeist_beam',name:'Moongeist Beam',icon:'🌙',type:'fairy', power:88, cost:3, effect:'Ignores shield. Once.', special: 'psyshock', exhaust: true },
+    { id:'play_rough',   name:'Play Rough',  icon:'🎀', type:'fairy',   power:72, cost:2, effect:'ATK -10',          special: 'debuff_atk' },
+    { id:'charm',        name:'Charm',       icon:'💝', type:'fairy',   power:0,  cost:1, effect:'ATK -30',          special: 'debuff_atk' },
   ],
-
   bug:      [
-    { id:'bug_bite',    name:'Bug Bite',    icon:'🐛', type:'bug',      power:40, cost:1, effect:'',                 special: null },
-    { id:'string_shot', name:'String Shot', icon:'🕸️', type:'bug',      power:0,  cost:0, effect:'Speed -1, draw 1',special: 'string_shot' },
-    { id:'signal_beam', name:'Signal Beam', icon:'📡', type:'bug',      power:48, cost:1, effect:'',                 special: null },
-    { id:'x_scissor',   name:'X-Scissor',   icon:'✂️', type:'bug',      power:60, cost:2, effect:'',                 special: null },
-    { id:'megahorn',    name:'Megahorn',    icon:'🦏', type:'bug',      power:70, cost:2, effect:'20 recoil',        special: 'recoil_15' },
+    { id:'bug_bite',     name:'Bug Bite',    icon:'🐛', type:'bug',      power:40, cost:1, effect:'',                 special: null },
+    { id:'string_shot',  name:'String Shot', icon:'🕸️', type:'bug',      power:0,  cost:0, effect:'Speed -1, draw 1',special: 'string_shot' },
+    { id:'signal_beam',  name:'Signal Beam', icon:'📡', type:'bug',      power:48, cost:1, effect:'',                 special: null },
+    { id:'x_scissor',    name:'X-Scissor',   icon:'✂️', type:'bug',      power:60, cost:2, effect:'',                 special: null },
+    { id:'megahorn',     name:'Megahorn',    icon:'🦏', type:'bug',      power:70, cost:2, effect:'20 recoil',        special: 'recoil_15' },
+    // League-tier
+    { id:'bug_buzz',     name:'Bug Buzz',    icon:'🐝', type:'bug',      power:82, cost:2, effect:'DEF -15',          special: 'debuff_def' },
+    { id:'quiver_dance', name:'Quiver Dance',icon:'🦋', type:'bug',      power:0,  cost:1, effect:'+1 energy+draw',  special: 'agility' },
+    { id:'lunge',        name:'Lunge',       icon:'🪲', type:'bug',      power:55, cost:1, effect:'ATK -15',          special: 'debuff_atk' },
   ],
 
 };
@@ -652,6 +716,211 @@ function buildPokemonDeck(type) {
   const std     = STANDARD_CARDS.slice(0, 5).map(c => ({ ...c }));
   const sig     = typeSig.slice(0, 5).map(c => ({ ...c }));
   return [...std, ...sig];
+}
+
+// ─── LEAGUE DECKS — pre-made, hand-crafted per type ──────────────────────────
+// Each deck has exactly 10 cards.
+// Strategy layout per type:
+//   3 cheap openers (cost 0–1)  → always playable turn 1
+//   4 mid-range cards (cost 1–2) → workhorse moves
+//   2 power plays (cost 2–3)     → high impact
+//   1 exhaust marquee (cost 3)   → one big moment per fight
+const LEAGUE_DECKS = {
+  fire: [
+    { id:'ember',       name:'Ember',       icon:'🔥', type:'fire',     power:40, cost:1, effect:'15% burn',         special:'burn_chance' },
+    { id:'flame_charge',name:'Flame Charge',icon:'🫧', type:'fire',     power:35, cost:1, effect:'+1 energy next',  special:'flame_charge' },
+    { id:'will_o_wisp', name:'Will-O-Wisp', icon:'🕯️', type:'fire',     power:0,  cost:1, effect:'Burn guaranteed',  special:'burn' },
+    { id:'flamethrower',name:'Flamethrower',icon:'🌋', type:'fire',     power:65, cost:2, effect:'',                 special:null },
+    { id:'inferno',     name:'Inferno',     icon:'🌠', type:'fire',     power:35, cost:2, effect:'Burn guaranteed',  special:'burn' },
+    { id:'heat_wave',   name:'Heat Wave',   icon:'♨️', type:'fire',     power:70, cost:2, effect:'Burn guaranteed',  special:'burn' },
+    { id:'smokescreen', name:'Smokescreen', icon:'💨', type:'normal',   power:0,  cost:1, effect:'Acc -25%',         special:'debuff_acc' },
+    { id:'overheat',    name:'Overheat',    icon:'🔥', type:'fire',     power:80, cost:3, effect:'25 recoil',        special:'overheat' },
+    { id:'blast_burn',  name:'Blast Burn',  icon:'💥', type:'fire',     power:85, cost:3, effect:'Massive. Once.',   special:null, exhaust:true },
+    { id:'fire_blast',  name:'Fire Blast',  icon:'🌟', type:'fire',     power:90, cost:3, effect:'20% burn. Once.',  special:'burn_chance', exhaust:true },
+  ],
+  water: [
+    { id:'water_gun',   name:'Water Gun',   icon:'💧', type:'water',    power:42, cost:1, effect:'',                 special:null },
+    { id:'aqua_jet',    name:'Aqua Jet',    icon:'💦', type:'water',    power:50, cost:1, effect:'Always first',     special:null },
+    { id:'rain_dance',  name:'Rain Dance',  icon:'🌧️', type:'water',    power:0,  cost:1, effect:'Water +20% 3t',   special:'rain' },
+    { id:'withdraw',    name:'Withdraw',    icon:'🛡️', type:'water',    power:0,  cost:1, effect:'Block 30 dmg',    special:'shield_35' },
+    { id:'surf',        name:'Surf',        icon:'🏄', type:'water',    power:62, cost:2, effect:'',                 special:null },
+    { id:'liquidation', name:'Liquidation', icon:'💦', type:'water',    power:72, cost:2, effect:'DEF -15',          special:'debuff_def' },
+    { id:'bubble',      name:'Bubble',      icon:'🫧', type:'water',    power:30, cost:1, effect:'Slow opp',         special:'slow_opp' },
+    { id:'whirlpool',   name:'Whirlpool',   icon:'🌀', type:'water',    power:58, cost:2, effect:'',                 special:null },
+    { id:'blizzard_w',  name:'Blizzard',    icon:'❄️', type:'ice',      power:65, cost:2, effect:'',                 special:null },
+    { id:'hydro_pump',  name:'Hydro Pump',  icon:'🌊', type:'water',    power:90, cost:3, effect:'Max water. Once.', special:null, exhaust:true },
+  ],
+  grass: [
+    { id:'vine_whip',   name:'Vine Whip',   icon:'🌿', type:'grass',    power:45, cost:1, effect:'',                 special:null },
+    { id:'absorb',      name:'Absorb',      icon:'🌱', type:'grass',    power:25, cost:1, effect:'Heal 12 HP',       special:'heal_10' },
+    { id:'sleep_powder',name:'Sleep Powder',icon:'💤', type:'grass',    power:0,  cost:1, effect:'Skip opp',         special:'skip_opp' },
+    { id:'leech_seed',  name:'Leech Seed',  icon:'🌾', type:'grass',    power:20, cost:2, effect:'Drain 20/turn×3',  special:'leech' },
+    { id:'mega_drain',  name:'Mega Drain',  icon:'💚', type:'grass',    power:40, cost:2, effect:'Heal 20 HP',       special:'mega_drain' },
+    { id:'petal_blizzard',name:'Petal Blizzard',icon:'🌸',type:'grass', power:70, cost:2, effect:'High crit',        special:'high_crit' },
+    { id:'spore',       name:'Spore',       icon:'🍄', type:'grass',    power:0,  cost:1, effect:'Sleep + draw 1',   special:'spore' },
+    { id:'synthesis',   name:'Synthesis',   icon:'☀️', type:'grass',    power:0,  cost:2, effect:'Heal 35 HP+draw',  special:'heal_25_draw' },
+    { id:'giga_drain',  name:'Giga Drain',  icon:'🌀', type:'grass',    power:60, cost:2, effect:'Heal 30 HP',       special:'mega_drain' },
+    { id:'solar_beam',  name:'Solar Beam',  icon:'☀️', type:'grass',    power:90, cost:3, effect:'Max power. Once.', special:null, exhaust:true },
+  ],
+  electric: [
+    { id:'thundershock',name:'ThunderShock',icon:'⚡', type:'electric', power:40, cost:1, effect:'15% para',         special:'para_chance' },
+    { id:'thunder_wave',name:'Thunder Wave',icon:'🌩️', type:'electric', power:0,  cost:1, effect:'Paralyse opp',    special:'paralyse' },
+    { id:'charge_beam', name:'Charge Beam', icon:'🔋', type:'electric', power:38, cost:1, effect:'+1 energy+draw',   special:'agility' },
+    { id:'spark',       name:'Spark',       icon:'🔆', type:'electric', power:45, cost:1, effect:'',                 special:null },
+    { id:'thunderbolt', name:'Thunderbolt', icon:'☇',  type:'electric', power:65, cost:2, effect:'25% para',         special:'para_chance' },
+    { id:'wild_charge', name:'Wild Charge', icon:'⚡', type:'electric', power:72, cost:2, effect:'15 recoil',        special:'recoil_15' },
+    { id:'discharge',   name:'Discharge',   icon:'🌐', type:'electric', power:50, cost:2, effect:'15 self dmg',      special:'discharge' },
+    { id:'volt_tackle', name:'Volt Tackle',  icon:'💛', type:'electric', power:78, cost:3, effect:'20 recoil',        special:'recoil_15' },
+    { id:'zap_cannon',  name:'Zap Cannon',  icon:'🎯', type:'electric', power:80, cost:3, effect:'Paralyse. Once.',  special:'paralyse', exhaust:true },
+    { id:'thunder',     name:'Thunder',     icon:'🌩', type:'electric', power:90, cost:3, effect:'35% para. Once.',  special:'para_chance', exhaust:true },
+  ],
+  psychic: [
+    { id:'confusion',   name:'Confusion',   icon:'🌀', type:'psychic',  power:38, cost:1, effect:'ATK debuff 20%',  special:'debuff_atk' },
+    { id:'calm_mind',   name:'Calm Mind',   icon:'🧘', type:'psychic',  power:0,  cost:1, effect:'Next move +30%',  special:'calm_mind' },
+    { id:'telekinesis', name:'Telekinesis', icon:'🔮', type:'psychic',  power:0,  cost:1, effect:'Block 45 dmg',    special:'iron_defense' },
+    { id:'psybeam',     name:'Psybeam',     icon:'💜', type:'psychic',  power:48, cost:1, effect:'',                 special:null },
+    { id:'psyshock',    name:'Psyshock',    icon:'🔮', type:'psychic',  power:55, cost:2, effect:'Pierces shield',   special:'psyshock' },
+    { id:'psychic_lg',  name:'Psychic',     icon:'🔮', type:'psychic',  power:80, cost:2, effect:'ATK -15',          special:'debuff_atk' },
+    { id:'future_sight',name:'Future Sight',icon:'👁', type:'psychic',  power:70, cost:2, effect:'Hits next turn',  special:'future_sight' },
+    { id:'recover',     name:'Recover',     icon:'💜', type:'psychic',  power:0,  cost:1, effect:'Heal 50 HP',       special:'recover' },
+    { id:'shadow_ball', name:'Shadow Ball', icon:'🌑', type:'ghost',    power:58, cost:2, effect:'DEF -15',          special:'debuff_def' },
+    { id:'psystrike_lg',name:'Psystrike',   icon:'💫', type:'psychic',  power:85, cost:3, effect:'Pierces. Once.',   special:'psyshock', exhaust:true },
+  ],
+  ice: [
+    { id:'ice_shard',   name:'Ice Shard',   icon:'❄️', type:'ice',      power:38, cost:1, effect:'Always first',     special:null },
+    { id:'icy_wind',    name:'Icy Wind',    icon:'🌬️', type:'ice',      power:40, cost:1, effect:'Slow opp',         special:'slow_opp' },
+    { id:'hail',        name:'Hail',        icon:'🌨️', type:'ice',      power:0,  cost:1, effect:'Opp -12/turn×3',  special:'hail' },
+    { id:'frost_breath',name:'Frost Breath',icon:'🥶', type:'ice',      power:52, cost:2, effect:'Always crits',     special:'always_crit' },
+    { id:'ice_beam',    name:'Ice Beam',    icon:'💠', type:'ice',      power:78, cost:2, effect:'20% slow',         special:'slow_opp' },
+    { id:'aurora_veil', name:'Aurora Veil', icon:'🌈', type:'ice',      power:0,  cost:1, effect:'Block 50 dmg',     special:'iron_defense' },
+    { id:'blizzard',    name:'Blizzard',    icon:'❄️', type:'ice',      power:65, cost:2, effect:'',                 special:null },
+    { id:'ice_punch',   name:'Ice Punch',   icon:'🧊', type:'ice',      power:60, cost:2, effect:'20% slow',         special:'slow_opp' },
+    { id:'glaciate',    name:'Glaciate',    icon:'💠', type:'ice',      power:72, cost:3, effect:'Slow opp. Once.',  special:'slow_opp', exhaust:true },
+    { id:'sheer_cold',  name:'Sheer Cold',  icon:'🧊', type:'ice',      power:90, cost:3, effect:'Freeze. Once.',    special:'skip_opp', exhaust:true },
+  ],
+  fighting: [
+    { id:'karate_chop', name:'Karate Chop', icon:'🥊', type:'fighting', power:45, cost:1, effect:'High crit',        special:'high_crit' },
+    { id:'low_kick',    name:'Low Kick',    icon:'🦵', type:'fighting', power:40, cost:1, effect:'',                 special:null },
+    { id:'bulk_up',     name:'Bulk Up',     icon:'🏋️', type:'fighting', power:0,  cost:1, effect:'Next move +30%',  special:'calm_mind' },
+    { id:'cross_chop',  name:'Cross Chop',  icon:'✊', type:'fighting', power:65, cost:2, effect:'High crit',        special:'high_crit' },
+    { id:'drain_punch', name:'Drain Punch', icon:'🤜', type:'fighting', power:60, cost:2, effect:'Heal 30 HP',       special:'mega_drain' },
+    { id:'close_combat',name:'Close Combat',icon:'💪', type:'fighting', power:80, cost:2, effect:'25 recoil',        special:'close_combat' },
+    { id:'focus_punch', name:'Focus Punch', icon:'🎯', type:'fighting', power:75, cost:2, effect:'Miss if hit first',special:'focus_punch' },
+    { id:'submission',  name:'Submission',  icon:'💥', type:'fighting', power:68, cost:2, effect:'15 recoil',        special:'recoil_15' },
+    { id:'high_jump_kick',name:'High Jump Kick',icon:'🦵',type:'fighting',power:82,cost:3,effect:'High crit. Once.', special:'high_crit', exhaust:true },
+    { id:'superpower',  name:'Superpower',  icon:'💥', type:'fighting', power:90, cost:3, effect:'Max force. Once.', special:'close_combat', exhaust:true },
+  ],
+  ghost: [
+    { id:'shadow_sneak',name:'Shadow Sneak',icon:'🌑', type:'ghost',    power:38, cost:1, effect:'Always first',     special:null },
+    { id:'lick',        name:'Lick',        icon:'👻', type:'ghost',    power:28, cost:1, effect:'35% para',         special:'para_chance' },
+    { id:'spite',       name:'Spite',       icon:'😈', type:'ghost',    power:0,  cost:1, effect:'ATK -25',          special:'debuff_atk' },
+    { id:'night_shade', name:'Night Shade', icon:'🌙', type:'ghost',    power:0,  cost:1, effect:'Dmg = opp level',  special:'night_shade' },
+    { id:'hex',         name:'Hex',         icon:'🌀', type:'ghost',    power:65, cost:2, effect:'×2 if status',     special:'venoshock' },
+    { id:'shadow_ball', name:'Shadow Ball', icon:'🌑', type:'ghost',    power:58, cost:2, effect:'DEF -15',          special:'debuff_def' },
+    { id:'curse_g',     name:'Curse',       icon:'💢', type:'ghost',    power:0,  cost:1, effect:'Opp -20/turn,-10HP',special:'curse' },
+    { id:'phantom_force',name:'Phantom Force',icon:'👁',type:'ghost',   power:72, cost:2, effect:'',                 special:null },
+    { id:'dark_pulse',  name:'Dark Pulse',  icon:'🌑', type:'ghost',    power:60, cost:2, effect:'25% flinch',       special:'flinch' },
+    { id:'shadow_force',name:'Shadow Force',icon:'💀', type:'ghost',    power:90, cost:3, effect:'Unstoppable. Once.',special:'psyshock', exhaust:true },
+  ],
+  dragon: [
+    { id:'twister',     name:'Twister',     icon:'🌪️', type:'dragon',  power:38, cost:1, effect:'25% flinch',       special:'flinch' },
+    { id:'scale_shot',  name:'Scale Shot',  icon:'🦎', type:'dragon',  power:50, cost:1, effect:'High crit',         special:'high_crit' },
+    { id:'dragon_dance',name:'Dragon Dance',icon:'💃', type:'dragon',  power:0,  cost:2, effect:'+20% dmg forever',  special:'dragon_dance' },
+    { id:'dragon_breath',name:'Dragon Breath',icon:'💨',type:'dragon', power:52, cost:2, effect:'25% para',          special:'para_chance' },
+    { id:'dragon_claw', name:'Dragon Claw', icon:'🐲', type:'dragon',  power:72, cost:2, effect:'High crit',         special:'high_crit' },
+    { id:'dragon_rage', name:'Dragon Rage', icon:'🐉', type:'dragon',  power:55, cost:2, effect:'',                  special:null },
+    { id:'aqua_tail',   name:'Aqua Tail',   icon:'💧', type:'water',   power:60, cost:2, effect:'',                  special:null },
+    { id:'outrage',     name:'Outrage',     icon:'😤', type:'dragon',  power:95, cost:3, effect:'20 recoil. Once.',   special:'recoil_15', exhaust:true },
+    { id:'dragon_rush', name:'Dragon Rush', icon:'🌀', type:'dragon',  power:78, cost:3, effect:'High crit. Once.',   special:'high_crit', exhaust:true },
+    { id:'draco_meteor',name:'Draco Meteor',icon:'☄️', type:'dragon',  power:100,cost:3, effect:'ATK -20. Once.',    special:'debuff_atk', exhaust:true },
+  ],
+  rock: [
+    { id:'rock_throw',  name:'Rock Throw',  icon:'🪨', type:'rock',    power:42, cost:1, effect:'',                  special:null },
+    { id:'smack_down',  name:'Smack Down',  icon:'⬇️', type:'rock',    power:48, cost:1, effect:'DEF -15',           special:'debuff_def' },
+    { id:'stealth_rock',name:'Stealth Rock',icon:'💎', type:'rock',    power:0,  cost:1, effect:'Chip 15/turn×3',    special:'stealth_rock' },
+    { id:'rollout',     name:'Rollout',     icon:'⚙️', type:'rock',    power:35, cost:1, effect:'',                  special:null },
+    { id:'rock_slide',  name:'Rock Slide',  icon:'🏔️', type:'rock',    power:58, cost:2, effect:'25% flinch',        special:'flinch' },
+    { id:'power_gem',   name:'Power Gem',   icon:'💎', type:'rock',    power:70, cost:2, effect:'High crit',         special:'high_crit' },
+    { id:'stone_edge',  name:'Stone Edge',  icon:'🗿', type:'rock',    power:65, cost:2, effect:'High crit',         special:'high_crit' },
+    { id:'ancient_power_r',name:'Ancient Power',icon:'✨',type:'rock', power:55, cost:2, effect:'10% all stats +1',  special:'ancient_power' },
+    { id:'head_smash',  name:'Head Smash',  icon:'💥', type:'rock',    power:80, cost:3, effect:'25 recoil. Once.',   special:'close_combat', exhaust:true },
+    { id:'rock_wrecker',name:'Rock Wrecker',icon:'💥', type:'rock',    power:95, cost:3, effect:'Max hit. Once.',     special:null, exhaust:true },
+  ],
+  ground: [
+    { id:'sand_attack', name:'Sand Attack', icon:'🏜️', type:'ground',  power:0,  cost:0, effect:'Acc -30%, free',   special:'debuff_acc' },
+    { id:'mud_slap',    name:'Mud Slap',    icon:'🟫', type:'ground',  power:28, cost:1, effect:'Acc -20%',          special:'debuff_acc' },
+    { id:'bulldoze',    name:'Bulldoze',    icon:'🚜', type:'ground',  power:40, cost:1, effect:'Slow opp',          special:'slow_opp' },
+    { id:'dig',         name:'Dig',         icon:'⛏️', type:'ground',  power:58, cost:2, effect:'',                  special:null },
+    { id:'earth_power', name:'Earth Power', icon:'🌍', type:'ground',  power:72, cost:2, effect:'DEF -15',           special:'debuff_def' },
+    { id:'earthquake',  name:'Earthquake',  icon:'🌋', type:'ground',  power:70, cost:2, effect:'15 recoil',         special:'recoil_15' },
+    { id:'shore_up',    name:'Shore Up',    icon:'🏔️', type:'ground',  power:0,  cost:2, effect:'Heal 40 HP',        special:'roost' },
+    { id:'high_horsepower',name:'High Horsepower',icon:'🐴',type:'ground',power:75,cost:2,effect:'High crit',        special:'high_crit' },
+    { id:'stomping_tantrum',name:'Stomping Tantrum',icon:'🦶',type:'ground',power:68,cost:3,effect:'High crit.Once.',special:'high_crit', exhaust:true },
+    { id:'precipice_blades',name:'Precipice Blades',icon:'⛰️',type:'ground',power:90,cost:3,effect:'Max. Once.',    special:null, exhaust:true },
+  ],
+  poison: [
+    { id:'poison_sting',name:'Poison Sting',icon:'☠️', type:'poison',  power:30, cost:1, effect:'35% poison',       special:'poison' },
+    { id:'acid',        name:'Acid',        icon:'🧪', type:'poison',  power:38, cost:1, effect:'DEF -10',           special:'debuff_def' },
+    { id:'toxic',       name:'Toxic',       icon:'💀', type:'poison',  power:0,  cost:1, effect:'Poison guaranteed',  special:'poison' },
+    { id:'sludge',      name:'Sludge',      icon:'🟢', type:'poison',  power:50, cost:2, effect:'50% poison',        special:'poison' },
+    { id:'venoshock',   name:'Venoshock',   icon:'💉', type:'poison',  power:55, cost:2, effect:'×2 if poisoned',    special:'venoshock' },
+    { id:'poison_jab',  name:'Poison Jab',  icon:'💪', type:'poison',  power:60, cost:2, effect:'50% poison',        special:'poison' },
+    { id:'cross_poison',name:'Cross Poison',icon:'✂️', type:'poison',  power:58, cost:2, effect:'High crit+poison',  special:'high_crit' },
+    { id:'acid_spray',  name:'Acid Spray',  icon:'💦', type:'poison',  power:42, cost:1, effect:'DEF -20',           special:'debuff_def' },
+    { id:'sludge_bomb', name:'Sludge Bomb', icon:'💣', type:'poison',  power:80, cost:2, effect:'Poison guaranteed',  special:'poison' },
+    { id:'gunk_shot',   name:'Gunk Shot',   icon:'🎯', type:'poison',  power:90, cost:3, effect:'Poison. Once.',     special:'poison', exhaust:true },
+  ],
+  flying: [
+    { id:'gust',        name:'Gust',        icon:'🌬️', type:'flying',  power:38, cost:1, effect:'',                  special:null },
+    { id:'aerial_ace',  name:'Aerial Ace',  icon:'✈️', type:'flying',  power:45, cost:1, effect:'Never misses',      special:null },
+    { id:'wing_attack', name:'Wing Attack', icon:'🦅', type:'flying',  power:48, cost:1, effect:'',                  special:null },
+    { id:'roost',       name:'Roost',       icon:'🪺', type:'flying',  power:0,  cost:2, effect:'Heal 35 HP',        special:'roost' },
+    { id:'air_slash',   name:'Air Slash',   icon:'🌪️', type:'flying',  power:58, cost:2, effect:'25% flinch',       special:'flinch' },
+    { id:'hurricane',   name:'Hurricane',   icon:'🌀', type:'flying',  power:80, cost:2, effect:'ATK debuff 15%',    special:'debuff_atk' },
+    { id:'tailwind',    name:'Tailwind',    icon:'💨', type:'flying',  power:0,  cost:1, effect:'+1 energy + draw',  special:'agility' },
+    { id:'acrobatics',  name:'Acrobatics',  icon:'🦜', type:'flying',  power:62, cost:2, effect:'High crit',        special:'high_crit' },
+    { id:'brave_bird',  name:'Brave Bird',  icon:'🦆', type:'flying',  power:85, cost:2, effect:'25 recoil',        special:'close_combat' },
+    { id:'sky_attack',  name:'Sky Attack',  icon:'⚡', type:'flying',  power:90, cost:3, effect:'Max hit. Once.',    special:null, exhaust:true },
+  ],
+  normal: [
+    { id:'tackle',      name:'Tackle',      icon:'💥', type:'normal',  power:38, cost:1, effect:'',                  special:null },
+    { id:'swift_n',     name:'Swift',       icon:'⭐', type:'normal',  power:40, cost:1, effect:'Never misses',      special:null },
+    { id:'metronome_n', name:'Metronome',   icon:'🎵', type:'normal',  power:0,  cost:0, effect:'Draw 2, free',      special:'metronome' },
+    { id:'body_slam',   name:'Body Slam',   icon:'🏋️', type:'normal',  power:58, cost:2, effect:'25% para',         special:'para_chance' },
+    { id:'extreme_speed',name:'ExtremeSpeed',icon:'💨',type:'normal',  power:65, cost:1, effect:'Always first',      special:null },
+    { id:'double_edge', name:'Double-Edge', icon:'⚔️', type:'normal',  power:72, cost:2, effect:'20 recoil',        special:'recoil_15' },
+    { id:'return_n',    name:'Return',      icon:'❤️', type:'normal',  power:70, cost:2, effect:'High crit',        special:'high_crit' },
+    { id:'facade',      name:'Façade',      icon:'🎭', type:'normal',  power:62, cost:2, effect:'×2 if status',     special:'venoshock' },
+    { id:'hyper_voice_n',name:'Hyper Voice',icon:'📣', type:'normal',  power:55, cost:2, effect:'ATK -15',          special:'debuff_atk' },
+    { id:'hyper_beam_n',name:'Hyper Beam',  icon:'💫', type:'normal',  power:100,cost:3, effect:'Max power. Once.', special:null, exhaust:true },
+  ],
+  bug: [
+    { id:'string_shot', name:'String Shot', icon:'🕸️', type:'bug',    power:0,  cost:0, effect:'Slow+draw 1',       special:'string_shot' },
+    { id:'bug_bite',    name:'Bug Bite',    icon:'🐛', type:'bug',    power:40, cost:1, effect:'',                  special:null },
+    { id:'lunge',       name:'Lunge',       icon:'🪲', type:'bug',    power:55, cost:1, effect:'ATK -15',           special:'debuff_atk' },
+    { id:'signal_beam', name:'Signal Beam', icon:'📡', type:'bug',    power:48, cost:1, effect:'',                  special:null },
+    { id:'quiver_dance',name:'Quiver Dance',icon:'🦋', type:'bug',    power:0,  cost:1, effect:'+1 energy+draw',    special:'agility' },
+    { id:'x_scissor',   name:'X-Scissor',   icon:'✂️', type:'bug',    power:60, cost:2, effect:'',                  special:null },
+    { id:'bug_buzz',    name:'Bug Buzz',    icon:'🐝', type:'bug',    power:82, cost:2, effect:'DEF -15',           special:'debuff_def' },
+    { id:'leech_life',  name:'Leech Life',  icon:'🩸', type:'bug',    power:50, cost:2, effect:'Heal 25 HP',        special:'mega_drain' },
+    { id:'megahorn',    name:'Megahorn',    icon:'🦏', type:'bug',    power:70, cost:2, effect:'20 recoil',         special:'recoil_15' },
+    { id:'attack_order',name:'Attack Order',icon:'🐝', type:'bug',    power:90, cost:3, effect:'High crit. Once.',  special:'high_crit', exhaust:true },
+  ],
+};
+
+// Apply level scaling and improvements to a LEAGUE_DECKS template
+function applyLeagueDeck(rawDeck, level = 40, improvements = {}) {
+  return rawDeck.map((card, deckPos) => {
+    const c = { ...card };
+    if (c.power > 0) c.power = Math.round(c.power + level * 0.5);
+    const imp = improvements[deckPos] || 0;
+    if (imp > 0) {
+      c.power    = Math.round(c.power * (1 + imp * 0.25));
+      c.improved = imp;
+    }
+    c.deckPos = deckPos;
+    return c;
+  });
 }
 
 // Starter deck composition: indices into CARD_TEMPLATES[type]
@@ -1040,10 +1309,19 @@ function deleteProfile(profileKey) {
   }
 }
 
-function registerPokedex(id, name, spriteUrl, caught = false) {
+function registerPokedex(id, name, spriteUrl, caught = false, type = null) {
   const dex = loadPokedex();
   if (!dex[id] || (caught && !dex[id].caught)) {
-    dex[id] = { id, name, spriteUrl, caught: caught || !!dex[id]?.caught, seen: true };
+    dex[id] = {
+      id, name, spriteUrl,
+      caught: caught || !!dex[id]?.caught,
+      seen:   true,
+      type:   type || dex[id]?.type || null,
+    };
+    savePokedex(dex);
+  } else if (type && !dex[id].type) {
+    // Backfill type if we now know it but didn't before
+    dex[id].type = type;
     savePokedex(dex);
   }
 }
@@ -5907,7 +6185,7 @@ const BattleEngine = {
     activePoke.battlesWon = (activePoke.battlesWon || 0) + 1;
 
     const opp = this.state.opp;
-    registerPokedex(opp.id, opp.name, opp.spriteUrl, false);
+    registerPokedex(opp.id, opp.name, opp.spriteUrl, false, opp.type || null);
 
     // Trainer battle — delegate to TrainerBattleEngine which handles
     // multi-Pokémon flow, gold accumulation, and completion.
@@ -10421,7 +10699,8 @@ const CatchEngine = {
     this._caught       = false;
     this._selectedBall = 'pokeball';
     this._pendingCatch = null;
-    registerPokedex(id, capitalize(data.name), getSpriteUrl(data, true), false);
+    const typeStrSeen = DUAL_TYPE_OVERRIDES[id] || data.types?.[0]?.type?.name || 'normal';
+    registerPokedex(id, capitalize(data.name), getSpriteUrl(data, true), false, typeStrSeen);
     hideLoading();
 
     // ── Set environment backdrop ───────────────────────────────────────────
@@ -10665,7 +10944,7 @@ const CatchEngine = {
       const sigCard = LEGENDARY_BIRD_CARDS[data.id];
       if (sigCard && newPoke.deck) newPoke.deck.push({ ...sigCard });
       const isNewDex  = !loadPokedex()[data.id]?.caught;
-      registerPokedex(data.id, pokeName, getSpriteUrl(data), true);
+      registerPokedex(data.id, pokeName, getSpriteUrl(data), true, typeStr);
 
       setTimeout(async () => {
         SoundEngine.playFanfare();
@@ -13465,12 +13744,17 @@ const LeagueEngine = {
     const level = Math.min(35 + wins * 3, 50);
 
     const party = selectedIds.map(id => {
-      const e = dex[id] || {};
-      return makePokemon(
-        parseInt(id), e.maxLevel || level,
-        e.spriteUrl  || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+      const e         = dex[id] || {};
+      const pokeLevel = e.maxLevel || level;
+      const poke      = makePokemon(
+        parseInt(id), pokeLevel,
+        e.spriteUrl || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
         e.name || `#${id}`, e.type || 'normal'
       );
+      // Pre-made League deck — looked up by resolved type, then scaled by level + improvements
+      const rawDeck = LEAGUE_DECKS[poke.type] || LEAGUE_DECKS.normal;
+      poke.deck = applyLeagueDeck(rawDeck, pokeLevel, e.improvements || {});
+      return poke;
     });
 
     GameState = {
@@ -13587,10 +13871,19 @@ const VictoryEngine = {
       (GameState.party || []).forEach(p => {
         const dex = loadPokedex();
         if (!dex[p.id]) dex[p.id] = {};
-        dex[p.id].maxLevel  = Math.max(dex[p.id].maxLevel || 0, p.level || 1);
-        dex[p.id].spriteUrl = p.spriteUrl;
-        dex[p.id].name      = p.name;
-        dex[p.id].type      = p.type;
+        dex[p.id].maxLevel    = Math.max(dex[p.id].maxLevel || 0, p.level || 1);
+        dex[p.id].spriteUrl   = p.spriteUrl;
+        dex[p.id].name        = p.name;
+        dex[p.id].type        = p.type;
+        // Persist deck improvements so League can apply them
+        if (p.improvementMap && Object.keys(p.improvementMap).length > 0) {
+          // Merge — keep the higher improvement level for each slot
+          const prev = dex[p.id].improvements || {};
+          Object.entries(p.improvementMap).forEach(([slot, val]) => {
+            prev[slot] = Math.max(prev[slot] || 0, val);
+          });
+          dex[p.id].improvements = prev;
+        }
         savePokedex(dex);
       });
       // Unlock League only on the exact win that hits the threshold (not retroactively)
