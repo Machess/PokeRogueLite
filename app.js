@@ -4313,21 +4313,47 @@ const MapEngine = {
   // ── Set gym background image ─────────────────────────────────────────────
   // ── Vertical gym tracker ─────────────────────────────────────────────────
   _renderGymTracker(bi, available) {
+    const labelEl = document.getElementById('gym-tracker-label');
+    const pipsEl  = document.getElementById('gym-tracker-pips');
+    if (!pipsEl) return;
+
+    // ── League tracker ────────────────────────────────────────────────────────
+    if (GameState.isLeagueRun) {
+      const LEAGUE_STEPS = [
+        { icon:'❄️', name:'Lorelei' },
+        { icon:'🥊', name:'Bruno'   },
+        { icon:'👻', name:'Agatha'  },
+        { icon:'🐉', name:'Lance'   },
+        { icon:'🏆', name:'Blue'    },
+      ];
+      // Count completed boss nodes on the League map
+      const completedBosses = (GameState.map || []).filter(n =>
+        n.type === 'boss' && n.done
+      ).length;
+
+      if (labelEl) labelEl.textContent = '⚔️';
+      pipsEl.innerHTML = '';
+      LEAGUE_STEPS.forEach((step, i) => {
+        const pip = document.createElement('div');
+        pip.className = 'gym-pip league-pip'
+          + (i < completedBosses  ? ' league-pip-done'    : '')
+          + (i === completedBosses ? ' league-pip-current' : '');
+        pip.textContent = step.icon;
+        pip.title       = step.name;
+        pipsEl.appendChild(pip);
+      });
+      return;
+    }
+
+    // ── Normal gym tracker ────────────────────────────────────────────────────
     const TOTAL_STEPS = 10;
     const done        = Math.max(0, GameState.highWaterRow ?? 0);
     const isBoss      = available?.[0]?.type === 'boss';
 
-    // Label
-    const labelEl = document.getElementById('gym-tracker-label');
     if (labelEl) {
       labelEl.textContent = isBoss ? '⚔️' : `${done}/${TOTAL_STEPS}`;
     }
 
-    // Pips — rebuild only when count changes (perf)
-    const pipsEl = document.getElementById('gym-tracker-pips');
-    if (!pipsEl) return;
-
-    // Always rebuild so classes stay in sync
     pipsEl.innerHTML = '';
     for (let i = 0; i < TOTAL_STEPS; i++) {
       const pip = document.createElement('div');
@@ -4458,9 +4484,18 @@ const MapEngine = {
     this._applyBackground(bi);
 
     // ── Location badge ─────────────────────────────────────────────────────
-    document.getElementById('nav-location-name').textContent = theme.name;
-    document.getElementById('nav-location-sub').textContent =
-      `Heading toward ${boss?.name ?? 'the Boss'} · ${GameState.bossesDefeated}/8 badges`;
+    if (GameState.isLeagueRun) {
+      document.getElementById('nav-location-name').textContent = 'Indigo Plateau';
+      // Find next boss node that isn't done yet
+      const nextBossNode = (GameState.map || []).find(n => n.type === 'boss' && !n.done);
+      const nextGym      = nextBossNode ? GYM_DATA[nextBossNode.gymIdx] : null;
+      document.getElementById('nav-location-sub').textContent =
+        nextGym ? `${nextGym.name} is waiting · ${nextGym.title}` : 'The Championship awaits';
+    } else {
+      document.getElementById('nav-location-name').textContent = theme.name;
+      document.getElementById('nav-location-sub').textContent =
+        `Heading toward ${boss?.name ?? 'the Boss'} · ${GameState.bossesDefeated}/8 badges`;
+    }
 
     // ── Find available choices ──────────────────────────────────────────────
     // With the decision-graph structure, multiple rows may have unlocked nodes
@@ -6456,6 +6491,8 @@ const BossEngine = {
               showModal('Boss Defeated! 🏅', modalMsg, () => {
                 if (GameState.isLeagueRun && isFinalBoss) {
                   LeagueEngine.showLeagueVictory();
+                } else if (GameState.isLeagueRun) {
+                  LeagueEngine.afterLeagueBoss(this.bossData);
                 } else {
                   Game.afterBoss(GameState.bossesDefeated);
                 }
@@ -13225,6 +13262,15 @@ Game.afterEvolve = function() {
 
 // ─── LEAGUE ENGINE ────────────────────────────────────────────────────────────
 
+// One-line challenge hints for each Elite Four member / Champion
+const LEAGUE_HINTS = {
+  'Lorelei': 'Her ice controls the field. Every move is a trap.',
+  'Bruno':   'He trains without rest. His Pokémon hit like stone.',
+  'Agatha':  'She fights with ghosts older than the League itself.',
+  'Lance':   'Dragons obey him. They will not obey you.',
+  'Blue':    'He has trained for this moment his entire life. So have you.',
+};
+
 function generateLeagueMap() {
   // Fixed linear map: heal → E4×4 (with heal/train choices between) → heal → Champion
   let idx = 0;
@@ -13269,6 +13315,55 @@ function generateLeagueMap() {
 }
 
 const LeagueEngine = {
+
+  // ── After a non-final League boss win — corridor screen ───────────────────
+  afterLeagueBoss(defeatedBoss) {
+    // The map node is already completed by BossEngine before reaching here.
+    // We just need to show the corridor, then MapEngine.show() resumes the League map.
+    saveGame();
+
+    // Find which GYM_DATA entry comes next on the League map
+    const leagueOrder = ['Lorelei','Bruno','Agatha','Lance','Blue'];
+    const defIdx      = leagueOrder.indexOf(defeatedBoss?.name ?? '');
+    const nextName    = leagueOrder[defIdx + 1] ?? null;
+    const nextGym     = nextName ? GYM_DATA.find(g => g.name === nextName) : null;
+    const chamberNum  = defIdx + 1; // 1-based (Lorelei=1, Bruno=2, etc.)
+
+    // Farewell from the defeated boss (from GYM_DATA)
+    const defeatedGym = GYM_DATA.find(g => g.name === defeatedBoss?.name);
+    // Strip surrounding quotes from farewell string
+    const farewellRaw = defeatedGym?.farewell || '';
+    const farewell    = farewellRaw.replace(/^["'"']|["'"']$/g, '');
+
+    // Build corridor HTML
+    const nextHint = nextName ? LEAGUE_HINTS[nextName] || '' : '';
+    const nextHtml = nextGym ? `
+      <div class="corridor-divider">━━━━━━━━━━━━━━</div>
+      <div class="corridor-next-label">Next opponent</div>
+      <div class="corridor-next-name">${nextGym.name}</div>
+      <div class="corridor-next-title">${nextGym.title}</div>
+      <div class="corridor-next-hint">${nextHint}</div>` : '';
+
+    const panel = document.getElementById('league-corridor-panel');
+    if (!panel) {
+      // Fallback — no corridor screen in HTML, go straight to map
+      MapEngine.show();
+      return;
+    }
+
+    document.getElementById('corridor-chamber').textContent =
+      `Indigo Plateau — Chamber ${chamberNum}`;
+    document.getElementById('corridor-defeated').textContent =
+      `${defeatedBoss?.name ?? 'Your opponent'} has fallen.`;
+    document.getElementById('corridor-farewell').textContent = farewell;
+    document.getElementById('corridor-next-wrap').innerHTML  = nextHtml;
+
+    showScreen('league-corridor');
+
+    document.getElementById('btn-corridor-continue').onclick = () => {
+      MapEngine.show();
+    };
+  },
 
   // ── Envelope screen ────────────────────────────────────────────────────────
   showEnvelope(totalWins) {

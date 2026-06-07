@@ -8910,3 +8910,95 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .hof-sprites { display: flex; gap: 4px; flex-wrap: wrap; }
 .hof-sprite { width: 32px; height: 32px; object-fit: contain; }
+
+/* ── League corridor screen ── */
+#screen-league-corridor {
+  justify-content: center; align-items: center;
+  background: #06060e;
+}
+.corridor-bg {
+  position: absolute; inset: 0;
+  background: url('assets/backgrounds/bg_league.jpg') center/cover no-repeat,
+              linear-gradient(180deg,#06060e 0%,#0a0a2a 60%,#020208 100%);
+  opacity: .45;
+}
+.corridor-panel {
+  position: relative; z-index: 1;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .7rem; padding: 1.5rem 1rem;
+  max-width: 400px; width: 90%;
+  text-align: center;
+}
+.corridor-chamber {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: rgba(200,170,100,.55);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.corridor-defeated {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: #ffd700;
+  text-shadow: 0 0 20px rgba(255,215,0,.4);
+}
+.corridor-farewell {
+  font-family: 'Nunito', sans-serif;
+  font-size: .72rem; color: rgba(255,255,255,.7);
+  font-style: italic; line-height: 1.5;
+  max-width: 320px;
+  animation: corridor-fade-in .6s .2s ease both;
+}
+@keyframes corridor-fade-in {
+  from { opacity:0; transform: translateY(8px); }
+  to   { opacity:1; transform: translateY(0); }
+}
+.corridor-divider {
+  color: rgba(200,170,100,.3);
+  font-size: .55rem; letter-spacing: .2em;
+  margin: .2rem 0;
+}
+.corridor-next-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .30rem; color: rgba(200,170,100,.5);
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.corridor-next-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .62rem; color: #fff;
+  text-shadow: 0 0 16px rgba(255,255,255,.3);
+}
+.corridor-next-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem; color: rgba(200,200,255,.5);
+}
+.corridor-next-hint {
+  font-family: 'Nunito', sans-serif;
+  font-size: .62rem; color: rgba(255,255,255,.45);
+  font-style: italic; max-width: 280px;
+}
+.corridor-btn { margin-top: .4rem; }
+
+/* ── League tracker pips ── */
+.league-pip {
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+  border-radius: 50%;
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid rgba(255,255,255,.1);
+  opacity: .35;
+  transition: opacity .2s, border-color .2s;
+}
+.league-pip-done {
+  opacity: 1;
+  border-color: rgba(255,215,0,.5);
+  background: rgba(255,215,0,.1);
+}
+.league-pip-current {
+  opacity: 1;
+  border-color: #fff;
+  background: rgba(255,255,255,.12);
+  animation: league-pip-pulse 1.5s ease-in-out infinite;
+}
+@keyframes league-pip-pulse {
+  0%,100% { box-shadow: 0 0 0 rgba(255,255,255,0); }
+  50%     { box-shadow: 0 0 10px rgba(255,255,255,.4); }
+}
