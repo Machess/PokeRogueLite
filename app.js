@@ -13539,6 +13539,87 @@ Game.afterEvolve = function() {
 
 // ─── VICTORY ENGINE ──────────────────────────────────────────────────────────
 
+// Complete Kanto type map — all 151 Pokémon, no network needed
+// Used as offline fallback in startLeague to guarantee correct League decks
+// regardless of what is (or isn't) stored in the Pokédex.
+const KANTO_TYPE_MAP = {
+  1:'grass',   2:'grass',   3:'grass',
+  4:'fire',    5:'fire',    6:'fire',
+  7:'water',   8:'water',   9:'water',
+  10:'bug',    11:'bug',    12:'bug',
+  13:'bug',    14:'bug',    15:'bug',
+  16:'flying', 17:'flying', 18:'flying',
+  19:'normal', 20:'normal',
+  21:'flying', 22:'flying',
+  23:'poison', 24:'poison',
+  25:'electric',26:'electric',
+  27:'ground', 28:'ground',
+  29:'poison', 30:'poison', 31:'poison',
+  32:'poison', 33:'poison', 34:'poison',
+  35:'normal', 36:'normal',
+  37:'fire',   38:'fire',
+  39:'normal', 40:'normal',
+  41:'poison', 42:'poison',
+  43:'grass',  44:'grass',  45:'grass',
+  46:'bug',    47:'bug',
+  48:'bug',    49:'bug',
+  50:'ground', 51:'ground',
+  52:'normal', 53:'normal',
+  54:'water',  55:'water',
+  56:'fighting',57:'fighting',
+  58:'fire',   59:'fire',
+  60:'water',  61:'water',  62:'water',
+  63:'psychic',64:'psychic',65:'psychic',
+  66:'fighting',67:'fighting',68:'fighting',
+  69:'grass',  70:'grass',  71:'grass',
+  72:'water',  73:'water',
+  74:'rock',   75:'rock',   76:'rock',
+  77:'fire',   78:'fire',
+  79:'water',  80:'water',
+  81:'electric',82:'electric',
+  83:'normal',
+  84:'flying', 85:'flying',
+  86:'water',  87:'ice',
+  88:'poison', 89:'poison',
+  90:'water',  91:'ice',
+  92:'ghost',  93:'ghost',  94:'ghost',
+  95:'rock',
+  96:'psychic',97:'psychic',
+  98:'water',  99:'water',
+  100:'electric',101:'electric',
+  102:'grass', 103:'grass',
+  104:'ground',105:'ground',
+  106:'fighting',107:'fighting',
+  108:'normal',
+  109:'poison',110:'poison',
+  111:'ground',112:'ground',
+  113:'normal',
+  114:'grass',
+  115:'normal',
+  116:'water', 117:'water',
+  118:'water', 119:'water',
+  120:'water', 121:'water',
+  122:'psychic',
+  123:'bug',
+  124:'ice',
+  125:'electric',
+  126:'fire',
+  127:'bug',
+  128:'normal',
+  129:'water', 130:'water',
+  131:'ice',
+  132:'normal',
+  133:'normal',134:'water',135:'electric',136:'fire',
+  137:'normal',
+  138:'rock',  139:'rock',
+  140:'rock',  141:'rock',
+  142:'flying',
+  143:'normal',
+  144:'ice',   145:'electric',146:'fire',
+  147:'dragon',148:'dragon',149:'dragon',
+  150:'psychic',151:'psychic',
+};
+
 // ─── LEAGUE ENGINE ────────────────────────────────────────────────────────────
 
 // One-line challenge hints for each Elite Four member / Champion
@@ -13742,27 +13823,46 @@ const LeagueEngine = {
     const dex   = loadPokedex();
     const wins  = (loadProfiles().find(p => p.key === getActiveProfile())?.totalWins || 3);
     const level = Math.min(35 + wins * 3, 50);
+    let   dexDirty = false;
 
     const party = selectedIds.map(id => {
-      const e         = dex[id] || {};
-      const pokeLevel = e.maxLevel || level;
-      const poke      = makePokemon(
-        parseInt(id), pokeLevel,
-        e.spriteUrl || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
-        e.name || `#${id}`, e.type || 'normal'
+      const numId    = parseInt(id);
+      const e        = dex[id] || {};
+      const pokeLevel= e.maxLevel || level;
+
+      // Type resolution — DUAL_TYPE_OVERRIDES → KANTO_TYPE_MAP → Pokédex → fallback
+      // Fully offline, no network call needed
+      const type = DUAL_TYPE_OVERRIDES[numId]
+                || KANTO_TYPE_MAP[numId]
+                || e.type
+                || 'normal';
+
+      // Backfill Pokédex so future runs don't need to resolve again
+      if (!e.type && type !== 'normal') {
+        if (!dex[id]) dex[id] = {};
+        dex[id].type = type;
+        dexDirty = true;
+      }
+
+      const poke = makePokemon(
+        numId, pokeLevel,
+        e.spriteUrl || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${numId}.png`,
+        e.name || `#${numId}`, type
       );
-      // Pre-made League deck — looked up by resolved type, then scaled by level + improvements
-      const rawDeck = LEAGUE_DECKS[poke.type] || LEAGUE_DECKS.normal;
+      const rawDeck = LEAGUE_DECKS[type] || LEAGUE_DECKS.normal;
       poke.deck = applyLeagueDeck(rawDeck, pokeLevel, e.improvements || {});
       return poke;
     });
+
+    // Persist any type backfills
+    if (dexDirty) savePokedex(dex);
 
     GameState = {
       ...GameState,
       party,
       activePokemonIndex: 0,
       isLeagueRun:  true,
-      leagueStats:  {},   // { pokeId: { dmgDealt, dmgTaken, wins } }
+      leagueStats:  {},
       map:          generateLeagueMap(),
       completedNodes: [],
       currentNodeIndex: null,

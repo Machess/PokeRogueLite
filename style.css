@@ -8768,11 +8768,18 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .league-party-panel {
   position: relative; z-index: 1;
   display: flex; flex-direction: column;
-  min-height: 100%;
-  padding: .8rem;
+  height: 100%;           /* fill full screen height */
+  padding: 0;
   max-width: 520px; margin: 0 auto;
+  overflow: hidden;       /* panel itself doesn't scroll */
 }
-.league-party-header { text-align: center; padding-bottom: .6rem; }
+.league-party-header {
+  text-align: center;
+  padding: .6rem .8rem .4rem;
+  flex-shrink: 0;         /* never shrinks — always visible */
+  background: linear-gradient(180deg,rgba(6,6,14,1) 85%,rgba(6,6,14,0));
+  z-index: 2;
+}
 .league-party-title {
   font-family: 'Press Start 2P', monospace;
   font-size: .65rem; color: #ffd700;
@@ -8780,30 +8787,34 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .league-party-sub {
   font-family: 'Nunito', sans-serif;
-  font-size: .65rem; color: rgba(255,255,255,.5);
-  margin-top: .25rem;
+  font-size: .60rem; color: rgba(255,255,255,.5);
+  margin-top: .2rem;
 }
 .league-party-counter {
   font-family: 'Press Start 2P', monospace;
-  font-size: .42rem; color: #ffd700;
-  margin-top: .4rem;
+  font-size: .40rem; color: #ffd700;
+  margin-top: .3rem;
 }
 .league-party-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-  gap: .5rem;
+  grid-template-columns: repeat(4, 1fr);  /* fixed 4 per row */
+  gap: .4rem;
+  overflow-y: auto;       /* ONLY the grid scrolls */
   flex: 1;
-  padding: .4rem 0;
+  padding: .4rem .8rem .6rem;
+  -webkit-overflow-scrolling: touch;
 }
 .league-poke-card {
   background: rgba(255,255,255,.06);
   border: 2px solid rgba(255,255,255,.12);
-  border-radius: 10px;
-  padding: .4rem .2rem;
+  border-radius: 8px;
+  padding: .35rem .15rem;
   text-align: center;
   cursor: pointer;
   transition: border-color .15s, background .15s, transform .1s;
   position: relative;
+  will-change: transform;
+  touch-action: manipulation;
 }
 .league-poke-card:hover  { border-color: rgba(255,215,0,.4); background: rgba(255,215,0,.06); }
 .league-poke-card:active { transform: scale(.96); }
@@ -8812,25 +8823,31 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: rgba(255,215,0,.12) !important;
   box-shadow: 0 0 10px rgba(255,215,0,.3);
 }
-.league-poke-sprite { width: 52px; height: 52px; object-fit: contain; }
+.league-poke-sprite { width: 44px; height: 44px; object-fit: contain; }
 .league-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .26rem; color: var(--col-text);
-  margin-top: .2rem; word-break: break-all;
+  font-size: .22rem; color: var(--col-text);
+  margin-top: .15rem; word-break: break-all; line-height: 1.3;
 }
 .league-poke-type {
   font-family: 'Press Start 2P', monospace;
-  font-size: .24rem;
-  border-radius: 4px; padding: 1px 4px;
-  margin-top: .15rem; display: inline-block;
+  font-size: .20rem;
+  border-radius: 4px; padding: 1px 3px;
+  margin-top: .1rem; display: inline-block;
   color: #fff;
 }
 .league-poke-check {
-  position: absolute; top: 3px; right: 4px;
-  color: #ffd700; font-size: .7rem;
+  position: absolute; top: 2px; right: 3px;
+  color: #ffd700; font-size: .65rem;
   text-shadow: 0 0 6px rgba(255,215,0,.8);
 }
-.league-party-footer { padding-top: .6rem; text-align: center; }
+.league-party-footer {
+  padding: .5rem .8rem;
+  text-align: center;
+  flex-shrink: 0;         /* always visible */
+  background: linear-gradient(0deg,rgba(6,6,14,1) 85%,rgba(6,6,14,0));
+  z-index: 2;
+}
 
 /* ── League victory screen ── */
 #screen-league-victory {
