@@ -152,47 +152,51 @@ const GYM_DATA = [
   },
   // ── Elite Four ──────────────────────────────────────────────────────────────
   {
-    name: 'Lorelei', title: 'Elite Four', image: 'giovanni.png',
+    name: 'Lorelei', title: 'Elite Four — Ice', image: 'lorelei.png',
     dialogue: "No one can best me when it comes to icy Pokémon! Freeze in your tracks!",
-    team: [87, 91, 124, 131],
+    team: [87, 91, 124, 131, 80],
     badge: '❄️', farewell: '"Ice does not melt easily. Neither does defeat."',
     watching: 'Bruno waits in the next chamber. He has not left in days.',
     city: 'Indigo Plateau', flavour: 'Beyond the mountain pass. The Elite Four. The Champion.',
     bgImage:   'bg_8_lorelei.png',
     bgFallback:'linear-gradient(180deg,#3060a0 0%,#a0c8e8 50%,#205080 100%)',
+    leagueLevel: 50,
   },
   {
-    name: 'Bruno', title: 'Elite Four', image: 'brock.png',
+    name: 'Bruno', title: 'Elite Four — Fighting', image: 'bruno.png',
     dialogue: "We will grind you down with the superior power of Fighting-type Pokémon!",
-    team: [95, 107, 106, 68],
+    team: [95, 107, 106, 68, 57],
     badge: '🥊', farewell: '"You have strength. But strength alone is not mastery."',
     watching: 'Agatha stirs in her chamber. She has felt your approach.',
     city: 'Indigo Plateau', flavour: 'Stone and shadow. The battle never truly ends here.',
     bgImage:   'bg_9_bruno.png',
     bgFallback:'linear-gradient(180deg,#2a1008 0%,#6a3018 50%,#180808 100%)',
+    leagueLevel: 53,
   },
   {
-    name: 'Agatha', title: 'Elite Four', image: 'sabrina.png',
+    name: 'Agatha', title: 'Elite Four — Ghost', image: 'agatha.png',
     dialogue: "Hehehe… Old-fashioned, am I? My Ghost Pokémon will give you nightmares!",
-    team: [94, 93, 110, 93],
+    team: [94, 93, 110, 93, 94],
     badge: '👻', farewell: '"You survived. That is all I will say."',
     watching: 'Lance awaits. His dragons are already restless.',
     city: 'Indigo Plateau', flavour: 'The candles never go out. The spirits watch.',
     bgImage:   'bg_10_agatha.png',
     bgFallback:'linear-gradient(180deg,#06060e 0%,#1a1430 50%,#02020a 100%)',
+    leagueLevel: 56,
   },
   {
-    name: 'Lance', title: 'Elite Four', image: 'giovanni.png',
+    name: 'Lance', title: 'Elite Four — Dragon', image: 'lance.png',
     dialogue: "Dragonite is an extremely rare Pokémon. And I have three of them! Tremble!",
-    team: [130, 148, 148, 149],
+    team: [130, 148, 148, 149, 149],
     badge: '🐉', farewell: '"Dragons bow to no one. Today they bowed to you."',
     watching: 'Blue. The Champion. He already knows you are coming.',
     city: 'Indigo Plateau', flavour: 'The final chamber. One more stands between you and the title.',
     bgImage:   'bg_11_lance.png',
     bgFallback:'linear-gradient(180deg,#060c20 0%,#0a1a40 50%,#020608 100%)',
+    leagueLevel: 58,
   },
   {
-    name: 'Blue', title: '★ Champion ★', image: 'giovanni.png',
+    name: 'Blue', title: '★ Champion ★', image: 'blue.png',
     dialogue: "Smell ya later? No — you won't be going anywhere after I beat you!",
     team: [18, 59, 65, 112, 149, 6],
     badge: '🏆', farewell: '"…Fine. You\'re the Champion. Don\'t let it go to your head."',
@@ -200,6 +204,7 @@ const GYM_DATA = [
     city: 'Indigo Plateau', flavour: '',
     bgImage:   'bg_12_blue.png',
     bgFallback:'linear-gradient(180deg,#0e0202 0%,#2a0808 50%,#060000 100%)',
+    leagueLevel: 62,
   },
 ];
 
@@ -3034,6 +3039,8 @@ const ProfileEngine = {
         <div class="profile-actions">
           <button class="btn-pixel btn-primary profile-play-btn"
                   data-key="${meta.key}">▶ Play</button>
+          ${meta.leagueUnlocked ? `<button class="btn-pixel btn-league profile-league-btn"
+                  data-key="${meta.key}" title="Enter the Pokémon League">⚔️ League</button>` : ''}
           <button class="btn-pixel btn-secondary profile-age-btn"
                   data-key="${meta.key}" title="Change difficulty">✏️</button>
           <button class="btn-pixel btn-danger profile-delete-btn"
@@ -3045,6 +3052,13 @@ const ProfileEngine = {
         e.stopPropagation();
         this._selectProfile(meta.key);
       });
+      const leagueBtn = card.querySelector('.profile-league-btn');
+      if (leagueBtn) {
+        leagueBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this._selectProfile(meta.key, true);
+        });
+      }
       card.querySelector('.profile-age-btn').addEventListener('click', (e) => {
         e.stopPropagation();
         this._changeAge(meta);
@@ -3086,10 +3100,15 @@ const ProfileEngine = {
     return `<span class="tier-pill ${cls}">${emoji} Age ${ageRange} · ${label}</span>`;
   },
 
-  _selectProfile(key) {
+  _selectProfile(key, goLeague = false) {
     setActiveProfile(key);
     ProfileEngine._updateStartScreen();
-    showScreen('start');
+    if (goLeague) {
+      showScreen('start');
+      setTimeout(() => LeagueEngine.showPartySelect(), 200);
+    } else {
+      showScreen('start');
+    }
   },
 
   _newProfile() {
@@ -4327,6 +4346,17 @@ const MapEngine = {
   _applyBackground(bi) {
     const bgEl = document.getElementById('nav-bg');
     if (!bgEl) return;
+
+    // League run always uses the Indigo Plateau interior background
+    if (GameState.isLeagueRun) {
+      bgEl.style.background = 'linear-gradient(180deg,#0a0a1a 0%,#1a1a3a 50%,#050510 100%)';
+      const img = new Image();
+      img.onload  = () => { bgEl.style.background = `url('assets/backgrounds/bg_league.jpg') center center / cover no-repeat`; };
+      img.onerror = () => {};
+      img.src = 'assets/backgrounds/bg_league.jpg';
+      return;
+    }
+
     const file     = GYM_BACKGROUNDS[Math.min(bi, GYM_BACKGROUNDS.length - 1)];
     const fallback = GYM_FALLBACKS[Math.min(bi, GYM_FALLBACKS.length - 1)];
     const url      = `assets/backgrounds/${file}`;
@@ -4539,7 +4569,13 @@ const MapEngine = {
       case 'catch':    CatchEngine.start(node, node.catchRarity);  break;
       case 'training': TrainingEngine.start(node);      break;
       case 'shop':     ShopEngine.start(node);          break;
-      case 'boss':     BossEngine.start(node);                 break;
+      case 'boss':
+        if (GameState.isLeagueRun && node.gymIdx !== undefined) {
+          BossEngine.startLeagueBoss(node);
+        } else {
+          BossEngine.start(node);
+        }
+        break;
       case 'mystery':  MysteryEngine.start(node);              break;
       case 'cooking':         CookingEngine.start(node);        break;
       case 'fishing':         FishingEngine.start(node);         break;
@@ -5945,6 +5981,48 @@ const BossEngine = {
   oppIdx:   0,
   bState:   null,
 
+  async startLeagueBoss(node) {
+    showLoading();
+    const gymIdx = node.gymIdx ?? 8;
+    const boss   = GYM_DATA[gymIdx];
+    this.bossData  = boss;
+    this.oppIdx    = 0;
+    this.oppTeam   = [];
+    this._isRocket = false;
+
+    const baseLevel = boss.leagueLevel || 50;
+    for (const id of boss.team) {
+      const d     = await fetchPoke(id).catch(() => null);
+      const pType = d?.types?.[0]?.type?.name || 'normal';
+      const level = baseLevel + Math.floor(Math.random() * 5);
+      this.oppTeam.push(makePokemon(id, level,
+        d ? getSpriteUrl(d, true) : '',
+        d ? capitalize(d.name) : `Pokémon #${id}`, pType));
+    }
+    hideLoading();
+
+    setBossIntroBg(gymIdx);
+    showScreen('boss');
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = `assets/${boss.image}`;
+    document.getElementById('dialogue-name').textContent = boss.name;
+    document.getElementById('dialogue-text').textContent = '';
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Battle! ▶'; }
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += boss.dialogue[ci++];
+      if (ci >= boss.dialogue.length) {
+        clearInterval(iv);
+        if (startBtn) startBtn.style.display = '';
+      }
+    }, 22);
+  },
+
   async start(node) {
     showLoading();
     const bossIdx = Math.min(
@@ -6339,8 +6417,21 @@ const BossEngine = {
             if (!GameState.stats) GameState.stats = {};
             GameState.stats.totalBattlesWon  = (GameState.stats.totalBattlesWon  || 0) + 1;
             GameState.stats.totalBossesBeaten = (GameState.stats.totalBossesBeaten || 0) + 1;
+            // Track league stats per active Pokémon
+            if (GameState.isLeagueRun) {
+              const active = GameState.party[GameState.activePokemonIndex];
+              if (active) {
+                if (!GameState.leagueStats) GameState.leagueStats = {};
+                if (!GameState.leagueStats[active.id]) GameState.leagueStats[active.id] = { dmgDealt:0, dmgTaken:0, wins:0 };
+                GameState.leagueStats[active.id].dmgDealt += BossEngine.bState?.totalDamageDealt || 0;
+                GameState.leagueStats[active.id].dmgTaken += BossEngine.bState?.totalDamageTaken || 0;
+                GameState.leagueStats[active.id].wins++;
+              }
+            }
             setTimeout(() => {
-              const isFinalBoss = GameState.bossesDefeated >= 7;
+              const isFinalBoss = GameState.isLeagueRun
+                ? this.bossData?.name === 'Blue'
+                : GameState.bossesDefeated >= 7;
               const bossName    = this.bossData.name;
               const BOSS_WIN_LINES = {
                 'Brock':     `"Your Pokémon has real grit. I can see you've been training hard. The Boulder Badge is yours."`,
@@ -6363,7 +6454,11 @@ const BossEngine = {
                 ? `You are the Champion!\n\n${bossLine}`
                 : bossLine;
               showModal('Boss Defeated! 🏅', modalMsg, () => {
-                Game.afterBoss(GameState.bossesDefeated);
+                if (GameState.isLeagueRun && isFinalBoss) {
+                  LeagueEngine.showLeagueVictory();
+                } else {
+                  Game.afterBoss(GameState.bossesDefeated);
+                }
               });
             }, 200);
           }
@@ -13128,12 +13223,292 @@ Game.afterEvolve = function() {
 
 // ─── VICTORY ENGINE ──────────────────────────────────────────────────────────
 
+// ─── LEAGUE ENGINE ────────────────────────────────────────────────────────────
+
+function generateLeagueMap() {
+  // Fixed linear map: heal → E4×4 (with heal/train choices between) → heal → Champion
+  let idx = 0;
+  const makeNode = (row, type, unlocked = false) => ({
+    idx: idx++, row, type, unlocked, revealed: unlocked,
+    done: false, bypassed: false, links: [],
+    x: 0.5, y: 1 - row / 11, col: 0, lane: 'mid',
+    leagueNode: true,
+  });
+
+  const heal0  = makeNode(0,  'heal',    true);  // mandatory rest
+  const lor    = makeNode(1,  'boss',    false); lor.gymIdx = 8;  // Lorelei
+  const mid1a  = makeNode(2,  'heal',    false);
+  const mid1b  = makeNode(2,  'training',false);
+  const bru    = makeNode(3,  'boss',    false); bru.gymIdx = 9;  // Bruno
+  const mid2a  = makeNode(4,  'heal',    false);
+  const mid2b  = makeNode(4,  'training',false);
+  const aga    = makeNode(5,  'boss',    false); aga.gymIdx = 10; // Agatha
+  const mid3a  = makeNode(6,  'heal',    false);
+  const mid3b  = makeNode(6,  'training',false);
+  const lan    = makeNode(7,  'boss',    false); lan.gymIdx = 11; // Lance
+  const heal1  = makeNode(8,  'heal',    false);
+  const blue   = makeNode(9,  'boss',    false); blue.gymIdx = 12; // Blue / Champion
+
+  // Wire links
+  heal0.links  = [lor.idx];
+  lor.links    = [mid1a.idx, mid1b.idx];
+  mid1a.links  = [bru.idx]; mid1b.links = [bru.idx];
+  bru.links    = [mid2a.idx, mid2b.idx];
+  mid2a.links  = [aga.idx];  mid2b.links = [aga.idx];
+  aga.links    = [mid3a.idx, mid3b.idx];
+  mid3a.links  = [lan.idx];  mid3b.links = [lan.idx];
+  lan.links    = [heal1.idx];
+  heal1.links  = [blue.idx];
+  blue.links   = [];
+
+  // Unlock first node
+  lor.unlocked = false; // unlocked only after heal0 done
+  const nodes = [heal0,lor,mid1a,mid1b,bru,mid2a,mid2b,aga,mid3a,mid3b,lan,heal1,blue];
+  nodes._bossIndex = 8; // Lorelei = GYM_DATA[8]
+  return nodes;
+}
+
+const LeagueEngine = {
+
+  // ── Envelope screen ────────────────────────────────────────────────────────
+  showEnvelope(totalWins) {
+    const name = GameState?.trainerName
+      || loadProfiles().find(p => p.key === getActiveProfile())?.name
+      || 'Trainer';
+    const el = document.getElementById('league-envelope');
+    if (!el) return;
+
+    document.getElementById('env-letter-body').innerHTML =
+      `<em>To: ${name}</em><br><br>` +
+      `The Pokémon League Committee has observed your victories with great interest.<br><br>` +
+      `You have defeated all eight Kanto Gym Leaders — not once, but ` +
+      `<strong>${totalWins} times</strong>.<br><br>` +
+      `You are hereby invited to compete in the ` +
+      `<strong>Kanto Pokémon League Championship</strong>.<br><br>` +
+      `Choose your finest Pokémon. The Elite Four await.<br><br>` +
+      `<em>— The League Committee</em>`;
+
+    // Show — override display directly so hidden class cannot interfere
+    el.style.display = 'flex';
+    el.classList.remove('hidden');
+    el.classList.add('active');
+    setTimeout(() => el.classList.add('envelope-open'), 300);
+
+    const hide = () => {
+      el.style.display = 'none';
+      el.classList.add('hidden');
+      el.classList.remove('active', 'envelope-open');
+    };
+
+    document.getElementById('btn-envelope-accept').onclick = () => {
+      hide();
+      showScreen('start');
+      ProfileEngine._updateStartScreen();
+    };
+    document.getElementById('btn-envelope-later').onclick = () => {
+      hide();
+    };
+  },
+
+  // ── Party selection screen ─────────────────────────────────────────────────
+  showPartySelect() {
+    const dex      = loadPokedex();
+    const entries  = Object.values(dex).filter(e => e.id || e.name);
+    const MAX_PICK = 6;
+    let   selected = new Set();
+
+    // Pre-select current run party
+    (GameState?.party || []).forEach(p => selected.add(String(p.id)));
+
+    const screen = document.getElementById('screen-league-party');
+    const grid   = document.getElementById('league-party-grid');
+    const counter= document.getElementById('league-party-counter');
+    const confirmBtn = document.getElementById('btn-league-confirm-party');
+
+    const dexEntries = Object.entries(dex);
+
+    const render = () => {
+      grid.innerHTML = '';
+      dexEntries.forEach(([id, entry]) => {
+        if (!entry.name) return;
+        const sel = selected.has(String(id));
+        const card = document.createElement('div');
+        card.className = 'league-poke-card' + (sel ? ' league-poke-selected' : '');
+        card.innerHTML = `
+          <img src="${entry.spriteUrl || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`}"
+               alt="${entry.name}" class="league-poke-sprite pixel-sprite"
+               onerror="this.src='assets/sprites/${id}.png'">
+          <div class="league-poke-name">${entry.name}</div>
+          <div class="league-poke-type type-${entry.type || 'normal'}">${entry.type || '?'}</div>
+          ${sel ? '<div class="league-poke-check">✓</div>' : ''}`;
+        card.addEventListener('click', () => {
+          if (selected.has(String(id))) {
+            selected.delete(String(id));
+          } else {
+            if (selected.size >= MAX_PICK) return;
+            selected.add(String(id));
+          }
+          render();
+        });
+        grid.appendChild(card);
+      });
+      counter.textContent = `${selected.size} / ${MAX_PICK} chosen`;
+      confirmBtn.disabled = selected.size < 1;
+    };
+
+    render();
+    showScreen('league-party');
+
+    confirmBtn.onclick = () => this.startLeague([...selected]);
+  },
+
+  // ── Start the League run ───────────────────────────────────────────────────
+  startLeague(selectedIds) {
+    showLoading();
+    const dex   = loadPokedex();
+    const wins  = (loadProfiles().find(p => p.key === getActiveProfile())?.totalWins || 3);
+    const level = Math.min(35 + wins * 3, 50);
+
+    const party = selectedIds.map(id => {
+      const e = dex[id] || {};
+      return makePokemon(
+        parseInt(id), e.maxLevel || level,
+        e.spriteUrl  || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+        e.name || `#${id}`, e.type || 'normal'
+      );
+    });
+
+    GameState = {
+      ...GameState,
+      party,
+      activePokemonIndex: 0,
+      isLeagueRun:  true,
+      leagueStats:  {},   // { pokeId: { dmgDealt, dmgTaken, wins } }
+      map:          generateLeagueMap(),
+      completedNodes: [],
+      currentNodeIndex: null,
+      bossesDefeated: 0,
+      gold: 0,
+      _lastRocketCheckAt: 0,
+    };
+
+    hideLoading();
+    MapEngine.show();
+  },
+
+  // ── League victory screen ──────────────────────────────────────────────────
+  showLeagueVictory() {
+    const party   = GameState.party || [];
+    const lStats  = GameState.leagueStats || {};
+    const name    = GameState.trainerName || 'Trainer';
+
+    // Update profile
+    const profiles = loadProfiles();
+    const profIdx  = profiles.findIndex(p => p.key === getActiveProfile());
+    if (profIdx >= 0) {
+      profiles[profIdx].leagueWins = (profiles[profIdx].leagueWins || 0) + 1;
+      if (!profiles[profIdx].hallOfFame) profiles[profIdx].hallOfFame = [];
+      profiles[profIdx].hallOfFame.push({
+        date:  Date.now(),
+        name,
+        party: party.map(p => ({ id: p.id, name: p.name, spriteUrl: p.spriteUrl })),
+      });
+      saveProfiles(profiles);
+    }
+
+    // Build stats cards
+    const mvp = party.reduce((best, p) => {
+      const s = lStats[p.id] || {};
+      const bS = lStats[best?.id] || {};
+      return (s.dmgDealt || 0) >= (bS.dmgDealt || 0) ? p : best;
+    }, party[0] || null);
+
+    const statsHtml = party.map(p => {
+      const s = lStats[p.id] || {};
+      return `<div class="lv-stat-card${p === mvp ? ' lv-mvp' : ''}">
+        <img src="${p.spriteUrl}" alt="${p.name}" class="lv-stat-sprite pixel-sprite"
+             onerror="this.src='assets/sprites/${p.id}.png'">
+        ${p === mvp ? '<div class="lv-mvp-crown">👑</div>' : ''}
+        <div class="lv-stat-name">${p.name}</div>
+        <div class="lv-stat-row">⚔️ ${s.dmgDealt || 0} dealt</div>
+        <div class="lv-stat-row">🛡️ ${s.dmgTaken || 0} taken</div>
+        <div class="lv-stat-row">🏅 ${s.wins || 0} wins</div>
+      </div>`;
+    }).join('');
+
+    // Hall of Fame
+    const hof = profiles[profIdx]?.hallOfFame || [];
+    const hofHtml = hof.slice().reverse().slice(0, 5).map((entry, i) => {
+      const d = new Date(entry.date);
+      const dateStr = `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+      const sprites = entry.party.map(p =>
+        `<img src="${p.spriteUrl}" alt="${p.name}" class="hof-sprite pixel-sprite"
+              onerror="this.src='assets/sprites/${p.id}.png'">`
+      ).join('');
+      return `<div class="hof-entry">
+        <div class="hof-date">${dateStr} — ${entry.name}</div>
+        <div class="hof-sprites">${sprites}</div>
+      </div>`;
+    }).join('');
+
+    document.getElementById('lv-trainer-name').textContent = `${name} — League Champion!`;
+    document.getElementById('lv-stats-grid').innerHTML  = statsHtml;
+    document.getElementById('lv-hof-list').innerHTML    = hofHtml || '<div style="opacity:.5">First entry!</div>';
+
+    showScreen('league-victory');
+
+    // Spawn stars
+    const lvStars = document.getElementById('lv-stars');
+    if (lvStars) {
+      lvStars.innerHTML = '';
+      for (let i = 0; i < 50; i++) {
+        const s = document.createElement('div');
+        s.className = 'victory-star';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top  = Math.random() * 100 + '%';
+        s.style.animationDelay    = (Math.random() * 3) + 's';
+        s.style.animationDuration = (1.5 + Math.random() * 2) + 's';
+        s.style.fontSize = (8 + Math.random() * 14) + 'px';
+        s.textContent = '★';
+        lvStars.appendChild(s);
+      }
+    }
+  },
+};
+
 const VictoryEngine = {
   show() {
     const stats = GameState.stats || {};
     const party = GameState.party || [];
 
-    // Use cumulative stats — these never reset between maps
+    // ── Track total wins per profile ──────────────────────────────────────────
+    const profiles = loadProfiles();
+    const profIdx  = profiles.findIndex(p => p.key === getActiveProfile());
+    let totalWins  = 0;
+    if (profIdx >= 0) {
+      profiles[profIdx].totalWins = (profiles[profIdx].totalWins || 0) + 1;
+      totalWins = profiles[profIdx].totalWins;
+      // Record caught Pokémon maxLevel in Pokédex for League party selection
+      (GameState.party || []).forEach(p => {
+        const dex = loadPokedex();
+        if (!dex[p.id]) dex[p.id] = {};
+        dex[p.id].maxLevel  = Math.max(dex[p.id].maxLevel || 0, p.level || 1);
+        dex[p.id].spriteUrl = p.spriteUrl;
+        dex[p.id].name      = p.name;
+        dex[p.id].type      = p.type;
+        savePokedex(dex);
+      });
+      // Unlock League only on the exact win that hits the threshold (not retroactively)
+      // leagueEnvelopeSeen prevents it showing again on future wins
+      const justHitThreshold = totalWins >= 3 && !profiles[profIdx].leagueUnlocked;
+      if (justHitThreshold) {
+        profiles[profIdx].leagueUnlocked    = true;
+        profiles[profIdx].leagueEnvelopeSeen = false; // will show once
+      }
+      saveProfiles(profiles);
+    }
+
+    // ── Stats ─────────────────────────────────────────────────────────────────
     document.getElementById('vic-battles-won').textContent =
       stats.totalBattlesWon    || stats.battlesWon   || 0;
     document.getElementById('vic-caught').textContent      =
@@ -13143,7 +13518,14 @@ const VictoryEngine = {
     document.getElementById('vic-bosses').textContent      =
       stats.totalBossesBeaten  || GameState.bossesDefeated || 0;
 
-    // Favourite — most battlesWon
+    // ── Teaser sub-text — builds anticipation across runs ─────────────────────
+    let subText = 'You are the PokéTrials Champion! Pikachu is now unlocked!';
+    if (totalWins === 1) subText = 'You are the PokéTrials Champion! Word of your victory is spreading…';
+    if (totalWins === 2) subText = 'Two victories. A letter was intercepted at the Pokémon Centre. It had your name on it.';
+    if (totalWins >= 3)  subText = 'Three victories. Something important awaits you.';
+    document.getElementById('victory-sub').textContent = subText;
+
+    // ── Favourite ─────────────────────────────────────────────────────────────
     const fav = party.reduce((best, p) =>
       (p.battlesWon || 0) >= (best.battlesWon || 0) ? p : best,
       party[0] || null
@@ -13161,7 +13543,7 @@ const VictoryEngine = {
         </div>`;
     }
 
-    // Full party
+    // ── Full party ────────────────────────────────────────────────────────────
     const partyEl = document.getElementById('victory-party');
     partyEl.innerHTML = '';
     party.forEach(p => {
@@ -13175,7 +13557,7 @@ const VictoryEngine = {
       partyEl.appendChild(d);
     });
 
-    // Spawn gold stars
+    // ── Stars ─────────────────────────────────────────────────────────────────
     const starsEl = document.getElementById('victory-stars');
     starsEl.innerHTML = '';
     for (let i = 0; i < 40; i++) {
@@ -13190,10 +13572,14 @@ const VictoryEngine = {
       starsEl.appendChild(s);
     }
 
-    document.getElementById('victory-sub').textContent =
-      'You are the PokéTrials Champion! Pikachu is now unlocked!';
-
     showScreen('victory');
+
+    // ── Envelope — show only once, on the exact qualifying win ───────────────
+    if (profiles[profIdx]?.leagueUnlocked && profiles[profIdx]?.leagueEnvelopeSeen === false) {
+      profiles[profIdx].leagueEnvelopeSeen = true;
+      saveProfiles(profiles);
+      setTimeout(() => LeagueEngine.showEnvelope(totalWins), 3500);
+    }
   },
 };
 
@@ -14294,6 +14680,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Victory screen ──
   document.getElementById('btn-play-again').addEventListener('click', () => Game.returnToStart());
+  document.getElementById('btn-league-victory-done').addEventListener('click', () => Game.returnToStart());
 
   // ── Modal ──
   document.getElementById('modal-ok').addEventListener('click', () => closeModal());

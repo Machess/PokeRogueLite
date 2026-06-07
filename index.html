@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=85" />
+  <link rel="stylesheet" href="style.css?v=87" />
 </head>
 <body>
 
@@ -820,6 +820,65 @@
 <!-- ═══════════════════════════════════════════
      SCREEN: VICTORY
 ═══════════════════════════════════════════ -->
+<!-- ═══════════════════════════════════════════
+     LEAGUE ENVELOPE OVERLAY
+═══════════════════════════════════════════ -->
+<div id="league-envelope" class="overlay hidden">
+  <div class="envelope-modal">
+    <div class="envelope-seal">🏆</div>
+    <div class="envelope-title">Official Correspondence</div>
+    <div class="envelope-body" id="env-letter-body"></div>
+    <div class="envelope-actions">
+      <button class="btn-pixel btn-primary" id="btn-envelope-accept">⚔️ Accept the Challenge</button>
+      <button class="btn-pixel btn-secondary" id="btn-envelope-later">Later</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: LEAGUE PARTY SELECT
+═══════════════════════════════════════════ -->
+<div id="screen-league-party" class="screen">
+  <div class="league-party-bg"></div>
+  <div class="league-party-panel">
+    <div class="league-party-header">
+      <div class="league-party-title">⚔️ Choose Your Team</div>
+      <div class="league-party-sub">Select up to 6 Pokémon for the League</div>
+      <div class="league-party-counter" id="league-party-counter">0 / 6 chosen</div>
+    </div>
+    <div class="league-party-grid" id="league-party-grid"></div>
+    <div class="league-party-footer">
+      <button class="btn-pixel btn-primary" id="btn-league-confirm-party" disabled>
+        Enter the League ▶
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: LEAGUE VICTORY
+═══════════════════════════════════════════ -->
+<div id="screen-league-victory" class="screen">
+  <div class="lv-bg">
+    <div class="victory-stars" id="lv-stars"></div>
+  </div>
+  <div class="lv-center">
+    <div class="lv-trophy">🏆</div>
+    <div class="lv-title">League Champion!</div>
+    <div class="lv-trainer-name" id="lv-trainer-name"></div>
+
+    <div class="lv-section-label">Your Team</div>
+    <div class="lv-stats-grid" id="lv-stats-grid"></div>
+
+    <div class="lv-section-label">🏛 Hall of Fame</div>
+    <div class="lv-hof-list" id="lv-hof-list"></div>
+
+    <button class="btn-pixel btn-primary gameover-btn" id="btn-league-victory-done">
+      ▶ Return
+    </button>
+  </div>
+</div>
+
 <div id="screen-victory" class="screen">
   <div class="victory-bg">
     <div class="victory-stars" id="victory-stars"></div>
@@ -932,6 +991,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=140"></script>
+<script src="app.js?v=146"></script>
 </body>
 </html>
