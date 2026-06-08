@@ -2201,10 +2201,19 @@ const SoundEngine = {
       setTimeout(() => this.playSFX('teamrocket_show.mp3', 0.6), 150);
       return;
     }
-    // Johto region overrides for start screen and map
-    if (GameState?.region === 'johto') {
-      if (screenId === 'start') { this.playBGM('johto_bg.mp3');     return; }
-      if (screenId === 'map')   { this.playBGM('johto_map_bg.mp3'); return; }
+    // Johto BGM — start screen uses profile flag (GameState not available there)
+    // map screen uses GameState.region (GameState always exists during a run)
+    if (screenId === 'start') {
+      const profiles    = loadProfiles?.();
+      const activeKey   = getActiveProfile?.();
+      const meta        = profiles?.find(p => p.key === activeKey);
+      const isJohto     = !!(meta?.leagueUnlocked && meta?.johtoUnlocked);
+      this.playBGM(isJohto ? 'johto_bg.mp3' : 'poke_intro.mp3');
+      return;
+    }
+    if (screenId === 'map' && GameState?.region === 'johto') {
+      this.playBGM('johto_map_bg.mp3');
+      return;
     }
     const track = this._bgmMap[screenId];
     if (track !== undefined) this.playBGM(track);
@@ -3810,9 +3819,9 @@ const ProfileEngine = {
     // Johto tint on start screen
     document.getElementById('screen-start')
       ?.classList.toggle('johto-active', johtoUnlocked);
-    // Update start screen BGM to match region when already on start screen
+    // Sync BGM when already on the start screen (e.g. profile switch)
     if (document.getElementById('screen-start')?.classList.contains('active')) {
-      SoundEngine.playBGM(johtoUnlocked ? 'johto_bg.mp3' : 'poke_intro.mp3');
+      SoundEngine.onScreenChange('start');
     }
     // Region pill + logo sub
     if (regionPill) {
