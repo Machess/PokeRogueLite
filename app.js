@@ -373,23 +373,23 @@ const JOHTO_MAP_THEMES = [
 ];
 
 // ─── REGION DATA — single gateway for all region-specific data ────────────────
-// All engines read from here via getRegionData() instead of direct constants.
+// Uses getters so MAP_THEMES / WILD_POOL are read lazily (defined further down).
 const REGION_DATA = {
   kanto: {
-    gymData:    GYM_DATA,
-    mapThemes:  MAP_THEMES,
-    wildPool:   null,    // set after WILD_POOL is defined below
-    name:       'Kanto',
-    maxBosses:  8,
-    bgmMap:     'pallet_town_theme.mp3',
+    get gymData()   { return GYM_DATA; },
+    get mapThemes() { return MAP_THEMES; },
+    get wildPool()  { return WILD_POOL; },
+    name:      'Kanto',
+    maxBosses: 8,
+    bgmMap:    'pallet_town_theme.mp3',
   },
   johto: {
-    gymData:    JOHTO_GYM_DATA,
-    mapThemes:  JOHTO_MAP_THEMES,
-    wildPool:   null,    // set after JOHTO_WILD_POOL is defined below
-    name:       'Johto',
-    maxBosses:  8,
-    bgmMap:     'johto_theme.mp3',
+    get gymData()   { return JOHTO_GYM_DATA; },
+    get mapThemes() { return JOHTO_MAP_THEMES; },
+    get wildPool()  { return JOHTO_WILD_POOL; },
+    name:      'Johto',
+    maxBosses: 8,
+    bgmMap:    'johto_theme.mp3',
   },
 };
 
@@ -1262,9 +1262,7 @@ const JOHTO_WILD_POOL = {
   legendary: [243, 244, 245, 249, 250],  // Raikou, Entei, Suicune, Lugia, Ho-Oh
 };
 
-// Wire Johto wild pool into REGION_DATA (defined above, populated here)
-REGION_DATA.johto.wildPool = JOHTO_WILD_POOL;
-REGION_DATA.kanto.wildPool = WILD_POOL;
+// Wire Johto wild pool into REGION_DATA — done via getter, no manual assignment needed
 
 // ── Battle background selection by opponent type ──────────────────────────
 const BATTLE_BACKGROUNDS = {
@@ -3729,15 +3727,19 @@ const ProfileEngine = {
     const contBtn    = document.getElementById('btn-continue-game');
     const dexBtn     = document.getElementById('btn-open-pokedex');
     const leagueBtn  = document.getElementById('btn-start-league');
+    const regionPill = document.getElementById('start-region-pill');
+    const logoSub    = document.getElementById('logo-sub');
 
     if (!meta) {
       // No active profile — disable game buttons, show nudge
       if (banner) banner.style.display = 'none';
       if (nudge)  nudge.style.display  = '';
-      if (newBtn)    { newBtn.disabled  = true; }
+      if (newBtn)    { newBtn.disabled  = true; newBtn.textContent = '▶ New Game'; }
       if (contBtn)   { contBtn.disabled = true; contBtn.textContent = '◈ Continue'; }
       if (dexBtn)    { dexBtn.disabled  = true; }
       if (leagueBtn) { leagueBtn.style.display = 'none'; }
+      if (regionPill){ regionPill.textContent = '🗺️ Kanto Region'; regionPill.className = 'start-region-pill'; }
+      if (logoSub)   { logoSub.textContent = 'A Roguelite Card Adventure'; }
       return;
     }
 
@@ -3794,7 +3796,24 @@ const ProfileEngine = {
     }
 
     // Enable/disable buttons
-    if (newBtn)  newBtn.disabled  = false;
+    const johtoUnlocked = !!meta.leagueUnlocked && !!meta.johtoUnlocked;
+    // Johto tint on start screen
+    document.getElementById('screen-start')
+      ?.classList.toggle('johto-active', johtoUnlocked);
+    // Region pill + logo sub
+    if (regionPill) {
+      regionPill.textContent = johtoUnlocked ? '🌿 Johto Region' : '🗺️ Kanto Region';
+      regionPill.className   = 'start-region-pill' + (johtoUnlocked ? ' johto' : '');
+    }
+    if (logoSub) {
+      logoSub.textContent = johtoUnlocked
+        ? 'Now exploring Johto!'
+        : 'A Roguelite Card Adventure';
+    }
+    if (newBtn) {
+      newBtn.disabled    = false;
+      newBtn.textContent = johtoUnlocked ? '🌿 New Johto Run' : '▶ New Kanto Run';
+    }
     if (dexBtn)  dexBtn.disabled  = false;
     if (contBtn) {
       const hasSave = meta.hasActiveSave;
