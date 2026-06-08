@@ -10,13 +10,18 @@
 const POKEAPI = 'https://pokeapi.co/api/v2';
 
 const STARTERS = [
-  { id: 1,   name: 'Bulbasaur',  type: 'grass',    evolutions: [1,2,3] },
-  { id: 4,   name: 'Charmander', type: 'fire',     evolutions: [4,5,6] },
-  { id: 7,   name: 'Squirtle',   type: 'water',    evolutions: [7,8,9] },
-  { id: 25,  name: 'Pikachu',    type: 'electric', evolutions: [25,26,26], locked: true },
-  { id: 133, name: 'Eevee',      type: 'normal',   evolutions: [133],      locked: true, eeveeStarter: true },
-  { id: 151, name: 'Mew',        type: 'psychic',  evolutions: [151],      locked: true, mewStarter: true },
-  { id: 150, name: 'Mewtwo',     type: 'psychic',  evolutions: [150],      locked: true, mewtwostarter: true },
+  // ── Kanto ──────────────────────────────────────────────────────────────────
+  { id: 1,   name: 'Bulbasaur',  type: 'grass',    evolutions: [1,2,3],     region: 'kanto' },
+  { id: 4,   name: 'Charmander', type: 'fire',     evolutions: [4,5,6],     region: 'kanto' },
+  { id: 7,   name: 'Squirtle',   type: 'water',    evolutions: [7,8,9],     region: 'kanto' },
+  { id: 25,  name: 'Pikachu',    type: 'electric', evolutions: [25,26,26],  region: 'kanto', locked: true },
+  { id: 133, name: 'Eevee',      type: 'normal',   evolutions: [133],       region: 'kanto', locked: true, eeveeStarter: true },
+  { id: 151, name: 'Mew',        type: 'psychic',  evolutions: [151],       region: 'kanto', locked: true, mewStarter: true },
+  { id: 150, name: 'Mewtwo',     type: 'psychic',  evolutions: [150],       region: 'kanto', locked: true, mewtwostarter: true },
+  // ── Johto ──────────────────────────────────────────────────────────────────
+  { id: 152, name: 'Chikorita',  type: 'grass',    evolutions: [152,153,154], region: 'johto', locked: true, johtoStarter: true },
+  { id: 155, name: 'Cyndaquil',  type: 'fire',     evolutions: [155,156,157], region: 'johto', locked: true, johtoStarter: true },
+  { id: 158, name: 'Totodile',   type: 'water',    evolutions: [158,159,160], region: 'johto', locked: true, johtoStarter: true },
 ];
 
 // Level thresholds that trigger starter evolution
@@ -25,9 +30,13 @@ const EVOLUTION_LEVELS = {
   4:   { stage2: 16, stage3: 36 },
   7:   { stage2: 16, stage3: 36 },
   25:  { stage2: 22 },
-  133: {},   // Eevee — stone-only evolution, no level thresholds
-  151: {},   // Mew — no evolution
-  150: {},   // Mewtwo — no evolution
+  133: {},
+  151: {},
+  150: {},
+  // Johto starters
+  152: { stage2: 18, stage3: 32 },  // Chikorita → Bayleef → Meganium
+  155: { stage2: 14, stage3: 36 },  // Cyndaquil → Quilava → Typhlosion
+  158: { stage2: 18, stage3: 30 },  // Totodile  → Croconaw → Feraligatr
 };
 
 // Warm narrative lines shown on the evolve screen — (trainerName, newPokeName, prevPokeName)
@@ -208,10 +217,194 @@ const GYM_DATA = [
   },
 ];
 
-// ── Backwards-compatible accessors so existing code keeps working ─────────────
+// ─── JOHTO GYM DATA ──────────────────────────────────────────────────────────
+const JOHTO_GYM_DATA = [
+  {
+    name: 'Falkner', title: 'Zephyr Badge', image: 'falkner.png',
+    dialogue: "Bird Pokémon are the finest in the world! My father raised me on that belief!",
+    team: [21, 22, 16],
+    badge: '🪶', farewell: '"The wind carries your name now. Keep going."',
+    watching: 'Bugsy in Azalea Town has heard. He is sharpening his strategy.',
+    city: 'Violet City', flavour: 'The wind never stops here. Neither do its trainers.',
+    bgImage: 'bg_johto_0.jpg', bgFallback: 'linear-gradient(180deg,#8ab4d8 0%,#c8dde8 50%,#6090a8 100%)',
+  },
+  {
+    name: 'Bugsy', title: 'Hive Badge', image: 'bugsy.png',
+    dialogue: "I'm Bugsy! My research makes me tops at bug-type Pokémon!",
+    team: [13, 14, 123],
+    badge: '🐝', farewell: '"You are stronger than you look. The forest respects you."',
+    watching: 'Whitney in Goldenrod has already posted about you. She is excited.',
+    city: 'Azalea Town', flavour: 'The wells run deep here. So do old grudges.',
+    bgImage: 'bg_johto_1.jpg', bgFallback: 'linear-gradient(180deg,#2a5a1a 0%,#4a8a20 50%,#1a3a10 100%)',
+  },
+  {
+    name: 'Whitney', title: 'Plain Badge', image: 'whitney.png',
+    dialogue: "La-la-la! I'm Whitney! Everyone says I'm pretty good!",
+    team: [35, 36, 241],
+    badge: '🎀', farewell: '"Okay fine, you\'re pretty good. Don\'t make me say it again."',
+    watching: 'Morty in Ecruteak is meditating. He already knows the outcome.',
+    city: 'Goldenrod City', flavour: 'The largest city in Johto. Everyone is watching.',
+    bgImage: 'bg_johto_2.jpg', bgFallback: 'linear-gradient(180deg,#f8c8d8 0%,#f0a0b8 50%,#c87090 100%)',
+  },
+  {
+    name: 'Morty', title: 'Fog Badge', image: 'morty.png',
+    dialogue: "With my clairvoyance I have seen you in my visions… but now I see you for real.",
+    team: [92, 93, 94, 200],
+    badge: '👻', farewell: '"The fog parts for you. Walk carefully — not all paths are visible."',
+    watching: 'Chuck trains at Cianwood in silence. The sea has told him nothing.',
+    city: 'Ecruteak City', flavour: 'Ancient towers. Older secrets. The fog never fully lifts.',
+    bgImage: 'bg_johto_3.jpg', bgFallback: 'linear-gradient(180deg,#1a0a2a 0%,#3a1a5a 50%,#0e0618 100%)',
+  },
+  {
+    name: 'Chuck', title: 'Storm Badge', image: 'chuck.png',
+    dialogue: "My punches are like lightning! My kicks are like thunder! Let\'s go!",
+    team: [57, 62, 237],
+    badge: '🌊', farewell: '"Good fight. My master would approve. Keep punching forward."',
+    watching: 'Jasmine watches the sea from the lighthouse. She has heard the waves change.',
+    city: 'Cianwood City', flavour: 'The waves have no patience. Neither does Chuck.',
+    bgImage: 'bg_johto_4.jpg', bgFallback: 'linear-gradient(180deg,#1a3a5a 0%,#2a5a4a 50%,#0a2030 100%)',
+  },
+  {
+    name: 'Jasmine', title: 'Mineral Badge', image: 'jasmine.png',
+    dialogue: "Oh… um, you want a battle? Alright. My Steelix and I will do our best.",
+    team: [81, 82, 208],
+    badge: '⚙️', farewell: '"You are stronger than iron. That is a rare thing."',
+    watching: 'Pryce has been awake since yesterday. He says old trainers do not need sleep.',
+    city: 'Olivine City', flavour: 'The lighthouse burns all night. Someone always needs guiding.',
+    bgImage: 'bg_johto_5.jpg', bgFallback: 'linear-gradient(180deg,#2a3040 0%,#404858 50%,#1a2030 100%)',
+  },
+  {
+    name: 'Pryce', title: 'Glacier Badge', image: 'pryce.png',
+    dialogue: "Ice-type Pokémon have a beauty and ferocity that no other type can match!",
+    team: [87, 91, 131, 221],
+    badge: '❄️', farewell: '"Cold outlasts heat. Remember that when things get hard."',
+    watching: 'Clair sharpens her dragon\'s temper in Blackthorn. She has been waiting.',
+    city: 'Mahogany Town', flavour: 'Nothing moves fast here. Even time seems to freeze.',
+    bgImage: 'bg_johto_6.jpg', bgFallback: 'linear-gradient(180deg,#c0d8e8 0%,#80b0d0 50%,#3060a0 100%)',
+  },
+  {
+    name: 'Clair', title: 'Rising Badge', image: 'clair.png',
+    dialogue: "I am the world\'s best Dragon trainer! You\'re going to need more than luck!",
+    team: [147, 148, 149, 230],
+    badge: '🐉', farewell: '"You earned it. I hate that. But you earned it."',
+    watching: 'The Johto Elite Four have convened. Will said it was inevitable.',
+    city: 'Blackthorn City', flavour: 'The Dragon\'s Den is below the city. You can feel it breathing.',
+    bgImage: 'bg_johto_7.jpg', bgFallback: 'linear-gradient(180deg,#1a0800 0%,#4a1800 50%,#0a0400 100%)',
+  },
+  // ── Johto Elite Four ───────────────────────────────────────────────────────
+  {
+    name: 'Will', title: 'Elite Four — Psychic', image: 'will.png',
+    dialogue: "I have trained all around the world, refining my psychic Pokémon. You cannot stop me!",
+    team: [178, 124, 196, 201, 178],
+    badge: '🔮', farewell: '"Your mind is stronger than I foresaw. That is rare."',
+    watching: 'Koga drifts in the shadows behind the next door. He has always been there.',
+    city: 'Johto Plateau', flavour: 'The air hums with psychic energy.',
+    bgImage: 'bg_johto_3.jpg', bgFallback: 'linear-gradient(180deg,#200828 0%,#4a2a6a 50%,#120416 100%)',
+    leagueLevel: 50,
+  },
+  {
+    name: 'Koga', title: 'Elite Four — Poison', image: 'koga.png',
+    dialogue: "Fwa ha ha… You have come far, young trainer. But my traps are everywhere.",
+    team: [109, 110, 89, 169, 49],
+    badge: '☠️', farewell: '"You are worthy of the poison badge and more. Go."',
+    watching: 'Bruno shakes the walls with his training. He has been waiting impatiently.',
+    city: 'Johto Plateau', flavour: 'The ninja never left. He merely changed rooms.',
+    bgImage: 'bg_4_koga.png', bgFallback: 'linear-gradient(180deg,#1a0a2a 0%,#2a1a4a 50%,#0e0618 100%)',
+    leagueLevel: 53,
+  },
+  {
+    name: 'Bruno', title: 'Elite Four — Fighting', image: 'bruno.png',
+    dialogue: "I have kept training since you defeated me in Kanto. I am stronger now!",
+    team: [107, 106, 237, 68, 214],
+    badge: '🥊', farewell: '"You hit harder than I remembered. Good."',
+    watching: 'Karen waits in the dark. She has been smiling since you entered.',
+    city: 'Johto Plateau', flavour: 'Stone and sweat. The battle never ends here.',
+    bgImage: 'bg_9_bruno.png', bgFallback: 'linear-gradient(180deg,#2a1008 0%,#6a3018 50%,#180808 100%)',
+    leagueLevel: 56,
+  },
+  {
+    name: 'Karen', title: 'Elite Four — Dark', image: 'karen.png',
+    dialogue: "Strong Pokémon. Weak Pokémon. That is only the selfish perspective of people. Prove your worth.",
+    team: [197, 215, 198, 229, 248],
+    badge: '🌑', farewell: '"Truly strong trainers make the best of any Pokémon they have."',
+    watching: 'Lance stirs. He has been champion twice now. He will not give it up easily.',
+    city: 'Johto Plateau', flavour: 'The darkness is not empty. It is full of teeth.',
+    bgImage: 'bg_10_agatha.png', bgFallback: 'linear-gradient(180deg,#06060e 0%,#1a1430 50%,#02020a 100%)',
+    leagueLevel: 58,
+  },
+  {
+    name: 'Lance', title: '★ Johto Champion ★', image: 'lance.png',
+    dialogue: "I have been waiting for someone worthy enough to challenge me again. Prove it.",
+    team: [148, 149, 149, 230, 334, 373],
+    badge: '🏆', farewell: '"Twice now. Once in Kanto, once here. You are the real Champion."',
+    watching: '',
+    city: 'Johto Plateau', flavour: '',
+    bgImage: 'bg_11_lance.png', bgFallback: 'linear-gradient(180deg,#060c20 0%,#0a1a40 50%,#020608 100%)',
+    leagueLevel: 62,
+  },
+];
+
+// ─── JOHTO MAP THEMES ─────────────────────────────────────────────────────────
+const JOHTO_MAP_THEMES = [
+  { name:'Violet City Route',    ocean:'#8ab4d8', land:'#6a9a4a', landHi:'#8aba5a', landShadow:'#2a4a1a',
+    trailFill:'#c8b878', trailEdge:'#8a7848', trailHi:'#e8d898', trailShadow:'rgba(20,40,10,0.5)',
+    pathDone:'rgba(200,220,100,0.9)', glowDone:'rgba(180,210,80,0.8)', accent:'#a8c850', texture:'grass', deco:'flowers' },
+  { name:'Azalea Town Trail',    ocean:'#2a7a3a', land:'#1a5a1a', landHi:'#3a8a2a', landShadow:'#0a2a0a',
+    trailFill:'#a0884a', trailEdge:'#706030', trailHi:'#c0a860', trailShadow:'rgba(10,30,10,0.55)',
+    pathDone:'rgba(160,220,80,0.9)',  glowDone:'rgba(140,200,60,0.9)',  accent:'#60b830', texture:'forest', deco:'bugs' },
+  { name:'Goldenrod City Walk',  ocean:'#f8c8d8', land:'#e8a8b8', landHi:'#f0b8c8', landShadow:'#c07888',
+    trailFill:'#f8e8a0', trailEdge:'#d8c880', trailHi:'#fff8c0', trailShadow:'rgba(180,140,80,0.4)',
+    pathDone:'rgba(255,220,80,0.9)', glowDone:'rgba(255,200,60,0.8)', accent:'#f8c820', texture:'city', deco:'flowers' },
+  { name:'Ecruteak Fog Path',   ocean:'#1a0a2a', land:'#2a1a4a', landHi:'#3a2a5a', landShadow:'#0e0618',
+    trailFill:'#6a5a3a', trailEdge:'#4a3a2a', trailHi:'#8a7a5a', trailShadow:'rgba(10,5,20,0.65)',
+    pathDone:'rgba(180,120,220,0.9)', glowDone:'rgba(160,80,200,0.8)', accent:'#a060e0', texture:'ghost', deco:'lanterns' },
+  { name:'Cianwood Sea Route',  ocean:'#1a4a6a', land:'#2a6a5a', landHi:'#3a8a6a', landShadow:'#0a2a30',
+    trailFill:'#8a7a5a', trailEdge:'#5a5038', trailHi:'#aaa070', trailShadow:'rgba(10,30,30,0.5)',
+    pathDone:'rgba(80,180,220,0.9)',  glowDone:'rgba(60,160,200,0.9)', accent:'#40b0d0', texture:'water', deco:'rocks' },
+  { name:'Olivine City Port',   ocean:'#2a3a5a', land:'#3a4a6a', landHi:'#4a5a7a', landShadow:'#1a2030',
+    trailFill:'#808898', trailEdge:'#585a68', trailHi:'#a0a8b8', trailShadow:'rgba(20,28,40,0.55)',
+    pathDone:'rgba(160,200,220,0.9)', glowDone:'rgba(140,180,210,0.8)', accent:'#90b8d0', texture:'steel', deco:'gears' },
+  { name:'Mahogany Snow Path',  ocean:'#3a6090', land:'#a0c8e0', landHi:'#c0e0f0', landShadow:'#204868',
+    trailFill:'#e0e8f0', trailEdge:'#b0c0d0', trailHi:'#f0f4f8', trailShadow:'rgba(30,60,90,0.4)',
+    pathDone:'rgba(180,220,255,0.9)', glowDone:'rgba(160,210,255,0.9)', accent:'#80c0e8', texture:'ice', deco:'snow' },
+  { name:'Blackthorn Dragon Den',ocean:'#1a0800', land:'#3a1000', landHi:'#5a2000', landShadow:'#0a0400',
+    trailFill:'#6a3818', trailEdge:'#4a2810', trailHi:'#8a5830', trailShadow:'rgba(30,10,5,0.7)',
+    pathDone:'rgba(255,120,40,0.9)',  glowDone:'rgba(255,80,20,0.9)',  accent:'#d04010', texture:'rock', deco:'lava' },
+];
+
+// ─── REGION DATA — single gateway for all region-specific data ────────────────
+// All engines read from here via getRegionData() instead of direct constants.
+const REGION_DATA = {
+  kanto: {
+    gymData:    GYM_DATA,
+    mapThemes:  MAP_THEMES,
+    wildPool:   null,    // set after WILD_POOL is defined below
+    name:       'Kanto',
+    maxBosses:  8,
+    bgmMap:     'pallet_town_theme.mp3',
+  },
+  johto: {
+    gymData:    JOHTO_GYM_DATA,
+    mapThemes:  JOHTO_MAP_THEMES,
+    wildPool:   null,    // set after JOHTO_WILD_POOL is defined below
+    name:       'Johto',
+    maxBosses:  8,
+    bgmMap:     'johto_theme.mp3',
+  },
+};
+
+// Backwards-compatible aliases — existing code keeps working
 const BOSS_TRAINERS   = GYM_DATA;
 const GYM_FALLBACKS   = GYM_DATA.map(g => g.bgFallback);
 const GYM_BACKGROUNDS = GYM_DATA.map(g => g.bgImage);
+
+// Accessor — always use this instead of GYM_DATA/MAP_THEMES directly
+function getRegionData() {
+  return REGION_DATA[GameState?.region || 'kanto'] || REGION_DATA.kanto;
+}
+function getGymData()   { return getRegionData().gymData;   }
+function getMapThemes() { return getRegionData().mapThemes; }
+function getWildPool()  { return getRegionData().wildPool || WILD_POOL; }
 
 const MAP_THEMES = [
   // 0: Brock
@@ -423,6 +616,18 @@ const OPPONENT_MOVES = {
     { name: 'X-Scissor',   power: 55, effect: null },
     { name: 'Leech Life',  power: 35, effect: null },
   ],
+  steel: [
+    { name: 'Metal Claw',   power: 40, effect: null },
+    { name: 'Iron Tail',    power: 65, effect: null },
+    { name: 'Flash Cannon', power: 62, effect: null },
+    { name: 'Heavy Slam',   power: 80, effect: null },
+  ],
+  dark: [
+    { name: 'Bite',       power: 42, effect: null },
+    { name: 'Crunch',     power: 58, effect: null },
+    { name: 'Night Slash',power: 55, effect: null },
+    { name: 'Dark Pulse', power: 65, effect: null },
+  ],
 };
 
 // Card templates keyed by starter type
@@ -515,6 +720,28 @@ const CARD_TEMPLATES = {
     { id:'barrier_m',    name:'Barrier',      icon:'🛡️', type:'psychic', power:0,  cost:1, effect:'Block 55 dmg',           special: 'shield_50' },
     { id:'confusion_m',  name:'Confusion',    icon:'🌀', type:'psychic', power:38, cost:1, effect:'20% ATK debuff',         special: 'debuff_atk' },
     { id:'hyper_beam_m', name:'Hyper Beam',   icon:'💫', type:'psychic', power:110,cost:3, effect:'One use only.',          special: null, exhaust: true },
+  ],
+  steel: [
+    { id:'metal_claw',   name:'Metal Claw',   icon:'⚙️', type:'steel',   power:40, cost:1, effect:'High crit',             special: 'high_crit' },
+    { id:'iron_defense', name:'Iron Defense', icon:'🛡️', type:'steel',   power:0,  cost:1, effect:'Block 50 dmg',          special: 'iron_defense' },
+    { id:'steel_wing',   name:'Steel Wing',   icon:'✈️', type:'steel',   power:50, cost:1, effect:'',                      special: null },
+    { id:'iron_tail',    name:'Iron Tail',    icon:'⚡', type:'steel',   power:65, cost:2, effect:'DEF -20',               special: 'debuff_def' },
+    { id:'flash_cannon', name:'Flash Cannon', icon:'💡', type:'steel',   power:62, cost:2, effect:'',                      special: null },
+    // League-tier
+    { id:'gyro_ball',    name:'Gyro Ball',    icon:'⚙️', type:'steel',   power:72, cost:2, effect:'High crit',             special: 'high_crit' },
+    { id:'heavy_slam',   name:'Heavy Slam',   icon:'🏋️', type:'steel',   power:80, cost:3, effect:'Max steel. Once.',      special: null, exhaust: true },
+    { id:'meteor_mash',  name:'Meteor Mash',  icon:'☄️', type:'steel',   power:90, cost:3, effect:'ATK +10. Once.',        special: 'ancient_power', exhaust: true },
+  ],
+  dark: [
+    { id:'bite',         name:'Bite',         icon:'🦷', type:'dark',    power:42, cost:1, effect:'25% flinch',            special: 'flinch' },
+    { id:'thief',        name:'Thief',        icon:'🌑', type:'dark',    power:38, cost:1, effect:'Steal opp item',        special: 'thief' },
+    { id:'taunt',        name:'Taunt',        icon:'😤', type:'dark',    power:0,  cost:1, effect:'Block utility×2',       special: 'taunt' },
+    { id:'crunch',       name:'Crunch',       icon:'💀', type:'dark',    power:58, cost:2, effect:'DEF -20',               special: 'debuff_def' },
+    { id:'night_slash',  name:'Night Slash',  icon:'🌑', type:'dark',    power:55, cost:2, effect:'High crit',             special: 'high_crit' },
+    // League-tier
+    { id:'dark_pulse2',  name:'Dark Pulse',   icon:'🌑', type:'dark',    power:65, cost:2, effect:'25% flinch',            special: 'flinch' },
+    { id:'foul_play',    name:'Foul Play',    icon:'🎭', type:'dark',    power:72, cost:2, effect:'Uses opp ATK',          special: 'venoshock' },
+    { id:'dark_void',    name:'Dark Void',    icon:'🕳️', type:'dark',    power:90, cost:3, effect:'Sleep guaranteed. Once.',special: 'skip_opp', exhaust: true },
   ],
 };
 
@@ -906,6 +1133,30 @@ const LEAGUE_DECKS = {
     { id:'megahorn',    name:'Megahorn',    icon:'🦏', type:'bug',    power:70, cost:2, effect:'20 recoil',         special:'recoil_15' },
     { id:'attack_order',name:'Attack Order',icon:'🐝', type:'bug',    power:90, cost:3, effect:'High crit. Once.',  special:'high_crit', exhaust:true },
   ],
+  steel: [
+    { id:'metal_claw',  name:'Metal Claw',  icon:'⚙️', type:'steel',  power:40, cost:1, effect:'High crit',         special:'high_crit' },
+    { id:'iron_defense',name:'Iron Defense',icon:'🛡️', type:'steel',  power:0,  cost:1, effect:'Block 50 dmg',      special:'iron_defense' },
+    { id:'steel_wing',  name:'Steel Wing',  icon:'✈️', type:'steel',  power:50, cost:1, effect:'',                  special:null },
+    { id:'iron_tail',   name:'Iron Tail',   icon:'⚡', type:'steel',  power:65, cost:2, effect:'DEF -20',           special:'debuff_def' },
+    { id:'flash_cannon',name:'Flash Cannon',icon:'💡', type:'steel',  power:62, cost:2, effect:'',                  special:null },
+    { id:'gyro_ball',   name:'Gyro Ball',   icon:'⚙️', type:'steel',  power:72, cost:2, effect:'High crit',         special:'high_crit' },
+    { id:'mirror_shot', name:'Mirror Shot', icon:'🪞', type:'steel',  power:55, cost:2, effect:'ACC -20%',          special:'debuff_acc' },
+    { id:'bullet_punch',name:'Bullet Punch',icon:'👊', type:'steel',  power:48, cost:1, effect:'Always first',      special:null },
+    { id:'heavy_slam',  name:'Heavy Slam',  icon:'🏋️', type:'steel',  power:80, cost:3, effect:'Max steel. Once.',  special:null, exhaust:true },
+    { id:'meteor_mash', name:'Meteor Mash', icon:'☄️', type:'steel',  power:90, cost:3, effect:'ATK +10. Once.',    special:'ancient_power', exhaust:true },
+  ],
+  dark: [
+    { id:'thief',       name:'Thief',       icon:'🌑', type:'dark',   power:38, cost:1, effect:'Steal opp item',    special:'thief' },
+    { id:'bite',        name:'Bite',        icon:'🦷', type:'dark',   power:42, cost:1, effect:'25% flinch',        special:'flinch' },
+    { id:'taunt2',      name:'Taunt',       icon:'😤', type:'dark',   power:0,  cost:1, effect:'Block utility×2',   special:'taunt' },
+    { id:'night_slash', name:'Night Slash', icon:'🌑', type:'dark',   power:55, cost:2, effect:'High crit',         special:'high_crit' },
+    { id:'crunch2',     name:'Crunch',      icon:'💀', type:'dark',   power:58, cost:2, effect:'DEF -20',           special:'debuff_def' },
+    { id:'dark_pulse2', name:'Dark Pulse',  icon:'🌑', type:'dark',   power:65, cost:2, effect:'25% flinch',        special:'flinch' },
+    { id:'foul_play',   name:'Foul Play',   icon:'🎭', type:'dark',   power:72, cost:2, effect:'Uses opp ATK',      special:'venoshock' },
+    { id:'sucker_punch',name:'Sucker Punch',icon:'🎯', type:'dark',   power:50, cost:1, effect:'Always first',      special:null },
+    { id:'knock_off',   name:'Knock Off',   icon:'👋', type:'dark',   power:60, cost:2, effect:'Removes held item', special:'debuff_def' },
+    { id:'dark_void',   name:'Dark Void',   icon:'🕳️', type:'dark',   power:90, cost:3, effect:'Sleep. Once.',      special:'skip_opp', exhaust:true },
+  ],
 };
 
 // Apply level scaling and improvements to a LEAGUE_DECKS template
@@ -974,6 +1225,46 @@ const WILD_POOL = {
   ],
   legendary: [144, 145, 146],  // Articuno, Zapdos, Moltres
 };
+
+// ── Johto wild pool (#152–251) ────────────────────────────────────────────────
+const JOHTO_WILD_POOL = {
+  common: [
+    152,155,158,         // starters (rare in wild but catchable)
+    161,163,165,167,
+    170,172,173,174,
+    175,177,179,
+    183,185,187,190,
+    191,193,194,198,
+    200,203,204,206,207,
+    209,211,213,214,216,
+    218,220,222,223,226,
+    228,231,234,235,236,
+  ],
+  uncommon: [
+    153,156,159,162,164,
+    166,168,169,
+    171,174,176,180,
+    184,186,188,195,196,
+    197,199,201,202,205,
+    208,210,212,215,217,
+    219,221,224,225,227,
+    229,230,232,233,237,
+    238,239,240,241,242,
+  ],
+  rare: [
+    154,157,160,         // fully evolved Johto starters
+    181,182,189,         // Ampharos, Bellossom, Jumpluff
+    192,207,             // Sunflora, Gligar
+    214,243,244,245,     // Heracross, legendary beasts (very rare)
+    246,247,248,         // Larvitar line
+    249,250,             // Lugia, Ho-Oh (legendary)
+  ],
+  legendary: [243, 244, 245, 249, 250],  // Raikou, Entei, Suicune, Lugia, Ho-Oh
+};
+
+// Wire Johto wild pool into REGION_DATA (defined above, populated here)
+REGION_DATA.johto.wildPool = JOHTO_WILD_POOL;
+REGION_DATA.kanto.wildPool = WILD_POOL;
 
 // ── Battle background selection by opponent type ──────────────────────────
 const BATTLE_BACKGROUNDS = {
@@ -1363,18 +1654,34 @@ function freshState(starterId) {
 // Charizard: primary is fire (correct), secondary is flying — fire is fine.
 // Scyther: primary is bug (correct), secondary is flying — bug is fine.
 const DUAL_TYPE_OVERRIDES = {
-  16:  'flying', // Pidgey       (normal/flying → flying)
-  17:  'flying', // Pidgeotto    (normal/flying → flying)
-  18:  'flying', // Pidgeot      (normal/flying → flying)
-  21:  'flying', // Spearow      (normal/flying → flying)
-  22:  'flying', // Fearow       (normal/flying → flying)
-  83:  'flying', // Farfetch'd   (normal/flying → flying)
-  84:  'flying', // Doduo        (normal/flying → flying)
-  85:  'flying', // Dodrio       (normal/flying → flying)
-  // Legendary birds — primary type is the battle-relevant one (secondary is flying)
-  144: 'ice',      // Articuno  (ice/flying → ice)
-  145: 'electric', // Zapdos    (electric/flying → electric)
-  146: 'fire',     // Moltres   (fire/flying → fire)
+  // Kanto
+  16:  'flying', 17:  'flying', 18:  'flying',
+  21:  'flying', 22:  'flying',
+  83:  'flying', 84:  'flying', 85:  'flying',
+  144: 'ice', 145: 'electric', 146: 'fire',
+  // Johto — dominant battle type
+  163: 'flying', 164: 'flying',  // Hoothoot, Noctowl (normal/flying)
+  165: 'bug',    166: 'bug',     // Ledyba, Ledian   (bug/flying → bug)
+  167: 'bug',    168: 'bug',     // Spinarak, Ariados (bug/poison → bug)
+  169: 'flying',                 // Crobat (poison/flying → flying)
+  176: 'flying',                 // Togetic (normal/flying → flying)
+  177: 'psychic',178: 'psychic', // Natu, Xatu (psychic/flying → psychic)
+  185: 'rock',                   // Sudowoodo (rock masquerades as grass)
+  187: 'grass',  188: 'grass', 189: 'flying', // Hoppip line — grass/flying; Jumpluff flying
+  190: 'normal',                 // Aipom
+  193: 'bug',                    // Yanma (bug/flying → bug)
+  194: 'water',  195: 'water',   // Wooper, Quagsire (water/ground → water)
+  197: 'dark',                   // Umbreon
+  198: 'flying',                 // Murkrow (dark/flying → flying)
+  207: 'ground',                 // Gligar (ground/flying → ground)
+  212: 'bug',                    // Scizor (bug/steel → bug)
+  214: 'bug',                    // Heracross (bug/fighting → bug)
+  215: 'ice',                    // Sneasel (dark/ice → ice)
+  227: 'flying',                 // Skarmory (steel/flying → flying)
+  229: 'fire',                   // Houndoom (dark/fire → fire)
+  230: 'water',                  // Kingdra (water/dragon → water)
+  243: 'electric', 244: 'fire', 245: 'water', // legendary beasts
+  249: 'water',  250: 'fire',    // Lugia, Ho-Oh
 };
 
 function makePokemon(id, level, spriteUrl, name, type, isStarter = false) {
@@ -3421,14 +3728,16 @@ const ProfileEngine = {
     const newBtn     = document.getElementById('btn-new-game');
     const contBtn    = document.getElementById('btn-continue-game');
     const dexBtn     = document.getElementById('btn-open-pokedex');
+    const leagueBtn  = document.getElementById('btn-start-league');
 
     if (!meta) {
       // No active profile — disable game buttons, show nudge
       if (banner) banner.style.display = 'none';
       if (nudge)  nudge.style.display  = '';
-      if (newBtn)  { newBtn.disabled  = true; }
-      if (contBtn) { contBtn.disabled = true; contBtn.textContent = '◈ Continue'; }
-      if (dexBtn)  { dexBtn.disabled  = true; }
+      if (newBtn)    { newBtn.disabled  = true; }
+      if (contBtn)   { contBtn.disabled = true; contBtn.textContent = '◈ Continue'; }
+      if (dexBtn)    { dexBtn.disabled  = true; }
+      if (leagueBtn) { leagueBtn.style.display = 'none'; }
       return;
     }
 
@@ -3493,6 +3802,10 @@ const ProfileEngine = {
       contBtn.textContent = hasSave
         ? `◈ Continue · ${meta.bossesDefeated}/8`
         : '◈ No Save';
+    }
+    // League button — only shown when unlocked for this profile
+    if (leagueBtn) {
+      leagueBtn.style.display = meta.leagueUnlocked ? '' : 'none';
     }
   },
 
@@ -3758,6 +4071,13 @@ const Game = {
     }));
 
     for (const s of STARTERS) {
+      // Insert region divider before first Johto starter
+      if (s.johtoStarter && !grid.querySelector('.starter-region-divider')) {
+        const div = document.createElement('div');
+        div.className = 'starter-region-divider';
+        div.textContent = '🌿 Johto Region';
+        grid.appendChild(div);
+      }
       const data   = await fetchPoke(s.id).catch(() => null);
       const sprite = data ? getSpriteUrl(data) : '';
 
@@ -3767,6 +4087,7 @@ const Game = {
       if (s.id === 133) locked = !GameState.unlockedEevee && !unlocks.eevee;
       if (s.id === 151) locked = !GameState.unlockedMew   && !unlocks.mew;
       if (s.id === 150) locked = !GameState.unlockedMewtwo && !unlocks.mewtwo;
+      if (s.johtoStarter) locked = !loadProfiles().find(p => p.key === getActiveProfile())?.johtoUnlocked;
 
       const card = document.createElement('div');
       card.className = 'starter-card';
@@ -3799,6 +4120,11 @@ const Game = {
           <div class="starter-locked-icon">🔒</div>
           <div class="starter-locked-text">Complete all other starters!</div>
           <div class="starter-locked-hint">${done.length}/${ALL.length} complete</div>
+        </div>`;
+      } else if (locked && s.johtoStarter) {
+        lockHtml = `<div class="starter-locked">
+          <div class="starter-locked-icon">🌿</div>
+          <div class="starter-locked-text">Win the Kanto League<br>to unlock Johto!</div>
         </div>`;
       } else if (locked) {
         lockHtml = `<div class="starter-locked">
@@ -3867,6 +4193,7 @@ const Game = {
 
     GameState.starterId           = s.id;
     GameState.starterType         = s.type;
+    GameState.region              = s.region || 'kanto';
     GameState.party               = [pokemon];
     GameState.activePokemonIndex  = 0;
     GameState.deck                = starterDeck;
@@ -3944,7 +4271,15 @@ const Game = {
     }
 
     // ── Won all 8 gyms → Victory ──────────────────────────────────────────
-    if (defeated >= 8) {
+    const regionData = getRegionData();
+    if (defeated >= regionData.maxBosses) {
+      if (GameState.region === 'johto') {
+        // Johto victory — straight to victory screen, no unlock logic needed
+        saveGame();
+        VictoryEngine.show();
+        return;
+      }
+      // Kanto victory — existing unlock logic
       // Track which starter completed this run
       const unlocks = loadUnlocks();
       unlocks.pikachu = true;
@@ -4002,7 +4337,7 @@ const Game = {
     }
 
     // ── Generate next map ─────────────────────────────────────────────────
-    const nextBossIdx = Math.min(defeated, BOSS_TRAINERS.length - 1);
+    const nextBossIdx = Math.min(defeated, getGymData().length - 1);
     GameState.map               = generateMap(nextBossIdx);
     GameState.completedNodes    = [];
     GameState.highWaterRow      = -1;
@@ -4020,7 +4355,7 @@ const Game = {
       if (evo.length > 0 && evolutions.length === 0) evolutions.push(...evo);
     }
 
-    const nextBoss  = BOSS_TRAINERS[nextBossIdx];
+    const nextBoss  = getGymData()[nextBossIdx];
 
     saveGame();
 
@@ -4032,14 +4367,15 @@ const Game = {
       }
     };
 
-    if (defeated === 1) {
+    // Joining narratives only in Kanto run for Brock (1) and Misty (2)
+    if (GameState.region !== 'johto' && defeated === 1) {
       const name = GameState.trainerName || 'Trainer';
       showModal(
         '🧑‍🍳 Brock wants to join!',
         `That was an incredible battle, ${name}. Your Pokémon have real heart — I haven't seen that kind of bond in a long time.\n\nI can't just let you walk out of here. My team and I would like to travel with you for a while. At least until you reach the next gym.\n\nAnd don't worry — I'll cook for your Pokémon every chance we get. A well-fed team is a strong team!`,
         () => showBadgeCeremony()
       );
-    } else if (defeated === 2) {
+    } else if (GameState.region !== 'johto' && defeated === 2) {
       const name = GameState.trainerName || 'Trainer';
       showModal(
         '🎣 Misty wants to join!',
@@ -4060,8 +4396,8 @@ const Game = {
 
 const BadgeCeremony = {
   show(boss, nextBoss, defeatedCount) {
-    const gymIdx = Math.min(defeatedCount - 1, GYM_DATA.length - 1);
-    const data   = GYM_DATA[gymIdx];
+    const gymIdx = Math.min(defeatedCount - 1, getGymData().length - 1);
+    const data   = getGymData()[gymIdx];
 
     const bgEl = document.getElementById('badge-bg');
     if (bgEl) bgEl.style.background = data.bgFallback;
@@ -4117,8 +4453,8 @@ const BadgeCeremony = {
 
 const MapTitleCard = {
   show(nextBoss, defeatedCount) {
-    const gymIdx = Math.min(defeatedCount, GYM_DATA.length - 1);
-    const data   = GYM_DATA[gymIdx];
+    const gymIdx = Math.min(defeatedCount, getGymData().length - 1);
+    const data   = getGymData()[gymIdx];
 
     const bgEl = document.getElementById('maptitle-bg');
     if (bgEl) bgEl.style.background = data.bgFallback;
@@ -4661,8 +4997,8 @@ const MapEngine = {
       return;
     }
 
-    const file     = GYM_BACKGROUNDS[Math.min(bi, GYM_BACKGROUNDS.length - 1)];
-    const fallback = GYM_FALLBACKS[Math.min(bi, GYM_FALLBACKS.length - 1)];
+    const file     = getGymData()[Math.min(bi, getGymData().length - 1)]?.bgImage;
+    const fallback = getGymData()[Math.min(bi, getGymData().length - 1)]?.bgFallback || '#111';
     const url      = `assets/backgrounds/${file}`;
 
     // Always set fallback gradient first so something shows immediately
@@ -4755,8 +5091,8 @@ const MapEngine = {
     if (!nodes) return;
 
     const bi    = nodes._bossIndex ?? GameState.bossesDefeated ?? 0;
-    const boss  = BOSS_TRAINERS[Math.min(bi, BOSS_TRAINERS.length - 1)];
-    const theme = MAP_THEMES[Math.min(bi, MAP_THEMES.length - 1)];
+    const boss  = getGymData()[Math.min(bi, getGymData().length - 1)];
+    const theme = getMapThemes()[Math.min(bi, getMapThemes().length - 1)];
 
     // Apply background
     this._applyBackground(bi);
@@ -4900,6 +5236,7 @@ const MapEngine = {
       case 'blaine_node':     BlaineEngine.start(node);          break;
       case 'giovanni_node':   GiovanniEngine.start(node);        break;
       case 'challenge':       ChallengeSelectEngine.start(node); break;
+      case 'wubbafat_node':   WubbafatEngine.start(node);        break;
     }
   },
 
@@ -6712,18 +7049,34 @@ const BossEngine = {
             GameState.stats.totalBattlesWon = (GameState.stats.totalBattlesWon || 0) + 1;
             const earned = Math.floor(20 + Math.random() * 30);
             GameState.gold = (GameState.gold || 0) + earned;
+
+            // Wubbafat rescue — grant a free rare Johto Pokémon catch
+            const isWubbafat = RocketBattleEngine._onWubbafatRescue;
+            if (isWubbafat) RocketBattleEngine._onWubbafatRescue = false;
+
             setTimeout(() => {
-              showModal('Team Rocket Fled! 🚀',
-                `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`,
-                () => {
-                  const evolutions = levelUpParty('battle');
-                  if (evolutions.length > 0) {
-                    runEvolutions(evolutions, () => CardReward.show(earned));
+              const title = isWubbafat ? 'Wubbafat Driven Off! 🌿' : 'Team Rocket Fled! 🚀';
+              const wildPool = getWildPool();
+              const rescuedId = isWubbafat && wildPool.uncommon
+                ? wildPool.uncommon[Math.floor(Math.random() * wildPool.uncommon.length)]
+                : null;
+              const msg = isWubbafat
+                ? `You drove off the Wubbafat poachers!\n+${earned}g recovered.\n\nA rescued Pokémon approaches...`
+                : `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`;
+              showModal(title, msg, () => {
+                const evolutions = levelUpParty('battle');
+                const afterEvo = () => {
+                  if (isWubbafat && rescuedId) {
+                    // Trigger catch screen with the rescued Pokémon
+                    const fakeNode = { type:'catch', idx: GameState.currentNodeIndex, row: 0, catchRarity:'uncommon', _forcedId: rescuedId };
+                    CatchEngine.start(fakeNode);
                   } else {
                     CardReward.show(earned);
                   }
-                }
-              );
+                };
+                if (evolutions.length > 0) runEvolutions(evolutions, afterEvo);
+                else afterEvo();
+              });
             }, 200);
           } else {
             // Normal gym boss win
@@ -8126,7 +8479,7 @@ const POKEMON_TYPES = {
 // Build a matchup: returns { leftId, rightId, leftType, rightType, winnerId, loserId, mult, relationship }
 function _buildMatchup(tier) {
   const attackTypes = Object.keys(TYPE_CHART);
-  const allIds = [...new Set([...WILD_POOL.common, ...WILD_POOL.uncommon, ...WILD_POOL.rare])];
+  const allIds = [...new Set([...getWildPool().common, ...getWildPool().uncommon, ...getWildPool().rare])];
 
   let attempts = 0;
   while (attempts++ < 60) {
@@ -10656,6 +11009,69 @@ const CATCH_BACKDROPS = [
   'catch-bg-dark',     // 7 Giovanni
 ];
 
+// ─── WUBBAFAT ENGINE — Johto poacher villain faction ─────────────────────────
+// Wubbafat is a Pokémon poaching ring active in Johto.
+// Mechanically wraps RocketBattleEngine but with different team + reward:
+// defeat them → rescue one of their captured Pokémon (free rare catch).
+const WubbafatEngine = {
+  _isActive: false,
+
+  start(node) {
+    this._isActive = true;
+    ActiveEngine.set(this);
+
+    showScreen('boss');
+    BossEngine._isRocket = true;  // reuse rocket battle screen structure
+
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.style.background =
+      'linear-gradient(180deg,#0a1a0a 0%,#1a3a1a 50%,#040a04 100%)';
+
+    document.getElementById('trainer-intro').style.display    = 'flex';
+    document.getElementById('boss-battle-area').style.display = 'none';
+    document.getElementById('boss-party-bar').innerHTML       = '';
+
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (trainerImg) trainerImg.src = 'assets/wubbafat.png';
+    trainerImg.onerror = () => { if(trainerImg) trainerImg.src = 'assets/giovanni.png'; };
+
+    document.getElementById('dialogue-name').textContent = 'Wubbafat Grunt';
+    document.getElementById('dialogue-text').textContent = '';
+
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Battle! ▶'; }
+    document.getElementById('btn-dialogue-next').style.display = 'none';
+
+    const SCRIPTS = [
+      "Stay back! These Pokémon belong to Wubbafat now!",
+      "You think you can stop us? We control every route in Johto!",
+      "Heh — try and take them back. I dare you.",
+      "Boss Wubbafat will hear about this meddling!",
+    ];
+    const intro = SCRIPTS[Math.floor(Math.random() * SCRIPTS.length)];
+    let ci = 0;
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += intro[ci++];
+      if (ci >= intro.length) {
+        clearInterval(iv);
+        if (startBtn) startBtn.style.display = '';
+      }
+    }, 22);
+
+    SoundEngine.playBGM('teamrocket_battle.mp3');
+    this._node = node;
+  },
+
+  startGame() {
+    this._isActive = false;
+    ActiveEngine.clear();
+    // Hand off to RocketBattleEngine to run the actual battle
+    // but override onWin to trigger the rescue reward
+    RocketBattleEngine._onWubbafatRescue = true;
+    RocketBattleEngine.start(this._node);
+  },
+};
+
 const CatchEngine = {
   current:       null,
   _caught:       false,
@@ -10671,23 +11087,23 @@ const CatchEngine = {
     const roll = Math.random();
     // forceRarity may be a node.catchRarity string ('common','uncommon','rare') or 'rare' from mystery
     if (forceRarity === 'rare' || forceRarity === 'rare ✨') {
-      rarity = 'Rare ✨'; pool = WILD_POOL.rare;
+      rarity = 'Rare ✨'; pool = getWildPool().rare;
     } else if (forceRarity === 'uncommon') {
-      rarity = 'Uncommon'; pool = WILD_POOL.uncommon;
+      rarity = 'Uncommon'; pool = getWildPool().uncommon;
     } else if (forceRarity === 'common') {
-      rarity = 'Common'; pool = WILD_POOL.common;
+      rarity = 'Common'; pool = getWildPool().common;
     } else if (forceRarity === 'legendary') {
-      rarity = 'legendary'; pool = WILD_POOL.legendary;
+      rarity = 'legendary'; pool = getWildPool().legendary;
     } else if (hasLure && Math.random() < 0.3) {
-      rarity = 'Rare ✨'; pool = WILD_POOL.rare;
+      rarity = 'Rare ✨'; pool = getWildPool().rare;
     } else if (hasRepel) {
       rarity = Math.random() < 0.7 ? 'Uncommon' : 'Rare ✨';
-      pool   = rarity === 'Uncommon' ? WILD_POOL.uncommon : WILD_POOL.rare;
+      pool   = rarity === 'Uncommon' ? getWildPool().uncommon : getWildPool().rare;
       ItemEngine.useItem('repel');
     } else {
-      if (roll < .6)      { rarity = 'Common';     pool = WILD_POOL.common; }
-      else if (roll < .9) { rarity = 'Uncommon';   pool = WILD_POOL.uncommon; }
-      else                { rarity = 'Rare ✨';    pool = WILD_POOL.rare; }
+      if (roll < .6)      { rarity = 'Common';     pool = getWildPool().common; }
+      else if (roll < .9) { rarity = 'Uncommon';   pool = getWildPool().uncommon; }
+      else                { rarity = 'Rare ✨';    pool = getWildPool().rare; }
     }
     const id   = pool[Math.floor(Math.random() * pool.length)];
     const data = await fetchPoke(id);
@@ -13539,9 +13955,7 @@ Game.afterEvolve = function() {
 
 // ─── VICTORY ENGINE ──────────────────────────────────────────────────────────
 
-// Complete Kanto type map — all 151 Pokémon, no network needed
-// Used as offline fallback in startLeague to guarantee correct League decks
-// regardless of what is (or isn't) stored in the Pokédex.
+// Complete Kanto+Johto type map — all 251 Pokémon, no network needed
 const KANTO_TYPE_MAP = {
   1:'grass',   2:'grass',   3:'grass',
   4:'fire',    5:'fire',    6:'fire',
@@ -13618,6 +14032,71 @@ const KANTO_TYPE_MAP = {
   144:'ice',   145:'electric',146:'fire',
   147:'dragon',148:'dragon',149:'dragon',
   150:'psychic',151:'psychic',
+  // Johto (#152–251)
+  152:'grass',  153:'grass',  154:'grass',
+  155:'fire',   156:'fire',   157:'fire',
+  158:'water',  159:'water',  160:'water',
+  161:'normal', 162:'normal',
+  163:'flying', 164:'flying',
+  165:'bug',    166:'bug',
+  167:'bug',    168:'bug',
+  169:'flying',
+  170:'water',  171:'water',
+  172:'electric',
+  173:'normal', 174:'normal',
+  175:'normal', 176:'flying',
+  177:'psychic',178:'psychic',
+  179:'electric',180:'electric',181:'electric',
+  182:'grass',
+  183:'water',  184:'water',
+  185:'rock',
+  186:'water',
+  187:'grass',  188:'grass',  189:'flying',
+  190:'normal',
+  191:'grass',  192:'grass',
+  193:'bug',
+  194:'water',  195:'water',
+  196:'psychic',197:'dark',
+  198:'flying',
+  199:'water',
+  200:'ghost',
+  201:'psychic',
+  202:'psychic',
+  203:'normal',
+  204:'bug',    205:'bug',
+  206:'normal',
+  207:'ground',
+  208:'steel',
+  209:'normal', 210:'normal',
+  211:'water',
+  212:'bug',
+  213:'bug',
+  214:'bug',
+  215:'ice',
+  216:'normal', 217:'normal',
+  218:'fire',   219:'fire',
+  220:'ice',    221:'ice',
+  222:'water',
+  223:'water',  224:'water',
+  225:'ice',
+  226:'water',
+  227:'flying',
+  228:'fire',   229:'fire',
+  230:'water',
+  231:'ground', 232:'ground',
+  233:'normal',
+  234:'normal',
+  235:'normal',
+  236:'fighting',237:'fighting',
+  238:'ice',
+  239:'electric',
+  240:'fire',
+  241:'normal',
+  242:'normal',
+  243:'electric',244:'fire',245:'water',
+  246:'rock',   247:'rock',   248:'rock',
+  249:'water',  250:'fire',
+  251:'psychic',
 };
 
 // ─── LEAGUE ENGINE ────────────────────────────────────────────────────────────
@@ -13886,6 +14365,10 @@ const LeagueEngine = {
     const profIdx  = profiles.findIndex(p => p.key === getActiveProfile());
     if (profIdx >= 0) {
       profiles[profIdx].leagueWins = (profiles[profIdx].leagueWins || 0) + 1;
+      // Unlock Johto on first League win
+      if (!profiles[profIdx].johtoUnlocked) {
+        profiles[profIdx].johtoUnlocked = true;
+      }
       if (!profiles[profIdx].hallOfFame) profiles[profIdx].hallOfFame = [];
       profiles[profIdx].hallOfFame.push({
         date:  Date.now(),
@@ -13933,6 +14416,13 @@ const LeagueEngine = {
     document.getElementById('lv-trainer-name').textContent = `${name} — League Champion!`;
     document.getElementById('lv-stats-grid').innerHTML  = statsHtml;
     document.getElementById('lv-hof-list').innerHTML    = hofHtml || '<div style="opacity:.5">First entry!</div>';
+
+    // Johto unlock teaser on first League win
+    const isFirstLeagueWin = (profiles[profIdx]?.leagueWins || 0) === 1;
+    const johtoTeaser = document.getElementById('lv-johto-teaser');
+    if (johtoTeaser) {
+      johtoTeaser.style.display = isFirstLeagueWin ? '' : 'none';
+    }
 
     showScreen('league-victory');
 
@@ -15069,6 +15559,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Start screen ──
   document.getElementById('btn-new-game').addEventListener('click', () => Game.startNew());
   document.getElementById('btn-continue-game').addEventListener('click', () => Game.continueGame());
+  document.getElementById('btn-start-league').addEventListener('click', () => LeagueEngine.showPartySelect());
   document.getElementById('btn-open-pokedex').addEventListener('click', () => PokedexEngine.show());
   document.getElementById('btn-select-profile').addEventListener('click', () => ProfileEngine.show());
   document.getElementById('btn-switch-profile').addEventListener('click', () => ProfileEngine.show());

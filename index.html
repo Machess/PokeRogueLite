@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=89" />
+  <link rel="stylesheet" href="style.css?v=92" />
 </head>
 <body>
 
@@ -63,6 +63,7 @@
   <div class="start-menu" id="start-menu">
     <button class="btn-pixel btn-primary"   id="btn-new-game"      disabled>▶ New Game</button>
     <button class="btn-pixel btn-secondary" id="btn-continue-game" disabled>◈ Continue</button>
+    <button class="btn-pixel btn-league"    id="btn-start-league"  style="display:none">⚔️ Pokémon League</button>
     <button class="btn-pixel btn-secondary" id="btn-open-pokedex"  disabled>📖 Pokédex</button>
     <button class="btn-pixel btn-secondary" id="btn-select-profile">👤 Select Profile</button>
   </div>
@@ -889,6 +890,13 @@
     <div class="lv-section-label">🏛 Hall of Fame</div>
     <div class="lv-hof-list" id="lv-hof-list"></div>
 
+    <!-- Johto unlock teaser — shown on first League win -->
+    <div class="lv-johto-teaser" id="lv-johto-teaser" style="display:none">
+      <div class="lv-johto-icon">🌿</div>
+      <div class="lv-johto-title">A New Region Awaits</div>
+      <div class="lv-johto-text">Word has reached New Bark Town. Professor Elm is looking for a trainer. The Johto region is now available — choose a Johto starter to begin.</div>
+    </div>
+
     <button class="btn-pixel btn-primary gameover-btn" id="btn-league-victory-done">
       ▶ Return
     </button>
@@ -1007,6 +1015,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=148"></script>
+<script src="app.js?v=153"></script>
 </body>
 </html>
