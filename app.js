@@ -1723,7 +1723,7 @@ function buildDeck(type, improvementMap = {}) {
 // No coordinates needed for display — only row/links matter.
 
 function generateMap(bossIndex) {
-  const bi = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, MAP_THEMES.length - 1);
+  const bi = bossIndex ?? Math.min(GameState?.bossesDefeated ?? 0, getMapThemes().length - 1);
 
   const STEPS = 10; // decision steps before boss
 
@@ -4289,7 +4289,7 @@ const Game = {
   async afterBoss(bossIndex) {
     GameState.bossesDefeated++;
     const defeated = GameState.bossesDefeated;
-    const boss     = BOSS_TRAINERS[Math.min(defeated - 1, BOSS_TRAINERS.length - 1)];
+    const boss     = getGymData()[Math.min(defeated - 1, getGymData().length - 1)];
 
     // ── Unlock mini-games progressively on boss defeat ────────────────────────
     // Each boss unlocks the next mini-game for subsequent maps.
@@ -6729,11 +6729,12 @@ const BossEngine = {
 
   async start(node) {
     showLoading();
+    const gymData = getGymData();
     const bossIdx = Math.min(
       node?.bossIndex ?? GameState.bossesDefeated,
-      BOSS_TRAINERS.length - 1
+      gymData.length - 1
     );
-    const boss = BOSS_TRAINERS[bossIdx];
+    const boss = gymData[bossIdx];
     this.bossData    = boss;
     this.oppIdx      = 0;
     this.oppTeam     = [];
@@ -10932,7 +10933,7 @@ const GameOver = {
         : '';
 
       // Boss farewell line — from whichever boss stopped the run
-      const lastBoss = BOSS_TRAINERS[Math.min(beaten, BOSS_TRAINERS.length - 1)];
+      const lastBoss = getGymData()[Math.min(beaten, getGymData().length - 1)];
       const BOSS_TAUNTS = [
         `"Brock says: The Boulder Badge was just the beginning. Come back stronger."`,
         `"Misty says: You almost had me. Almost."`,
