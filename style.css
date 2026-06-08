@@ -8842,9 +8842,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   text-shadow: 0 0 6px rgba(255,215,0,.8);
 }
 .league-party-footer {
-  padding: .5rem .8rem;
-  text-align: center;
-  flex-shrink: 0;         /* always visible */
+  padding: .5rem .8rem .8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .4rem;
+  flex-shrink: 0;
   background: linear-gradient(0deg,rgba(6,6,14,1) 85%,rgba(6,6,14,0));
   z-index: 2;
 }
