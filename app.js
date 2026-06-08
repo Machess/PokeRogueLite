@@ -2201,6 +2201,11 @@ const SoundEngine = {
       setTimeout(() => this.playSFX('teamrocket_show.mp3', 0.6), 150);
       return;
     }
+    // Johto region overrides for start screen and map
+    if (GameState?.region === 'johto') {
+      if (screenId === 'start') { this.playBGM('johto_bg.mp3');     return; }
+      if (screenId === 'map')   { this.playBGM('johto_map_bg.mp3'); return; }
+    }
     const track = this._bgmMap[screenId];
     if (track !== undefined) this.playBGM(track);
   },
@@ -3163,14 +3168,19 @@ const TeamRocketChallenge = {
   // Pick a random character and show their challenge
   show(onComplete) {
     this._onComplete = onComplete;
-    const chars = ['meowth', 'jessie', 'james'];
+    const chars = ['meowth', 'jessie', 'james', 'wobbuffet'];
     const pool  = chars.filter(c => c !== this._type);
     this._type  = pool[Math.floor(Math.random() * pool.length)];
-    // Reset counter so next event can't fire for at least 3 more nodes
     GameState.nodesSinceRocket = 0;
 
-    if (this._type === 'meowth') this._showMeowth();
+    if (this._type === 'meowth')     this._showMeowth();
     else if (this._type === 'jessie') this._showJessie();
+    else if (this._type === 'wobbuffet') {
+      // WobbuffetEngine uses the boss-screen intro flow
+      const fakeNode = { type:'wobbuffet_node', idx: GameState.currentNodeIndex, row: 0 };
+      WobbuffetEngine._onComplete = this._onComplete;
+      WobbuffetEngine.start(fakeNode);
+    }
     else this._showJames();
   },
 
@@ -3800,6 +3810,10 @@ const ProfileEngine = {
     // Johto tint on start screen
     document.getElementById('screen-start')
       ?.classList.toggle('johto-active', johtoUnlocked);
+    // Update start screen BGM to match region when already on start screen
+    if (document.getElementById('screen-start')?.classList.contains('active')) {
+      SoundEngine.playBGM(johtoUnlocked ? 'johto_bg.mp3' : 'poke_intro.mp3');
+    }
     // Region pill + logo sub
     if (regionPill) {
       regionPill.textContent = johtoUnlocked ? '🌿 Johto Region' : '🗺️ Kanto Region';
@@ -5255,7 +5269,7 @@ const MapEngine = {
       case 'blaine_node':     BlaineEngine.start(node);          break;
       case 'giovanni_node':   GiovanniEngine.start(node);        break;
       case 'challenge':       ChallengeSelectEngine.start(node); break;
-      case 'wubbafat_node':   WubbafatEngine.start(node);        break;
+      case 'wobbuffet_node':  WobbuffetEngine.start(node);       break;
     }
   },
 
@@ -5678,6 +5692,17 @@ const BattleEngine = {
     }
     if (fx.giovanniDisinfo) {
       this._giovanniDisinfoPending = true;
+    }
+    if (fx.wobbuffetCounter) {
+      // Reflected hit — deal 20 damage to the opponent immediately
+      const reflected = 20;
+      this.state.opp.hp = Math.max(0, this.state.opp.hp - reflected);
+      this._logPlayer(`🛡️ Wobbuffet COUNTER! Reflected ${reflected} damage to the opponent!`);
+    }
+    if (fx.wobbuffetBackfire) {
+      // Wobbuffet accidentally hurt the player — 10 chip damage
+      this.state.player.hp = Math.max(1, this.state.player.hp - 10);
+      this._logPlayer(`😬 Wobbuffet wobbled and hit your party for 10 damage...`);
     }
     GameState.pendingPlayerEffects = {};
 
@@ -6386,6 +6411,10 @@ const BattleEngine = {
       return;
     }
 
+    // Declare sprite IDs here — used in multiple places below including early returns
+    const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
+    const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
+
     // Pick a move from the opponent's moveset (assigned at creation)
     const movePool = st.opp.moves || OPPONENT_MOVES[st.opp.type] || OPPONENT_MOVES.normal;
     const move     = movePool[Math.floor(Math.random() * movePool.length)];
@@ -6417,9 +6446,6 @@ const BattleEngine = {
       if (move.effect === 'poison_chance')  addStatus(st, 'player', 'poison');
       if (move.effect === 'debuff_atk')     st.oppAtkDebuff = Math.max(st.oppAtkDebuff - 5, 0); // debuff opp instead
     }
-
-    const playerSpriteId = this.isBoss ? 'boss-player-sprite' : 'player-sprite';
-    const oppSpriteId    = this.isBoss ? 'boss-opp-sprite'    : 'opp-sprite';
 
     if (blocked > 0) {
       st.player.hp = Math.max(0, st.player.hp - blocked);
@@ -7068,34 +7094,18 @@ const BossEngine = {
             GameState.stats.totalBattlesWon = (GameState.stats.totalBattlesWon || 0) + 1;
             const earned = Math.floor(20 + Math.random() * 30);
             GameState.gold = (GameState.gold || 0) + earned;
-
-            // Wubbafat rescue — grant a free rare Johto Pokémon catch
-            const isWubbafat = RocketBattleEngine._onWubbafatRescue;
-            if (isWubbafat) RocketBattleEngine._onWubbafatRescue = false;
-
             setTimeout(() => {
-              const title = isWubbafat ? 'Wubbafat Driven Off! 🌿' : 'Team Rocket Fled! 🚀';
-              const wildPool = getWildPool();
-              const rescuedId = isWubbafat && wildPool.uncommon
-                ? wildPool.uncommon[Math.floor(Math.random() * wildPool.uncommon.length)]
-                : null;
-              const msg = isWubbafat
-                ? `You drove off the Wubbafat poachers!\n+${earned}g recovered.\n\nA rescued Pokémon approaches...`
-                : `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`;
-              showModal(title, msg, () => {
-                const evolutions = levelUpParty('battle');
-                const afterEvo = () => {
-                  if (isWubbafat && rescuedId) {
-                    // Trigger catch screen with the rescued Pokémon
-                    const fakeNode = { type:'catch', idx: GameState.currentNodeIndex, row: 0, catchRarity:'uncommon', _forcedId: rescuedId };
-                    CatchEngine.start(fakeNode);
+              showModal('Team Rocket Fled! 🚀',
+                `Team Rocket blasted off again!\nYou found ${earned}g they dropped!`,
+                () => {
+                  const evolutions = levelUpParty('battle');
+                  if (evolutions.length > 0) {
+                    runEvolutions(evolutions, () => CardReward.show(earned));
                   } else {
                     CardReward.show(earned);
                   }
-                };
-                if (evolutions.length > 0) runEvolutions(evolutions, afterEvo);
-                else afterEvo();
-              });
+                }
+              );
             }, 200);
           } else {
             // Normal gym boss win
@@ -11028,46 +11038,75 @@ const CATCH_BACKDROPS = [
   'catch-bg-dark',     // 7 Giovanni
 ];
 
-// ─── WUBBAFAT ENGINE — Johto poacher villain faction ─────────────────────────
-// Wubbafat is a Pokémon poaching ring active in Johto.
-// Mechanically wraps RocketBattleEngine but with different team + reward:
-// defeat them → rescue one of their captured Pokémon (free rare catch).
-const WubbafatEngine = {
+// ─── WOBBUFFET ENGINE — "Wobbu-Counter!" mini-game ───────────────────────────
+// Wobbuffet pops out of Jessie's Poké Ball mid-route.
+// Incoming attacks slide in — player must tap the super-effective counter type.
+// 5 rounds, faster each round. Part of the TeamRocketChallenge pool.
+
+const WOBBU_ATTACKS = [
+  // { incoming type, correct counter type, wrong choices }
+  { type:'fire',     counter:'water',    icon:'🔥' },
+  { type:'water',    counter:'electric', icon:'💧' },
+  { type:'grass',    counter:'fire',     icon:'🌿' },
+  { type:'electric', counter:'ground',   icon:'⚡' },
+  { type:'ice',      counter:'fire',     icon:'❄️' },
+  { type:'psychic',  counter:'bug',      icon:'🔮' },
+  { type:'rock',     counter:'water',    icon:'🪨' },
+  { type:'ground',   counter:'water',    icon:'🟫' },
+  { type:'poison',   counter:'ground',   icon:'☠️' },
+  { type:'flying',   counter:'electric', icon:'🌬️' },
+  { type:'bug',      counter:'fire',     icon:'🐛' },
+  { type:'ghost',    counter:'ghost',    icon:'👻' },
+  { type:'dragon',   counter:'ice',      icon:'🐉' },
+  { type:'fighting', counter:'psychic',  icon:'🥊' },
+  { type:'dark',     counter:'fighting', icon:'🌑' },
+  { type:'steel',    counter:'fire',     icon:'⚙️' },
+  { type:'normal',   counter:'fighting', icon:'💥' },
+];
+
+const WOBBU_WRONG_POOL = ['fire','water','grass','electric','ice','psychic','rock','ground'];
+
+const WobbuffetEngine = {
   _isActive: false,
+  _node:     null,
+  _round:    0,
+  _hits:     0,
+  _sequence: [],
+  _tier:     1,
 
   start(node) {
     this._isActive = true;
+    this._node     = node;
+    this._tier     = GameState.difficultyTier || 2;
     ActiveEngine.set(this);
 
     showScreen('boss');
-    BossEngine._isRocket = true;  // reuse rocket battle screen structure
+    BossEngine._isRocket = false;
 
-    const bgEl  = document.querySelector('#screen-boss .battle-bg');
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.style.background =
-      'linear-gradient(180deg,#0a1a0a 0%,#1a3a1a 50%,#040a04 100%)';
+      'linear-gradient(180deg,#1a1040 0%,#2a1a5a 50%,#0e0620 100%)';
+    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
+    if (imgEl) imgEl.style.opacity = '0';
 
     document.getElementById('trainer-intro').style.display    = 'flex';
     document.getElementById('boss-battle-area').style.display = 'none';
     document.getElementById('boss-party-bar').innerHTML       = '';
 
     const trainerImg = document.getElementById('boss-trainer-sprite');
-    if (trainerImg) trainerImg.src = 'assets/wubbafat.png';
-    trainerImg.onerror = () => { if(trainerImg) trainerImg.src = 'assets/giovanni.png'; };
+    if (trainerImg) {
+      trainerImg.src     = 'assets/wobbuffet.png';
+      trainerImg.onerror = () => { trainerImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/202.png`; };
+    }
 
-    document.getElementById('dialogue-name').textContent = 'Wubbafat Grunt';
+    document.getElementById('dialogue-name').textContent = 'Wobbuffet';
     document.getElementById('dialogue-text').textContent = '';
 
     const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Battle! ▶'; }
+    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'WOBBUFFET! ▶'; }
     document.getElementById('btn-dialogue-next').style.display = 'none';
 
-    const SCRIPTS = [
-      "Stay back! These Pokémon belong to Wubbafat now!",
-      "You think you can stop us? We control every route in Johto!",
-      "Heh — try and take them back. I dare you.",
-      "Boss Wubbafat will hear about this meddling!",
-    ];
-    const intro = SCRIPTS[Math.floor(Math.random() * SCRIPTS.length)];
+    const intro = "WOBBUFFET!! (Jessie's Poké Ball burst open again. Wobbuffet has appeared and is saluting the incoming attacks. Help it counter them all!)";
     let ci = 0;
     const iv = setInterval(() => {
       document.getElementById('dialogue-text').textContent += intro[ci++];
@@ -11075,19 +11114,191 @@ const WubbafatEngine = {
         clearInterval(iv);
         if (startBtn) startBtn.style.display = '';
       }
-    }, 22);
+    }, 18);
 
-    SoundEngine.playBGM('teamrocket_battle.mp3');
-    this._node = node;
+    SoundEngine.playBGM('mini_game.mp3');
   },
 
   startGame() {
     this._isActive = false;
     ActiveEngine.clear();
-    // Hand off to RocketBattleEngine to run the actual battle
-    // but override onWin to trigger the rescue reward
-    RocketBattleEngine._onWubbafatRescue = true;
-    RocketBattleEngine.start(this._node);
+
+    // Build 5-round sequence — no repeat types in a row
+    const pool = shuffle([...WOBBU_ATTACKS]);
+    this._sequence = pool.slice(0, 5);
+    this._round    = 0;
+    this._hits     = 0;
+
+    document.getElementById('trainer-intro').style.display = 'none';
+    this._showRound();
+  },
+
+  _showRound() {
+    const p     = this._round;
+    if (p >= this._sequence.length) { this._finish(); return; }
+
+    const attack = this._sequence[p];
+    const tier   = this._tier;
+
+    // Build 3 or 4 answer choices depending on tier
+    const numChoices = tier <= 1 ? 3 : 4;
+    const wrong = shuffle(
+      WOBBU_WRONG_POOL.filter(t => t !== attack.counter && t !== attack.type)
+    ).slice(0, numChoices - 1);
+    const choices = shuffle([attack.counter, ...wrong]);
+
+    // Build challenge screen
+    const cv = setupChallengeScreen({
+      portrait:    'assets/wobbuffet.png',
+      badge:       '🛡️ Wobbu-Counter!',
+      intro:       `Round ${p + 1}/5 — An attack is incoming!`,
+      wrapClass:   'wobbu-wrap',
+      screenClass: 'wobbu-active',
+      bgm:         false,   // already playing
+    });
+
+    // Speed increases each round
+    const timeLimit = tier <= 1 ? 0 : Math.max(1500, 3500 - p * 400);
+
+    // Attack card slides in from right
+    const attackCard = document.createElement('div');
+    attackCard.className = 'wobbu-attack-card wobbu-slide-in';
+    attackCard.innerHTML = `
+      <div class="wobbu-attack-icon">${attack.icon}</div>
+      <div class="wobbu-attack-type type-${attack.type}">${attack.type}</div>
+      <div class="wobbu-attack-label">Incoming attack!</div>`;
+    cv.appendChild(attackCard);
+
+    // Wobbuffet salute sprite
+    const salute = document.createElement('div');
+    salute.className = 'wobbu-salute';
+    salute.innerHTML = `<img src="assets/wobbuffet.png"
+      onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/202.png'"
+      class="wobbu-sprite pixel-sprite" alt="Wobbuffet">
+      <div class="wobbu-speech">WOBBUFFET!</div>`;
+    cv.appendChild(salute);
+
+    // Timer bar (Tier 2+)
+    let timerEl = null;
+    let timerTimeout = null;
+    if (timeLimit > 0) {
+      timerEl = document.createElement('div');
+      timerEl.className = 'wobbu-timer-bar';
+      timerEl.innerHTML = `<div class="wobbu-timer-fill" id="wobbu-timer-fill"></div>`;
+      cv.appendChild(timerEl);
+      // Animate fill shrinking
+      setTimeout(() => {
+        const fill = document.getElementById('wobbu-timer-fill');
+        if (fill) {
+          fill.style.transition = `width ${timeLimit}ms linear`;
+          fill.style.width = '0%';
+        }
+      }, 50);
+      // Auto-miss on timeout
+      timerTimeout = setTimeout(() => this._answer(false, attack, null), timeLimit);
+    }
+
+    // Choice hint (Tier 1 only: show "super effective against X")
+    if (tier <= 1) {
+      const hint = document.createElement('div');
+      hint.className = 'wobbu-hint';
+      hint.textContent = `What's super effective against ${attack.type}?`;
+      cv.appendChild(hint);
+    }
+
+    // Answer buttons
+    const btnRow = document.createElement('div');
+    btnRow.className = 'wobbu-choices';
+    choices.forEach(choice => {
+      const btn = document.createElement('button');
+      btn.className = `wobbu-choice-btn type-badge-btn type-${choice}`;
+      btn.innerHTML = `<span class="wobbu-choice-type">${choice}</span>`;
+      btn.addEventListener('click', () => {
+        if (timerTimeout) clearTimeout(timerTimeout);
+        this._answer(choice === attack.counter, attack, btn);
+      });
+      btnRow.appendChild(btn);
+    });
+    cv.appendChild(btnRow);
+
+    // Score row
+    const scoreRow = document.createElement('div');
+    scoreRow.className = 'wobbu-score';
+    scoreRow.innerHTML = Array.from({length: this._sequence.length}, (_, i) =>
+      `<span class="wobbu-pip${i < p ? (this._sequence[i]._hit ? ' hit' : ' miss') : i === p ? ' current' : ''}">${
+        i < p ? (this._sequence[i]._hit ? '✓' : '✗') : '●'
+      }</span>`
+    ).join('');
+    cv.appendChild(scoreRow);
+  },
+
+  _answer(correct, attack, clickedBtn) {
+    attack._hit = correct;
+    if (correct) this._hits++;
+
+    // Visual feedback
+    const attackCard = document.querySelector('.wobbu-attack-card');
+    const saluteEl   = document.querySelector('.wobbu-salute');
+    if (correct) {
+      if (attackCard) {
+        attackCard.classList.remove('wobbu-slide-in');
+        attackCard.classList.add('wobbu-countered');
+      }
+      if (saluteEl) saluteEl.classList.add('wobbu-bounce');
+      if (clickedBtn) clickedBtn.classList.add('wobbu-correct');
+    } else {
+      if (attackCard) attackCard.classList.add('wobbu-hit');
+      if (saluteEl) saluteEl.classList.add('wobbu-wobble');
+      // Highlight the correct answer
+      document.querySelectorAll('.wobbu-choice-btn').forEach(b => {
+        if (b.querySelector('.wobbu-choice-type')?.textContent === attack.counter) {
+          b.classList.add('wobbu-correct');
+        }
+      });
+    }
+
+    // Disable all buttons
+    document.querySelectorAll('.wobbu-choice-btn').forEach(b => b.disabled = true);
+
+    // Advance after brief pause
+    setTimeout(() => {
+      this._round++;
+      this._showRound();
+    }, correct ? 700 : 1000);
+  },
+
+  _finish() {
+    const hits    = this._hits;
+    const total   = this._sequence.length;  // 5
+    const perfect = hits === total;
+    const bi      = GameState.bossesDefeated || 0;
+    const gold    = perfect ? 20 + bi * 3 : hits >= 3 ? 10 + bi * 2 : 5;
+
+    GameState.gold = (GameState.gold || 0) + gold;
+
+    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
+    if (perfect) {
+      // Endorsement: enemy takes 20 reflected damage at battle start next fight
+      GameState.pendingPlayerEffects.wobbuffetCounter = true;
+      SoundEngine.playFanfare();
+    } else if (hits === 0) {
+      // Wobbuffet accidentally hits your party — minor chip damage
+      GameState.pendingPlayerEffects.wobbuffetBackfire = true;
+    }
+
+    SoundEngine.stopBGM();
+    document.getElementById('screen-challenge').classList.remove('wobbu-active');
+
+    const grades = ['😰 0/5 — Wobbuffet wobbled!','😐 1/5','😐 2/5','👍 3/5 — Not bad!','⭐ 4/5 — Great!','✨ 5/5 — PERFECT COUNTER!'];
+    const title  = perfect ? '🛡️ Perfect Counter!' : '🛡️ Wobbu-Counter';
+    const body   = `${grades[hits]}\n\n+${gold}💰` +
+      (perfect ? '\n\n⭐ Wobbuffet Counter — enemy takes 20 reflected damage next battle!' : '') +
+      (hits === 0 ? '\n\n😬 Wobbuffet accidentally hurt your party...' : '');
+
+    showModal(title, body, () => {
+      MapEngine.completeNode(GameState.currentNodeIndex);
+      MapEngine.show();
+    });
   },
 };
 

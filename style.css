@@ -9093,3 +9093,128 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 #screen-start.johto-active .start-bg {
   background: linear-gradient(180deg,#0a1a0a 0%,#1a3a1a 60%,#0a1a0a 100%);
 }
+
+/* ═══════════════════════════════════════════
+   WOBBUFFET — WOBBU-COUNTER MINI-GAME
+═══════════════════════════════════════════ */
+#screen-challenge.wobbu-active {
+  background: linear-gradient(160deg,#1a1040 0%,#2a1a5a 60%,#0e0620 100%);
+}
+.wobbu-wrap {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: .5rem !important;
+  width: 100%;
+}
+
+/* Incoming attack card */
+.wobbu-attack-card {
+  background: rgba(255,255,255,.08);
+  border: 2px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  padding: .6rem 1.2rem;
+  text-align: center;
+  min-width: 140px;
+  transition: transform .3s, opacity .3s;
+}
+.wobbu-slide-in { animation: wobbu-slide .4s ease both; }
+@keyframes wobbu-slide {
+  from { opacity:0; transform: translateX(60px); }
+  to   { opacity:1; transform: translateX(0); }
+}
+.wobbu-countered {
+  animation: wobbu-fly-off .4s ease forwards !important;
+}
+@keyframes wobbu-fly-off {
+  to { opacity:0; transform: translateX(-80px) rotate(-20deg); }
+}
+.wobbu-hit { animation: wobbu-shake .4s ease; }
+@keyframes wobbu-shake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-8px); }
+  75%     { transform: translateX(8px); }
+}
+.wobbu-attack-icon  { font-size: 1.8rem; }
+.wobbu-attack-type  {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; margin-top: .2rem;
+  border-radius: 6px; padding: 2px 8px; display: inline-block; color: #fff;
+}
+.wobbu-attack-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem; color: rgba(255,255,255,.5); margin-top: .2rem;
+}
+
+/* Wobbuffet salute */
+.wobbu-salute { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+.wobbu-sprite { width: 64px; height: 64px; object-fit: contain; }
+.wobbu-bounce { animation: wobbu-bounce .5s ease; }
+@keyframes wobbu-bounce {
+  0%,100% { transform: scale(1) rotate(0); }
+  30%     { transform: scale(1.3) rotate(-10deg); }
+  60%     { transform: scale(0.9) rotate(5deg); }
+}
+.wobbu-wobble { animation: wobbu-wobble .5s ease; }
+@keyframes wobbu-wobble {
+  0%,100% { transform: rotate(0); }
+  25%     { transform: rotate(-15deg); }
+  75%     { transform: rotate(15deg); }
+}
+.wobbu-speech {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem; color: #a0d0ff;
+  animation: wobbu-speech-pulse 1s ease-in-out infinite;
+}
+@keyframes wobbu-speech-pulse {
+  0%,100% { opacity:.6; } 50% { opacity:1; }
+}
+
+/* Timer bar */
+.wobbu-timer-bar {
+  width: 100%; height: 8px;
+  background: rgba(255,255,255,.1);
+  border-radius: 4px; overflow: hidden;
+}
+.wobbu-timer-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #ffd700, #ff4040);
+  border-radius: 4px;
+}
+
+/* Hint */
+.wobbu-hint {
+  font-family: 'Nunito', sans-serif;
+  font-size: .60rem; color: rgba(200,200,255,.7);
+  font-style: italic;
+}
+
+/* Choice buttons */
+.wobbu-choices {
+  display: flex; gap: .4rem; flex-wrap: wrap; justify-content: center;
+}
+.wobbu-choice-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem;
+  padding: .4rem .7rem;
+  border-radius: 8px;
+  border: 2px solid rgba(255,255,255,.2);
+  background: rgba(255,255,255,.08);
+  color: #fff; cursor: pointer;
+  transition: transform .1s, border-color .1s;
+  touch-action: manipulation;
+}
+.wobbu-choice-btn:hover  { border-color: rgba(255,255,255,.5); transform: scale(1.05); }
+.wobbu-choice-btn:active { transform: scale(.96); }
+.wobbu-correct { border-color: #80e880 !important; background: rgba(80,200,80,.2) !important; }
+.wobbu-choice-type { pointer-events: none; text-transform: capitalize; }
+
+/* Score pips */
+.wobbu-score { display: flex; gap: .4rem; justify-content: center; }
+.wobbu-pip {
+  font-family: 'Press Start 2P', monospace; font-size: .50rem; opacity: .3;
+}
+.wobbu-pip.hit     { color: #80e880; opacity: 1; }
+.wobbu-pip.miss    { color: #e88080; opacity: 1; }
+.wobbu-pip.current { color: #ffd700; opacity: 1; animation: wobbu-pip-pulse 1s infinite; }
+@keyframes wobbu-pip-pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
