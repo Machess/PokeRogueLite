@@ -2018,7 +2018,14 @@ function showBossIntro(opts) {
 // opts: { portrait, badge, intro, wrapClass, screenClass, bgm, coinVisualEl? }
 function setupChallengeScreen(opts) {
   const charImg = document.getElementById('challenge-character-img');
-  if (charImg && opts.portrait) { charImg.src = opts.portrait; charImg.style.display = ''; }
+  if (charImg && opts.portrait) {
+    // Support both bare filenames ('falkner.png') and full paths ('assets/falkner.png')
+    const src = opts.portrait.startsWith('assets/') || opts.portrait.startsWith('http')
+      ? opts.portrait
+      : `assets/${opts.portrait}`;
+    charImg.src = src;
+    charImg.style.display = '';
+  }
 
   document.getElementById('challenge-badge').textContent            = opts.badge  || '';
   document.getElementById('challenge-intro').textContent            = opts.intro  || '';
@@ -6770,6 +6777,10 @@ const BossEngine = {
 
   async start(node) {
     showLoading();
+    // Hide battle button immediately — must not be tappable until team is loaded
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Battle! ▶'; }
+
     const gymData = getGymData();
     const bossIdx = Math.min(
       node?.bossIndex ?? GameState.bossesDefeated,
@@ -6779,7 +6790,7 @@ const BossEngine = {
     this.bossData    = boss;
     this.oppIdx      = 0;
     this.oppTeam     = [];
-    this._isRocket   = false;  // always clear — Rocket sets it separately
+    this._isRocket   = false;
 
     for (const id of boss.team) {
       try {
@@ -6796,9 +6807,8 @@ const BossEngine = {
     }
     hideLoading();
 
-    // Show gym-specific intro background (full portrait) during trainer dialogue
     const firstOppType = this.oppTeam[0]?.type || 'normal';
-    this._firstOppType = firstOppType;   // stored so startBattle can restore it
+    this._firstOppType = firstOppType;
     setBossIntroBg(bossIdx);
     showScreen('boss');
 
@@ -6815,7 +6825,8 @@ const BossEngine = {
     }
 
     document.getElementById('dialogue-name').textContent = `${boss.name} — ${boss.title}`;
-    document.getElementById('dialogue-text').textContent  = boss.dialogue;
+    document.getElementById('dialogue-text').textContent  = '';
+    document.getElementById('btn-dialogue-next').style.display = 'none';
 
     const introEl  = document.getElementById('trainer-intro');
     const battleEl = document.getElementById('boss-battle-area');
@@ -6824,6 +6835,17 @@ const BossEngine = {
 
     document.getElementById('boss-party-bar').innerHTML = this.oppTeam.map((_,i)=>
       `<div class="boss-poke-pip" id="boss-pip-${i}"></div>`).join('');
+
+    // Typewriter — button only appears after dialogue completes AND team is loaded
+    let ci = 0;
+    const dialogue = boss.dialogue || '';
+    const iv = setInterval(() => {
+      document.getElementById('dialogue-text').textContent += dialogue[ci++];
+      if (ci >= dialogue.length) {
+        clearInterval(iv);
+        if (startBtn) startBtn.style.display = '';
+      }
+    }, 22);
   },
 
   startBattle() {
