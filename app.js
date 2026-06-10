@@ -2261,7 +2261,7 @@ const SoundEngine = {
   },
 
   playStarterCry(starterId) {
-    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3', 133: 'eevee.mp3', 151: 'mew.mp3' };
+    const cryMap = { 1: 'bulbasaur.mp3', 4: 'charmander.mp3', 7: 'squirtle.mp3', 25: 'pikachu.mp3', 133: 'eevee.mp3', 151: 'mew.mp3', 152: 'chikorita.wav', 155: 'cyndaquil.wav', 158: 'totodile.wav' };
     const file = cryMap[starterId];
     if (file) this.playSFXDebounced(file, 0.8);
   },
@@ -4246,6 +4246,9 @@ const Game = {
     if (s.id === 25)  SoundEngine.playPikachu2();
     if (s.id === 133) SoundEngine.playStarterCry(133);
     if (s.id === 151) SoundEngine.playStarterCry(151);
+    if (s.id === 152) SoundEngine.playStarterCry(152);
+    if (s.id === 155) SoundEngine.playStarterCry(155);
+    if (s.id === 158) SoundEngine.playStarterCry(158);
     const data   = await fetchPoke(s.id).catch(() => null);
     const sprite = data ? getSpriteUrl(data) : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${s.id}.png`;
     // Mewtwo starts at level 10 and gets +40 HP (handled in makePokemon via id check)
