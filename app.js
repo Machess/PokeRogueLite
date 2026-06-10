@@ -6718,20 +6718,40 @@ const BOSS_INTRO_BACKGROUNDS = [
   'assets/bg_12_boss.png',  // Blue
 ];
 
+const JOHTO_BOSS_INTRO_BACKGROUNDS = [
+  'assets/bg_johto_boss_0.jpg',  // Falkner
+  'assets/bg_johto_boss_1.jpg',  // Bugsy
+  'assets/bg_johto_boss_2.jpg',  // Whitney
+  'assets/bg_johto_boss_3.jpg',  // Morty
+  'assets/bg_johto_boss_4.jpg',  // Chuck
+  'assets/bg_johto_boss_5.jpg',  // Jasmine
+  'assets/bg_johto_boss_6.jpg',  // Pryce
+  'assets/bg_johto_boss_7.jpg',  // Clair
+  'assets/bg_johto_boss_8.jpg',  // Will   (Elite Four)
+  'assets/bg_johto_boss_9.jpg',  // Koga   (Elite Four)
+  'assets/bg_johto_boss_10.jpg', // Bruno  (Elite Four)
+  'assets/bg_johto_boss_11.jpg', // Karen  (Elite Four)
+  'assets/bg_johto_boss_12.jpg', // Lance  (Champion)
+];
+
 function setBossIntroBg(bossIdx) {
-  const src      = BOSS_INTRO_BACKGROUNDS[Math.min(bossIdx, BOSS_INTRO_BACKGROUNDS.length - 1)];
-  const fallback = GYM_FALLBACKS[Math.min(bossIdx, GYM_FALLBACKS.length - 1)];
+  const bgArray   = (GameState?.region === 'johto')
+    ? JOHTO_BOSS_INTRO_BACKGROUNDS
+    : BOSS_INTRO_BACKGROUNDS;
+  const fallbacks = getGymData().map(g => g.bgFallback);
+
+  const src      = bgArray[Math.min(bossIdx, bgArray.length - 1)];
+  const fallback = fallbacks[Math.min(bossIdx, fallbacks.length - 1)];
   const bgEl     = document.querySelector('#screen-boss .battle-bg');
   const imgEl    = document.querySelector('#screen-boss .battle-bg-img');
   if (!bgEl || !imgEl) return;
 
-  // Enter intro mode — full-portrait cover image
   bgEl.classList.add('boss-intro-mode');
-  bgEl.style.background = fallback;   // fallback gradient on the container
+  bgEl.style.background = fallback;
 
-  imgEl.style.opacity = '0';          // hide until loaded
+  imgEl.style.opacity = '0';
   imgEl.onload  = () => { imgEl.style.opacity = '1'; bgEl.style.background = ''; };
-  imgEl.onerror = () => { imgEl.style.opacity = '0'; /* keep fallback gradient */ };
+  imgEl.onerror = () => { imgEl.style.opacity = '0'; };
   imgEl.src = src;
 }
 
@@ -11568,7 +11588,7 @@ const FalknerEngine = {
   },
 
   _loop() {
-    const GRAVITY = 0.45, THRUST = -0.55, MAX_UP = -5, MAX_DOWN = 9;
+    const GRAVITY = 0.28, THRUST = -0.38, MAX_UP = -3.5, MAX_DOWN = 5.5;
     const ctx = this._ctx;
     this._frame++;
 
@@ -11589,7 +11609,7 @@ const FalknerEngine = {
     }
 
     // Move pipes & coins
-    const speed = Math.min(3 + Math.floor(this._frame / 300), 6);
+    const speed = Math.min(2 + Math.floor(this._frame / 450), 4);
     this._pipes.forEach(p => p.x -= speed);
     this._coins.forEach(c => c.x -= speed);
 
