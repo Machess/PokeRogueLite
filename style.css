@@ -9221,3 +9221,200 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .wobbu-pip.miss    { color: #e88080; opacity: 1; }
 .wobbu-pip.current { color: #ffd700; opacity: 1; animation: wobbu-pip-pulse 1s infinite; }
 @keyframes wobbu-pip-pulse { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+/* ═══════════════════════════════════════════
+   JOHTO MINI-GAME CSS
+═══════════════════════════════════════════ */
+
+/* ── Shared Johto challenge wrapper ── */
+.falkner-wrap, .bugsy-wrap, .whitney-wrap, .morty-wrap,
+.jasmine-wrap, .pryce-wrap, .clair-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .5rem !important; width: 100%;
+}
+
+/* ── Falkner — Wind Reading ── */
+#screen-challenge.falkner-active { background: linear-gradient(160deg,#4a7ab0 0%,#8ab8d8 60%,#3a6090 100%); }
+.falkner-lanes { display: flex; gap: .6rem; }
+.falkner-lane {
+  min-width: 80px; min-height: 100px; background: rgba(255,255,255,.1);
+  border: 2px solid rgba(255,255,255,.2); border-radius: 10px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: .2rem; cursor: pointer; transition: background .15s, transform .1s;
+  padding: .4rem;
+}
+.falkner-lane:hover { background: rgba(255,255,255,.2); transform: scale(1.04); }
+.falkner-bird { font-size: 1.2rem; display: block; }
+.falkner-lane-label { font-family:'Press Start 2P',monospace; font-size:.28rem; color:rgba(255,255,255,.6); margin-top:.2rem; }
+.falkner-correct { border-color: #80e880 !important; background: rgba(80,200,80,.2) !important; }
+.falkner-wrong   { border-color: #e88080 !important; background: rgba(200,80,80,.1) !important; }
+
+/* ── Bugsy — Bug Hunt ── */
+#screen-challenge.bugsy-active { background: linear-gradient(160deg,#2a5a1a 0%,#4a8a20 60%,#1a3a10 100%); }
+.bugsy-hint { font-family:'Nunito',sans-serif; font-size:.7rem; color:rgba(255,255,220,.9); }
+.bugsy-target { font-weight:700; }
+.bugsy-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:.4rem; }
+.bugsy-cell {
+  width:70px; height:70px; background:rgba(255,255,255,.08);
+  border:2px solid rgba(255,255,255,.15); border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:1.6rem; transition: transform .1s;
+}
+.bugsy-cell:hover { transform: scale(1.08); }
+.bugsy-bug { pointer-events:none; }
+.bugsy-correct { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
+.bugsy-wrong   { border-color:#e88080 !important; background:rgba(200,80,80,.1) !important; }
+
+/* ── Whitney — Rollout Dodge ── */
+#screen-challenge.whitney-active { background: linear-gradient(160deg,#f0b0c8 0%,#e888a8 60%,#c06080 100%); }
+.whitney-lanes { display:flex; gap:.5rem; }
+.whitney-lane {
+  width:80px; height:120px; background:rgba(255,255,255,.15);
+  border:2px solid rgba(255,255,255,.3); border-radius:10px;
+  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
+  padding-bottom:.4rem; cursor:pointer; transition:background .15s;
+  position:relative; overflow:hidden;
+}
+.whitney-lane:hover { background:rgba(255,255,255,.25); }
+.whitney-lane-emoji { font-size:1.5rem; }
+.whitney-boulder-rolling { font-size:1.8rem; display:block; animation:boulder-fall .3s ease; }
+.whitney-boulder-anim { font-size:1.8rem; display:block; }
+@keyframes boulder-fall { from{transform:translateY(-40px)} to{transform:translateY(0)} }
+.whitney-safe { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
+.whitney-hit  { border-color:#e88080 !important; background:rgba(200,80,80,.2) !important;
+                animation:whitney-shake .3s ease; }
+@keyframes whitney-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+/* ── Morty — Ghost Séance ── */
+#screen-challenge.morty-active { background: linear-gradient(160deg,#1a0a2a 0%,#3a1a5a 60%,#0e0618 100%); }
+.morty-grid { display:grid; gap:.3rem; }
+.morty-grid-8  { grid-template-columns:repeat(4,1fr); }
+.morty-grid-12 { grid-template-columns:repeat(4,1fr); }
+.morty-grid-16 { grid-template-columns:repeat(4,1fr); }
+.morty-card {
+  width:60px; height:60px; background:rgba(255,255,255,.06);
+  border:2px solid rgba(180,100,220,.3); border-radius:8px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:1.4rem; transition:transform .15s;
+  user-select:none;
+}
+.morty-card:hover { transform:scale(1.06); }
+.morty-face-up   { background:rgba(100,50,150,.3); border-color:rgba(180,100,220,.6); }
+.morty-matched   { border-color:#ffd700 !important; background:rgba(255,215,0,.15) !important; opacity:.7; }
+.morty-wrong     { border-color:#e88080 !important; animation:morty-wrong-shake .3s ease; }
+@keyframes morty-wrong-shake { 0%,100%{transform:rotate(0)} 25%{transform:rotate(-8deg)} 75%{transform:rotate(8deg)} }
+.morty-card-back,.morty-card-front { pointer-events:none; }
+
+/* ── Jasmine — Steel Forging ── */
+#screen-challenge.jasmine-active { background: linear-gradient(160deg,#202838 0%,#384858 60%,#182028 100%); }
+.jasmine-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:.5rem; }
+.jasmine-btn {
+  width:80px; height:80px; font-size:1.6rem;
+  background: rgba(var(--forge-color-raw, 128,144,160),.2);
+  background-color: rgba(128,144,160,.2);
+  border: 2px solid rgba(255,255,255,.2);
+  border-radius:12px; cursor:pointer;
+  transition: transform .1s, border-color .15s;
+}
+.jasmine-btn:hover { transform:scale(1.06); border-color:rgba(255,255,255,.4); }
+.jasmine-flash    { background:rgba(200,220,240,.4) !important; transform:scale(1.12) !important; }
+.jasmine-demo     { box-shadow:0 0 16px rgba(180,200,220,.6); }
+.jasmine-success  { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
+.jasmine-error    { border-color:#e88080 !important; background:rgba(200,80,80,.2) !important;
+                    animation:jasmine-shake .3s ease; }
+@keyframes jasmine-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.jasmine-indicator { font-family:'Press Start 2P',monospace; font-size:.38rem; color:#a0c0e0; text-align:center; }
+
+/* ── Pryce — Ice Fishing ── */
+#screen-challenge.pryce-active { background: linear-gradient(160deg,#203848 0%,#406080 60%,#102030 100%); }
+.pryce-water {
+  width:180px; height:140px; background:rgba(20,60,100,.6);
+  border:2px solid rgba(140,200,240,.3); border-radius:12px;
+  position:relative; overflow:hidden; display:flex;
+  align-items:center; justify-content:center;
+}
+.pryce-surface {
+  position:absolute; top:50%; left:0; right:0; height:2px;
+  background:rgba(140,200,240,.4);
+}
+.pryce-bobber {
+  font-size:2rem; position:absolute; top:30%;
+  transition: top .3s ease;
+  cursor:default;
+}
+.pryce-dip { top:55% !important; animation:bobber-dip .2s ease; }
+.pryce-miss { animation:bobber-miss .3s ease; }
+@keyframes bobber-dip  { 0%{top:30%} 50%{top:65%} 100%{top:55%} }
+@keyframes bobber-miss { 0%,100%{opacity:1} 50%{opacity:.3} }
+.pryce-tap-btn {
+  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
+  font-family:'Press Start 2P',monospace; font-size:.38rem; color:#fff;
+  background:rgba(80,160,220,.4); border:2px solid rgba(140,200,240,.5);
+  border-radius:8px; padding:.3rem .7rem; cursor:pointer;
+  animation:tap-pulse 1s ease-in-out infinite;
+}
+@keyframes tap-pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
+.pryce-indicator { font-family:'Press Start 2P',monospace; font-size:.38rem; color:#a0d0f0; }
+
+/* ── Clair — Dragon Tamer ── */
+#screen-challenge.clair-active { background: linear-gradient(160deg,#1a0800 0%,#4a1800 60%,#0a0400 100%); }
+.clair-charge {
+  padding:.6rem 1rem; background:rgba(var(--dragon-color-raw,74,128,224),.15);
+  border:2px solid rgba(255,255,255,.15); border-radius:12px;
+  text-align:center; min-width:160px;
+  animation: clair-charge-in .4s ease;
+}
+@keyframes clair-charge-in { from{opacity:0;transform:translateX(50px)} to{opacity:1;transform:translateX(0)} }
+.clair-stopped { animation:clair-stop .4s ease forwards; }
+.clair-hit     { animation:clair-hit-shake .4s ease; }
+@keyframes clair-stop     { to{opacity:0;transform:translateX(-60px) scale(.8)} }
+@keyframes clair-hit-shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+.clair-dragon-icon  { font-size:2rem; }
+.clair-dragon-name  { font-family:'Press Start 2P',monospace; font-size:.28rem; color:rgba(255,255,255,.7); margin-top:.2rem; }
+.clair-dragon-label { font-family:'Press Start 2P',monospace; font-size:.26rem; color:rgba(255,255,255,.4); }
+.clair-dragon-type-bar { height:8px; border-radius:4px; margin:.3rem auto; width:80px; }
+.clair-choices { display:flex; gap:.4rem; flex-wrap:wrap; justify-content:center; }
+.clair-choice {
+  font-family:'Press Start 2P',monospace; font-size:.34rem;
+  padding:.4rem .7rem; border-radius:8px;
+  border:2px solid rgba(255,255,255,.2); background:rgba(255,255,255,.08);
+  color:#fff; cursor:pointer; transition:transform .1s;
+  text-transform:capitalize;
+}
+.clair-choice:hover { transform:scale(1.05); }
+.clair-correct { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
+.clair-wrong   { border-color:#e88080 !important; background:rgba(200,80,80,.15) !important; }
+
+/* ── Falkner — Flappy Pokémon ── */
+.falkner-picker-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .6rem !important; width: 100%;
+}
+.falkner-picker-row { display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap; }
+.falkner-picker-card {
+  background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.2);
+  border-radius: 12px; padding: .6rem; text-align: center; cursor: pointer;
+  transition: transform .15s, border-color .15s; min-width: 90px;
+}
+.falkner-picker-card:hover { transform: scale(1.06); border-color: #ffd700; }
+.falkner-picker-sprite { width: 72px; height: 72px; object-fit: contain; display: block; margin: 0 auto; }
+.falkner-picker-name {
+  font-family: 'Press Start 2P', monospace; font-size: .28rem;
+  color: #fff; margin-top: .3rem;
+}
+.falkner-game-wrap { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100%; }
+.falkner-canvas { touch-action: none; image-rendering: pixelated; }
+
+/* ── Bugsy — sprite-based bug hunt ── */
+.bugsy-target-sprite { width: 32px; height: 32px; object-fit: contain; vertical-align: middle; }
+.bugsy-bug-sprite    { width: 52px; height: 52px; object-fit: contain; pointer-events: none; }
+.bugsy-cell { width: 72px; height: 72px; } /* wider to fit sprites */
+
+/* ── Jasmine — colored forge buttons ── */
+.jasmine-btn {
+  width: 80px; height: 80px; font-size: 1.6rem;
+  border-width: 2.5px; border-style: solid; border-radius: 12px;
+  cursor: pointer; transition: transform .1s, box-shadow .15s;
+  background: transparent;
+}
+.jasmine-btn:hover { transform: scale(1.08); }

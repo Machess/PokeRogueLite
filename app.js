@@ -478,6 +478,9 @@ const CHALLENGE_CLASSES = [
   'surge-active','erika-active','koga-active',
   'blaine-active','sabrina-active','fishing-active','jigglypuff-active',
   'challenge-select-active','giovanni-active',
+  // Johto + Wobbuffet
+  'falkner-active','bugsy-active','whitney-active','morty-active',
+  'jasmine-active','pryce-active','clair-active','wobbu-active',
 ];
 
 const NODE_ICONS = {
@@ -485,6 +488,10 @@ const NODE_ICONS = {
   boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣',
   jigglypuff_node: '🎵', surge_node: '⚡', erika_node: '🧪',
   ninja_node: '🥷', sabrina_node: '🔮', blaine_node: '🔥',
+  giovanni_node: '🎨', wobbuffet_node: '🛡️',
+  // Johto gym mini-games
+  falkner_node: '🪶', bugsy_node: '🐛', whitney_node: '🎀',
+  morty_node: '👻', jasmine_node: '⚙️', pryce_node: '❄️', clair_node: '🐉',
   challenge: '🎮', giovanni_node: '🃏',
 };
 const NODE_MYSTERY_ICON = '❓';
@@ -1824,7 +1831,7 @@ function generateMap(bossIndex) {
     const isReturning = (unlocks.completedWith?.length || 0) > 0;
 
     // Build the full schedule — which mini-game maps to which node type and row
-    const MG_SCHEDULE = [
+    const KANTO_MG_SCHEDULE = [
       { key:'jigglypuff', type:'jigglypuff_node', row:3, minBi:2 },
       { key:'surge',      type:'surge_node',      row:2, minBi:3 },
       { key:'erika',      type:'erika_node',      row:2, minBi:4 },
@@ -1832,6 +1839,16 @@ function generateMap(bossIndex) {
       { key:'sabrina',    type:'sabrina_node',    row:2, minBi:6 },
       { key:'blaine',     type:'blaine_node',     row:2, minBi:7 },
     ];
+    const JOHTO_MG_SCHEDULE = [
+      { key:'bugsy',   type:'bugsy_node',   row:2, minBi:1 },
+      { key:'whitney', type:'whitney_node', row:3, minBi:2 },
+      { key:'morty',   type:'morty_node',   row:2, minBi:3 },
+      { key:'jasmine', type:'jasmine_node', row:2, minBi:5 },
+      { key:'pryce',   type:'pryce_node',   row:2, minBi:6 },
+      { key:'clair',   type:'clair_node',   row:3, minBi:7 },
+      { key:'falkner', type:'falkner_node', row:2, minBi:0 },
+    ];
+    const MG_SCHEDULE = GameState?.region === 'johto' ? JOHTO_MG_SCHEDULE : KANTO_MG_SCHEDULE;
 
     // Determine which are available this map
     const available = MG_SCHEDULE.filter(mg => {
@@ -1851,7 +1868,9 @@ function generateMap(bossIndex) {
         const candidates = nodes.filter(n =>
           n.row === mg.row &&
           !['cooking','fishing','boss','jigglypuff_node','surge_node',
-            'erika_node','ninja_node','sabrina_node','blaine_node'].includes(n.type)
+            'erika_node','ninja_node','sabrina_node','blaine_node',
+            'falkner_node','bugsy_node','whitney_node','morty_node',
+            'jasmine_node','pryce_node','clair_node'].includes(n.type)
         );
         if (candidates.length > 0) {
           const target = candidates[Math.floor(Math.random() * candidates.length)];
@@ -1876,7 +1895,9 @@ function generateMap(bossIndex) {
     const isReturning = (unlocks.completedWith?.length || 0) > 0;
     const SPECIAL     = ['cooking','fishing','boss','challenge',
                          'jigglypuff_node','surge_node','erika_node',
-                         'ninja_node','sabrina_node','blaine_node'];
+                         'ninja_node','sabrina_node','blaine_node',
+                         'falkner_node','bugsy_node','whitney_node','morty_node',
+                         'jasmine_node','pryce_node','clair_node'];
 
     const injectChallenge = (row) => {
       const cands = nodes.filter(n => n.row === row && !SPECIAL.includes(n.type));
@@ -5279,6 +5300,14 @@ const MapEngine = {
       case 'giovanni_node':   GiovanniEngine.start(node);        break;
       case 'challenge':       ChallengeSelectEngine.start(node); break;
       case 'wobbuffet_node':  WobbuffetEngine.start(node);       break;
+      // Johto gym mini-games
+      case 'falkner_node':    FalknerEngine.start(node);         break;
+      case 'bugsy_node':      BugsyEngine.start(node);           break;
+      case 'whitney_node':    WhitneyEngine.start(node);         break;
+      case 'morty_node':      MortyEngine.start(node);           break;
+      case 'jasmine_node':    JasmineEngine.start(node);         break;
+      case 'pryce_node':      PryceEngine.start(node);           break;
+      case 'clair_node':      ClairEngine.start(node);           break;
     }
   },
 
@@ -5703,16 +5732,28 @@ const BattleEngine = {
       this._giovanniDisinfoPending = true;
     }
     if (fx.wobbuffetCounter) {
-      // Reflected hit — deal 20 damage to the opponent immediately
       const reflected = 20;
       this.state.opp.hp = Math.max(0, this.state.opp.hp - reflected);
       this._logPlayer(`🛡️ Wobbuffet COUNTER! Reflected ${reflected} damage to the opponent!`);
     }
     if (fx.wobbuffetBackfire) {
-      // Wobbuffet accidentally hurt the player — 10 chip damage
       this.state.player.hp = Math.max(1, this.state.player.hp - 10);
       this._logPlayer(`😬 Wobbuffet wobbled and hit your party for 10 damage...`);
     }
+    if (fx.falknerWind)     { this.state.oppAccDebuff = (this.state.oppAccDebuff||0)+30;
+                              this._logPlayer(`🪶 Wind Sense — enemy accuracy -30% this battle!`); }
+    if (fx.whitneyDodge)    { this.state.shield = (this.state.shield||0)+999;
+                              this._logPlayer(`🎀 Rollout Resist — first hit fully blocked!`); }
+    if (fx.mortyClairvoyance){ this._mortyClairvoyance = true;
+                              this._logPlayer(`👻 Clairvoyance — next draw is your strongest card!`); }
+    if (fx.jasmineForge)    { this.state.shield = (this.state.shield||0)+40;
+                              this._logPlayer(`⚙️ Forged Steel — steel shield 40 dmg active!`); }
+    if (fx.pryce_catch_bonus){ GameState.pryceCatchBonus = true;
+                              this._logPlayer(`❄️ Cold Precision — next catch rate doubled!`); }
+    if (fx.clairDragonBane) { this._clairBoost = true;
+                              this._logPlayer(`🐉 Dragon Bane — Dragon/Water +25% this battle!`); }
+    if (fx.bugsyResearch)   { this.state.oppAtkDebuff = (this.state.oppAtkDebuff||0)+15;
+                              this._logPlayer(`🐛 Bug Research — enemy attack -15% this battle!`); }
     GameState.pendingPlayerEffects = {};
 
     this._dealHand(5);
@@ -11312,6 +11353,1051 @@ const WobbuffetEngine = {
   },
 };
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// JOHTO MINI-GAME ENGINES
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ─── FALKNER ENGINE — "Flappy Pokémon" (Flappy Bird with flying Pokémon) ──────
+// Player picks one of 3 random flying Pokémon fetched from PokéAPI.
+// Navigate through pipe gaps by tapping. Collect coins. Hit wall = lose a life.
+// 3 lives. Need 10 coins to pass. 15 pipes total scroll past.
+const FALKNER_FLYING_POOL = [
+  16,17,18,   // Pidgey, Pidgeotto, Pidgeot
+  21,22,      // Spearow, Fearow
+  41,42,      // Zubat, Golbat
+  83,         // Farfetch'd
+  84,85,      // Doduo, Dodrio
+  123,        // Scyther
+  142,        // Aerodactyl
+  144,145,146,// Legendary birds
+  163,164,    // Hoothoot, Noctowl
+  169,        // Crobat
+  176,        // Togetic
+  177,178,    // Natu, Xatu
+  193,        // Yanma
+  198,        // Murkrow
+  227,        // Skarmory
+];
+
+const FalknerEngine = {
+  _isActive: false, _node: null,
+  _chosenSprite: null, _chosenName: '',
+  // Flappy state
+  _animFrame: null, _gameRunning: false,
+  _y: 0, _vy: 0, _pipes: [], _coins: [], _score: 0, _lives: 3,
+  _frame: 0, _canvas: null, _ctx: null,
+
+  async start(node) {
+    this._node = node; this._isActive = true;
+    ActiveEngine.set(this);
+    // Reset game state
+    this._y = 0; this._vy = 0; this._pipes = []; this._coins = [];
+    this._score = 0; this._lives = 3; this._frame = 0; this._gameRunning = false;
+    if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
+
+    // Pick 3 random flying Pokémon from pool
+    const pool3 = shuffle([...FALKNER_FLYING_POOL]).slice(0, 3);
+
+    showBossIntro({
+      gymIndex: 0, portrait: 'falkner.png',
+      name: 'Falkner', btnLabel: 'Choose your flyer! 🪶',
+      introText: "Bird Pokémon are the finest! Fly through the gaps, collect coins, and don't hit the walls! Choose your Pokémon first.",
+    });
+
+    // Fetch sprites for the 3 candidates
+    showLoading();
+    const candidates = await Promise.all(pool3.map(async id => {
+      const data = await fetchPoke(id).catch(() => null);
+      return {
+        id,
+        name:   data ? capitalize(data.name) : `#${id}`,
+        sprite: data ? getSpriteUrl(data) : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
+      };
+    }));
+    hideLoading();
+
+    // Show picker when intro completes
+    const startBtn = document.getElementById('btn-start-boss-battle');
+    if (startBtn) {
+      startBtn.onclick = () => {
+        startBtn.style.display = 'none';
+        document.getElementById('trainer-intro').style.display = 'none';
+        this._showPicker(candidates);
+      };
+    }
+  },
+
+  _showPicker(candidates) {
+    const cv = setupChallengeScreen({
+      portrait: 'falkner.png', badge: '🪶 Choose Your Pokémon!',
+      intro: 'Pick the Pokémon you want to fly with:',
+      wrapClass: 'falkner-picker-wrap', screenClass: 'falkner-active',
+    });
+
+    const row = document.createElement('div');
+    row.className = 'falkner-picker-row';
+    candidates.forEach(c => {
+      const card = document.createElement('div');
+      card.className = 'falkner-picker-card';
+      card.innerHTML = `
+        <img src="${c.sprite}" alt="${c.name}" class="falkner-picker-sprite pixel-sprite"
+             onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${c.id}.png'">
+        <div class="falkner-picker-name">${c.name}</div>`;
+      card.addEventListener('click', () => {
+        this._chosenSprite = c.sprite;
+        this._chosenName   = c.name;
+        this._startGame();
+      });
+      row.appendChild(card);
+    });
+    cv.appendChild(row);
+  },
+
+  _startGame() {
+    this._isActive   = false;
+    ActiveEngine.clear();
+    const W = 360, H = 480;
+    const cv = setupChallengeScreen({
+      portrait: 'falkner.png', badge: '🪶 Flappy Pokémon',
+      intro: `Lives: ❤️❤️❤️  Coins: 0/10`,
+      wrapClass: 'falkner-game-wrap', screenClass: 'falkner-active',
+    });
+
+    // Canvas
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    canvas.className = 'falkner-canvas';
+    canvas.style.cssText = 'width:100%;max-width:360px;border-radius:12px;display:block;margin:0 auto;cursor:pointer;touch-action:manipulation;';
+    cv.appendChild(canvas);
+    this._canvas = canvas;
+    this._ctx    = canvas.getContext('2d');
+
+    // Load bird sprite
+    const birdImg = new Image();
+    birdImg.src   = this._chosenSprite;
+    this._birdImg = birdImg;
+
+    // Game state
+    this._y      = H / 2;
+    this._vy     = 0;
+    this._pipes  = [];
+    this._coins  = [];
+    this._score  = 0;
+    this._lives  = 3;
+    this._frame  = 0;
+    this._held   = false;    // true while player is pressing
+    this._gameRunning = false;  // starts false until countdown ends
+    this._W = W; this._H = H;
+
+    // Input — hold = fly up, release = fall
+    const onDown = (e) => { e.preventDefault(); this._held = true;  };
+    const onUp   = (e) => { e.preventDefault(); this._held = false; };
+    canvas.addEventListener('pointerdown',  onDown, { passive: false });
+    canvas.addEventListener('pointerup',    onUp,   { passive: false });
+    canvas.addEventListener('pointerleave', onUp,   { passive: false });
+    this._downFn = onDown; this._upFn = onUp;
+
+    // 3-2-1 countdown drawn on canvas before game starts
+    let countdown = 3;
+    const ctx = this._ctx;
+    const drawCountdown = (n) => {
+      ctx.fillStyle = '#7ec8e3';
+      ctx.fillRect(0, 0, W, H);
+      // Bird preview
+      if (this._birdImg.complete && this._birdImg.naturalWidth > 0) {
+        ctx.drawImage(this._birdImg, 60, H/2 - 18, 36, 36);
+      }
+      ctx.fillStyle = 'rgba(0,0,0,.5)';
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = '#fff';
+      ctx.font = 'bold 80px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(n > 0 ? String(n) : 'GO!', W/2, H/2 + 28);
+      ctx.font = 'bold 18px monospace';
+      ctx.fillText('Hold to fly up · Release to fall', W/2, H/2 + 72);
+      ctx.textAlign = 'left';
+    };
+    drawCountdown(3);
+    const cdInterval = setInterval(() => {
+      countdown--;
+      drawCountdown(Math.max(0, countdown));
+      if (countdown <= 0) {
+        clearInterval(cdInterval);
+        this._gameRunning = true;
+        this._loop();
+      }
+    }, 1000);
+  },
+
+  _loop() {
+    const GRAVITY = 0.45, THRUST = -0.55, MAX_UP = -5, MAX_DOWN = 9;
+    const ctx = this._ctx;
+    this._frame++;
+
+    // Physics — hold for up, release for down
+    if (this._held) {
+      this._vy = Math.max(MAX_UP,  this._vy + THRUST);
+    } else {
+      this._vy = Math.min(MAX_DOWN, this._vy + GRAVITY);
+    }
+    this._y += this._vy;
+    const W = this._W, H = this._H;
+    if (this._frame % 90 === 0) {
+      const gap    = 130;
+      const topH   = 60 + Math.random() * (H - gap - 120);
+      const coinY  = topH + gap / 2;
+      this._pipes.push({ x: W, topH, botY: topH + gap, passed: false });
+      this._coins.push({ x: W + 40, y: coinY, taken: false });
+    }
+
+    // Move pipes & coins
+    const speed = Math.min(3 + Math.floor(this._frame / 300), 6);
+    this._pipes.forEach(p => p.x -= speed);
+    this._coins.forEach(c => c.x -= speed);
+
+    // Pipe scoring + wall collision
+    const bx = 60, bw = 36, bh = 36;
+    let hit = false;
+
+    for (const p of this._pipes) {
+      // Passed pipe (didn't hit)
+      if (!p.passed && p.x + 52 < bx) { p.passed = true; }
+      // Collision
+      if (bx + bw - 8 > p.x && bx < p.x + 52) {
+        if (this._y < p.topH + 4 || this._y + bh - 4 > p.botY) { hit = true; break; }
+      }
+    }
+
+    // Ceiling / floor
+    if (this._y < 0 || this._y + bh > H) hit = true;
+
+    // Coin collection
+    for (const c of this._coins) {
+      if (!c.taken && Math.abs(c.x - bx) < 28 && Math.abs(c.y - this._y - 18) < 28) {
+        c.taken = true;
+        this._score++;
+      }
+    }
+
+    // Handle hit
+    if (hit) {
+      this._lives--;
+      this._vy = -5;
+      this._y  = Math.max(0, Math.min(this._y, H - bh));
+      // Flash
+      ctx.fillStyle = 'rgba(255,80,80,.5)';
+      ctx.fillRect(0, 0, W, H);
+    }
+
+    // Win / lose check
+    const finished = this._frame >= 1350 || this._lives <= 0;
+
+    // ── DRAW ──────────────────────────────────────────────────────────────────
+    // Sky background
+    ctx.fillStyle = '#7ec8e3';
+    ctx.fillRect(0, 0, W, H);
+    // Ground
+    ctx.fillStyle = '#8bc34a';
+    ctx.fillRect(0, H - 24, W, 24);
+    ctx.fillStyle = '#6a9a30';
+    ctx.fillRect(0, H - 28, W, 6);
+
+    // Pipes
+    ctx.fillStyle = '#4caf50';
+    for (const p of this._pipes) {
+      ctx.fillRect(p.x, 0, 52, p.topH);
+      ctx.fillRect(p.x - 4, p.topH - 16, 60, 16);
+      ctx.fillRect(p.x, p.botY, 52, H - p.botY);
+      ctx.fillRect(p.x - 4, p.botY, 60, 16);
+      ctx.fillStyle = '#388e3c';
+      ctx.fillRect(p.x + 2, 0, 8, p.topH - 16);
+      ctx.fillRect(p.x + 2, p.botY + 16, 8, H - p.botY);
+      ctx.fillStyle = '#4caf50';
+    }
+
+    // Coins
+    for (const c of this._coins) {
+      if (c.taken) continue;
+      ctx.fillStyle = '#ffd700';
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 10, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffeb3b';
+      ctx.beginPath();
+      ctx.arc(c.x - 2, c.y - 2, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Bird (sprite or fallback circle)
+    ctx.save();
+    ctx.translate(bx, this._y);
+    if (this._vy > 2) { ctx.rotate(0.3); }
+    if (this._birdImg.complete && this._birdImg.naturalWidth > 0) {
+      ctx.drawImage(this._birdImg, 0, 0, bw, bh);
+    } else {
+      ctx.fillStyle = '#ff9800';
+      ctx.beginPath(); ctx.arc(18, 18, 18, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // HUD
+    ctx.fillStyle = 'rgba(0,0,0,.45)';
+    ctx.fillRect(0, 0, W, 36);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 13px monospace';
+    ctx.fillText(`❤️ ${this._lives}   💰 ${this._score}/10`, 10, 22);
+    const progress = Math.min(1, this._frame / 1350);
+    ctx.fillStyle = 'rgba(255,255,255,.2)';
+    ctx.fillRect(0, 32, W, 4);
+    ctx.fillStyle = '#ffd700';
+    ctx.fillRect(0, 32, W * progress, 4);
+
+    // Remove off-screen pipes/coins
+    this._pipes = this._pipes.filter(p => p.x > -60);
+    this._coins = this._coins.filter(c => c.x > -20);
+
+    if (finished || this._lives <= 0) {
+      this._gameRunning = false;
+      this._canvas?.removeEventListener('click',      this._flapFn);
+      this._canvas?.removeEventListener('touchstart', this._flapFn);
+      setTimeout(() => this._finish(), 600);
+      return;
+    }
+
+    this._animFrame = requestAnimationFrame(() => this._loop());
+  },
+
+  _finish() {
+    if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
+    this._gameRunning = false;
+    this._held = false;
+    if (this._canvas) {
+      this._canvas.removeEventListener('pointerdown',  this._downFn);
+      this._canvas.removeEventListener('pointerup',    this._upFn);
+      this._canvas.removeEventListener('pointerleave', this._upFn);
+    }
+    const gold = won ? (this._lives === 3 ? 30 : 20) : Math.max(5, this._score * 2);
+    completeChallenge({
+      screenClass: 'falkner-active', won,
+      goldReward: gold,
+      effects: won && this._lives === 3 ? { falknerWind: true } : {},
+      modalTitle: won ? `🪶 ${this._chosenName} Soars!` : `🪶 ${this._chosenName} Crashed!`,
+      modalBody: `💰 ${this._score} coins collected\n❤️ ${this._lives} lives remaining\n+${gold}💰` +
+        (won && this._lives === 3 ? '\n\n⭐ Wind Sense — enemy accuracy -30% next battle!' : ''),
+    });
+  },
+};
+
+// ─── WHITNEY ENGINE — "Miltank's Rollout" (Dodge the boulder) ────────────────
+// A boulder rolls down one of 3 lanes. Tap the safe lane before it hits.
+// 5 rounds. Speed increases. Higher tiers show decoy shakes.
+const WhitneyEngine = {
+  _isActive: false, _node: null, _round: 0, _lives: 3, _timeouts: [],
+
+  start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._lives = 3; this._timeouts = [];
+    ActiveEngine.set(this);
+    showBossIntro({
+      gymIndex: 2, portrait: 'whitney.png',
+      name: 'Whitney', btnLabel: 'Dodge! 🎀',
+      introText: "Don't let my Miltank's Rollout flatten you! It'll come from one of three lanes — dodge into a safe one before it hits! You have 3 lives. La-la-la!",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5 || this._lives <= 0) { this._finish(); return; }
+    const tier    = GameState.difficultyTier || 2;
+    const cv      = setupChallengeScreen({ portrait:'whitney.png', badge:'🎀 Rollout Dodge!',
+      intro: `Round ${this._round + 1}/5 — ${Array(this._lives).fill('❤️').join('')}`,
+      wrapClass: 'whitney-wrap', screenClass: 'whitney-active' });
+
+    const dangerLane = Math.floor(Math.random() * 3);
+    const timeMs     = Math.max(2000, 4500 - this._round * 250 - (tier - 1) * 200);
+
+    const lanes = document.createElement('div');
+    lanes.className = 'whitney-lanes';
+    [0, 1, 2].forEach(i => {
+      const lane = document.createElement('div');
+      lane.className = 'whitney-lane';
+      lane.innerHTML = '<span class="whitney-lane-emoji">🏃</span>';
+      lane.id = `whitney-lane-${i}`;
+      lane.addEventListener('click', () => {
+        this._timeouts.forEach(t => clearTimeout(t));
+        this._timeouts = [];
+        document.querySelectorAll('.whitney-lane').forEach(l => l.style.pointerEvents = 'none');
+        document.getElementById(`whitney-lane-${dangerLane}`)
+          .innerHTML = '<span class="whitney-boulder-anim">🪨</span>';
+        if (i === dangerLane) {
+          this._lives--;
+          lane.classList.add('whitney-hit');
+        } else {
+          lane.classList.add('whitney-safe');
+        }
+        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 700));
+      });
+      lanes.appendChild(lane);
+    });
+    cv.appendChild(lanes);
+
+    // Boulder appears after delay and auto-hits if not dodged
+    const boulderDelay = Math.max(300, timeMs - 300);
+    this._timeouts.push(setTimeout(() => {
+      const dl = document.getElementById(`whitney-lane-${dangerLane}`);
+      if (dl) dl.innerHTML = '<span class="whitney-boulder-rolling">🪨</span>';
+    }, boulderDelay));
+
+    this._timeouts.push(setTimeout(() => {
+      document.querySelectorAll('.whitney-lane').forEach(l => l.style.pointerEvents = 'none');
+      this._lives--;
+      const dl = document.getElementById(`whitney-lane-${dangerLane}`);
+      if (dl) dl.classList.add('whitney-hit');
+      this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 700));
+    }, timeMs));
+  },
+
+  _finish() {
+    const survived = this._lives > 0;
+    const gold     = this._lives === 3 ? 25 : this._lives === 2 ? 18 : this._lives === 1 ? 10 : 5;
+    completeChallenge({
+      screenClass: 'whitney-active', won: survived && this._lives >= 2,
+      goldReward: gold,
+      effects: this._lives === 3 ? { whitneyDodge: true } : {},
+      modalTitle: this._lives === 3 ? '🎀 Perfect Dodge!' : survived ? '🎀 You Survived!' : '🎀 Flattened!',
+      modalBody: `❤️ ${this._lives}/3 lives remaining\n+${gold}💰` +
+        (this._lives === 3 ? '\n\n⭐ Rollout Resist — first hit next battle blocked entirely!' : ''),
+    });
+  },
+};
+
+// ─── MORTY ENGINE — "Ghost Séance" (Memory pairs with ghost symbols) ─────────
+// Reuses NinjaMemoryEngine pattern with ghost-themed cards and Morty's bg.
+const MORTY_CARDS = [
+  { id:'gastly',   icon:'👻', label:'Gastly'   },
+  { id:'haunter',  icon:'🌑', label:'Haunter'  },
+  { id:'gengar',   icon:'💀', label:'Gengar'   },
+  { id:'misdreavus',icon:'😱',label:'Misdreavus'},
+  { id:'fog',      icon:'🌫️', label:'Fog Bell' },
+  { id:'candle',   icon:'🕯️', label:'Candle'   },
+  { id:'eye',      icon:'👁',  label:'Watching' },
+  { id:'crystal',  icon:'💎', label:'Crystal'  },
+];
+
+const MortyEngine = {
+  _isActive:false, _node:null, _grid:[], _first:null, _misses:0,
+  _matched:0, _budget:0, _pairCount:0, _locked:false, _peekMs:0,
+
+  start(node) {
+    this._node = node; this._isActive = true; this._first = null;
+    this._misses = 0; this._matched = 0; this._locked = false;
+    ActiveEngine.set(this);
+    const tier = GameState.difficultyTier || 2;
+    if (tier <= 1)       { this._pairCount = 4; this._budget = 7;  this._peekMs = 2500; }
+    else if (tier === 2) { this._pairCount = 6; this._budget = 9;  this._peekMs = 1500; }
+    else                 { this._pairCount = 8; this._budget = 10; this._peekMs = 800;  }
+
+    const pairs = shuffle([...MORTY_CARDS]).slice(0, this._pairCount);
+    this._grid  = shuffle([...pairs, ...pairs].map(c => ({
+      id: c.id, icon: c.icon, label: c.label, flipped:false, matched:false, el:null,
+    })));
+
+    showBossIntro({
+      gymIndex: 3, portrait: 'morty.png',
+      name: 'Morty', btnLabel: 'Enter the Séance 👻',
+      introText: "The spirits speak to those who remember. Match the ghost symbols before the fog hides them. I have already seen your future here…",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._render();
+  },
+
+  _render() {
+    const cv = setupChallengeScreen({ portrait:'morty.png', badge:'👻 Ghost Séance',
+      intro: `Match the pairs — ${this._budget} moves left`,
+      wrapClass: 'morty-wrap', screenClass: 'morty-active' });
+
+    const grid = document.createElement('div');
+    grid.className = `morty-grid morty-grid-${this._pairCount * 2}`;
+    this._grid.forEach((card, i) => {
+      const el = document.createElement('div');
+      el.className = 'morty-card morty-face-down';
+      el.innerHTML = '<span class="morty-card-back">👁</span>';
+      el.addEventListener('click', () => this._flip(i));
+      card.el = el;
+      grid.appendChild(el);
+    });
+    cv.appendChild(grid);
+
+    // Peek phase — briefly show all cards
+    setTimeout(() => {
+      this._grid.forEach(c => {
+        c.el.className = 'morty-card morty-face-up';
+        c.el.innerHTML = `<span class="morty-card-front">${c.icon}</span>`;
+      });
+      setTimeout(() => {
+        this._grid.forEach(c => {
+          if (!c.matched) {
+            c.el.className = 'morty-card morty-face-down';
+            c.el.innerHTML = '<span class="morty-card-back">👁</span>';
+          }
+        });
+      }, this._peekMs);
+    }, 300);
+  },
+
+  _flip(i) {
+    if (this._locked) return;
+    const card = this._grid[i];
+    if (card.flipped || card.matched) return;
+    card.flipped = true;
+    card.el.className = 'morty-card morty-face-up';
+    card.el.innerHTML = `<span class="morty-card-front">${card.icon}</span>`;
+
+    if (!this._first) { this._first = i; return; }
+
+    const first = this._grid[this._first];
+    this._first = null;
+    this._locked = true;
+    this._budget--;
+
+    if (card.id === first.id) {
+      this._matched++;
+      card.el.classList.add('morty-matched');
+      first.el.classList.add('morty-matched');
+      card.matched = first.matched = true;
+      this._locked = false;
+      document.getElementById('challenge-intro').textContent =
+        `Match the pairs — ${this._budget} moves left`;
+      if (this._matched === this._pairCount) this._finish(true);
+    } else {
+      this._misses++;
+      card.el.classList.add('morty-wrong'); first.el.classList.add('morty-wrong');
+      setTimeout(() => {
+        card.el.className = 'morty-card morty-face-down';
+        card.el.innerHTML = '<span class="morty-card-back">👁</span>';
+        first.el.className = 'morty-card morty-face-down';
+        first.el.innerHTML = '<span class="morty-card-back">👁</span>';
+        card.flipped = first.flipped = false;
+        this._locked = false;
+        document.getElementById('challenge-intro').textContent =
+          `Match the pairs — ${this._budget} moves left`;
+        if (this._budget <= 0) this._finish(false);
+      }, 900);
+    }
+  },
+
+  _finish(won) {
+    const gold = won ? 22 : Math.max(5, 10 - this._misses);
+    completeChallenge({
+      screenClass: 'morty-active', won,
+      goldReward: gold,
+      effects: won && this._misses === 0 ? { mortyClairvoyance: true } : {},
+      modalTitle: won ? '👻 The Spirits Are Pleased!' : '👻 The Fog Won',
+      modalBody: `Matched ${this._matched}/${this._pairCount} pairs\n+${gold}💰` +
+        (won && this._misses === 0 ? '\n\n⭐ Clairvoyance — next card drawn is always your strongest!' : ''),
+    });
+  },
+};
+
+function hexToRgb(hex) {
+  const r = parseInt(hex.slice(1,3),16);
+  const g = parseInt(hex.slice(3,5),16);
+  const b = parseInt(hex.slice(5,7),16);
+  return isNaN(r) ? null : `${r},${g},${b}`;
+}
+
+// ─── JASMINE ENGINE — "Steel Forging" (Simon Says sequence) ──────────────────
+// 4 steel-themed buttons light up in sequence. Repeat the pattern.
+// Sequence grows by 1 each round. 5 rounds.
+const JasmineEngine = {
+  _isActive:false, _node:null, _round:0, _seq:[], _playerSeq:[],
+  _btns:[], _locked:false, _failed:false,
+
+  start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._failed = false;
+    ActiveEngine.set(this);
+    showBossIntro({
+      gymIndex: 5, portrait: 'jasmine.png',
+      name: 'Jasmine', btnLabel: 'Begin Forging ⚙️',
+      introText: "Oh… to forge steel you must listen carefully. I will tap the anvils in order — you repeat the pattern exactly. One mistake and the steel cracks.",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._seq = [];
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5) { this._finish(true); return; }
+    this._playerSeq = [];
+    this._locked    = true;
+
+    const cv = setupChallengeScreen({ portrait:'jasmine.png', badge:'⚙️ Steel Forging',
+      intro: `Round ${this._round + 1}/5 — Watch the pattern`,
+      wrapClass: 'jasmine-wrap', screenClass: 'jasmine-active' });
+
+    // 4 forge buttons
+    const FORGE = [
+      { label:'⚙️', color:'#f0c000', glow:'rgba(240,192,0,.5)',   id:0 },  // yellow
+      { label:'🔩', color:'#e06010', glow:'rgba(224,96,16,.5)',    id:1 },  // orange
+      { label:'⛏️', color:'#c02020', glow:'rgba(192,32,32,.5)',    id:2 },  // red
+      { label:'🔨', color:'#f0f0f0', glow:'rgba(240,240,240,.4)',  id:3 },  // white
+    ];
+    const grid = document.createElement('div');
+    grid.className = 'jasmine-grid';
+    this._btns = [];
+    FORGE.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'jasmine-btn';
+      btn.innerHTML = f.label;
+      btn.style.background   = `rgba(${hexToRgb(f.color) || '128,144,160'},.25)`;
+      btn.style.borderColor  = f.color;
+      btn.style.boxShadow    = `0 0 10px ${f.glow}`;
+      btn.dataset.forgeColor = f.color;
+      btn.addEventListener('click', () => {
+        if (this._locked) return;
+        this._flash(f.id, true);
+        this._playerSeq.push(f.id);
+        this._checkPlayer();
+      });
+      this._btns.push(btn);
+      grid.appendChild(btn);
+    });
+    cv.appendChild(grid);
+
+    const indicator = document.createElement('div');
+    indicator.className = 'jasmine-indicator';
+    indicator.id = 'jasmine-indicator';
+    cv.appendChild(indicator);
+    this._indicator = indicator;  // store ref — don't rely on getElementById across re-renders
+
+    // Extend sequence by 1
+    this._seq.push(Math.floor(Math.random() * 4));
+
+    // Play sequence after short delay
+    setTimeout(() => this._playSequence(), 600);
+  },
+
+  _playSequence() {
+    const ind = this._indicator;
+    if (!ind) return;
+    ind.textContent = 'Watch…';
+    const tier    = GameState.difficultyTier || 2;
+    const delayMs = Math.max(700, 1200 - this._round * 50 - (tier - 1) * 60);
+    let   i       = 0;
+    const iv = setInterval(() => {
+      this._flash(this._seq[i], false);
+      i++;
+      if (i >= this._seq.length) {
+        clearInterval(iv);
+        setTimeout(() => {
+          this._locked = false;
+          if (this._indicator) this._indicator.textContent = 'Your turn!';
+        }, delayMs + 100);
+      }
+    }, delayMs + 150);
+  },
+
+  _flash(id, isPlayer) {
+    const btn = this._btns[id];
+    if (!btn) return;
+    btn.classList.add('jasmine-flash');
+    if (!isPlayer) btn.classList.add('jasmine-demo');
+    setTimeout(() => {
+      btn.classList.remove('jasmine-flash', 'jasmine-demo');
+    }, 250);
+  },
+
+  _checkPlayer() {
+    const pos = this._playerSeq.length - 1;
+    if (this._playerSeq[pos] !== this._seq[pos]) {
+      this._locked = true;
+      this._btns.forEach(b => b.classList.add('jasmine-error'));
+      if (this._indicator) this._indicator.textContent = 'Steel cracked!';
+      setTimeout(() => this._finish(false), 1000);
+      return;
+    }
+    if (this._playerSeq.length === this._seq.length) {
+      this._locked = true;
+      if (this._indicator) this._indicator.textContent = '✓ Perfect!';
+      this._btns.forEach(b => b.classList.add('jasmine-success'));
+      setTimeout(() => {
+        this._btns.forEach(b => b.classList.remove('jasmine-success'));
+        this._round++;
+        this._showRound();
+      }, 700);
+    }
+  },
+
+  _finish(won) {
+    const gold = won ? 24 : 8;
+    completeChallenge({
+      screenClass: 'jasmine-active', won,
+      goldReward: gold,
+      effects: won ? { jasmineForge: true } : {},
+      modalTitle: won ? '⚙️ Steel Forged!' : '⚙️ Steel Cracked',
+      modalBody: `${won ? '5/5 patterns correct' : `Failed at round ${this._round + 1}`}\n+${gold}💰` +
+        (won ? '\n\n⭐ Forged Steel — your Pokémon gains a 1-hit shield next battle!' : ''),
+    });
+  },
+};
+
+// ─── PRYCE ENGINE — "Ice Fishing" (Timed tap as bobber dips) ─────────────────
+// A fishing bobber bobs on ice water. Tap exactly when it dips below the line.
+// 5 casts. Window shrinks each cast. Perfect timing = rare catch.
+const PryceEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0, _timeouts:[],
+
+  start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0; this._timeouts = [];
+    ActiveEngine.set(this);
+    showBossIntro({
+      gymIndex: 6, portrait: 'pryce.png',
+      name: 'Pryce', btnLabel: 'Cast the Line ❄️',
+      introText: "Ice fishing requires patience and precision. The cold does not wait for the unprepared. Watch the bobber — tap when it dips below the line.",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5) { this._finish(); return; }
+    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+    const tier = GameState.difficultyTier || 2;
+
+    const cv = setupChallengeScreen({ portrait:'pryce.png', badge:'❄️ Ice Fishing',
+      intro: `Cast ${this._round + 1}/5`,
+      wrapClass: 'pryce-wrap', screenClass: 'pryce-active' });
+
+    // Bobber display
+    const bobberWrap = document.createElement('div');
+    bobberWrap.className = 'pryce-water';
+    bobberWrap.innerHTML = `
+      <div class="pryce-surface"></div>
+      <div class="pryce-bobber" id="pryce-bobber">🎣</div>
+      <div class="pryce-tap-btn" id="pryce-tap-btn">TAP!</div>`;
+    cv.appendChild(bobberWrap);
+
+    const indicator = document.createElement('div');
+    indicator.className = 'pryce-indicator';
+    indicator.id = 'pryce-indicator';
+    indicator.textContent = 'Waiting…';
+    cv.appendChild(indicator);
+
+    let tapped    = false;
+    let inWindow  = false;
+
+    // Random delay before bobber dips
+    const waitMs   = 2500 + Math.random() * 2000;
+    // Window gets shorter each round/tier
+    const windowMs = Math.max(700, 1600 - this._round * 80 - (tier - 1) * 100);
+
+    const tapBtn = () => {
+      document.getElementById('pryce-tap-btn')?.addEventListener('click', () => {
+        if (tapped) return;
+        tapped = true;
+        this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+        const bobber = document.getElementById('pryce-bobber');
+        const ind    = document.getElementById('pryce-indicator');
+        if (inWindow) {
+          this._hits++;
+          if (bobber) bobber.textContent = '🐟';
+          if (ind)    ind.textContent    = 'Got one! ✓';
+        } else {
+          if (bobber) bobber.classList.add('pryce-miss');
+          if (ind)    ind.textContent = 'Too early!';
+        }
+        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 800));
+      });
+    };
+    tapBtn();
+
+    // Start bobber dip
+    this._timeouts.push(setTimeout(() => {
+      inWindow = true;
+      const bobber = document.getElementById('pryce-bobber');
+      const ind    = document.getElementById('pryce-indicator');
+      if (bobber) bobber.classList.add('pryce-dip');
+      if (ind)    ind.textContent = 'NOW!';
+      // Window closes
+      this._timeouts.push(setTimeout(() => {
+        inWindow = false;
+        if (!tapped) {
+          tapped = true;
+          if (bobber) bobber.classList.remove('pryce-dip');
+          if (ind)    ind.textContent = 'Missed!';
+          this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 800));
+        }
+      }, windowMs));
+    }, waitMs));
+  },
+
+  _finish() {
+    const gold = this._hits >= 5 ? 28 : this._hits >= 3 ? 16 : 7;
+    completeChallenge({
+      screenClass: 'pryce-active', won: this._hits >= 4,
+      goldReward: gold,
+      effects: this._hits === 5 ? { pryce_catch_bonus: true } : {},
+      modalTitle: this._hits >= 5 ? '❄️ Master Angler!' : '❄️ Ice Fishing',
+      modalBody: `${this._hits}/5 catches\n+${gold}💰` +
+        (this._hits === 5 ? '\n\n⭐ Cold Precision — next Pokémon catch has doubled catch rate!' : ''),
+    });
+  },
+};
+
+// ─── CLAIR ENGINE — "Dragon Tamer" (Type-read incoming dragon charge) ────────
+// A dragon charges from one of 3 sides. Player must pick the type-effective move.
+// 5 rounds, 3 choices (tier 1 shows type name, tier 2+ shows only colour flash).
+const CLAIR_DRAGONS = [
+  { name:'Dratini',   type:'dragon', weakness:'ice',      icon:'🐉', color:'#4a80e0' },
+  { name:'Dragonair', type:'dragon', weakness:'ice',      icon:'🌀', color:'#6a60c0' },
+  { name:'Seadra',    type:'water',  weakness:'electric', icon:'🌊', color:'#2a80c0' },
+  { name:'Gyarados',  type:'water',  weakness:'electric', icon:'🌊', color:'#1a60b0' },
+  { name:'Aerodactyl',type:'flying', weakness:'electric', icon:'🦅', color:'#8080c0' },
+  { name:'Charizard', type:'fire',   weakness:'water',    icon:'🔥', color:'#d04020' },
+];
+
+const ClairEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0, _seq:[],
+
+  start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
+    ActiveEngine.set(this);
+    // Build 5-dragon sequence
+    this._seq = shuffle([...CLAIR_DRAGONS]).slice(0, 5);
+    showBossIntro({
+      gymIndex: 7, portrait: 'clair.png',
+      name: 'Clair', btnLabel: 'Face the Dragons 🐉',
+      introText: "Dragons do not wait for you to think. Read the charge and pick the right counter — fast! One wrong move and you are finished.",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5) { this._finish(); return; }
+    const tier   = GameState.difficultyTier || 2;
+    const dragon = this._seq[this._round];
+    const cv     = setupChallengeScreen({ portrait:'clair.png', badge:'🐉 Dragon Tamer',
+      intro: `Round ${this._round + 1}/5`,
+      wrapClass: 'clair-wrap', screenClass: 'clair-active' });
+
+    // Dragon charge display
+    const chargeEl = document.createElement('div');
+    chargeEl.className = 'clair-charge';
+    chargeEl.style.setProperty('--dragon-color', dragon.color);
+    chargeEl.innerHTML = `
+      <div class="clair-dragon-icon">${dragon.icon}</div>
+      ${tier <= 1 ? `<div class="clair-dragon-name">${dragon.name} — ${dragon.type} type</div>` : `<div class="clair-dragon-type-bar" style="background:${dragon.color}"></div>`}
+      <div class="clair-dragon-label">Incoming charge!</div>`;
+    cv.appendChild(chargeEl);
+
+    // 3 choices — correct weakness + 2 wrong
+    const allWeaknesses = ['ice','electric','water','fire','fighting','rock'];
+    const wrong = shuffle(allWeaknesses.filter(w => w !== dragon.weakness)).slice(0, 2);
+    const choices = shuffle([dragon.weakness, ...wrong]);
+
+    const btnRow = document.createElement('div');
+    btnRow.className = 'clair-choices';
+    choices.forEach(c => {
+      const btn = document.createElement('button');
+      btn.className = `clair-choice type-badge-btn type-${c}`;
+      btn.textContent = c;
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.clair-choice').forEach(b => {
+          b.disabled = true;
+          if (b.textContent === dragon.weakness) b.classList.add('clair-correct');
+        });
+        if (c === dragon.weakness) {
+          this._hits++;
+          chargeEl.classList.add('clair-stopped');
+        } else {
+          btn.classList.add('clair-wrong');
+          chargeEl.classList.add('clair-hit');
+        }
+        setTimeout(() => { this._round++; this._showRound(); }, 800);
+      });
+      btnRow.appendChild(btn);
+    });
+    cv.appendChild(btnRow);
+
+    // Auto-fail timer for tier 2+
+    if (tier >= 2) {
+      const ms = Math.max(2500, 5500 - this._round * 300);
+      setTimeout(() => {
+        if (!document.querySelector('.clair-stopped, .clair-hit')) {
+          document.querySelectorAll('.clair-choice').forEach(b => {
+            b.disabled = true;
+            if (b.textContent === dragon.weakness) b.classList.add('clair-correct');
+          });
+          chargeEl.classList.add('clair-hit');
+          setTimeout(() => { this._round++; this._showRound(); }, 800);
+        }
+      }, ms);
+    }
+  },
+
+  _finish() {
+    const gold = this._hits >= 5 ? 30 : this._hits >= 3 ? 18 : 8;
+    completeChallenge({
+      screenClass: 'clair-active', won: this._hits >= 4,
+      goldReward: gold,
+      effects: this._hits === 5 ? { clairDragonBane: true } : {},
+      modalTitle: this._hits >= 5 ? '🐉 Dragon Tamed!' : '🐉 Dragon Tamer',
+      modalBody: `${this._hits}/5 counters correct\n+${gold}💰` +
+        (this._hits === 5 ? '\n\n⭐ Dragon Bane — Dragon and Water moves deal +25% next battle!' : ''),
+    });
+  },
+};
+
+// ─── BUGSY ENGINE — "Bug Hunt" (Tap the right bug — real sprites) ────────────
+const BUGSY_POKEMON = [
+  { id:10,  name:'Caterpie'  },
+  { id:13,  name:'Weedle'    },
+  { id:46,  name:'Paras'     },
+  { id:123, name:'Scyther'   },
+  { id:167, name:'Spinarak'  },
+  { id:165, name:'Ledyba'    },
+  { id:127, name:'Pinsir'    },
+  { id:204, name:'Pineco'    },
+];
+
+const BugsyEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0, _timeouts:[],
+  _sprites: {},   // id → spriteUrl, pre-fetched
+
+  async start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0; this._timeouts = [];
+    this._sprites = {};
+    ActiveEngine.set(this);
+
+    // Pre-fetch all sprites before intro finishes
+    await Promise.all(BUGSY_POKEMON.map(async b => {
+      const data = await fetchPoke(b.id).catch(() => null);
+      this._sprites[b.id] = data ? getSpriteUrl(data) :
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${b.id}.png`;
+    }));
+
+    showBossIntro({
+      gymIndex: 1, portrait: 'bugsy.png',
+      name: 'Bugsy', btnLabel: 'Begin Bug Hunt 🐛',
+      introText: "My research makes me tops at Bug-type Pokémon! I'll show you one species — find it in the swarm before it vanishes!",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5) { this._finish(); return; }
+    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+    const tier   = GameState.difficultyTier || 2;
+    const target = BUGSY_POKEMON[Math.floor(Math.random() * BUGSY_POKEMON.length)];
+    const decoys = shuffle(BUGSY_POKEMON.filter(b => b.id !== target.id)).slice(0, 4);
+    const grid   = shuffle([target, target, ...decoys]);
+
+    const cv = setupChallengeScreen({ portrait:'bugsy.png', badge:'🐛 Bug Hunt',
+      intro: `Round ${this._round + 1}/5`,
+      wrapClass: 'bugsy-wrap', screenClass: 'bugsy-active' });
+
+    const hint = document.createElement('div');
+    hint.className = 'bugsy-hint';
+    hint.innerHTML = `Find: <span class="bugsy-target">
+      <img src="${this._sprites[target.id]}" class="bugsy-target-sprite pixel-sprite"
+           onerror="this.style.display='none'" alt="${target.name}">
+      ${target.name}</span>`;
+    cv.appendChild(hint);
+
+    const bugGrid = document.createElement('div');
+    bugGrid.className = 'bugsy-grid';
+    let tapped = false;
+    grid.forEach(bug => {
+      const cell = document.createElement('div');
+      cell.className = 'bugsy-cell';
+      const sprite = this._sprites[bug.id] || '';
+      cell.innerHTML = `<img src="${sprite}" class="bugsy-bug-sprite pixel-sprite"
+        alt="${bug.name}" onerror="this.innerText='🐛'">`;
+      cell.addEventListener('click', () => {
+        if (tapped) return;
+        tapped = true;
+        this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+        bugGrid.querySelectorAll('.bugsy-cell').forEach(c => c.style.pointerEvents = 'none');
+        if (bug.id === target.id) {
+          this._hits++;
+          cell.classList.add('bugsy-correct');
+        } else {
+          cell.classList.add('bugsy-wrong');
+          // Highlight the correct ones
+          bugGrid.querySelectorAll('.bugsy-cell').forEach((c, ci) => {
+            if (grid[ci].id === target.id) c.classList.add('bugsy-correct');
+          });
+        }
+        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 900));
+      });
+      bugGrid.appendChild(cell);
+    });
+    cv.appendChild(bugGrid);
+
+    const ms = Math.max(2200, 5000 - this._round * 200 - (tier - 1) * 300);
+    this._timeouts.push(setTimeout(() => {
+      if (!tapped) {
+        tapped = true;
+        bugGrid.querySelectorAll('.bugsy-cell').forEach((c, ci) => {
+          c.style.pointerEvents = 'none';
+          if (grid[ci].id === target.id) c.classList.add('bugsy-correct');
+        });
+        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 900));
+      }
+    }, ms));
+  },
+
+  _finish() {
+    const gold = this._hits >= 5 ? 22 : this._hits >= 3 ? 14 : 7;
+    completeChallenge({
+      screenClass: 'bugsy-active', won: this._hits >= 4,
+      goldReward: gold,
+      effects: this._hits === 5 ? { bugsyResearch: true } : {},
+      modalTitle: this._hits >= 5 ? '🐛 Expert Entomologist!' : '🐛 Bug Hunt',
+      modalBody: `${this._hits}/5 found\n+${gold}💰` +
+        (this._hits === 5 ? '\n\n⭐ Bug Research — enemy attack -20% next battle!' : ''),
+    });
+  },
+};
+
 const CatchEngine = {
   current:       null,
   _caught:       false,
@@ -15900,6 +16986,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Victory screen ──
   document.getElementById('btn-play-again').addEventListener('click', () => Game.returnToStart());
   document.getElementById('btn-league-victory-done').addEventListener('click', () => Game.returnToStart());
+  document.getElementById('btn-league-party-back').addEventListener('click', () => Game.returnToStart());
 
   // ── Modal ──
   document.getElementById('modal-ok').addEventListener('click', () => closeModal());
