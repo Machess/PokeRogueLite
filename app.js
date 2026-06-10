@@ -11568,8 +11568,9 @@ const FalknerEngine = {
       }
     }
 
-    // Ceiling / floor
-    if (this._y < 0 || this._y + bh > H) hit = true;
+    // Ceiling / floor — clamp position, no life lost
+    if (this._y < 0)        { this._y = 0;        this._vy = 0; }
+    if (this._y + bh > H)   { this._y = H - bh;   this._vy = 0; }
 
     // Coin collection
     for (const c of this._coins) {
@@ -11658,8 +11659,6 @@ const FalknerEngine = {
 
     if (finished || this._lives <= 0) {
       this._gameRunning = false;
-      this._canvas?.removeEventListener('click',      this._flapFn);
-      this._canvas?.removeEventListener('touchstart', this._flapFn);
       setTimeout(() => this._finish(), 600);
       return;
     }
@@ -11676,6 +11675,7 @@ const FalknerEngine = {
       this._canvas.removeEventListener('pointerup',    this._upFn);
       this._canvas.removeEventListener('pointerleave', this._upFn);
     }
+    const won  = this._score >= 10 && this._lives > 0;
     const gold = won ? (this._lives === 3 ? 30 : 20) : Math.max(5, this._score * 2);
     completeChallenge({
       screenClass: 'falkner-active', won,
