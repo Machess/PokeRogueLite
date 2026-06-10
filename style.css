@@ -9418,3 +9418,63 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: transparent;
 }
 .jasmine-btn:hover { transform: scale(1.08); }
+
+/* ── Bugsy — scatter field ── */
+.bugsy-scatter-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .4rem !important; width: 100%;
+}
+.bugsy-field {
+  position: relative;
+  background: linear-gradient(160deg,#1a4a0a 0%,#2a6a18 50%,#1a3a0a 100%);
+  border-radius: 12px;
+  border: 2px solid rgba(80,180,40,.3);
+  overflow: hidden;
+  touch-action: manipulation;
+  flex-shrink: 0;
+}
+/* Leaf texture overlay */
+.bugsy-field::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 30% 40%, rgba(60,140,20,.3) 0%, transparent 60%),
+              radial-gradient(ellipse at 70% 70%, rgba(20,80,10,.4) 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+.bugsy-scatter-sprite {
+  position: absolute;
+  object-fit: contain;
+  cursor: pointer;
+  z-index: 1;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  animation: bugsy-scurry linear infinite;
+  touch-action: manipulation;
+  transition: transform .1s;
+}
+.bugsy-scatter-sprite:hover { filter: drop-shadow(0 0 8px rgba(255,255,255,.6)); transform: scale(1.15); }
+@keyframes bugsy-scurry {
+  0%   { transform: translate(0,           0)            rotate(0deg); }
+  25%  { transform: translate(var(--dx1),  var(--dy1))   rotate(var(--dr1)); }
+  75%  { transform: translate(var(--dx2),  var(--dy2))   rotate(var(--dr2)); }
+  100% { transform: translate(0,           0)            rotate(0deg); }
+}
+.bugsy-scatter-correct {
+  filter: drop-shadow(0 0 12px rgba(80,220,80,.9)) !important;
+  animation: none !important;
+  transform: scale(1.25) !important;
+}
+.bugsy-scatter-wrong {
+  filter: drop-shadow(0 0 8px rgba(220,80,80,.9)) !important;
+  animation: none !important;
+  opacity: .5 !important;
+}
+.bugsy-timer-bar {
+  width: 100%; max-width: 340px; height: 8px;
+  background: rgba(255,255,255,.15); border-radius: 4px; overflow: hidden;
+}
+.bugsy-timer-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #80e840, #ffd700, #ff4040);
+  border-radius: 4px;
+}
