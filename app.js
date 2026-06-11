@@ -70,6 +70,19 @@ const EVOLVE_NARRATIVES = {
   150: {
     2: (n, next, prev) => `${n}, Mewtwo was engineered to be the most powerful Pokémon ever created. With you, it pushes beyond even those limits. The air crackles with psychic energy...`,
   },
+  // ── Johto starters ──────────────────────────────────────────────────────────
+  152: {
+    2: (n, next, prev) => `${n}, ${prev} has been absorbing sunlight through every battle, quietly growing stronger. The leaf on its head is glowing now. Something beautiful is about to happen...`,
+    3: (n, next, prev) => `${n}, look at ${prev}! Every challenge you faced together, every battle you won — it was all leading to this. The Johto wind is with you both. Watch!`,
+  },
+  155: {
+    2: (n, next, prev) => `${n}, the small flame inside ${prev} has been burning steady through everything you've been through together. It believes in you completely. That belief is about to become something much bigger...`,
+    3: (n, next, prev) => `${n}! The fire inside ${prev} has never once gone out — not through a single defeat, not through a single hard moment. This is your reward. Watch it blaze!`,
+  },
+  158: {
+    2: (n, next, prev) => `${n}, ${prev} splashed into battle so many times, always fearless, always ready. You never held it back. It is growing to match your courage. Here it comes...`,
+    3: (n, next, prev) => `${n}, ${prev} has fought beside you since the very beginning in Johto. Every river crossed, every gym cleared — all of it has brought you here. This is the final form!`,
+  },
 };
 
 // ─── GYM DATA — single source of truth for all gym/boss data ─────────────────
@@ -2116,13 +2129,12 @@ const FADE_EXIT_MS  = 180; // fade-out duration
 const FADE_ENTER_MS = 220; // fade-in duration (map return uses 300ms)
 
 function showScreen(id, _direction) {
-  // _direction param kept for call-site compatibility but ignored —
-  // all transitions are now a simple fade out → fade in for performance.
   const incoming = document.getElementById('screen-' + id);
   if (!incoming) return;
 
   const outgoing = document.querySelector('.screen.active');
   SoundEngine.onScreenChange(id);
+  SoundEngine.stopSpeech();   // cancel Pokédex voice on any navigation
 
   if (!outgoing || outgoing === incoming) {
     // Nothing to transition from — instant show
@@ -2268,7 +2280,53 @@ const SoundEngine = {
 
   playFanfare()  { this.playSFX('fanfare_item_get.mp3', 0.65); },
   playRecovery() { this.playSFX('pokemon_recovery.mp3', 0.7); },
-  playPikachu2() { this.playSFX('pikachu2.mp3', 0.8); },
+  // ── Pokédex voice — Web Speech API ────────────────────────────────────────
+  _dexVoice: null,
+  _voicesReady: false,
+
+  _initVoices() {
+    if (this._voicesReady) return;
+    const pick = () => {
+      const voices = window.speechSynthesis?.getVoices() || [];
+      // Prefer robotic/clear voices by name — order matters
+      const preferred = ['Daniel', 'Google UK English Male', 'Fred',
+                         'Google US English', 'Alex', 'English United States'];
+      for (const name of preferred) {
+        const v = voices.find(v => v.name.includes(name));
+        if (v) { this._dexVoice = v; break; }
+      }
+      if (!this._dexVoice && voices.length) this._dexVoice = voices[0];
+      this._voicesReady = true;
+    };
+    if (window.speechSynthesis?.getVoices().length) {
+      pick();
+    } else {
+      window.speechSynthesis?.addEventListener('voiceschanged', pick, { once: true });
+    }
+  },
+
+  speakPokedex(name, category, flavour) {
+    if (!window.speechSynthesis) return;
+    if (this._muted) return;
+    this._initVoices();
+    window.speechSynthesis.cancel();   // stop any previous speech
+
+    // Build the full script: "Name. The X Pokémon. Flavour text."
+    const catText    = category ? `The ${category}.` : '';
+    const flavText   = flavour  ? flavour.replace(/[\n\f\r]/g,' ').replace(/\s+/g,' ').trim() : '';
+    const fullScript = [name, catText, flavText].filter(Boolean).join('  ');
+
+    const utter = new SpeechSynthesisUtterance(fullScript);
+    if (this._dexVoice) utter.voice = this._dexVoice;
+    utter.rate  = 0.82;
+    utter.pitch = 1.1;
+    utter.volume = 0.9;
+    window.speechSynthesis.speak(utter);
+  },
+
+  stopSpeech() {
+    window.speechSynthesis?.cancel();
+  },
 
   toggleMute() {
     this._muted = !this._muted;
@@ -11419,303 +11477,237 @@ const WobbuffetEngine = {
 // Player picks one of 3 random flying Pokémon fetched from PokéAPI.
 // Navigate through pipe gaps by tapping. Collect coins. Hit wall = lose a life.
 // 3 lives. Need 10 coins to pass. 15 pipes total scroll past.
-const FALKNER_FLYING_POOL = [
-  16,17,18,   // Pidgey, Pidgeotto, Pidgeot
-  21,22,      // Spearow, Fearow
-  41,42,      // Zubat, Golbat
-  83,         // Farfetch'd
-  84,85,      // Doduo, Dodrio
-  123,        // Scyther
-  142,        // Aerodactyl
-  144,145,146,// Legendary birds
-  163,164,    // Hoothoot, Noctowl
-  169,        // Crobat
-  176,        // Togetic
-  177,178,    // Natu, Xatu
-  193,        // Yanma
-  198,        // Murkrow
-  227,        // Skarmory
+// ─── FALKNER ENGINE — "Duck Hunt" style — catch escaped bird Pokémon ──────────
+// Pokémon fly across the screen in waves. Tap to throw a Pokéball.
+// Different species have different speeds, paths and point values.
+
+const FALKNER_BIRDS = [
+  { id:16,  name:'Pidgey',     pts:10, speed:0.6, path:'straight', size:52 },
+  { id:21,  name:'Spearow',    pts:15, speed:0.8, path:'sine',     size:48 },
+  { id:17,  name:'Pidgeotto',  pts:20, speed:0.9, path:'swoop',    size:56 },
+  { id:22,  name:'Fearow',     pts:30, speed:1.1, path:'sine',     size:52 },
+  { id:84,  name:'Doduo',      pts:25, speed:1.0, path:'straight', size:50 },
+  { id:142, name:'Aerodactyl', pts:50, speed:1.4, path:'erratic',  size:58 },
+];
+
+// Wave definitions — [birdId, birdId, ...]
+const FALKNER_WAVES = [
+  [16, 16, 16],                          // Wave 1 — slow Pidgey
+  [16, 21, 17, 21, 16],                  // Wave 2 — mixed
+  [22, 16, 84, 142, 17, 21, 22],         // Wave 3 — fast + Aerodactyl
 ];
 
 const FalknerEngine = {
   _isActive: false, _node: null,
-  _chosenSprite: null, _chosenName: '',
-  // Flappy state
-  _animFrame: null, _gameRunning: false,
-  _y: 0, _vy: 0, _pipes: [], _coins: [], _score: 0, _lives: 3,
-  _frame: 0, _canvas: null, _ctx: null,
+  _sprites:  {},          // id → Image object
+  _birds:    [],          // active flying Pokémon on screen
+  _wave:     0,
+  _waveQueue:[],          // remaining birds to spawn in current wave
+  _score:    0,
+  _balls:    0,           // Pokéballs remaining
+  _ballCooldown: false,
+  _missCount:0,
+  _passScore:0,
+  _maxBalls: 0,
+  _animFrame:null,
+  _gameRunning: false,
+  _spawnTimer: 0,
+  _field: null,           // the game DOM container
+  _tier:  1,
 
   async start(node) {
-    this._node = node; this._isActive = true;
+    this._node = node;
+    this._isActive = true;
+    this._sprites = {};
     ActiveEngine.set(this);
-    // Reset game state
-    this._y = 0; this._vy = 0; this._pipes = []; this._coins = [];
-    this._score = 0; this._lives = 3; this._frame = 0; this._gameRunning = false;
-    if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
 
-    // Pick 3 random flying Pokémon from pool
-    const pool3 = shuffle([...FALKNER_FLYING_POOL]).slice(0, 3);
-
-    showBossIntro({
-      gymIndex: 0, portrait: 'falkner.png',
-      name: 'Falkner', btnLabel: 'Choose your flyer! 🪶',
-      introText: "Bird Pokémon are the finest! Fly through the gaps, collect coins, and don't hit the walls! Choose your Pokémon first.",
-    });
-
-    // Fetch sprites for the 3 candidates
+    // Pre-fetch all bird sprites
     showLoading();
-    const candidates = await Promise.all(pool3.map(async id => {
-      const data = await fetchPoke(id).catch(() => null);
-      return {
-        id,
-        name:   data ? capitalize(data.name) : `#${id}`,
-        sprite: data ? getSpriteUrl(data) : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`,
-      };
+    await Promise.all(FALKNER_BIRDS.map(async b => {
+      const data = await fetchPoke(b.id).catch(() => null);
+      const img  = new Image();
+      img.src    = data ? getSpriteUrl(data) :
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${b.id}.png`;
+      this._sprites[b.id] = img;
     }));
     hideLoading();
 
-    // Show picker when intro completes
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) {
-      startBtn.onclick = () => {
-        startBtn.style.display = 'none';
-        document.getElementById('trainer-intro').style.display = 'none';
-        this._showPicker(candidates);
-      };
-    }
+    showBossIntro({
+      gymIndex:  0,
+      portrait:  'falkner.png',
+      name:      'Falkner',
+      btnLabel:  '🎯 Help Catch Them!',
+      introText: "My Pokémon escaped from the tower! They are flying all over Violet City! Throw Pokéballs to catch them — tap where they are! I need your help!",
+    });
   },
 
-  _showPicker(candidates) {
-    const cv = setupChallengeScreen({
-      portrait: 'falkner.png', badge: '🪶 Choose Your Pokémon!',
-      intro: 'Pick the Pokémon you want to fly with:',
-      wrapClass: 'falkner-picker-wrap', screenClass: 'falkner-active',
-    });
-
-    const row = document.createElement('div');
-    row.className = 'falkner-picker-row';
-    candidates.forEach(c => {
-      const card = document.createElement('div');
-      card.className = 'falkner-picker-card';
-      card.innerHTML = `
-        <img src="${c.sprite}" alt="${c.name}" class="falkner-picker-sprite pixel-sprite"
-             onerror="this.src='https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${c.id}.png'">
-        <div class="falkner-picker-name">${c.name}</div>`;
-      card.addEventListener('click', () => {
-        this._chosenSprite = c.sprite;
-        this._chosenName   = c.name;
-        this._startGame();
-      });
-      row.appendChild(card);
-    });
-    cv.appendChild(row);
-  },
-
-  _startGame() {
+  startGame() {
     this._isActive   = false;
     ActiveEngine.clear();
-    const W = 360, H = 480;
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+
+    this._tier      = GameState.difficultyTier || 2;
+    this._score     = 0;
+    this._wave      = 0;
+    this._birds     = [];
+    this._missCount = 0;
+    this._ballCooldown = false;
+    this._gameRunning  = true;
+    this._spawnTimer   = 0;
+
+    // Tier config
+    const CFG = { 1:{balls:18,pass:50}, 2:{balls:15,pass:80}, 3:{balls:12,pass:100} };
+    const cfg = CFG[Math.min(this._tier, 3)];
+    this._balls     = cfg.balls;
+    this._maxBalls  = cfg.balls;
+    this._passScore = cfg.pass;
+
     const cv = setupChallengeScreen({
-      portrait: 'falkner.png', badge: '🪶 Flappy Pokémon',
-      intro: `Lives: ❤️❤️❤️  Coins: 0/10`,
-      wrapClass: 'falkner-game-wrap', screenClass: 'falkner-active',
+      portrait: 'falkner.png', badge: '🎯 Catch Falkner\'s Flock!',
+      intro: `Wave 1/3 — Score: 0 — 🎯 ${this._balls}`,
+      wrapClass: 'falkner-dh-wrap', screenClass: 'falkner-active',
     });
 
-    // Canvas
-    const canvas = document.createElement('canvas');
-    canvas.width = W; canvas.height = H;
-    canvas.className = 'falkner-canvas';
-    canvas.style.cssText = 'width:100%;max-width:360px;border-radius:12px;display:block;margin:0 auto;cursor:pointer;touch-action:manipulation;';
-    cv.appendChild(canvas);
-    this._canvas = canvas;
-    this._ctx    = canvas.getContext('2d');
+    // Build game field
+    const field = document.createElement('div');
+    field.className = 'falkner-dh-field';
+    field.id = 'falkner-field';
+    cv.appendChild(field);
+    this._field = field;
 
-    // Load bird sprite
-    const birdImg = new Image();
-    birdImg.src   = this._chosenSprite;
-    this._birdImg = birdImg;
+    // HUD row
+    const hud = document.createElement('div');
+    hud.className = 'falkner-dh-hud';
+    hud.id = 'falkner-hud';
+    hud.innerHTML = `
+      <span class="fdh-score" id="fdh-score">⭐ 0</span>
+      <span class="fdh-wave"  id="fdh-wave">Wave 1/3</span>
+      <span class="fdh-balls" id="fdh-balls">🎯 ${this._balls}</span>`;
+    cv.appendChild(hud);
 
-    // Game state
-    this._y      = H / 2;
-    this._vy     = 0;
-    this._pipes  = [];
-    this._coins  = [];
-    this._score  = 0;
-    this._lives  = 3;
-    this._frame  = 0;
-    this._held   = false;    // true while player is pressing
-    this._gameRunning = false;  // starts false until countdown ends
-    this._W = W; this._H = H;
+    // Pokéball count bar
+    const ballBar = document.createElement('div');
+    ballBar.className = 'fdh-ball-bar';
+    ballBar.id = 'fdh-ball-bar';
+    this._renderBallBar(ballBar);
+    cv.appendChild(ballBar);
 
-    // Input — hold = fly up, release = fall
-    const onDown = (e) => { e.preventDefault(); this._held = true;  };
-    const onUp   = (e) => { e.preventDefault(); this._held = false; };
-    canvas.addEventListener('pointerdown',  onDown, { passive: false });
-    canvas.addEventListener('pointerup',    onUp,   { passive: false });
-    canvas.addEventListener('pointerleave', onUp,   { passive: false });
-    this._downFn = onDown; this._upFn = onUp;
+    // Grass / ground strip
+    const grass = document.createElement('div');
+    grass.className = 'fdh-grass';
+    field.appendChild(grass);
 
-    // 3-2-1 countdown drawn on canvas before game starts
-    let countdown = 3;
-    const ctx = this._ctx;
-    const drawCountdown = (n) => {
-      ctx.fillStyle = '#7ec8e3';
-      ctx.fillRect(0, 0, W, H);
-      // Bird preview
-      if (this._birdImg.complete && this._birdImg.naturalWidth > 0) {
-        ctx.drawImage(this._birdImg, 60, H/2 - 18, 36, 36);
-      }
-      ctx.fillStyle = 'rgba(0,0,0,.5)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 80px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(n > 0 ? String(n) : 'GO!', W/2, H/2 + 28);
-      ctx.font = 'bold 18px monospace';
-      ctx.fillText('Hold to fly up · Release to fall', W/2, H/2 + 72);
-      ctx.textAlign = 'left';
-    };
-    drawCountdown(3);
-    const cdInterval = setInterval(() => {
-      countdown--;
-      drawCountdown(Math.max(0, countdown));
-      if (countdown <= 0) {
-        clearInterval(cdInterval);
-        this._gameRunning = true;
-        this._loop();
-      }
-    }, 1000);
+    // Tap to throw
+    field.addEventListener('click', e => this._throwBall(e));
+    field.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const t = e.touches[0];
+      const rect = field.getBoundingClientRect();
+      this._throwBall({ clientX: t.clientX, clientY: t.clientY, _rect: rect });
+    }, { passive: false });
+
+    // Start spawning wave 0
+    this._loadWave(0);
+    this._loop();
+  },
+
+  _renderBallBar(el) {
+    el = el || document.getElementById('fdh-ball-bar');
+    if (!el) return;
+    el.innerHTML = Array.from({ length: this._maxBalls }, (_, i) =>
+      `<span class="fdh-ball-pip${i < this._balls ? '' : ' used'}">⚪</span>`
+    ).join('');
+  },
+
+  _loadWave(waveIdx) {
+    this._wave     = waveIdx;
+    this._waveQueue = [...FALKNER_WAVES[waveIdx]];
+    this._spawnTimer = 0;
+    document.getElementById('fdh-wave').textContent = `Wave ${waveIdx + 1}/3`;
   },
 
   _loop() {
-    const GRAVITY = 0.28, THRUST = -0.38, MAX_UP = -3.5, MAX_DOWN = 5.5;
-    const ctx = this._ctx;
-    this._frame++;
+    if (!this._gameRunning) return;
+    this._spawnTimer++;
 
-    // Physics — hold for up, release for down
-    if (this._held) {
-      this._vy = Math.max(MAX_UP,  this._vy + THRUST);
-    } else {
-      this._vy = Math.min(MAX_DOWN, this._vy + GRAVITY);
-    }
-    this._y += this._vy;
-    const W = this._W, H = this._H;
-    if (this._frame % 90 === 0) {
-      const gap    = 130;
-      const topH   = 60 + Math.random() * (H - gap - 120);
-      const coinY  = topH + gap / 2;
-      this._pipes.push({ x: W, topH, botY: topH + gap, passed: false });
-      this._coins.push({ x: W + 40, y: coinY, taken: false });
+    // Spawn next bird every ~90 frames if queue has entries and < 3 on screen
+    if (this._waveQueue.length > 0 && this._birds.length < 3 && this._spawnTimer > 60) {
+      this._spawnTimer = 0;
+      const id   = this._waveQueue.shift();
+      const def  = FALKNER_BIRDS.find(b => b.id === id);
+      if (def) this._spawnBird(def);
     }
 
-    // Move pipes & coins
-    const speed = Math.min(2 + Math.floor(this._frame / 450), 4);
-    this._pipes.forEach(p => p.x -= speed);
-    this._coins.forEach(c => c.x -= speed);
+    // Move all birds
+    const FW = this._field?.offsetWidth  || 340;
+    const FH = this._field?.offsetHeight || 260;
 
-    // Pipe scoring + wall collision
-    const bx = 60, bw = 36, bh = 36;
-    let hit = false;
+    this._birds.forEach(b => {
+      if (b.caught || b.escaped) return;
+      const spd = b.def.speed * (this._tier <= 1 ? 0.6 : this._tier === 2 ? 0.85 : 1.1) * 1.8;
 
-    for (const p of this._pipes) {
-      // Passed pipe (didn't hit)
-      if (!p.passed && p.x + 52 < bx) { p.passed = true; }
-      // Collision
-      if (bx + bw - 8 > p.x && bx < p.x + 52) {
-        if (this._y < p.topH + 4 || this._y + bh - 4 > p.botY) { hit = true; break; }
+      if (b.dir > 0) { b.x += spd; }
+      else           { b.x -= spd; }
+
+      // Path logic
+      b.t += 0.04;
+      if (b.def.path === 'sine') {
+        b.y = b.baseY + Math.sin(b.t * 2) * 30;
+      } else if (b.def.path === 'swoop') {
+        // Arc: starts low, peaks mid-screen, comes back
+        const progress = b.x / FW;
+        b.y = b.baseY - Math.sin(progress * Math.PI) * 60;
+      } else if (b.def.path === 'erratic') {
+        b.erraticTimer = (b.erraticTimer || 0) + 1;
+        if (b.erraticTimer > 40 + Math.random() * 30) {
+          b.erraticTimer = 0;
+          b.erraticDy = (Math.random() - 0.5) * 3;
+        }
+        b.y = Math.max(20, Math.min(FH - b.def.size - 40, b.y + (b.erraticDy || 0)));
+      }
+
+      // Flip sprite based on direction
+      if (b.el) {
+        b.el.style.left      = `${b.x}px`;
+        b.el.style.top       = `${b.y}px`;
+        b.el.style.transform = b.dir < 0 ? 'scaleX(-1)' : '';
+      }
+
+      // Off screen → escaped
+      if (b.x > FW + 60 || b.x < -60) {
+        b.escaped = true;
+        b.el?.remove();
+        this._missCount++;
+        this._showMiss(b.def.name);
+      }
+    });
+
+    // Clean up
+    this._birds = this._birds.filter(b => !b.caught && !b.escaped);
+
+    // Wave clear?
+    if (this._waveQueue.length === 0 && this._birds.length === 0) {
+      if (this._wave < FALKNER_WAVES.length - 1) {
+        // Short pause then next wave
+        this._gameRunning = false;
+        setTimeout(() => {
+          this._gameRunning = true;
+          this._loadWave(this._wave + 1);
+          this._loop();
+        }, 1200);
+        return;
+      } else {
+        // All waves done
+        this._gameRunning = false;
+        setTimeout(() => this._finish(), 800);
+        return;
       }
     }
 
-    // Ceiling / floor — clamp position, no life lost
-    if (this._y < 0)        { this._y = 0;        this._vy = 0; }
-    if (this._y + bh > H)   { this._y = H - bh;   this._vy = 0; }
-
-    // Coin collection
-    for (const c of this._coins) {
-      if (!c.taken && Math.abs(c.x - bx) < 28 && Math.abs(c.y - this._y - 18) < 28) {
-        c.taken = true;
-        this._score++;
-      }
-    }
-
-    // Handle hit
-    if (hit) {
-      this._lives--;
-      this._vy = -5;
-      this._y  = Math.max(0, Math.min(this._y, H - bh));
-      // Flash
-      ctx.fillStyle = 'rgba(255,80,80,.5)';
-      ctx.fillRect(0, 0, W, H);
-    }
-
-    // Win / lose check
-    const finished = this._frame >= 1350 || this._lives <= 0;
-
-    // ── DRAW ──────────────────────────────────────────────────────────────────
-    // Sky background
-    ctx.fillStyle = '#7ec8e3';
-    ctx.fillRect(0, 0, W, H);
-    // Ground
-    ctx.fillStyle = '#8bc34a';
-    ctx.fillRect(0, H - 24, W, 24);
-    ctx.fillStyle = '#6a9a30';
-    ctx.fillRect(0, H - 28, W, 6);
-
-    // Pipes
-    ctx.fillStyle = '#4caf50';
-    for (const p of this._pipes) {
-      ctx.fillRect(p.x, 0, 52, p.topH);
-      ctx.fillRect(p.x - 4, p.topH - 16, 60, 16);
-      ctx.fillRect(p.x, p.botY, 52, H - p.botY);
-      ctx.fillRect(p.x - 4, p.botY, 60, 16);
-      ctx.fillStyle = '#388e3c';
-      ctx.fillRect(p.x + 2, 0, 8, p.topH - 16);
-      ctx.fillRect(p.x + 2, p.botY + 16, 8, H - p.botY);
-      ctx.fillStyle = '#4caf50';
-    }
-
-    // Coins
-    for (const c of this._coins) {
-      if (c.taken) continue;
-      ctx.fillStyle = '#ffd700';
-      ctx.beginPath();
-      ctx.arc(c.x, c.y, 10, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffeb3b';
-      ctx.beginPath();
-      ctx.arc(c.x - 2, c.y - 2, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    // Bird (sprite or fallback circle)
-    ctx.save();
-    ctx.translate(bx, this._y);
-    if (this._vy > 2) { ctx.rotate(0.3); }
-    if (this._birdImg.complete && this._birdImg.naturalWidth > 0) {
-      ctx.drawImage(this._birdImg, 0, 0, bw, bh);
-    } else {
-      ctx.fillStyle = '#ff9800';
-      ctx.beginPath(); ctx.arc(18, 18, 18, 0, Math.PI * 2); ctx.fill();
-    }
-    ctx.restore();
-
-    // HUD
-    ctx.fillStyle = 'rgba(0,0,0,.45)';
-    ctx.fillRect(0, 0, W, 36);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 13px monospace';
-    ctx.fillText(`❤️ ${this._lives}   💰 ${this._score}/10`, 10, 22);
-    const progress = Math.min(1, this._frame / 1350);
-    ctx.fillStyle = 'rgba(255,255,255,.2)';
-    ctx.fillRect(0, 32, W, 4);
-    ctx.fillStyle = '#ffd700';
-    ctx.fillRect(0, 32, W * progress, 4);
-
-    // Remove off-screen pipes/coins
-    this._pipes = this._pipes.filter(p => p.x > -60);
-    this._coins = this._coins.filter(c => c.x > -20);
-
-    if (finished || this._lives <= 0) {
+    // Out of balls
+    if (this._balls <= 0 && this._birds.length === 0 && this._waveQueue.length === 0) {
       this._gameRunning = false;
       setTimeout(() => this._finish(), 600);
       return;
@@ -11724,31 +11716,170 @@ const FalknerEngine = {
     this._animFrame = requestAnimationFrame(() => this._loop());
   },
 
+  _spawnBird(def) {
+    const FW   = this._field?.offsetWidth  || 340;
+    const FH   = this._field?.offsetHeight || 260;
+    const dir  = Math.random() > 0.5 ? 1 : -1;
+    const x    = dir > 0 ? -def.size - 10 : FW + 10;
+    const y    = 20 + Math.random() * (FH - def.size - 80);
+
+    const el = document.createElement('img');
+    el.className = 'fdh-bird';
+    el.src       = this._sprites[def.id]?.src ||
+      `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${def.id}.png`;
+    el.style.cssText = `left:${x}px;top:${y}px;width:${def.size}px;height:${def.size}px;`;
+    this._field.appendChild(el);
+
+    // Points badge above bird
+    const pts = document.createElement('div');
+    pts.className = 'fdh-pts-badge';
+    pts.textContent = `${def.pts}`;
+    pts.style.cssText = `left:${x + def.size/2}px;top:${y - 16}px;`;
+    pts.id = `fdh-pts-${def.id}-${Date.now()}`;
+    this._field.appendChild(pts);
+
+    const bird = { def, x, y, baseY: y, dir, t: 0, el, ptsEl: pts, caught: false, escaped: false };
+    this._birds.push(bird);
+  },
+
+  _throwBall(e) {
+    if (!this._gameRunning || this._ballCooldown) return;
+    if (this._balls <= 0) return;
+
+    const rect = e._rect || this._field?.getBoundingClientRect();
+    if (!rect) return;
+    const tapX  = e.clientX - rect.left;
+    const tapY  = e.clientY - rect.top;
+
+    this._balls--;
+    document.getElementById('fdh-balls').textContent = `🎯 ${this._balls}`;
+    this._renderBallBar();
+
+    // Cooldown
+    this._ballCooldown = true;
+    setTimeout(() => { this._ballCooldown = false; }, 400);
+
+    // Animate Pokéball throw
+    this._animateBall(tapX, tapY, () => {
+      // Check hit — 48px radius tolerance
+      const HIT_R = 48;
+      let hit = null;
+      for (const b of this._birds) {
+        if (b.caught || b.escaped) continue;
+        const cx = b.x + b.def.size / 2;
+        const cy = b.y + b.def.size / 2;
+        const dist = Math.hypot(cx - tapX, cy - tapY);
+        if (dist < HIT_R + b.def.size / 2) {
+          if (!hit || dist < Math.hypot(hit.x + hit.def.size/2 - tapX, hit.y + hit.def.size/2 - tapY)) {
+            hit = b;
+          }
+        }
+      }
+      if (hit) {
+        this._catchBird(hit, tapX, tapY);
+      }
+    });
+  },
+
+  _animateBall(tx, ty, onLand) {
+    const FW   = this._field?.offsetWidth  || 340;
+    const FH   = this._field?.offsetHeight || 260;
+    const ball = document.createElement('img');
+    ball.src   = 'assets/pokeball.png';
+    ball.className = 'fdh-pokeball';
+
+    // Start from bottom centre
+    const sx = FW / 2, sy = FH - 30;
+    ball.style.cssText = `left:${sx}px;top:${sy}px;`;
+    this._field.appendChild(ball);
+
+    const dur    = 320;
+    const start  = performance.now();
+    const animate = (now) => {
+      const t = Math.min((now - start) / dur, 1);
+      // Parabolic arc
+      const x  = sx + (tx - sx) * t;
+      const y  = sy + (ty - sy) * t - Math.sin(t * Math.PI) * 50;
+      const rot = t * 540;
+      ball.style.left      = `${x}px`;
+      ball.style.top       = `${y}px`;
+      ball.style.transform = `translate(-50%,-50%) rotate(${rot}deg)`;
+      if (t < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        ball.remove();
+        onLand();
+      }
+    };
+    requestAnimationFrame(animate);
+  },
+
+  _catchBird(bird, tx, ty) {
+    bird.caught = true;
+    bird.ptsEl?.remove();
+
+    const el = bird.el;
+    if (!el) return;
+
+    // Catch animation — shrink toward tap point then disappear
+    el.style.transition = 'all 0.5s ease';
+    el.style.left    = `${tx - bird.def.size/2}px`;
+    el.style.top     = `${ty - bird.def.size/2}px`;
+    el.style.opacity = '0';
+    el.style.transform = 'scale(0.1)';
+
+    // Points popup
+    const pop = document.createElement('div');
+    pop.className   = 'fdh-catch-pop';
+    pop.textContent = `+${bird.def.pts} ⭐`;
+    pop.style.cssText = `left:${tx}px;top:${ty - 20}px;`;
+    this._field.appendChild(pop);
+    setTimeout(() => pop.remove(), 900);
+
+    // Shake ball effect
+    const shakeBall = document.createElement('img');
+    shakeBall.src = 'assets/pokeball.png';
+    shakeBall.className = 'fdh-catch-ball';
+    shakeBall.style.cssText = `left:${tx}px;top:${ty}px;`;
+    this._field.appendChild(shakeBall);
+    setTimeout(() => shakeBall.remove(), 900);
+
+    setTimeout(() => el.remove(), 500);
+
+    // Update score
+    this._score += bird.def.pts;
+    document.getElementById('fdh-score').textContent = `⭐ ${this._score}`;
+    document.getElementById('challenge-intro').textContent =
+      `Wave ${this._wave + 1}/3 — Score: ${this._score} — Need: ${this._passScore}`;
+  },
+
+  _showMiss(name) {
+    // Falkner headshake — brief panel
+    const miss = document.createElement('div');
+    miss.className = 'fdh-miss-panel';
+    miss.innerHTML = `<img src="assets/falkner.png" class="fdh-miss-portrait">
+      <span>${name} escaped!</span>`;
+    this._field.appendChild(miss);
+    setTimeout(() => miss.remove(), 1200);
+  },
+
   _finish() {
     if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
-    this._gameRunning = false;
-    this._held = false;
-    if (this._canvas) {
-      this._canvas.removeEventListener('pointerdown',  this._downFn);
-      this._canvas.removeEventListener('pointerup',    this._upFn);
-      this._canvas.removeEventListener('pointerleave', this._upFn);
-    }
-    const won  = this._score >= 10 && this._lives > 0;
-    const gold = won ? (this._lives === 3 ? 30 : 20) : Math.max(5, this._score * 2);
+    const won     = this._score >= this._passScore;
+    const perfect = this._missCount === 0;
+    const gold    = won ? (perfect ? 30 : 20) : Math.max(5, Math.floor(this._score / 5));
     completeChallenge({
       screenClass: 'falkner-active', won,
       goldReward: gold,
-      effects: won && this._lives === 3 ? { falknerWind: true } : {},
-      modalTitle: won ? `🪶 ${this._chosenName} Soars!` : `🪶 ${this._chosenName} Crashed!`,
-      modalBody: `💰 ${this._score} coins collected\n❤️ ${this._lives} lives remaining\n+${gold}💰` +
-        (won && this._lives === 3 ? '\n\n⭐ Wind Sense — enemy accuracy -30% next battle!' : ''),
+      effects: perfect ? { falknerPerfect: true } : won ? { falknerWind: true } : {},
+      modalTitle: perfect ? '🎯 Perfect Catch!' : won ? '🎯 Good Work!' : '🎯 They Got Away...',
+      modalBody: `⭐ ${this._score} pts · ${this._missCount} escaped\n+${gold}💰` +
+        (perfect ? '\n\n⭐ Perfect! Enemy accuracy -40% next battle!' :
+         won     ? '\n\n⭐ Wind Sense — enemy accuracy -30% next battle!' : ''),
     });
   },
 };
 
-// ─── WHITNEY ENGINE — "Miltank's Rollout" (Dodge the boulder) ────────────────
-// A boulder rolls down one of 3 lanes. Tap the safe lane before it hits.
-// 5 rounds. Speed increases. Higher tiers show decoy shakes.
 const WhitneyEngine = {
   _isActive: false, _node: null, _round: 0, _lives: 3, _timeouts: [],
 
@@ -14029,7 +14160,8 @@ async function showPokedexCard(data, isNewDex = false, cachedSpecies = null) {
 
   // ── Flavour text ─────────────────────────────────────────────────────────
   flavEl.textContent = '…';
-  let flavour = '';
+  let flavour  = '';
+  let category = '';
   try {
     let species = cachedSpecies;
     if (!species && data.species?.url) {
@@ -14039,15 +14171,32 @@ async function showPokedexCard(data, isNewDex = false, cachedSpecies = null) {
       const entry = species.flavor_text_entries.find(e => e.language?.name === 'en');
       if (entry) flavour = entry.flavor_text.replace(/[\n\f\r]/g, ' ').replace(/\s+/g, ' ').trim();
     }
+    // Extract category (genus) for voice
+    if (species?.genera) {
+      const gen = species.genera.find(g => g.language?.name === 'en');
+      if (gen) category = gen.genus;
+    }
   } catch (_) {}
 
-  // Typewriter
+  const pokeName = capitalize(data.name);
+
+  // ── Typewriter + voice start simultaneously ───────────────────────────────
   flavEl.textContent = '';
   let fi = 0;
   const flavInterval = setInterval(() => {
     if (fi >= flavour.length) { clearInterval(flavInterval); return; }
     flavEl.textContent += flavour[fi++];
-  }, 30);
+  }, 28);
+
+  // Pokédex voice — name, category, flavour text
+  SoundEngine.speakPokedex(pokeName, category, flavour);
+
+  // ── Speaker replay button ─────────────────────────────────────────────────
+  const speakerBtn = document.getElementById('pdx-speak-btn');
+  if (speakerBtn) {
+    speakerBtn.style.display = '';
+    speakerBtn.onclick = () => SoundEngine.speakPokedex(pokeName, category, flavour);
+  }
 
   // ── New-entry banner ─────────────────────────────────────────────────────
   newBanner.style.display = isNewDex ? '' : 'none';
@@ -14062,6 +14211,7 @@ async function showPokedexCard(data, isNewDex = false, cachedSpecies = null) {
   return new Promise(resolve => {
     const handler = () => {
       clearInterval(flavInterval);
+      SoundEngine.stopSpeech();          // cancel voice when card closes
       closeBtn.removeEventListener('click', handler);
       overlay.classList.remove('pdx-modal-in');
       setTimeout(() => { overlay.style.display = 'none'; resolve(); }, 200);

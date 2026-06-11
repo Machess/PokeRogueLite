@@ -9630,3 +9630,158 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: linear-gradient(90deg, #80e840, #ffd700, #ff4040);
   border-radius: 4px;
 }
+
+/* ── Pokédex speak button ── */
+.pdx-speak-btn {
+  background: none; border: none;
+  font-size: 1.1rem; cursor: pointer;
+  opacity: .7; transition: opacity .15s, transform .1s;
+  padding: .1rem .3rem; margin-left: .3rem;
+  vertical-align: middle;
+}
+.pdx-speak-btn:hover { opacity: 1; transform: scale(1.15); }
+
+/* ═══════════════════════════════════════════
+   FALKNER — DUCK HUNT STYLE
+═══════════════════════════════════════════ */
+#screen-challenge.falkner-active {
+  background: linear-gradient(180deg, #5ba3d9 0%, #87ceeb 55%, #4a9a30 55%);
+}
+.falkner-dh-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .35rem !important;
+  width: 100%; padding: 0 !important;
+}
+.falkner-dh-field {
+  position: relative;
+  width: 340px; height: 260px;
+  background: linear-gradient(180deg, #7ec8e3 0%, #b0ddf0 55%, #5aaa30 55%, #3a7a18 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+  border: 2px solid rgba(255,255,255,.2);
+  flex-shrink: 0;
+}
+.fdh-grass {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 42px;
+  background: linear-gradient(180deg, #5aaa30 0%, #3a7a18 100%);
+  border-top: 3px solid #4a9a20;
+}
+/* Flying bird sprites */
+.fdh-bird {
+  position: absolute;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
+  z-index: 2;
+}
+/* Points badge above bird */
+.fdh-pts-badge {
+  position: absolute;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem;
+  color: #ffd700;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.8);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 3;
+}
+/* Thrown Pokéball */
+.fdh-pokeball {
+  position: absolute;
+  width: 28px; height: 28px;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 10;
+  image-rendering: pixelated;
+}
+/* Catch animation ball */
+.fdh-catch-ball {
+  position: absolute;
+  width: 24px; height: 24px;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 10;
+  transform: translate(-50%,-50%);
+  animation: fdh-ball-shake .8s ease;
+  image-rendering: pixelated;
+}
+@keyframes fdh-ball-shake {
+  0%,100% { transform: translate(-50%,-50%) rotate(0); }
+  15%     { transform: translate(-50%,-50%) rotate(-15deg); }
+  30%     { transform: translate(-50%,-50%) rotate(15deg); }
+  45%     { transform: translate(-50%,-50%) rotate(-10deg); }
+  60%     { transform: translate(-50%,-50%) rotate(10deg); }
+  75%     { transform: translate(-50%,-50%) rotate(-5deg); }
+}
+/* Points popup on catch */
+.fdh-catch-pop {
+  position: absolute;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem;
+  color: #ffd700;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.8);
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 10;
+  animation: fdh-pop-up .9s ease forwards;
+}
+@keyframes fdh-pop-up {
+  0%   { opacity:1; transform: translateX(-50%) translateY(0); }
+  100% { opacity:0; transform: translateX(-50%) translateY(-40px); }
+}
+/* Miss panel — Falkner headshake */
+.fdh-miss-panel {
+  position: absolute;
+  bottom: 44px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; gap: .4rem;
+  background: rgba(0,0,0,.7);
+  border: 2px solid rgba(255,100,100,.5);
+  border-radius: 8px;
+  padding: .3rem .6rem;
+  z-index: 20;
+  animation: fdh-miss-appear .15s ease;
+}
+@keyframes fdh-miss-appear {
+  from { opacity:0; transform: translateX(-50%) scale(.8); }
+  to   { opacity:1; transform: translateX(-50%) scale(1); }
+}
+.fdh-miss-portrait {
+  width: 28px; height: 28px; object-fit: contain;
+  animation: fdh-headshake .4s ease;
+}
+@keyframes fdh-headshake {
+  0%,100% { transform: rotate(0); }
+  25%     { transform: rotate(-12deg); }
+  75%     { transform: rotate(12deg); }
+}
+.fdh-miss-panel span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .28rem; color: #ff8080;
+}
+/* HUD row */
+.falkner-dh-hud {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 340px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: #fff;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
+.fdh-score  { color: #ffd700; }
+.fdh-wave   { color: rgba(255,255,255,.7); font-size: .28rem; }
+.fdh-balls  { color: #80e8ff; }
+/* Ball pip bar */
+.fdh-ball-bar {
+  display: flex; gap: 2px; flex-wrap: wrap;
+  justify-content: center;
+  width: 340px;
+}
+.fdh-ball-pip {
+  font-size: .55rem;
+  transition: opacity .2s;
+}
+.fdh-ball-pip.used { opacity: .2; }
