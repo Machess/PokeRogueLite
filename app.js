@@ -493,7 +493,8 @@ const CHALLENGE_CLASSES = [
   'challenge-select-active','giovanni-active',
   // Johto + Wobbuffet
   'falkner-active','bugsy-active','whitney-active','morty-active',
-  'jasmine-active','pryce-active','clair-active','wobbu-active',
+  'jasmine-active','pryce-active','clair-active','wobbu-active','chuck-active',
+  'oak-active','snorlax-active','rocketmoney-active',
 ];
 
 const NODE_ICONS = {
@@ -501,11 +502,12 @@ const NODE_ICONS = {
   boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣',
   jigglypuff_node: '🎵', surge_node: '⚡', erika_node: '🧪',
   ninja_node: '🥷', sabrina_node: '🔮', blaine_node: '🔥',
-  giovanni_node: '🎨', wobbuffet_node: '🛡️',
+  giovanni_node: '💰', wobbuffet_node: '🛡️',
   // Johto gym mini-games
   falkner_node: '🪶', bugsy_node: '🐛', whitney_node: '🎀',
   morty_node: '👻', jasmine_node: '⚙️', pryce_node: '❄️', clair_node: '🐉',
-  challenge: '🎮', giovanni_node: '🃏',
+  chuck_node: '🕐',
+  challenge: '🎮',
 };
 const NODE_MYSTERY_ICON = '❓';
 
@@ -1448,7 +1450,10 @@ const GOLD_TABLE = [
 function getScaledPrice(basePrice) {
   const bosses = Math.min(GameState?.bossesDefeated || 0, 7);
   const factor = 1 + (bosses / 7) * 1.0;   // 1.0× early → 2.0× late
-  return Math.ceil((basePrice * factor) / 5) * 5; // round up to nearest 5g
+  let price = Math.ceil((basePrice * factor) / 5) * 5; // round up to nearest 5g
+  // Rocket's Ledger reward — 10% off for the rest of the run
+  if (GameState?.rocketLedgerDiscount) price = Math.ceil((price * 0.9) / 5) * 5;
+  return price;
 }
 
 function goldForWildBattle() {
@@ -1856,6 +1861,7 @@ function generateMap(bossIndex) {
       { key:'bugsy',   type:'bugsy_node',   row:2, minBi:1 },
       { key:'whitney', type:'whitney_node', row:3, minBi:2 },
       { key:'morty',   type:'morty_node',   row:2, minBi:3 },
+      { key:'chuck',   type:'chuck_node',   row:2, minBi:4 },
       { key:'jasmine', type:'jasmine_node', row:2, minBi:5 },
       { key:'pryce',   type:'pryce_node',   row:2, minBi:6 },
       { key:'clair',   type:'clair_node',   row:3, minBi:7 },
@@ -1883,7 +1889,7 @@ function generateMap(bossIndex) {
           !['cooking','fishing','boss','jigglypuff_node','surge_node',
             'erika_node','ninja_node','sabrina_node','blaine_node',
             'falkner_node','bugsy_node','whitney_node','morty_node',
-            'jasmine_node','pryce_node','clair_node'].includes(n.type)
+            'jasmine_node','pryce_node','clair_node','chuck_node'].includes(n.type)
         );
         if (candidates.length > 0) {
           const target = candidates[Math.floor(Math.random() * candidates.length)];
@@ -1910,7 +1916,7 @@ function generateMap(bossIndex) {
                          'jigglypuff_node','surge_node','erika_node',
                          'ninja_node','sabrina_node','blaine_node',
                          'falkner_node','bugsy_node','whitney_node','morty_node',
-                         'jasmine_node','pryce_node','clair_node'];
+                         'jasmine_node','pryce_node','clair_node','chuck_node'];
 
     const injectChallenge = (row) => {
       const cands = nodes.filter(n => n.row === row && !SPECIAL.includes(n.type));
@@ -1990,6 +1996,9 @@ function showBossIntro(opts) {
   // Cancel any still-running typewriter from a previous intro
   if (_bossIntroInterval) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; }
 
+  // Fire-and-forget preload of portrait + pokeball — typewriter gives them ~3s to land
+  preloadImages([`assets/${opts.portrait}`, 'assets/pokeball.png']);
+
   showScreen('boss');
   BossEngine._isRocket = false;
 
@@ -2026,17 +2035,43 @@ function showBossIntro(opts) {
 
   // Typewriter — stored globally so next call can cancel it
   let ci = 0;
+  const finishIntro = () => {
+    if (_bossIntroInterval) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; }
+    const dialogueEl = document.getElementById('dialogue-text');
+    if (dialogueEl) dialogueEl.textContent = opts.introText;
+    if (startBtn) startBtn.style.display = '';
+    if (opts.onReady) opts.onReady(startBtn);
+  };
   _bossIntroInterval = setInterval(() => {
     const dialogueEl = document.getElementById('dialogue-text');
     if (!dialogueEl) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; return; }
     dialogueEl.textContent += opts.introText[ci++];
-    if (ci >= opts.introText.length) {
-      clearInterval(_bossIntroInterval);
-      _bossIntroInterval = null;
-      if (startBtn) startBtn.style.display = '';
-      if (opts.onReady) opts.onReady(startBtn);
-    }
+    if (ci >= opts.introText.length) finishIntro();
   }, 22);
+
+  // A5 — tap anywhere on the intro to skip the typewriter
+  const introWrap = document.getElementById('trainer-intro');
+  if (introWrap) introWrap.onclick = () => { if (_bossIntroInterval) finishIntro(); };
+
+  // A1 — best-score chip on the intro (gameKey derived from portrait filename)
+  const gameKey = (opts.gameKey || opts.portrait || '').replace(/\.(png|jpg)$/,'').replace('assets/','');
+  try {
+    const all  = JSON.parse(localStorage.getItem(_bestScoresKey()) || '{}');
+    const best = all[gameKey];
+    let chip = document.getElementById('intro-best-chip');
+    if (best !== undefined) {
+      if (!chip) {
+        chip = document.createElement('div');
+        chip.id = 'intro-best-chip';
+        chip.className = 'intro-best-chip';
+        introWrap?.appendChild(chip);
+      }
+      chip.textContent = `🏆 Best: ${best}`;
+      chip.style.display = '';
+    } else if (chip) {
+      chip.style.display = 'none';
+    }
+  } catch(_) {}
 }
 
 // Shared challenge screen setup — all mini-game engines call this at the
@@ -2075,14 +2110,81 @@ function setupChallengeScreen(opts) {
 
   if (opts.bgm !== false) SoundEngine.playBGM(opts.bgm || 'mini_game.mp3');
 
+  // ── Universal quit button — forfeits gracefully back to the map ───────────
+  let quitBtn = document.getElementById('mg-quit-btn');
+  if (!quitBtn) {
+    quitBtn = document.createElement('button');
+    quitBtn.id = 'mg-quit-btn';
+    quitBtn.className = 'mg-quit-btn';
+    quitBtn.textContent = '✕';
+    quitBtn.title = 'Quit mini-game';
+    scr.appendChild(quitBtn);
+  }
+  quitBtn.style.display = '';
+  quitBtn.onclick = () => {
+    showModal('Quit mini-game?', 'You can come back to the map,\nbut this challenge counts as skipped.', () => {
+      SoundEngine.stopBGM();
+      scr.classList.remove(...CHALLENGE_CLASSES);
+      quitBtn.style.display = 'none';
+      if (GameState?.currentNodeIndex != null) {
+        MapEngine.completeNode(GameState.currentNodeIndex);
+      }
+      MapEngine.show();
+    }, true);   // true → show a cancel option if supported
+  };
+
+  // ── Rules chip — re-shows the one-line rule for the current game ──────────
+  let rulesChip = document.getElementById('mg-rules-chip');
+  if (!rulesChip) {
+    rulesChip = document.createElement('button');
+    rulesChip.id = 'mg-rules-chip';
+    rulesChip.className = 'mg-rules-chip';
+    rulesChip.textContent = '?';
+    rulesChip.title = 'How to play';
+    scr.appendChild(rulesChip);
+  }
+  if (opts.rule || opts.intro) {
+    rulesChip.style.display = '';
+    const ruleText = opts.rule || opts.badge || '';
+    rulesChip.onclick = () => {
+      const tip = document.createElement('div');
+      tip.className = 'mg-rule-tip';
+      tip.textContent = MG_RULES[opts.screenClass] || ruleText;
+      scr.appendChild(tip);
+      setTimeout(() => tip.remove(), 2600);
+    };
+  } else {
+    rulesChip.style.display = 'none';
+  }
+
   return cv;   // return cv so caller can append children immediately
 }
+
+// One-line rules per mini-game screen class — shown by the "?" chip
+const MG_RULES = {
+  'falkner-active':  'Tap a flying Pokémon to throw a Pokéball at it!',
+  'bugsy-active':    'Find and tap the Pokémon shown at the top!',
+  'whitney-active':  'Pour jugs to hit the exact target line — then pick the berry!',
+  'morty-active':    'Flip cards and match the ghost pairs!',
+  'jasmine-active':  'Watch the anvils flash, then repeat the pattern!',
+  'pryce-active':    'Tap exactly when the bobber dips below the line!',
+  'clair-active':    'Tap the type that beats the incoming dragon!',
+  'chuck-active':    'Read the time and set the clock for Chuck!',
+  'oak-active':      'Tap the basket each Pokémon belongs in!',
+  'snorlax-active':  'Compare weights and balance the scale!',
+  'rocketmoney-active': 'Count the coins to pay the exact amount!',
+  'wobbu-active':    'Tap the super-effective counter before the attack lands!',
+};
 
 // Shared finish flow — applies effects, awards gold, shows modal, returns to map.
 // opts: { screenClass, won, goldReward, effects?, statuses?,
 //         modalTitle, modalBody, onComplete? }
 function completeChallenge(opts) {
   SoundEngine.stopBGM();
+
+  // Hide mini-game chrome
+  const qb = document.getElementById('mg-quit-btn');   if (qb) qb.style.display = 'none';
+  const rc = document.getElementById('mg-rules-chip'); if (rc) rc.style.display = 'none';
 
   // Clean up screen class
   if (opts.screenClass) {
@@ -2108,10 +2210,33 @@ function completeChallenge(opts) {
 
   saveGame();
 
-  showModal(opts.modalTitle, opts.modalBody, () => {
+  const finish = () => {
     if (opts.onComplete) opts.onComplete();
     else { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
-  });
+  };
+
+  // A6 — structured results card when score data is provided; legacy modal otherwise
+  if (opts.score !== undefined && opts.maxScore !== undefined) {
+    showResultsCard({
+      title:      opts.modalTitle,
+      score:      opts.score,
+      maxScore:   opts.maxScore,
+      gold:       opts.goldReward || 0,
+      tokenLabel: opts.tokenLabel || null,
+      won:        opts.won,
+      gameKey:    opts.gameKey || null,
+      onDone:     finish,
+    });
+  } else {
+    // Legacy callers (no score data) — still get the card, stars derived from won
+    showResultsCard({
+      title:  opts.modalTitle,
+      detail: opts.modalBody,
+      gold:   opts.goldReward || 0,
+      won:    opts.won,
+      onDone: finish,
+    });
+  }
 }
 
 // ─── GAMESTATE ACCESSORS ─────────────────────────────────────────────────────
@@ -2279,6 +2404,25 @@ const SoundEngine = {
   },
 
   playFanfare()  { this.playSFX('fanfare_item_get.mp3', 0.65); },
+
+  // ── D5: universal tap blip — Web Audio square chirp, no asset needed ──────
+  _audioCtx: null,
+  playTap() {
+    if (this._muted) return;
+    try {
+      if (!this._audioCtx) this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx  = this._audioCtx;
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, ctx.currentTime + 0.04);
+      gain.gain.setValueAtTime(0.06, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.07);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(); osc.stop(ctx.currentTime + 0.08);
+    } catch (_) {}
+  },
   playRecovery() { this.playSFX('pokemon_recovery.mp3', 0.7); },
   // ── Pokédex voice — Web Speech API ────────────────────────────────────────
   _dexVoice: null,
@@ -2335,10 +2479,110 @@ const SoundEngine = {
   },
 };
 
-function showLoading() { document.getElementById('loading-overlay').classList.remove('hidden'); }
-function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+// ── Asset preloader — resolves when all images are decoded (or errored) ──────
+// Usage: await preloadImages(['assets/falkner.png', spriteUrl, ...])
+function preloadImages(urls) {
+  return Promise.all(
+    (urls || []).filter(Boolean).map(url => new Promise(resolve => {
+      const img = new Image();
+      img.onload  = () => { (img.decode ? img.decode().catch(()=>{}) : Promise.resolve()).then(() => resolve(img)); };
+      img.onerror = () => resolve(null);   // never block on a missing asset
+      img.src = url;
+    }))
+  );
+}
 
-function showModal(title, body, cb) {
+// ── A1: per-profile best scores ───────────────────────────────────────────────
+function _bestScoresKey() { return `pkt_best_scores_${getActiveProfile() || 'default'}`; }
+function getBestScore(gameKey) {
+  try { return (JSON.parse(localStorage.getItem(_bestScoresKey()) || '{}'))[gameKey] ?? null; }
+  catch(e) { return null; }
+}
+function recordBestScore(gameKey, score) {
+  try {
+    const all  = JSON.parse(localStorage.getItem(_bestScoresKey()) || '{}');
+    const prev = all[gameKey] ?? null;
+    const isNew = prev === null || score > prev;
+    if (isNew) { all[gameKey] = score; localStorage.setItem(_bestScoresKey(), JSON.stringify(all)); }
+    return { isNew: isNew && prev !== null, best: Math.max(score, prev ?? 0), first: prev === null };
+  } catch(e) { return { isNew: false, best: score, first: false }; }
+}
+
+// ── A6: shared results card — stars, gold count-up, token, NEW BEST ─────────
+function showResultsCard(opts) {
+  // opts: { title, score, maxScore, gold, tokenLabel, won, gameKey, onDone }
+  const stars   = opts.maxScore > 0 ? Math.round((opts.score / opts.maxScore) * 5) : (opts.won ? 5 : 2);
+  const bestRes = opts.gameKey ? recordBestScore(opts.gameKey, opts.score) : null;
+
+  let overlay = document.getElementById('results-card-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'results-card-overlay';
+    overlay.className = 'results-card-overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div class="results-card ${opts.won ? 'rc-won' : 'rc-lost'}">
+      <div class="rc-title">${opts.title || (opts.won ? 'You did it!' : 'Nice try!')}</div>
+      ${bestRes?.isNew ? '<div class="rc-newbest">🏆 NEW BEST!</div>' : ''}
+      <div class="rc-stars">${Array.from({length:5},(_,i)=>
+        `<span class="rc-star${i<stars?' filled':''}" style="animation-delay:${i*0.12}s">${i<stars?'★':'☆'}</span>`).join('')}</div>
+      ${opts.maxScore ? `<div class="rc-score">${opts.score} / ${opts.maxScore}</div>` : ''}
+      ${opts.detail ? `<div class="rc-detail">${String(opts.detail).replace(/\n/g,'<br>')}</div>` : ''}
+      ${bestRes && !bestRes.first && !bestRes.isNew ? `<div class="rc-best">Best: ${bestRes.best}</div>` : ''}
+      <div class="rc-gold" id="rc-gold">💰 +0</div>
+      ${opts.tokenLabel ? `<div class="rc-token">⭐ ${opts.tokenLabel}</div>` : ''}
+      <button class="btn-pixel btn-primary rc-done" id="rc-done">Continue ▶</button>
+    </div>`;
+  overlay.style.display = 'flex';
+
+  // Gold count-up animation
+  const goldEl = document.getElementById('rc-gold');
+  const target = opts.gold || 0;
+  let cur = 0;
+  const step = Math.max(1, Math.ceil(target / 24));
+  const iv = setInterval(() => {
+    cur = Math.min(target, cur + step);
+    if (goldEl) goldEl.textContent = `💰 +${cur}`;
+    if (cur >= target) clearInterval(iv);
+  }, 40);
+
+  document.getElementById('rc-done').onclick = () => {
+    clearInterval(iv);
+    overlay.style.display = 'none';
+    if (opts.onDone) opts.onDone();
+  };
+}
+
+
+const LOADING_TIPS = [
+  'Type matchups deal double damage!',
+  'Catch Pokémon to fill your Pokédex!',
+  'Shields block incoming damage!',
+  'Win 3 runs to unlock the League!',
+  'Perfect mini-games give battle bonuses!',
+  'Evolved Pokémon hit much harder!',
+  'Heal nodes restore your whole party!',
+];
+let _loadingTipInterval = null;
+
+function showLoading() {
+  document.getElementById('loading-overlay').classList.remove('hidden');
+  const tipEl = document.getElementById('loading-tip');
+  if (tipEl) {
+    const showTip = () => { tipEl.textContent = LOADING_TIPS[Math.floor(Math.random() * LOADING_TIPS.length)]; };
+    showTip();
+    clearInterval(_loadingTipInterval);
+    _loadingTipInterval = setInterval(showTip, 2400);
+  }
+}
+function hideLoading() {
+  document.getElementById('loading-overlay').classList.add('hidden');
+  clearInterval(_loadingTipInterval);
+  _loadingTipInterval = null;
+}
+
+function showModal(title, body, cb, withCancel) {
   document.getElementById('modal-title').textContent = title;
   document.getElementById('modal-body').innerHTML = (body || '').replace(/\n/g, '<br>');
   document.getElementById('overlay').classList.remove('hidden');
@@ -2346,6 +2590,21 @@ function showModal(title, body, cb) {
     document.getElementById('overlay').classList.add('hidden');
     if (cb) cb();
   };
+  // Optional cancel button — created once, toggled per call
+  let cancelBtn = document.getElementById('modal-cancel');
+  if (withCancel) {
+    if (!cancelBtn) {
+      cancelBtn = document.createElement('button');
+      cancelBtn.id = 'modal-cancel';
+      cancelBtn.className = 'btn-pixel btn-secondary modal-cancel-btn';
+      cancelBtn.textContent = 'Cancel';
+      document.getElementById('modal-ok').insertAdjacentElement('afterend', cancelBtn);
+    }
+    cancelBtn.style.display = '';
+    cancelBtn.onclick = () => document.getElementById('overlay').classList.add('hidden');
+  } else if (cancelBtn) {
+    cancelBtn.style.display = 'none';
+  }
 }
 
 function closeModal() {
@@ -3918,6 +4177,7 @@ const ProfileEngine = {
     // Johto tint on start screen
     document.getElementById('screen-start')
       ?.classList.toggle('johto-active', johtoUnlocked);
+    document.body.classList.toggle('johto-accent', johtoUnlocked);
     // Sync BGM when already on the start screen (e.g. profile switch)
     if (document.getElementById('screen-start')?.classList.contains('active')) {
       SoundEngine.onScreenChange('start');
@@ -4989,7 +5249,7 @@ const ARROW_LABELS = {
   sabrina_node:   { icon: null, emoji: '🔮', label: 'Sabrina Jigsaw'     },
   blaine_node:    { icon: null, emoji: '🔥', label: 'Battle Lab'         },
   challenge:      { icon: null, emoji: '🎮', label: 'Your Choice'        },
-  giovanni_node:  { icon: null, emoji: '🃏', label: 'Power Rankings'     },
+  giovanni_node:  { icon: null, emoji: '💰', label: "Rocket's Ledger"    },
 };
 
 // Builds an inline SVG directional chevron for nav arrows.
@@ -5249,10 +5509,25 @@ const MapEngine = {
       const nextGym      = nextBossNode ? GYM_DATA[nextBossNode.gymIdx] : null;
       document.getElementById('nav-location-sub').textContent =
         nextGym ? `${nextGym.name} is waiting · ${nextGym.title}` : 'The Championship awaits';
+      const lp = document.getElementById('nav-badge-pips');
+      if (lp) lp.style.display = 'none';
     } else {
       document.getElementById('nav-location-name').textContent = theme.name;
       document.getElementById('nav-location-sub').textContent =
-        `Heading toward ${boss?.name ?? 'the Boss'} · ${GameState.bossesDefeated}/8 badges`;
+        `Heading toward ${boss?.name ?? 'the Boss'}`;
+      // D4 — badge pip row: filled circle per badge earned
+      let pipRow = document.getElementById('nav-badge-pips');
+      if (!pipRow) {
+        pipRow = document.createElement('div');
+        pipRow.id = 'nav-badge-pips';
+        pipRow.className = 'nav-badge-pips';
+        document.getElementById('nav-location').appendChild(pipRow);
+      }
+      pipRow.style.display = '';
+      const earned = GameState.bossesDefeated || 0;
+      pipRow.innerHTML = Array.from({ length: 8 }, (_, i) =>
+        `<span class="badge-pip${i < earned ? ' earned' : ''}">${i < earned ? '●' : '○'}</span>`
+      ).join('');
     }
 
     // ── Find available choices ──────────────────────────────────────────────
@@ -5389,6 +5664,7 @@ const MapEngine = {
       case 'jasmine_node':    JasmineEngine.start(node);         break;
       case 'pryce_node':      PryceEngine.start(node);           break;
       case 'clair_node':      ClairEngine.start(node);           break;
+      case 'chuck_node':      ChuckEngine.start(node);           break;
     }
   },
 
@@ -5709,6 +5985,9 @@ const BattleEngine = {
                     || active.spriteUrl;
     active.backSpriteUrl = backSprite;
 
+    // Preload both sprites before the battle screen appears — no pop-in
+    await preloadImages([oppSprite, backSprite]);
+
     hideLoading();
     setBattleBg(oppType, false);
     showScreen('battle');
@@ -5835,6 +6114,8 @@ const BattleEngine = {
                               this._logPlayer(`🐉 Dragon Bane — Dragon/Water +25% this battle!`); }
     if (fx.bugsyResearch)   { this.state.oppAtkDebuff = (this.state.oppAtkDebuff||0)+15;
                               this._logPlayer(`🐛 Bug Research — enemy attack -15% this battle!`); }
+    if (fx.chuckDiscipline) { this.state.energy = (this.state.energy || 0) + 1;
+                              this._logPlayer(`🕐 Chuck's Discipline — +1 energy this turn!`); }
     GameState.pendingPlayerEffects = {};
 
     this._dealHand(5);
@@ -6901,6 +7182,12 @@ const BossEngine = {
     }
     hideLoading();
 
+    // Preload all battle assets before the screen appears — no pop-in
+    await preloadImages([
+      `assets/${boss.image}`,
+      ...this.oppTeam.map(p => p.spriteUrl),
+    ]);
+
     const firstOppType = this.oppTeam[0]?.type || 'normal';
     this._firstOppType = firstOppType;
     setBossIntroBg(bossIdx);
@@ -6933,13 +7220,18 @@ const BossEngine = {
     // Typewriter — button only appears after dialogue completes AND team is loaded
     let ci = 0;
     const dialogue = boss.dialogue || '';
+    const finishIntro = () => {
+      clearInterval(iv);
+      document.getElementById('dialogue-text').textContent = dialogue;
+      if (startBtn) startBtn.style.display = '';
+    };
     const iv = setInterval(() => {
       document.getElementById('dialogue-text').textContent += dialogue[ci++];
-      if (ci >= dialogue.length) {
-        clearInterval(iv);
-        if (startBtn) startBtn.style.display = '';
-      }
+      if (ci >= dialogue.length) finishIntro();
     }, 22);
+    // A5 — tap to skip
+    const introWrapB = document.getElementById('trainer-intro');
+    if (introWrapB) introWrapB.onclick = () => finishIntro();
   },
 
   startBattle() {
@@ -10279,559 +10571,164 @@ const GIO_PALETTE = [
 
 // Each painting: abstract geometric zones + the Pokémon hidden inside
 // Points are [x%, y%] percentage of a 200×200 viewBox
-const GIOVANNI_PAINTINGS = [
-  {
-    name:       'Storm Fragment',
-    intro:      '"Colour it precisely. I can tell when someone guesses."',
-    revealId:   25,
-    revealName: 'Pikachu',
-    revealType: 'electric',
-    palette:    [1,6,2],   // colour numbers available (tier 1 uses first 2, tier 2 first 3, tier 3 all)
-    zones: [
-      // Lightning bolt shards radiating from centre — all yellow/electric
-      { id:1,  num:1, points:[[100,20],[115,65],[100,55],[85,65]] },    // top spike
-      { id:2,  num:1, points:[[140,40],[165,80],[130,70],[120,50]] },   // right spike
-      { id:3,  num:1, points:[[60,40],[80,50],[70,70],[35,80]] },       // left spike
-      { id:4,  num:1, points:[[100,55],[115,65],[110,120],[90,120],[85,65]] }, // centre bolt
-      { id:5,  num:6, points:[[80,130],[90,120],[110,120],[120,130],[100,155]] }, // tail/cream base
-      { id:6,  num:6, points:[[60,90],[80,95],[85,65],[35,80]] },       // left fill
-      { id:7,  num:6, points:[[120,90],[165,80],[140,40],[115,65]] },   // right fill
-      { id:8,  num:2, points:[[45,140],[80,130],[100,155],[60,170]] },  // ground shadow left
-      { id:9,  num:2, points:[[155,140],[120,130],[100,155],[140,170]]}, // ground shadow right
-    ],
-  },
-  {
-    name:       'Ancient Flame',
-    intro:      '"Fire is not chaos. It has structure. Find it."',
-    revealId:   4,
-    revealName: 'Charmander',
-    revealType: 'fire',
-    palette:    [2,6,1,8],
-    zones: [
-      { id:1,  num:2, points:[[100,15],[120,50],[100,45],[80,50]] },     // flame tip
-      { id:2,  num:2, points:[[80,50],[100,45],[120,50],[130,90],[70,90]] }, // upper flame
-      { id:3,  num:2, points:[[60,90],[70,90],[80,130],[65,140],[45,110]] }, // left flame tongue
-      { id:4,  num:2, points:[[140,90],[130,90],[120,130],[135,140],[155,110]] }, // right flame tongue
-      { id:5,  num:6, points:[[70,90],[130,90],[125,145],[100,160],[75,145]] }, // body centre
-      { id:6,  num:1, points:[[75,145],[125,145],[120,175],[80,175]] },  // tail ember
-      { id:7,  num:8, points:[[45,150],[75,145],[80,175],[50,180]] },    // left base
-      { id:8,  num:8, points:[[155,150],[125,145],[120,175],[150,180]] },// right base
-    ],
-  },
-  {
-    name:       'Tidal Arc',
-    intro:      '"The ocean does not apologise. Neither should your brushwork."',
-    revealId:   7,
-    revealName: 'Squirtle',
-    revealType: 'water',
-    palette:    [3,6,1,8],
-    zones: [
-      { id:1,  num:3, points:[[20,60],[55,40],[70,70],[40,85]] },        // left wave crest
-      { id:2,  num:3, points:[[55,40],[100,25],[115,55],[70,70]] },      // top wave arc
-      { id:3,  num:3, points:[[100,25],[145,40],[130,70],[115,55]] },    // right top arc
-      { id:4,  num:3, points:[[130,70],[160,60],[180,90],[145,100]] },   // right wave
-      { id:5,  num:3, points:[[40,85],[70,70],[115,55],[145,100],[100,120],[55,110]] }, // main body water
-      { id:6,  num:6, points:[[55,110],[100,120],[95,160],[65,165]] },   // shell left
-      { id:7,  num:6, points:[[100,120],[145,100],[135,165],[105,160]] }, // shell right
-      { id:8,  num:1, points:[[65,165],[95,160],[105,160],[135,165],[100,185]] }, // base foam
-      { id:9,  num:8, points:[[20,120],[40,85],[55,110],[35,145]] },     // left shadow
-      { id:10, num:8, points:[[180,120],[145,100],[135,165],[165,155]] }, // right shadow
-    ],
-  },
-  {
-    name:       'Forest Spiral',
-    intro:      '"Growth follows a pattern. Show me you see it."',
-    revealId:   1,
-    revealName: 'Bulbasaur',
-    revealType: 'grass',
-    palette:    [4,6,3,8],
-    zones: [
-      { id:1,  num:4, points:[[100,15],[130,30],[125,65],[100,60],[75,65],[70,30]] },  // top canopy
-      { id:2,  num:4, points:[[60,55],[75,65],[70,100],[45,90]] },       // left leaf
-      { id:3,  num:4, points:[[140,55],[125,65],[130,100],[155,90]] },   // right leaf
-      { id:4,  num:4, points:[[70,100],[100,90],[130,100],[125,130],[75,130]] }, // lower canopy
-      { id:5,  num:6, points:[[75,130],[125,130],[120,165],[80,165]] },  // body
-      { id:6,  num:3, points:[[45,130],[75,130],[80,165],[50,175]] },    // left vine
-      { id:7,  num:3, points:[[155,130],[125,130],[120,165],[150,175]] }, // right vine
-      { id:8,  num:8, points:[[80,165],[120,165],[115,185],[85,185]] },  // ground
-    ],
-  },
-  {
-    name:       'Mind Fracture',
-    intro:      '"Psychic power crystallises in patterns. Recognise them."',
-    revealId:   63,
-    revealName: 'Abra',
-    revealType: 'psychic',
-    palette:    [5,6,1,3,8],
-    zones: [
-      { id:1,  num:5, points:[[100,10],[125,45],[100,40],[75,45]] },     // top crystal
-      { id:2,  num:5, points:[[150,25],[165,70],[135,65],[125,45]] },    // right top shard
-      { id:3,  num:5, points:[[50,25],[75,45],[65,65],[35,70]] },        // left top shard
-      { id:4,  num:5, points:[[125,45],[100,40],[75,45],[65,65],[100,75],[135,65]] }, // crown ring
-      { id:5,  num:6, points:[[65,65],[100,75],[135,65],[145,110],[100,120],[55,110]] }, // face zone
-      { id:6,  num:1, points:[[35,70],[65,65],[55,110],[20,100]] },      // left aura
-      { id:7,  num:1, points:[[165,70],[135,65],[145,110],[180,100]] },  // right aura
-      { id:8,  num:3, points:[[55,110],[100,120],[145,110],[140,155],[100,165],[60,155]] }, // body
-      { id:9,  num:8, points:[[60,155],[100,165],[140,155],[130,185],[70,185]] }, // base shadow
-    ],
-  },
-  {
-    name:       'Shadow Veil',
-    intro:      '"Darkness is not the absence of colour. It is a colour. Use it."',
-    revealId:   94,
-    revealName: 'Gengar',
-    revealType: 'ghost',
-    palette:    [7,5,6,3,1,8],
-    zones: [
-      { id:1,  num:7, points:[[100,15],[140,40],[135,75],[100,65],[65,75],[60,40]] },  // dark crown
-      { id:2,  num:7, points:[[40,55],[60,40],[65,75],[45,90],[20,80]] }, // left dark arc
-      { id:3,  num:7, points:[[160,55],[140,40],[135,75],[155,90],[180,80]] }, // right dark arc
-      { id:4,  num:5, points:[[65,75],[100,65],[135,75],[130,115],[100,125],[70,115]] }, // purple glow body
-      { id:5,  num:5, points:[[45,90],[65,75],[70,115],[50,130],[25,110]] }, // left mist
-      { id:6,  num:5, points:[[155,90],[135,75],[130,115],[150,130],[175,110]] }, // right mist
-      { id:7,  num:6, points:[[70,115],[100,125],[130,115],[128,155],[72,155]] }, // belly cream
-      { id:8,  num:1, points:[[50,155],[72,155],[68,180],[40,175]] },    // left glow
-      { id:9,  num:1, points:[[150,155],[128,155],[132,180],[160,175]] }, // right glow
-      { id:10, num:8, points:[[68,180],[132,180],[125,195],[75,195]] },  // ground
-    ],
-  },
+// ─── GIOVANNI ENGINE — "Rocket's Ledger" — teaches money & change ────────────
+// Giovanni audits Team Rocket's loot. Pay exact amounts and make change
+// using gold coins. Tier 1: pay exact price. Tier 2: make change.
+// Tier 3: bigger amounts, mixed change. Reward: 10% shop discount this run.
+
+const ROCKET_COINS = [
+  { val: 1,  label: '1g',  cls: 'rk-coin-1'  },
+  { val: 5,  label: '5g',  cls: 'rk-coin-5'  },
+  { val: 10, label: '10g', cls: 'rk-coin-10' },
+  { val: 50, label: '50g', cls: 'rk-coin-50' },
 ];
 
-// Giovanni commentary lines — painting-themed, never reveal the Pokémon
-const GIO_LINES = {
-  start:       '"Colour it precisely. Show me you understand the type."',
-  first_zone:  '"Good. You started with conviction."',
-  wrong_color: '"That colour does not belong there. Think again."',
-  change_mind: '"Changed your mind. Doubt or wisdom — I cannot tell yet."',
-  all_one_type:'"The [TYPE] zones. Consistent."',
-  examining:   '"..."',
-  grade_3:     '"Worthy of my collection."',
-  grade_2:     '"Acceptable. Not remarkable."',
-  grade_1:     '"You missed the point."',
-  grade_0:     '"Disappointing. Even a child could see the type."',
-};
+const ROCKET_ITEMS = ['Stolen Pokéball','"Borrowed" Potion','Mystery Crate','Rare Candy (fake)','Bent Spoon','Moon Stone Replica','Suspicious TM','Golden Magikarp Statue'];
 
 const GiovanniEngine = {
-  _node:        null,
-  _isActive:    false,
-  _painting:    null,
-  _filled:      {},     // { zoneId: colorNum }
-  _selectedColor: null,
-  _tier:        1,
-  _undoStack:   [],     // [{zoneId, prev}]
+  _node:null, _isActive:false, _round:0, _hits:0,
+  _target:0, _paid:0, _mode:'pay',
 
   start(node) {
-    this._node      = node;
-    this._isActive  = true;
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
     ActiveEngine.set(this);
-    this._tier      = GameState.difficultyTier || 2;
-    this._filled    = {};
-    this._undoStack = [];
-    this._selectedColor = null;
-
-    // Pick a random painting
-    this._painting = GIOVANNI_PAINTINGS[
-      Math.floor(Math.random() * GIOVANNI_PAINTINGS.length)
-    ];
-
-    // Boss screen intro
-    showScreen('boss');
-    BossEngine._isRocket = false;
-    const bgEl  = document.querySelector('#screen-boss .battle-bg');
-    const imgEl = document.querySelector('#screen-boss .battle-bg-img');
-    if (bgEl) { bgEl.style.background = GYM_FALLBACKS[7]; }
-    if (imgEl) { imgEl.style.opacity = '0'; }
-
-    document.getElementById('trainer-intro').style.display    = 'flex';
-    document.getElementById('boss-battle-area').style.display = 'none';
-    document.getElementById('boss-party-bar').innerHTML       = '';
-    const trainerImg = document.getElementById('boss-trainer-sprite');
-    if (trainerImg) trainerImg.src = 'assets/giovanni.png';
-    document.getElementById('dialogue-name').textContent = 'Giovanni';
-    document.getElementById('dialogue-text').textContent = '';
-
-    const startBtn = document.getElementById('btn-start-boss-battle');
-    if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Begin ▶'; }
-    document.getElementById('btn-dialogue-next').style.display = 'none';
-
-    const intro = `${GameState.trainerName || 'Trainer'}. I am expanding my collection. I have an unfinished work — "${this._painting.name}". Colour it by number. Impress me.`;
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) { clearInterval(iv); if (startBtn) startBtn.style.display = ''; }
-    }, 22);
+    showBossIntro({
+      gymIndex: 7, portrait: 'giovanni.png', gameKey: 'giovanni',
+      name: 'Giovanni', btnLabel: '💰 Open the Ledger',
+      introText: "So. Team Rocket's finances are a disaster — my grunts cannot count. You will settle the ledger. Pay EXACTLY what is owed. One coin too many or too few, and... I will be displeased.",
+    });
   },
 
   startGame() {
-    this._isActive = false;
-    ActiveEngine.clear();
+    this._isActive = false; ActiveEngine.clear();
     document.getElementById('trainer-intro').style.display = 'none';
-    this._showPainting();
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
   },
 
-  _showPainting() {
-    const p    = this._painting;
-    const tier = this._tier;
-
-    // Which zones are visible (tier scales complexity)
-    const visibleZones = tier <= 1
-      ? p.zones.slice(0, Math.min(5, p.zones.length))
-      : tier === 2
-      ? p.zones.slice(0, Math.min(8, p.zones.length))
-      : p.zones;
-
-    // Which palette colours are available
-    const paletteNums = new Set(visibleZones.map(z => z.num));
-    const palette     = GIO_PALETTE.filter(c => paletteNums.has(c.num));
-
-    // Setup challenge screen
-    const charImg = document.getElementById('challenge-character-img');
-    if (charImg) { charImg.src = 'assets/giovanni.png'; charImg.style.display = ''; }
-    document.getElementById('challenge-badge').textContent  = '🎨 Giovanni\'s Gallery';
-    document.getElementById('challenge-intro').textContent  = `"${p.name}"`;
-    document.getElementById('challenge-result').style.display       = 'none';
-    document.getElementById('challenge-continue-btn').style.display = 'none';
-    document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('challenge-answer-btns').innerHTML      = '';
-    const jwd = document.getElementById('jessie-word-display');
-    if (jwd) { jwd.style.display='none'; jwd.innerHTML=''; jwd.className='jessie-word-display'; }
-
-    const cv = document.getElementById('challenge-coin-visual');
-    cv.style.display = 'block';
-    cv.className     = 'giovanni-wrap';
-    cv.innerHTML     = '';
-
-    showScreen('challenge');
-    document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
-    document.getElementById('screen-challenge').classList.add('giovanni-active');
-    SoundEngine.playBGM('mini_game.mp3');
-
-    // ── Build SVG canvas ─────────────────────────────────────────────────────
-    const canvasWrap = document.createElement('div');
-    canvasWrap.className = 'gio-canvas-wrap';
-
-    const svgNS = 'http://www.w3.org/2000/svg';
-    const svg   = document.createElementNS(svgNS, 'svg');
-    svg.setAttribute('viewBox', '0 0 400 400');
-    svg.setAttribute('class', 'gio-canvas-svg');
-    svg.setAttribute('id', 'gio-svg');
-
-    // Background
-    const bg = document.createElementNS(svgNS, 'rect');
-    bg.setAttribute('width', '400'); bg.setAttribute('height', '400');
-    bg.setAttribute('fill', '#1a1a2a');
-    svg.appendChild(bg);
-
-    // Zones not in visibleZones are pre-filled grey (background)
-    const visibleIds = new Set(visibleZones.map(z => z.id));
-    p.zones.forEach(z => {
-      if (visibleIds.has(z.id)) return;
-      const poly = document.createElementNS(svgNS, 'polygon');
-      poly.setAttribute('points', z.points.map(([x,y]) => `${x*2},${y*2}`).join(' '));
-      poly.setAttribute('fill', '#2a2a3a');
-      poly.setAttribute('stroke', '#3a3a4a');
-      poly.setAttribute('stroke-width', '1');
-      svg.appendChild(poly);
-    });
-
-    // Visible zones
-    visibleZones.forEach(z => {
-      const poly = document.createElementNS(svgNS, 'polygon');
-      poly.setAttribute('id', `gio-zone-${z.id}`);
-      poly.setAttribute('points', z.points.map(([x,y]) => `${x*2},${y*2}`).join(' '));
-      poly.setAttribute('fill', '#2e2e40');
-      poly.setAttribute('stroke', '#888');
-      poly.setAttribute('stroke-width', '1.5');
-      poly.setAttribute('class', 'gio-zone');
-      poly.setAttribute('data-zone', z.id);
-      poly.setAttribute('data-correct', z.num);
-      poly.addEventListener('click', () => this._tapZone(z.id, poly));
-      svg.appendChild(poly);
-
-      // Number label — always visible on all tiers
-      {
-        const bbox   = z.points;
-        const cx     = bbox.reduce((s,[x]) => s+x, 0) / bbox.length;
-        const cy     = bbox.reduce((s,[,y]) => s+y, 0) / bbox.length;
-        const text   = document.createElementNS(svgNS, 'text');
-        text.setAttribute('x', cx * 2);
-        text.setAttribute('y', cy * 2 + 4);
-        text.setAttribute('text-anchor', 'middle');
-        text.setAttribute('font-size', '18');
-        text.setAttribute('font-family', 'Press Start 2P, monospace');
-        text.setAttribute('fill', 'rgba(255,255,255,0.85)');
-        text.setAttribute('class', 'gio-zone-label');
-        text.setAttribute('id', `gio-label-${z.id}`);
-        text.setAttribute('pointer-events', 'none');
-        text.textContent = z.num;
-        svg.appendChild(text);
-      }
-    });
-
-    canvasWrap.appendChild(svg);
-    cv.appendChild(canvasWrap);
-
-    // ── Colour palette ────────────────────────────────────────────────────────
-    const paletteRow = document.createElement('div');
-    paletteRow.className = 'gio-palette';
-    paletteRow.id        = 'gio-palette';
-    palette.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = 'gio-palette-btn';
-      btn.id        = `gio-pal-${c.num}`;
-      btn.style.setProperty('--pal-color', c.hex);
-      btn.innerHTML = `<span class="gio-pal-num">${c.num}</span>`;
-      btn.title     = c.label;
-      btn.addEventListener('click', () => this._selectColor(c.num, btn));
-      paletteRow.appendChild(btn);
-    });
-    cv.appendChild(paletteRow);
-
-    // ── Selected colour indicator + undo ─────────────────────────────────────
-    const controlRow = document.createElement('div');
-    controlRow.className = 'gio-control-row';
-    controlRow.innerHTML = `
-      <div class="gio-selected-indicator" id="gio-sel-indicator">
-        <span>Select a colour</span>
-      </div>
-      <button class="gio-undo-btn" id="gio-undo-btn" disabled>↩ Undo</button>`;
-    cv.appendChild(controlRow);
-    document.getElementById('gio-undo-btn').addEventListener('click', () => this._undo());
-
-    // ── Submit button ─────────────────────────────────────────────────────────
-    const submitBtn = document.createElement('button');
-    submitBtn.className = 'btn-pixel btn-primary gio-submit-btn';
-    submitBtn.id        = 'gio-submit-btn';
-    submitBtn.textContent = '✓ Submit Artwork';
-    submitBtn.disabled  = true;
-    submitBtn.addEventListener('click', () => this._submit(visibleZones));
-    cv.appendChild(submitBtn);
-
-    // ── Giovanni comment row ─────────────────────────────────────────────────
-    const gioRow = document.createElement('div');
-    gioRow.className = 'gio-giovanni-row';
-    gioRow.innerHTML = `
-      <img src="assets/giovanni.png" class="gio-portrait"
-           onerror="this.style.display='none'" alt="Giovanni"/>
-      <div class="gio-comment" id="gio-comment">${p.intro}</div>`;
-    cv.appendChild(gioRow);
-    // Show intro then fade
-    const commentEl = document.getElementById('gio-comment');
-    commentEl.classList.add('gio-comment-show');
-    setTimeout(() => commentEl.classList.remove('gio-comment-show'), 3500);
-  },
-
-  _selectColor(num, btn) {
-    this._selectedColor = num;
-    // Update palette selection state
-    document.querySelectorAll('.gio-palette-btn').forEach(b => b.classList.remove('gio-pal-active'));
-    btn.classList.add('gio-pal-active');
-    // Update indicator
-    const col = GIO_PALETTE.find(c => c.num === num);
-    const ind = document.getElementById('gio-sel-indicator');
-    if (ind && col) {
-      ind.innerHTML = `<span class="gio-sel-swatch" style="background:${col.hex}"></span>
-                       <span>${col.label}</span>`;
+  _genRound(tier) {
+    const item = ROCKET_ITEMS[Math.floor(Math.random() * ROCKET_ITEMS.length)];
+    if (tier === 1) {
+      // Pay an exact price using the tray
+      const price = [12, 17, 25, 35, 46, 58][Math.floor(Math.random() * 6)];
+      return { mode:'pay', item, price, target: price,
+        prompt: `A grunt "found" a ${item}. Pay the fence EXACTLY ${price}g!` };
     }
+    if (tier === 2) {
+      // Make change from a round payment
+      const price = 15 + Math.floor(Math.random() * 8) * 5;       // 15..50 step 5
+      const paidWith = price <= 45 ? 50 : 100;
+      return { mode:'change', item, price, paidWith, target: paidWith - price,
+        prompt: `The ${item} costs ${price}g. The grunt pays ${paidWith}g. Give the RIGHT change!` };
+    }
+    // Tier 3 — bigger, mixed
+    const price = 23 + Math.floor(Math.random() * 60);            // 23..82
+    const paidWith = 100;
+    return { mode:'change', item, price, paidWith, target: paidWith - price,
+      prompt: `${item}: ${price}g. Paid with ${paidWith}g. Count the change — Giovanni is watching.` };
   },
 
-  _tapZone(zoneId, polyEl) {
-    if (this._selectedColor === null) {
-      this._showComment('"Select a colour first."');
-      return;
-    }
-    const prev = this._filled[zoneId] ?? null;
-    const col  = GIO_PALETTE.find(c => c.num === this._selectedColor);
-    if (!col) return;
+  _showRound() {
+    if (this._round >= 5) { this._finish(); return; }
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const r    = this._genRound(tier);
+    this._target = r.target;
+    this._paid   = 0;
 
-    // Push undo (max 1 step)
-    this._undoStack = [{ zoneId, prev }];
-    document.getElementById('gio-undo-btn').disabled = false;
-
-    this._filled[zoneId] = this._selectedColor;
-    polyEl.setAttribute('fill', col.hex);
-    polyEl.classList.add('gio-zone-filled');
-
-    // Commentary
-    if (Object.keys(this._filled).length === 1) {
-      this._showComment(GIO_LINES.first_zone);
-    } else if (prev !== null && prev !== this._selectedColor) {
-      this._showComment(GIO_LINES.change_mind);
-    }
-
-    // Enable submit when all visible zones filled
-    const svg = document.getElementById('gio-svg');
-    const allFilled = svg
-      ? [...svg.querySelectorAll('.gio-zone')].every(z =>
-          this._filled[parseInt(z.dataset.zone)] !== undefined)
-      : false;
-    const submitBtn = document.getElementById('gio-submit-btn');
-    if (submitBtn) submitBtn.disabled = !allFilled;
-  },
-
-  _undo() {
-    if (!this._undoStack.length) return;
-    const { zoneId, prev } = this._undoStack.pop();
-    document.getElementById('gio-undo-btn').disabled = true;
-
-    if (prev === null) {
-      delete this._filled[zoneId];
-      const polyEl = document.getElementById(`gio-zone-${zoneId}`);
-      if (polyEl) { polyEl.setAttribute('fill', '#2e2e40'); polyEl.classList.remove('gio-zone-filled'); }
-    } else {
-      this._filled[zoneId] = prev;
-      const col = GIO_PALETTE.find(c => c.num === prev);
-      const polyEl = document.getElementById(`gio-zone-${zoneId}`);
-      if (polyEl && col) polyEl.setAttribute('fill', col.hex);
-    }
-    const submitBtn = document.getElementById('gio-submit-btn');
-    if (submitBtn) submitBtn.disabled = true;
-    this._showComment(GIO_LINES.change_mind);
-  },
-
-  _submit(visibleZones) {
-    let correct = 0;
-    visibleZones.forEach(z => {
-      if (this._filled[z.id] === z.num) correct++;
+    const cv = setupChallengeScreen({
+      portrait: 'giovanni.png', badge: "💰 Rocket's Ledger",
+      intro: `Deal ${this._round + 1}/5 — ${this._hits} settled`,
+      wrapClass: 'rk-wrap', screenClass: 'rocketmoney-active',
     });
-    const pct   = correct / visibleZones.length;
-    const grade = pct >= 1.0 ? 3 : pct >= 0.7 ? 2 : pct >= 0.5 ? 1 : 0;
 
-    // Disable all interaction
-    document.querySelectorAll('.gio-zone').forEach(el => {
-      el.style.pointerEvents = 'none';
-    });
-    document.querySelectorAll('.gio-palette-btn, #gio-submit-btn, #gio-undo-btn')
-      .forEach(el => { el.disabled = true; });
+    const prompt = document.createElement('div');
+    prompt.className = 'rk-prompt';
+    prompt.textContent = r.prompt;
+    cv.appendChild(prompt);
 
-    // Step 1: flash wrong zones to correct colour
-    this._showComment(GIO_LINES.examining);
-    setTimeout(() => {
-      visibleZones.forEach(z => {
-        const polyEl = document.getElementById(`gio-zone-${z.id}`);
-        if (!polyEl) return;
-        const isRight = this._filled[z.id] === z.num;
-        if (!isRight) {
-          // Flash correct colour
-          const correctCol = GIO_PALETTE.find(c => c.num === z.num);
-          polyEl.classList.add('gio-zone-wrong-flash');
-          setTimeout(() => {
-            polyEl.setAttribute('fill', correctCol?.hex || '#888');
-            polyEl.classList.remove('gio-zone-wrong-flash');
-            polyEl.classList.add('gio-zone-corrected');
-          }, 400);
-        } else {
-          polyEl.classList.add('gio-zone-correct-pulse');
+    // The ledger line — what we owe
+    const ledger = document.createElement('div');
+    ledger.className = 'rk-ledger';
+    ledger.innerHTML = r.mode === 'pay'
+      ? `<span class="rk-owe">OWED: ${r.target}g</span>`
+      : `<span class="rk-math">${r.paidWith}g − ${r.price}g = <b>?</b></span>`;
+    cv.appendChild(ledger);
+
+    // Counting tray — coins placed so far
+    const tray = document.createElement('div');
+    tray.className = 'rk-tray';
+    tray.innerHTML = `<div class="rk-tray-coins" id="rk-tray-coins"></div>
+      <div class="rk-tray-total" id="rk-tray-total">0g</div>`;
+    cv.appendChild(tray);
+
+    // Coin buttons
+    const row = document.createElement('div');
+    row.className = 'rk-coin-row';
+    ROCKET_COINS.forEach(c => {
+      const b = document.createElement('button');
+      b.className = `rk-coin ${c.cls}`;
+      b.textContent = c.label;
+      b.addEventListener('click', () => {
+        this._paid += c.val;
+        const tc = document.getElementById('rk-tray-coins');
+        if (tc) tc.insertAdjacentHTML('beforeend', `<span class="rk-coin-mini ${c.cls}">${c.label}</span>`);
+        const tt = document.getElementById('rk-tray-total');
+        if (tt) {
+          tt.textContent = `${this._paid}g`;
+          tt.classList.toggle('rk-over', this._paid > this._target);
         }
       });
+      row.appendChild(b);
+    });
+    cv.appendChild(row);
 
-      // Step 2: reveal Pokémon sprite after corrections settle
-      setTimeout(() => this._revealPokemon(grade, correct, visibleZones.length), 1200);
-    }, 800);
+    // Actions: clear + hand over
+    const actions = document.createElement('div');
+    actions.className = 'rk-actions';
+    const clear = document.createElement('button');
+    clear.className = 'btn-pixel btn-secondary rk-clear';
+    clear.textContent = '↺ Start over';
+    clear.addEventListener('click', () => {
+      this._paid = 0;
+      const tc = document.getElementById('rk-tray-coins');  if (tc) tc.innerHTML = '';
+      const tt = document.getElementById('rk-tray-total');  if (tt) { tt.textContent = '0g'; tt.classList.remove('rk-over'); }
+    });
+    const submit = document.createElement('button');
+    submit.className = 'btn-pixel btn-primary rk-submit';
+    submit.textContent = '🤝 Hand it over';
+    submit.addEventListener('click', () => {
+      row.querySelectorAll('button').forEach(b => b.disabled = true);
+      clear.disabled = submit.disabled = true;
+      const correct = this._paid === this._target;
+      tray.classList.add(correct ? 'rk-correct' : 'rk-wrong');
+      const verdict = document.createElement('div');
+      verdict.className = 'rk-verdict';
+      verdict.textContent = correct
+        ? `"Exactly ${this._target}g. Acceptable." ✓`
+        : this._paid > this._target
+          ? `"${this._paid - this._target}g too MUCH. Sloppy." (needed ${this._target}g)`
+          : `"${this._target - this._paid}g SHORT. Pathetic." (needed ${this._target}g)`;
+      cv.appendChild(verdict);
+      if (correct) this._hits++;
+      setTimeout(() => { this._round++; this._showRound(); }, correct ? 1100 : 2200);
+    });
+    actions.appendChild(clear);
+    actions.appendChild(submit);
+    cv.appendChild(actions);
   },
 
-  _revealPokemon(grade, correct, total) {
-    const p      = this._painting;
-    const svg    = document.getElementById('gio-svg');
-    const wrap   = document.querySelector('.gio-canvas-wrap');
-    if (!wrap) { this._finish(grade); return; }
-
-    // Fade SVG to dimmed
-    if (svg) { svg.style.transition = 'opacity .8s'; svg.style.opacity = '0.35'; }
-
-    // Reveal sprite centred on canvas
-    const revealImg = document.createElement('img');
-    revealImg.className   = 'gio-reveal-sprite';
-    revealImg.src         = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.revealId}.png`;
-    revealImg.alt         = p.revealName;
-    revealImg.onerror     = () => {
-      revealImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.revealId}.png`;
-    };
-    wrap.appendChild(revealImg);
-
-    // Name reveal below canvas
-    const nameEl = document.createElement('div');
-    nameEl.className   = 'gio-reveal-name';
-    nameEl.textContent = '';
-    wrap.appendChild(nameEl);
-
-    // Typewrite the name
-    setTimeout(() => {
-      let i = 0;
-      const tick = () => {
-        nameEl.textContent += p.revealName[i++];
-        if (i < p.revealName.length) setTimeout(tick, 60);
-      };
-      tick();
-    }, 800);
-
-    // Grade badge + Giovanni final comment
-    setTimeout(() => {
-      const gradeEmoji = ['❌','★','★★','★★★'][grade];
-      const gradeLabel = ['Dismissed','Below Expectations','Acceptable','Masterpiece'][grade];
-      const gradeComment = [
-        `"You missed the point. That was ${p.revealName}."`,
-        `"${p.revealName}. You found the type but not the depth."`,
-        `"${p.revealName}. Acceptable. Not remarkable."`,
-        `"${p.revealName}. You understood. It is worthy of my collection."`,
-      ][grade];
-
-      const gradeBadge = document.createElement('div');
-      gradeBadge.className = `gio-grade-badge gio-grade-${grade}`;
-      gradeBadge.innerHTML = `<span class="gio-grade-stars">${gradeEmoji}</span>
-                              <span class="gio-grade-label">${gradeLabel}</span>
-                              <span class="gio-grade-score">${correct}/${total} zones</span>`;
-      const cv = document.getElementById('challenge-coin-visual');
-      if (cv) cv.insertBefore(gradeBadge, cv.querySelector('.gio-giovanni-row'));
-
-      this._showComment(gradeComment);
-
-      // Finish after player sees the reveal
-      setTimeout(() => this._finish(grade), 3000);
-    }, 1500);
-  },
-
-  _showComment(text) {
-    const el = document.getElementById('gio-comment');
-    if (!el) return;
-    el.textContent = text;
-    el.classList.remove('gio-comment-show');
-    void el.offsetWidth;
-    el.classList.add('gio-comment-show');
-    setTimeout(() => el.classList.remove('gio-comment-show'), 3000);
-  },
-
-  _finish(grade) {
-    const bi         = GameState.bossesDefeated || 0;
-    const goldReward = [5, 8, 15 + bi * 2, 20 + bi * 3][grade];
-
-    GameState.gold = (GameState.gold || 0) + goldReward;
-    SoundEngine.stopBGM();
-
-    if (!GameState.pendingPlayerEffects) GameState.pendingPlayerEffects = {};
-    if (grade >= 3) {
-      GameState.pendingPlayerEffects.giovanniEndorsement = true;
-      SoundEngine.playFanfare();
-    } else if (grade === 0) {
-      GameState.pendingPlayerEffects.giovanniDisinfo = true;
-    }
-
-    saveGame();
-    document.getElementById('screen-challenge').classList.remove('giovanni-active');
-    const cv = document.getElementById('challenge-coin-visual');
-    cv.innerHTML = ''; cv.className = 'challenge-coin-visual';
-
-    const titles   = ['🎨 Dismissed', '🎨 Below Expectations', '🎨 Acceptable', '🎨 Masterpiece'];
-    const outcomes = [
-      `+${goldReward}💰\n\n🃏 Giovanni planted Disinformation — one card next battle shows false power.`,
-      `+${goldReward}💰\n\nA poor result, but you tried.`,
-      `+${goldReward}💰\n\nA reasonable effort.`,
-      `+${goldReward}💰\n\n⭐ Giovanni's Endorsement — first card played next battle deals +5 bonus damage!`,
-    ];
-
-    showModal(titles[grade], outcomes[grade], () => {
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
+  _finish() {
+    const won  = this._hits >= 4;
+    const gold = this._hits >= 5 ? 28 : won ? 16 : 6;
+    if (won) GameState.rocketLedgerDiscount = true;   // 10% off shop for the rest of the run
+    completeChallenge({
+      screenClass: 'rocketmoney-active', won,
+      goldReward: gold,
+      score: this._hits, maxScore: 5, gameKey: 'giovanni',
+      tokenLabel: won ? '10% Rocket discount at all shops!' : null,
+      modalTitle: this._hits >= 5 ? '💰 The Ledger Balances!' : won ? '💰 Giovanni Approves' : '💰 "Get out of my sight."',
+      modalBody: `${this._hits}/5 deals settled\n+${gold}💰`,
     });
   },
 };
@@ -10842,6 +10739,8 @@ const MysteryEngine = {
     const pool = [
       { weight: 3, fn: () => CatchEngine.start(node, 'rare') },
       { weight: 2, fn: () => RocketBattleEngine.start(node) },
+      { weight: 2, fn: () => OakSortEngine.start(node) },
+      { weight: 2, fn: () => SnorlaxEngine.start(node) },
     ];
     if (beaten >= 2) pool.push({ weight: 2, fn: () => JigglypuffEngine.start(node) });
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
@@ -11456,15 +11355,20 @@ const WobbuffetEngine = {
     SoundEngine.stopBGM();
     document.getElementById('screen-challenge').classList.remove('wobbu-active');
 
-    const grades = ['😰 0/5 — Wobbuffet wobbled!','😐 1/5','😐 2/5','👍 3/5 — Not bad!','⭐ 4/5 — Great!','✨ 5/5 — PERFECT COUNTER!'];
     const title  = perfect ? '🛡️ Perfect Counter!' : '🛡️ Wobbu-Counter';
-    const body   = `${grades[hits]}\n\n+${gold}💰` +
-      (perfect ? '\n\n⭐ Wobbuffet Counter — enemy takes 20 reflected damage next battle!' : '') +
-      (hits === 0 ? '\n\n😬 Wobbuffet accidentally hurt your party...' : '');
+    const detail =
+      (perfect ? '⭐ Wobbuffet Counter — enemy takes 20 reflected damage next battle!' : '') +
+      (hits === 0 ? '😬 Wobbuffet accidentally hurt your party...' : '');
 
-    showModal(title, body, () => {
-      MapEngine.completeNode(GameState.currentNodeIndex);
-      MapEngine.show();
+    showResultsCard({
+      title, score: hits, maxScore: total, gold,
+      won: hits >= 3, gameKey: 'wobbuffet',
+      detail: detail || null,
+      tokenLabel: perfect ? 'Wobbuffet Counter' : null,
+      onDone: () => {
+        if (this._onComplete) { const cb = this._onComplete; this._onComplete = null; cb(); }
+        else { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); }
+      },
     });
   },
 };
@@ -11871,6 +11775,8 @@ const FalknerEngine = {
     completeChallenge({
       screenClass: 'falkner-active', won,
       goldReward: gold,
+      score: this._score, maxScore: Math.max(this._passScore, this._score), gameKey: 'falkner',
+      tokenLabel: perfect ? 'Perfect Catch — enemy accuracy -40%!' : won ? 'Wind Sense — enemy accuracy -30%!' : null,
       effects: perfect ? { falknerPerfect: true } : won ? { falknerWind: true } : {},
       modalTitle: perfect ? '🎯 Perfect Catch!' : won ? '🎯 Good Work!' : '🎯 They Got Away...',
       modalBody: `⭐ ${this._score} pts · ${this._missCount} escaped\n+${gold}💰` +
@@ -11880,16 +11786,79 @@ const FalknerEngine = {
   },
 };
 
-const WhitneyEngine = {
-  _isActive: false, _node: null, _round: 0, _lives: 3, _timeouts: [],
+// ─── WHITNEY ENGINE — "Whitney's Miltank Shake Bar" ──────────────────────────
+// Players fill jugs to exact volumes and pick the right berry for shake orders.
+// Plain orders: measure volume only. Shake orders: measure + pick berry.
 
-  start(node) {
-    this._node = node; this._isActive = true; this._round = 0; this._lives = 3; this._timeouts = [];
+const WHITNEY_JUGS = [
+  { ml: 100,  label: '100ml',  color: '#e0f4ff', h: 28 },
+  { ml: 250,  label: '250ml',  color: '#c8ecff', h: 48 },
+  { ml: 500,  label: '500ml',  color: '#a8e0ff', h: 72 },
+  { ml: 1000, label: '1L',     color: '#80ccff', h: 100 },
+];
+
+const WHITNEY_BERRIES = [
+  { id:'oran',   name:'Oran',   color:'#5a80e0', light:'#a0b8ff', emoji:'🫐' },
+  { id:'sitrus', name:'Sitrus', color:'#e0c020', light:'#ffe880', emoji:'🍋' },
+  { id:'pecha',  name:'Pecha',  color:'#e060a0', light:'#ffb0d8', emoji:'🍓' },
+  { id:'rawst',  name:'Rawst',  color:'#40a840', light:'#90d890', emoji:'🍃' },
+  { id:'cheri',  name:'Cheri',  color:'#d03020', light:'#ff9080', emoji:'🍒' },
+  { id:'aspear', name:'Aspear', color:'#c8c040', light:'#f0e890', emoji:'🍑' },
+];
+
+// Orders per tier: { ml, berry|null, customer, hint }
+const WHITNEY_ORDERS = {
+  1: [
+    { ml:250,  berry:null,    customer:"🧒", hint:"250ml of fresh milk please!" },
+    { ml:500,  berry:'oran',  customer:"👩", hint:"A 500ml Oran Berry shake!" },
+    { ml:1000, berry:null,    customer:"👴", hint:"One full litre of milk." },
+    { ml:250,  berry:'pecha', customer:"🧒", hint:"250ml Pecha Berry shake please!" },
+    { ml:500,  berry:null,    customer:"👩", hint:"500ml milk for my recipe." },
+  ],
+  2: [
+    { ml:350,  berry:null,    customer:"👩", hint:"Exactly 350ml of milk." },
+    { ml:600,  berry:'cheri', customer:"🧒", hint:"600ml Cheri Berry shake!" },
+    { ml:750,  berry:null,    customer:"👴", hint:"750ml of Miltank milk." },
+    { ml:1100, berry:'sitrus',customer:"👩", hint:"1100ml Sitrus shake please." },
+    { ml:1000, berry:'rawst', customer:"🧒", hint:"A 1L Rawst Berry shake!" },
+  ],
+  3: [
+    { ml:850,  berry:'rawst', customer:"👩", hint:"850ml Rawst shake — remember!" },
+    { ml:1350, berry:null,    customer:"👴", hint:"1350ml of milk, quickly!" },
+    { ml:600,  berry:'pecha', customer:"🧒", hint:"600ml Pecha shake — fast!" },
+    { ml:1750, berry:'aspear',customer:"👩", hint:"1750ml Aspear shake!" },
+    { ml:1100, berry:'cheri', customer:"🧒", hint:"1100ml Cheri Berry shake!" },
+  ],
+};
+
+const WhitneyEngine = {
+  _isActive: false, _node: null,
+  _round: 0, _score: 0, _combos: 0,
+  _currentMl: 0, _targetMl: 0,
+  _targetBerry: null, _selectedBerry: null,
+  _phase: 'fill',   // 'fill' | 'berry' | 'done'
+  _orders: [],
+  _timeouts: [],
+  _miltankSprite: null,
+
+  async start(node) {
+    this._node    = node;
+    this._isActive = true;
+    this._round   = 0;
+    this._score   = 0;
+    this._combos  = 0;
+    this._timeouts = [];
     ActiveEngine.set(this);
+
+    // Pre-fetch Miltank sprite
+    const data = await fetchPoke(241).catch(() => null);
+    this._miltankSprite = data ? getSpriteUrl(data) :
+      'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/241.png';
+
     showBossIntro({
       gymIndex: 2, portrait: 'whitney.png',
-      name: 'Whitney', btnLabel: 'Dodge! 🎀',
-      introText: "Don't let my Miltank's Rollout flatten you! It'll come from one of three lanes — dodge into a safe one before it hits! You have 3 lives. La-la-la!",
+      name: 'Whitney', btnLabel: '🥛 Open the Shake Bar!',
+      introText: "La-la-la! Welcome to Miltank's Shake Bar! Fill the jug to the right amount — and for shakes, pick the right berry too! Ready?",
     });
   },
 
@@ -11898,73 +11867,309 @@ const WhitneyEngine = {
     document.getElementById('trainer-intro').style.display = 'none';
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
+
+    const tier   = Math.min(GameState.difficultyTier || 2, 3);
+    this._orders = [...WHITNEY_ORDERS[tier]];
     this._showRound();
   },
 
   _showRound() {
-    if (this._round >= 5 || this._lives <= 0) { this._finish(); return; }
-    const tier    = GameState.difficultyTier || 2;
-    const cv      = setupChallengeScreen({ portrait:'whitney.png', badge:'🎀 Rollout Dodge!',
-      intro: `Round ${this._round + 1}/5 — ${Array(this._lives).fill('❤️').join('')}`,
-      wrapClass: 'whitney-wrap', screenClass: 'whitney-active' });
+    if (this._round >= this._orders.length) { this._finish(); return; }
+    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
 
-    const dangerLane = Math.floor(Math.random() * 3);
-    const timeMs     = Math.max(2000, 4500 - this._round * 250 - (tier - 1) * 200);
+    const order     = this._orders[this._round];
+    const tier      = Math.min(GameState.difficultyTier || 2, 3);
+    this._targetMl  = order.ml;
+    this._targetBerry = order.berry;
+    this._currentMl = 0;
+    this._selectedBerry = null;
+    this._phase     = 'fill';
+    this._firstPour = true;  // for combo tracking
 
-    const lanes = document.createElement('div');
-    lanes.className = 'whitney-lanes';
-    [0, 1, 2].forEach(i => {
-      const lane = document.createElement('div');
-      lane.className = 'whitney-lane';
-      lane.innerHTML = '<span class="whitney-lane-emoji">🏃</span>';
-      lane.id = `whitney-lane-${i}`;
-      lane.addEventListener('click', () => {
-        this._timeouts.forEach(t => clearTimeout(t));
-        this._timeouts = [];
-        document.querySelectorAll('.whitney-lane').forEach(l => l.style.pointerEvents = 'none');
-        document.getElementById(`whitney-lane-${dangerLane}`)
-          .innerHTML = '<span class="whitney-boulder-anim">🪨</span>';
-        if (i === dangerLane) {
-          this._lives--;
-          lane.classList.add('whitney-hit');
-        } else {
-          lane.classList.add('whitney-safe');
-        }
-        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 700));
-      });
-      lanes.appendChild(lane);
+    const cv = setupChallengeScreen({
+      portrait: 'whitney.png', badge: '🥛 Shake Bar',
+      intro: `Order ${this._round + 1}/5 — Score: ${this._score}`,
+      wrapClass: 'whitney-wrap', screenClass: 'whitney-active',
     });
-    cv.appendChild(lanes);
 
-    // Boulder appears after delay and auto-hits if not dodged
-    const boulderDelay = Math.max(300, timeMs - 300);
-    this._timeouts.push(setTimeout(() => {
-      const dl = document.getElementById(`whitney-lane-${dangerLane}`);
-      if (dl) dl.innerHTML = '<span class="whitney-boulder-rolling">🪨</span>';
-    }, boulderDelay));
+    // ── Order speech bubble ───────────────────────────────────────────────────
+    const bubble = document.createElement('div');
+    bubble.className = 'wh-bubble';
+    bubble.innerHTML = `<span class="wh-customer">${order.customer}</span>
+      <span class="wh-hint" id="wh-hint">${order.hint}</span>`;
+    cv.appendChild(bubble);
+
+    // On Tier 2 hint fades after 3s; Tier 3 fades after 1.5s
+    if (tier >= 2) {
+      this._timeouts.push(setTimeout(() => {
+        const h = document.getElementById('wh-hint');
+        if (h) { h.style.transition = 'opacity 1s'; h.style.opacity = '0'; }
+      }, tier === 2 ? 3000 : 1500));
+    }
+
+    // ── Target label ─────────────────────────────────────────────────────────
+    const targetRow = document.createElement('div');
+    targetRow.className = 'wh-target-row';
+    targetRow.innerHTML = `<span class="wh-target-label">TARGET:</span>
+      <span class="wh-target-val" id="wh-target-val">${order.ml}ml</span>
+      ${order.berry ? `<span class="wh-target-berry">${this._berryById(order.berry).emoji} ${tier === 1 ? this._berryById(order.berry).name : ''}</span>` : ''}`;
+    cv.appendChild(targetRow);
+
+    // ── Main area — jug + jugs panel ─────────────────────────────────────────
+    const mainRow = document.createElement('div');
+    mainRow.className = 'wh-main-row';
+    cv.appendChild(mainRow);
+
+    // Order jug (centre)
+    const jugWrap = document.createElement('div');
+    jugWrap.className = 'wh-jug-wrap';
+    const maxDisplay = 2000;
+    jugWrap.innerHTML = `
+      <div class="wh-jug-container" id="wh-jug-container">
+        <div class="wh-jug-fill" id="wh-jug-fill"></div>
+        <div class="wh-jug-target-line" id="wh-jug-target-line"
+             style="bottom:${(order.ml / maxDisplay * 100).toFixed(1)}%"></div>
+        <div class="wh-jug-markings">${this._jugMarkings(maxDisplay)}</div>
+      </div>
+      <div class="wh-jug-readout" id="wh-jug-readout">0 / ${order.ml}ml</div>
+      <button class="btn-pixel btn-secondary wh-reset-btn" id="wh-reset-btn">↺ Reset</button>`;
+    mainRow.appendChild(jugWrap);
+
+    // Miltank sprite
+    const miltank = document.createElement('img');
+    miltank.src = this._miltankSprite;
+    miltank.className = 'wh-miltank';
+    jugWrap.appendChild(miltank);
+
+    // Pour jugs panel (right)
+    const jugPanel = document.createElement('div');
+    jugPanel.className = 'wh-jug-panel';
+    WHITNEY_JUGS.forEach(j => {
+      const btn = document.createElement('button');
+      btn.className = 'wh-pour-btn';
+      btn.id = `wh-pour-${j.ml}`;
+      btn.innerHTML = `<div class="wh-pour-jug" style="height:${j.h}px;background:${j.color}"></div>
+        <span class="wh-pour-label">${tier <= 2 ? j.label : ''}</span>`;
+      btn.addEventListener('click', () => this._pour(j.ml));
+      jugPanel.appendChild(btn);
+    });
+    mainRow.appendChild(jugPanel);
+
+    // Reset button
+    document.getElementById('wh-reset-btn').addEventListener('click', () => {
+      this._currentMl = 0;
+      this._selectedBerry = null;
+      this._phase = 'fill';
+      this._firstPour = false;  // combo broken on reset
+      this._updateJug(false, null);
+      this._hideBerryTray();
+    });
+
+    // ── Berry tray (hidden until jug filled) ─────────────────────────────────
+    const berryTray = document.createElement('div');
+    berryTray.className = 'wh-berry-tray wh-berry-locked';
+    berryTray.id = 'wh-berry-tray';
+    berryTray.innerHTML = `<div class="wh-berry-lock-msg" id="wh-berry-lock-msg">
+      🔒 Fill to ${order.ml}ml first</div>`;
+    if (order.berry) cv.appendChild(berryTray);
+
+    // Timer (Tier 3 only)
+    if (tier >= 3) {
+      const timerBar = document.createElement('div');
+      timerBar.className = 'wh-timer-bar';
+      timerBar.innerHTML = `<div class="wh-timer-fill" id="wh-timer-fill"></div>`;
+      cv.appendChild(timerBar);
+      setTimeout(() => {
+        const f = document.getElementById('wh-timer-fill');
+        if (f) { f.style.transition = 'width 12s linear'; f.style.width = '0%'; }
+      }, 50);
+      this._timeouts.push(setTimeout(() => {
+        if (this._phase !== 'done') {
+          this._roundResult(false, 'timeout');
+        }
+      }, 12000));
+    }
+  },
+
+  _pour(ml) {
+    if (this._phase !== 'fill') return;
+    const order = this._orders[this._round];
+    this._currentMl += ml;
+
+    // Over-filled
+    if (this._currentMl > order.ml) {
+      this._currentMl = 0;
+      this._firstPour = false;
+      this._updateJug(true, null);  // flash red
+      this._showWhitneyComment("overflow");
+      return;
+    }
+
+    this._updateJug(false, null);
+
+    // Exactly right
+    if (this._currentMl === order.ml) {
+      if (order.berry) {
+        // Need to pick berry
+        this._phase = 'berry';
+        this._showBerryTray();
+      } else {
+        // Plain milk — done
+        this._roundResult(true, 'plain');
+      }
+    }
+  },
+
+  _showBerryTray() {
+    const tray = document.getElementById('wh-berry-tray');
+    if (!tray) return;
+    tray.classList.remove('wh-berry-locked');
+    tray.innerHTML = '';
+
+    const tier    = Math.min(GameState.difficultyTier || 2, 3);
+    const order   = this._orders[this._round];
+    // Show 2 berries Tier 1, 3 Tier 2, 4 Tier 3
+    const count   = tier === 1 ? 2 : tier === 2 ? 3 : 4;
+    const correct = this._berryById(order.berry);
+    const others  = shuffle(WHITNEY_BERRIES.filter(b => b.id !== order.berry)).slice(0, count - 1);
+    const options = shuffle([correct, ...others]);
+
+    options.forEach(b => {
+      const btn = document.createElement('button');
+      btn.className = 'wh-berry-btn';
+      btn.style.setProperty('--berry-color', b.color);
+      btn.style.setProperty('--berry-light', b.light);
+      btn.innerHTML = `<span class="wh-berry-emoji">${b.emoji}</span>
+        ${tier <= 2 ? `<span class="wh-berry-name">${b.name}</span>` : ''}`;
+      btn.addEventListener('click', () => this._pickBerry(b));
+      tray.appendChild(btn);
+    });
+  },
+
+  _hideBerryTray() {
+    const tray = document.getElementById('wh-berry-tray');
+    if (!tray) return;
+    const order = this._orders[this._round];
+    tray.classList.add('wh-berry-locked');
+    tray.innerHTML = `<div class="wh-berry-lock-msg">🔒 Fill to ${order.ml}ml first</div>`;
+  },
+
+  _pickBerry(berry) {
+    if (this._phase !== 'berry') return;
+    const order = this._orders[this._round];
+
+    if (berry.id === order.berry) {
+      // Correct berry — colour the jug
+      this._selectedBerry = berry;
+      this._updateJug(false, berry);
+      this._roundResult(true, 'shake');
+    } else {
+      // Wrong berry — don't fail the round, just clear berry and show message
+      this._firstPour = false;
+      this._phase = 'berry';  // stays in berry phase
+      this._showWhitneyComment("wrongberry");
+      // Flash the wrong button red
+      const tray = document.getElementById('wh-berry-tray');
+      tray?.querySelectorAll('.wh-berry-btn').forEach(b => { b.disabled = true; });
+      setTimeout(() => { this._showBerryTray(); }, 800);
+    }
+  },
+
+  _roundResult(won, type) {
+    this._phase = 'done';
+    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+
+    const combo = won && this._firstPour;
+    if (combo) this._combos++;
+    else       this._combos = 0;
+
+    const pts = won ? (type === 'shake' ? 20 : 15) + (combo ? 5 : 0) : 0;
+    this._score += pts;
+
+    document.getElementById('challenge-intro').textContent =
+      `Order ${this._round + 1}/5 — Score: ${this._score}`;
+
+    if (won) {
+      this._showWhitneyComment(combo ? 'combo' : type === 'shake' ? 'shake' : 'plain');
+      if (this._combos >= 3) this._showWhitneyComment('streak');
+    }
 
     this._timeouts.push(setTimeout(() => {
-      document.querySelectorAll('.whitney-lane').forEach(l => l.style.pointerEvents = 'none');
-      this._lives--;
-      const dl = document.getElementById(`whitney-lane-${dangerLane}`);
-      if (dl) dl.classList.add('whitney-hit');
-      this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 700));
-    }, timeMs));
+      this._round++;
+      this._showRound();
+    }, 1400));
+  },
+
+  _updateJug(overflow, berry) {
+    const order    = this._orders[this._round];
+    const fillEl   = document.getElementById('wh-jug-fill');
+    const readout  = document.getElementById('wh-jug-readout');
+    const container= document.getElementById('wh-jug-container');
+    if (!fillEl) return;
+    const pct = Math.min(this._currentMl / 2000 * 100, 100);
+    const fillColor = berry ? berry.color : '#e8f8ff';
+    fillEl.style.height     = `${pct}%`;
+    fillEl.style.background = berry
+      ? `linear-gradient(180deg, ${berry.light}, ${berry.color})`
+      : 'linear-gradient(180deg, #ffffff, #c8ecff)';
+    if (readout) readout.textContent = `${this._currentMl} / ${order.ml}ml`;
+    if (overflow && container) {
+      container.classList.add('wh-overflow');
+      setTimeout(() => container.classList.remove('wh-overflow'), 600);
+    }
+  },
+
+  _jugMarkings(maxMl) {
+    return [200,400,600,800,1000,1500,2000]
+      .map(v => `<div class="wh-mark" style="bottom:${(v/maxMl*100).toFixed(1)}%">
+        <span>${v >= 1000 ? v/1000+'L' : v+'ml'}</span></div>`).join('');
+  },
+
+  _berryById(id) {
+    return WHITNEY_BERRIES.find(b => b.id === id) || WHITNEY_BERRIES[0];
+  },
+
+  _showWhitneyComment(type) {
+    const msgs = {
+      plain:    ["Exactly right! La-la-la! ✨", "Perfect measure! ⭐"],
+      shake:    ["One shake coming up! You're amazing! 🎀", "That's the one! ✨"],
+      combo:    ["First try! ⭐ Combo!"],
+      streak:   ["You're a natural! Whitney approves! 🎀"],
+      overflow: ["Too much! Poor Miltank has to make more! 😅", "Oops! Too full!"],
+      wrongberry:["That's not it! Look at the colour! 🎨"],
+      timeout:  ["Too slow! The customer is waiting! ⏰"],
+    };
+    const pool = msgs[type] || msgs.plain;
+    const text = pool[Math.floor(Math.random() * pool.length)];
+    const comment = document.createElement('div');
+    comment.className = 'wh-comment';
+    comment.textContent = text;
+    const cv = document.getElementById('challenge-coin-visual');
+    if (cv) {
+      cv.appendChild(comment);
+      setTimeout(() => comment.remove(), 1200);
+    }
   },
 
   _finish() {
-    const survived = this._lives > 0;
-    const gold     = this._lives === 3 ? 25 : this._lives === 2 ? 18 : this._lives === 1 ? 10 : 5;
+    const maxScore = this._orders.reduce((s, o) => s + (o.berry ? 25 : 20), 0);
+    const pct  = this._score / maxScore;
+    const won  = pct >= 0.5;
+    const gold = won ? Math.round(10 + this._score / 2) : 6;
     completeChallenge({
-      screenClass: 'whitney-active', won: survived && this._lives >= 2,
+      screenClass: 'whitney-active', won,
       goldReward: gold,
-      effects: this._lives === 3 ? { whitneyDodge: true } : {},
-      modalTitle: this._lives === 3 ? '🎀 Perfect Dodge!' : survived ? '🎀 You Survived!' : '🎀 Flattened!',
-      modalBody: `❤️ ${this._lives}/3 lives remaining\n+${gold}💰` +
-        (this._lives === 3 ? '\n\n⭐ Rollout Resist — first hit next battle blocked entirely!' : ''),
+      score: this._score, maxScore: maxScore, gameKey: 'whitney',
+      tokenLabel: pct >= 0.9 ? 'First-try master — next hit blocked!' : null,
+      effects: pct >= 0.9 ? { whitneyDodge: true } : {},
+      modalTitle: pct >= 0.9 ? '🥛 Perfect Shake Bar!' : won ? '🥛 Orders Filled!' : '🥛 Needs Practice',
+      modalBody: `⭐ ${this._score}/${maxScore} pts · ${this._combos} combos\n+${gold}💰` +
+        (pct >= 0.9 ? '\n\n⭐ First-try master — next hit fully blocked!' : ''),
     });
   },
 };
+
+
 
 // ─── MORTY ENGINE — "Ghost Séance" (Memory pairs with ghost symbols) ─────────
 // Reuses NinjaMemoryEngine pattern with ghost-themed cards and Morty's bg.
@@ -12092,6 +12297,8 @@ const MortyEngine = {
     completeChallenge({
       screenClass: 'morty-active', won,
       goldReward: gold,
+      score: this._matched, maxScore: this._pairCount, gameKey: 'morty',
+      tokenLabel: won && this._misses === 0 ? 'Clairvoyance — strongest card next draw!' : null,
       effects: won && this._misses === 0 ? { mortyClairvoyance: true } : {},
       modalTitle: won ? '👻 The Spirits Are Pleased!' : '👻 The Fog Won',
       modalBody: `Matched ${this._matched}/${this._pairCount} pairs\n+${gold}💰` +
@@ -12240,6 +12447,8 @@ const JasmineEngine = {
     completeChallenge({
       screenClass: 'jasmine-active', won,
       goldReward: gold,
+      score: won ? 5 : this._round, maxScore: 5, gameKey: 'jasmine',
+      tokenLabel: won ? 'Forged Steel — 40 dmg shield next battle!' : null,
       effects: won ? { jasmineForge: true } : {},
       modalTitle: won ? '⚙️ Steel Forged!' : '⚙️ Steel Cracked',
       modalBody: `${won ? '5/5 patterns correct' : `Failed at round ${this._round + 1}`}\n+${gold}💰` +
@@ -12349,6 +12558,8 @@ const PryceEngine = {
     completeChallenge({
       screenClass: 'pryce-active', won: this._hits >= 4,
       goldReward: gold,
+      score: this._hits, maxScore: 5, gameKey: 'pryce',
+      tokenLabel: this._hits === 5 ? 'Cold Precision — next catch rate doubled!' : null,
       effects: this._hits === 5 ? { pryce_catch_bonus: true } : {},
       modalTitle: this._hits >= 5 ? '❄️ Master Angler!' : '❄️ Ice Fishing',
       modalBody: `${this._hits}/5 catches\n+${gold}💰` +
@@ -12460,10 +12671,539 @@ const ClairEngine = {
     completeChallenge({
       screenClass: 'clair-active', won: this._hits >= 4,
       goldReward: gold,
+      score: this._hits, maxScore: 5, gameKey: 'clair',
+      tokenLabel: this._hits === 5 ? 'Dragon Bane — Dragon/Water +25%!' : null,
       effects: this._hits === 5 ? { clairDragonBane: true } : {},
       modalTitle: this._hits >= 5 ? '🐉 Dragon Tamed!' : '🐉 Dragon Tamer',
       modalBody: `${this._hits}/5 counters correct\n+${gold}💰` +
         (this._hits === 5 ? '\n\n⭐ Dragon Bane — Dragon and Water moves deal +25% next battle!' : ''),
+    });
+  },
+};
+
+// ─── CHUCK ENGINE — "Chuck's Training Clock" — teaches reading clocks ─────────
+// Tier 1: whole hours, pick the right clock face from 3.
+// Tier 2: half/quarter hours, set the hands with +hour/+5min buttons.
+// Tier 3: elapsed-time problems ("started 3:15, lasted 45min — set the end time").
+
+// Render an analog clock as inline SVG. h = 0-11, m = 0-55 (5-min steps).
+function _clockSVG(h, m, size = 110) {
+  const hourAngle = ((h % 12) + m / 60) * 30;
+  const minAngle  = m * 6;
+  return `<svg viewBox="0 0 100 100" width="${size}" height="${size}" class="chuck-clock-svg">
+    <circle cx="50" cy="50" r="46" fill="#fdf6e3" stroke="#7a4a20" stroke-width="4"/>
+    ${Array.from({length:12},(_,i)=>{
+      const a=(i*30-90)*Math.PI/180, x1=50+38*Math.cos(a), y1=50+38*Math.sin(a),
+            x2=50+42*Math.cos(a), y2=50+42*Math.sin(a);
+      return `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#7a4a20" stroke-width="2"/>`;
+    }).join('')}
+    ${[12,3,6,9].map(n=>{
+      const a=((n%12)*30-90)*Math.PI/180, x=50+32*Math.cos(a), y=50+32*Math.sin(a)+3;
+      return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="10" font-weight="bold" fill="#7a4a20" text-anchor="middle">${n}</text>`;
+    }).join('')}
+    <line x1="50" y1="50" x2="${(50+22*Math.cos((hourAngle-90)*Math.PI/180)).toFixed(1)}" y2="${(50+22*Math.sin((hourAngle-90)*Math.PI/180)).toFixed(1)}" stroke="#2a2a2a" stroke-width="5" stroke-linecap="round"/>
+    <line x1="50" y1="50" x2="${(50+34*Math.cos((minAngle-90)*Math.PI/180)).toFixed(1)}" y2="${(50+34*Math.sin((minAngle-90)*Math.PI/180)).toFixed(1)}" stroke="#c03028" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="50" cy="50" r="3.5" fill="#2a2a2a"/>
+  </svg>`;
+}
+
+function _timeWords(h, m) {
+  const hh = ((h - 1) % 12) + 1;
+  const next = (hh % 12) + 1;
+  if (m === 0)  return `${hh} o'clock`;
+  if (m === 15) return `quarter past ${hh}`;
+  if (m === 30) return `half past ${hh}`;
+  if (m === 45) return `quarter to ${next}`;
+  return `${hh}:${String(m).padStart(2,'0')}`;
+}
+
+const ChuckEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0,
+  _setH:0, _setM:0, _target:null,
+
+  start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
+    ActiveEngine.set(this);
+    showBossIntro({
+      gymIndex: 4, portrait: 'chuck.png',
+      name: 'Chuck', btnLabel: '🕐 Start Training!',
+      introText: "WAHAHA! Training waits for NO ONE! My whole dojo runs on the clock — and YOU are going to set it! Show me you can read the time, kid!",
+    });
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _randTime(tier) {
+    const h = 1 + Math.floor(Math.random() * 12);
+    const m = tier === 1 ? 0 : [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+    return { h, m };
+  },
+
+  _showRound() {
+    if (this._round >= 5) { this._finish(); return; }
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+
+    const cv = setupChallengeScreen({
+      portrait: 'chuck.png', badge: '🕐 Training Clock',
+      intro: `Round ${this._round + 1}/5 — ${this._hits} correct`,
+      wrapClass: 'chuck-wrap', screenClass: 'chuck-active',
+    });
+
+    if (tier === 1) this._roundPick(cv);
+    else            this._roundSet(cv, tier);
+  },
+
+  // ── Tier 1: Chuck says a time, tap the matching clock of 3 ────────────────
+  _roundPick(cv) {
+    const target = this._randTime(1);
+    // Two unique decoy hours
+    const hours = shuffle([1,2,3,4,5,6,7,8,9,10,11,12].filter(h => h !== target.h)).slice(0,2);
+    const options = shuffle([target, ...hours.map(h => ({ h, m: 0 }))]);
+
+    const say = document.createElement('div');
+    say.className = 'chuck-say';
+    say.textContent = `"Training starts at ${_timeWords(target.h, target.m)}! Which clock is right?"`;
+    cv.appendChild(say);
+
+    const row = document.createElement('div');
+    row.className = 'chuck-clock-row';
+    options.forEach(o => {
+      const btn = document.createElement('button');
+      btn.className = 'chuck-clock-btn';
+      btn.innerHTML = _clockSVG(o.h, o.m, 96);
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.chuck-clock-btn').forEach(b => b.disabled = true);
+        const correct = o.h === target.h && o.m === target.m;
+        btn.classList.add(correct ? 'chuck-correct' : 'chuck-wrong');
+        if (!correct) {
+          // reveal the right one
+          options.forEach((oo, i) => {
+            if (oo.h === target.h && oo.m === target.m)
+              row.children[i].classList.add('chuck-correct');
+          });
+        } else this._hits++;
+        setTimeout(() => { this._round++; this._showRound(); }, 1000);
+      });
+      row.appendChild(btn);
+    });
+    cv.appendChild(row);
+  },
+
+  // ── Tier 2/3: set the hands with buttons ──────────────────────────────────
+  _roundSet(cv, tier) {
+    let target, sayText;
+    if (tier === 2) {
+      target  = this._randTime(2);
+      sayText = `"Set the clock to ${_timeWords(target.h, target.m)}!"`;
+    } else {
+      // Elapsed-time problem
+      const startT = this._randTime(2);
+      const addMin = [30, 45, 60, 90][Math.floor(Math.random() * 4)];
+      const totalM = startT.h * 60 + startT.m + addMin;
+      target  = { h: (Math.floor(totalM / 60) - 1) % 12 + 1, m: totalM % 60 };
+      sayText = `"Training started at ${startT.h}:${String(startT.m).padStart(2,'0')} and lasted ${addMin} minutes. Set the clock to when it ENDED!"`;
+    }
+    this._target = target;
+    this._setH = 12; this._setM = 0;
+
+    const say = document.createElement('div');
+    say.className = 'chuck-say';
+    say.textContent = sayText;
+    cv.appendChild(say);
+
+    const clockWrap = document.createElement('div');
+    clockWrap.id = 'chuck-set-clock';
+    clockWrap.innerHTML = _clockSVG(this._setH, this._setM, 130);
+    cv.appendChild(clockWrap);
+
+    const readout = document.createElement('div');
+    readout.className = 'chuck-readout';
+    readout.id = 'chuck-readout';
+    readout.textContent = `12:00`;
+    cv.appendChild(readout);
+
+    const ctrl = document.createElement('div');
+    ctrl.className = 'chuck-ctrl-row';
+    const mk = (label, fn) => {
+      const b = document.createElement('button');
+      b.className = 'btn-pixel btn-secondary chuck-ctrl-btn';
+      b.textContent = label;
+      b.addEventListener('click', () => { fn(); this._redrawSetClock(); });
+      return b;
+    };
+    ctrl.appendChild(mk('+1 hour', () => { this._setH = (this._setH % 12) + 1; }));
+    ctrl.appendChild(mk('+5 min',  () => {
+      this._setM += 5;
+      if (this._setM >= 60) { this._setM = 0; this._setH = (this._setH % 12) + 1; }
+    }));
+    cv.appendChild(ctrl);
+
+    const submit = document.createElement('button');
+    submit.className = 'btn-pixel btn-primary chuck-submit';
+    submit.textContent = '✓ That\'s the time!';
+    submit.addEventListener('click', () => {
+      submit.disabled = true;
+      ctrl.querySelectorAll('button').forEach(b => b.disabled = true);
+      const correct = this._setH === target.h && this._setM === target.m;
+      clockWrap.classList.add(correct ? 'chuck-correct' : 'chuck-wrong');
+      if (correct) this._hits++;
+      else {
+        const ans = document.createElement('div');
+        ans.className = 'chuck-answer';
+        ans.innerHTML = `Correct: ${target.h}:${String(target.m).padStart(2,'0')} ${_clockSVG(target.h, target.m, 70)}`;
+        cv.appendChild(ans);
+      }
+      setTimeout(() => { this._round++; this._showRound(); }, correct ? 900 : 2200);
+    });
+    cv.appendChild(submit);
+  },
+
+  _redrawSetClock() {
+    const wrap = document.getElementById('chuck-set-clock');
+    if (wrap) wrap.innerHTML = _clockSVG(this._setH, this._setM, 130);
+    const ro = document.getElementById('chuck-readout');
+    if (ro) ro.textContent = `${this._setH}:${String(this._setM).padStart(2,'0')}`;
+  },
+
+  _finish() {
+    const won  = this._hits >= 4;
+    const gold = this._hits >= 5 ? 26 : this._hits >= 3 ? 15 : 7;
+    completeChallenge({
+      screenClass: 'chuck-active', won,
+      goldReward: gold,
+      effects: this._hits === 5 ? { chuckDiscipline: true } : {},
+      score: this._hits, maxScore: 5, gameKey: 'chuck',
+      tokenLabel: this._hits === 5 ? 'Discipline — +1 energy first turn!' : null,
+      modalTitle: this._hits === 5 ? '🕐 Perfect Timing!' : won ? '🕐 Well Trained!' : '🕐 Back to Training!',
+      modalBody: `${this._hits}/5 clocks correct\n+${gold}💰`,
+    });
+  },
+};
+
+// ─── OAK SORT ENGINE — "Oak's Sorting Lab" — teaches classification ──────────
+// Pokémon slide across one at a time; tap the correct basket before they exit.
+// Sorting rules rotate: by type, by colour, by wings, by size.
+
+const OAK_POKEMON = [
+  { id:1,   name:'Bulbasaur',  type:'grass',    color:'green',  wings:false, size:'small' },
+  { id:4,   name:'Charmander', type:'fire',     color:'orange', wings:false, size:'small' },
+  { id:7,   name:'Squirtle',   type:'water',    color:'blue',   wings:false, size:'small' },
+  { id:25,  name:'Pikachu',    type:'electric', color:'yellow', wings:false, size:'small' },
+  { id:6,   name:'Charizard',  type:'fire',     color:'orange', wings:true,  size:'big'   },
+  { id:9,   name:'Blastoise',  type:'water',    color:'blue',   wings:false, size:'big'   },
+  { id:12,  name:'Butterfree', type:'bug',      color:'white',  wings:true,  size:'small' },
+  { id:18,  name:'Pidgeot',    type:'flying',   color:'brown',  wings:true,  size:'big'   },
+  { id:54,  name:'Psyduck',    type:'water',    color:'yellow', wings:false, size:'small' },
+  { id:59,  name:'Arcanine',   type:'fire',     color:'orange', wings:false, size:'big'   },
+  { id:143, name:'Snorlax',    type:'normal',   color:'blue',   wings:false, size:'big'   },
+  { id:130, name:'Gyarados',   type:'water',    color:'blue',   wings:false, size:'big'   },
+  { id:39,  name:'Jigglypuff', type:'normal',   color:'pink',   wings:false, size:'small' },
+  { id:152, name:'Chikorita',  type:'grass',    color:'green',  wings:false, size:'small' },
+  { id:155, name:'Cyndaquil',  type:'fire',     color:'blue',   wings:false, size:'small' },
+  { id:163, name:'Hoothoot',   type:'flying',   color:'brown',  wings:true,  size:'small' },
+];
+
+const OAK_RULES = [
+  { key:'type',  label:'TYPE',  buckets: [['fire','🔥 Fire'], ['water','💧 Water'], ['grass','🌿 Grass']] },
+  { key:'color', label:'COLOUR',buckets: [['blue','🔵 Blue'], ['orange','🟠 Orange'], ['yellow','🟡 Yellow']] },
+  { key:'wings', label:'WINGS', buckets: [[true,'🪽 Has wings'], [false,'🚫 No wings']] },
+  { key:'size',  label:'SIZE',  buckets: [['big','🐘 Big'], ['small','🐭 Small']] },
+];
+
+const OakSortEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0, _queue:[], _rule:null,
+  _sprites:{}, _timeouts:[],
+
+  async start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0; this._timeouts = [];
+    ActiveEngine.set(this);
+
+    showLoading();
+    await Promise.all(OAK_POKEMON.map(async p => {
+      const d = await fetchPoke(p.id).catch(() => null);
+      this._sprites[p.id] = d ? getSpriteUrl(d) :
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`;
+    }));
+    hideLoading();
+
+    showBossIntro({
+      gymIndex: 0, portrait: 'oak.png', gameKey: 'oak',
+      name: 'Professor Oak', btnLabel: '🔬 Help Sort!',
+      introText: "Oh dear, oh dear! My research Pokémon got all mixed up! Help me sort them into the right groups — look carefully at each one as it passes!",
+    });
+    // Oak portrait fallback if missing
+    const t = document.getElementById('boss-trainer-sprite');
+    if (t) t.onerror = () => { t.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png'; };
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+
+    // Pick a rule, build a queue of 8 Pokémon that all fit one of its buckets
+    this._rule = OAK_RULES[Math.floor(Math.random() * OAK_RULES.length)];
+    const bucketVals = this._rule.buckets.map(b => b[0]);
+    const eligible   = OAK_POKEMON.filter(p => bucketVals.includes(p[this._rule.key]));
+    this._queue      = shuffle(eligible).slice(0, 8);
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= this._queue.length) { this._finish(); return; }
+    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const poke = this._queue[this._round];
+
+    const cv = setupChallengeScreen({
+      portrait: 'oak.png', badge: `🔬 Sort by ${this._rule.label}!`,
+      intro: `${this._round + 1}/${this._queue.length} — ${this._hits} sorted right`,
+      wrapClass: 'oak-wrap', screenClass: 'oak-active',
+    });
+
+    // The conveyor — sprite slides across
+    const belt = document.createElement('div');
+    belt.className = 'oak-belt';
+    const slideMs = Math.max(3500, 7000 - (tier - 1) * 1500 - this._round * 200);
+    belt.innerHTML = `
+      <img src="${this._sprites[poke.id]}" class="oak-poke pixel-sprite" id="oak-poke"
+           style="animation-duration:${slideMs}ms" alt="${poke.name}">
+      <div class="oak-poke-name">${poke.name}</div>`;
+    cv.appendChild(belt);
+
+    // Baskets
+    const row = document.createElement('div');
+    row.className = 'oak-baskets';
+    let answered = false;
+    this._rule.buckets.forEach(([val, label]) => {
+      const b = document.createElement('button');
+      b.className = 'oak-basket';
+      b.innerHTML = `<span class="oak-basket-label">${label}</span>`;
+      b.addEventListener('click', () => {
+        if (answered) return;
+        answered = true;
+        this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+        document.getElementById('oak-poke')?.style.setProperty('animation-play-state','paused');
+        const correct = poke[this._rule.key] === val;
+        b.classList.add(correct ? 'oak-correct' : 'oak-wrong');
+        if (correct) this._hits++;
+        else {
+          row.querySelectorAll('.oak-basket').forEach((bb, i) => {
+            if (this._rule.buckets[i][0] === poke[this._rule.key]) bb.classList.add('oak-correct');
+          });
+        }
+        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 950));
+      });
+      row.appendChild(b);
+    });
+    cv.appendChild(row);
+
+    // Escaped — slid past without sorting
+    this._timeouts.push(setTimeout(() => {
+      if (!answered) {
+        answered = true;
+        row.querySelectorAll('.oak-basket').forEach((bb, i) => {
+          bb.disabled = true;
+          if (this._rule.buckets[i][0] === poke[this._rule.key]) bb.classList.add('oak-correct');
+        });
+        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 950));
+      }
+    }, slideMs));
+  },
+
+  _finish() {
+    const total = this._queue.length;
+    const won   = this._hits >= Math.ceil(total * 0.7);
+    const gold  = this._hits === total ? 24 : won ? 14 : 6;
+    completeChallenge({
+      screenClass: 'oak-active', won,
+      goldReward: gold,
+      score: this._hits, maxScore: total, gameKey: 'oak',
+      modalTitle: this._hits === total ? '🔬 Master Researcher!' : won ? '🔬 Well Sorted!' : '🔬 Keep Studying!',
+      modalBody: `${this._hits}/${total} sorted correctly\n+${gold}💰`,
+    });
+  },
+};
+
+// ─── SNORLAX ENGINE — "Snorlax's Weigh Station" — comparison & estimation ────
+// Snorlax blocks the road. Balance the scale using real PokéAPI weights.
+const SNORLAX_POOL = [143, 25, 1, 4, 7, 39, 52, 54, 95, 130, 131, 6, 9, 59, 78, 115, 128, 149];
+
+const SnorlaxEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0,
+  _pokes: [],   // { id, name, sprite, kg }
+
+  async start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
+    ActiveEngine.set(this);
+
+    showLoading();
+    const picks = shuffle([...SNORLAX_POOL]).slice(0, 12);
+    this._pokes = (await Promise.all(picks.map(async id => {
+      const d = await fetchPoke(id).catch(() => null);
+      if (!d) return null;
+      return { id, name: capitalize(d.name), sprite: getSpriteUrl(d), kg: Math.round(d.weight / 10) };
+    }))).filter(Boolean);
+    hideLoading();
+
+    showBossIntro({
+      gymIndex: 0, portrait: 'snorlax_block.png', gameKey: 'snorlax',
+      name: 'Snorlax', btnLabel: '⚖️ Wake it up!',
+      introText: "Zzz... A wild Snorlax is blocking the road! It will only move for someone who understands WEIGHT. Balance the scale to prove it... zzz...",
+    });
+    const t = document.getElementById('boss-trainer-sprite');
+    if (t) t.onerror = () => { t.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png'; };
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5 || this._pokes.length < 4) { this._finish(); return; }
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+
+    const cv = setupChallengeScreen({
+      portrait: 'snorlax_block.png', badge: '⚖️ Weigh Station',
+      intro: `Round ${this._round + 1}/5 — ${this._hits} balanced`,
+      wrapClass: 'snorlax-wrap', screenClass: 'snorlax-active',
+    });
+
+    const pool = shuffle([...this._pokes]);
+
+    if (tier === 1) {
+      // Which is heavier? Two sprites, tap the heavier one.
+      const [a, b] = pool.slice(0, 2);
+      const q = document.createElement('div');
+      q.className = 'snx-question';
+      q.textContent = 'Which Pokémon is HEAVIER?';
+      cv.appendChild(q);
+
+      const row = document.createElement('div');
+      row.className = 'snx-pick-row';
+      [a, b].forEach(p => {
+        const btn = document.createElement('button');
+        btn.className = 'snx-pick';
+        btn.innerHTML = `<img src="${p.sprite}" class="snx-sprite pixel-sprite"><span class="snx-name">${p.name}</span>`;
+        btn.addEventListener('click', () => {
+          row.querySelectorAll('.snx-pick').forEach(x => x.disabled = true);
+          const heavier = a.kg >= b.kg ? a : b;
+          const correct = p.id === heavier.id;
+          btn.classList.add(correct ? 'snx-correct' : 'snx-wrong');
+          // Reveal weights — the teaching moment
+          row.querySelectorAll('.snx-pick').forEach((x, i) => {
+            const pk = [a, b][i];
+            x.insertAdjacentHTML('beforeend', `<span class="snx-kg">${pk.kg} kg</span>`);
+            if (pk.id === heavier.id) x.classList.add('snx-correct');
+          });
+          if (correct) this._hits++;
+          setTimeout(() => { this._round++; this._showRound(); }, 1600);
+        });
+        row.appendChild(btn);
+      });
+      cv.appendChild(row);
+      return;
+    }
+
+    // Tier 2/3 — balance the scale: left pan has 1 (T2) or a target weight (T3)
+    const left   = pool[0];
+    const shelf  = pool.slice(1, 4);
+    const tol    = tier === 2 ? 0.5 : 0.25;  // closest wins; tolerance for "balanced" wording
+    const q = document.createElement('div');
+    q.className = 'snx-question';
+    q.textContent = tier === 2
+      ? `Pick the Pokémon CLOSEST in weight to ${left.name} (${left.kg} kg)!`
+      : `Pick TWO Pokémon that together weigh closest to ${left.kg * 2} kg!`;
+    cv.appendChild(q);
+
+    // The scale visual
+    const scale = document.createElement('div');
+    scale.className = 'snx-scale';
+    scale.id = 'snx-scale';
+    scale.innerHTML = `
+      <div class="snx-beam" id="snx-beam">
+        <div class="snx-pan snx-pan-left">
+          ${tier === 2 ? `<img src="${left.sprite}" class="snx-pan-sprite pixel-sprite">` : `<span class="snx-pan-kg">${left.kg * 2} kg</span>`}
+        </div>
+        <div class="snx-pan snx-pan-right" id="snx-pan-right"></div>
+      </div>
+      <div class="snx-base">⚖️</div>`;
+    cv.appendChild(scale);
+
+    const targetKg = tier === 2 ? left.kg : left.kg * 2;
+    let pickedIds = [];
+    let pickedKg  = 0;
+    const need    = tier === 2 ? 1 : 2;
+
+    const row = document.createElement('div');
+    row.className = 'snx-shelf';
+    shelf.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'snx-pick snx-shelf-item';
+      btn.innerHTML = `<img src="${p.sprite}" class="snx-sprite pixel-sprite"><span class="snx-name">${p.name}</span><span class="snx-kg">${p.kg} kg</span>`;
+      btn.addEventListener('click', () => {
+        if (pickedIds.includes(p.id)) return;
+        pickedIds.push(p.id); pickedKg += p.kg;
+        btn.classList.add('snx-picked');
+        document.getElementById('snx-pan-right')?.insertAdjacentHTML('beforeend',
+          `<img src="${p.sprite}" class="snx-pan-sprite pixel-sprite">`);
+        // Tilt beam toward heavier side
+        const beam = document.getElementById('snx-beam');
+        if (beam) {
+          const diff = Math.max(-12, Math.min(12, (targetKg - pickedKg) / Math.max(targetKg, 1) * 18));
+          beam.style.transform = `rotate(${(-diff).toFixed(1)}deg)`;
+        }
+        if (pickedIds.length >= need) {
+          row.querySelectorAll('button').forEach(b => b.disabled = true);
+          // Best possible pick(s) for scoring
+          let bestDiff = Infinity;
+          if (need === 1) {
+            shelf.forEach(s => bestDiff = Math.min(bestDiff, Math.abs(s.kg - targetKg)));
+          } else {
+            for (let i = 0; i < shelf.length; i++)
+              for (let k = i + 1; k < shelf.length; k++)
+                bestDiff = Math.min(bestDiff, Math.abs(shelf[i].kg + shelf[k].kg - targetKg));
+          }
+          const myDiff  = Math.abs(pickedKg - targetKg);
+          const correct = myDiff <= bestDiff + 0.01;
+          scale.classList.add(correct ? 'snx-balanced' : 'snx-tipped');
+          const verdict = document.createElement('div');
+          verdict.className = 'snx-verdict';
+          verdict.textContent = correct
+            ? `Balanced! ${pickedKg} kg vs ${targetKg} kg ✓`
+            : `${pickedKg} kg vs ${targetKg} kg — off by ${Math.abs(pickedKg - targetKg)} kg`;
+          cv.appendChild(verdict);
+          if (correct) this._hits++;
+          setTimeout(() => { this._round++; this._showRound(); }, 1800);
+        }
+      });
+      row.appendChild(btn);
+    });
+    cv.appendChild(row);
+  },
+
+  _finish() {
+    const won  = this._hits >= 4;
+    const gold = this._hits >= 5 ? 26 : won ? 16 : 7;
+    completeChallenge({
+      screenClass: 'snorlax-active', won,
+      goldReward: gold,
+      score: this._hits, maxScore: 5, gameKey: 'snorlax',
+      modalTitle: this._hits >= 5 ? '⚖️ Perfectly Balanced!' : won ? '⚖️ Snorlax Moves!' : '⚖️ Snorlax Snores On...',
+      modalBody: `${this._hits}/5 weighed right\n+${gold}💰` +
+        (won ? '\n\nSnorlax lumbers off the road!' : ''),
     });
   },
 };
@@ -12673,6 +13413,8 @@ const BugsyEngine = {
     completeChallenge({
       screenClass: 'bugsy-active', won: this._hits >= 4,
       goldReward: gold,
+      score: this._hits, maxScore: 5, gameKey: 'bugsy',
+      tokenLabel: this._hits === 5 ? 'Bug Research — enemy attack -20%!' : null,
       effects: this._hits === 5 ? { bugsyResearch: true } : {},
       modalTitle: this._hits >= 5 ? '🐛 Expert Entomologist!' : '🐛 Bug Hunt',
       modalBody: `${this._hits}/5 found\n+${gold}💰` +
@@ -17123,6 +17865,12 @@ function hasStatus(st, who, status) {
 // ─── INIT — wire all buttons here, zero inline onclick in HTML ────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  // D5 — universal tap blip on any enabled button (delegated, capture phase)
+  document.addEventListener('pointerdown', e => {
+    const btn = e.target.closest('button');
+    if (btn && !btn.disabled) SoundEngine.playTap();
+  }, { capture: true, passive: true });
+
 
   // ── Party drawer ──
   document.getElementById('btn-party-drawer-close').addEventListener('click', () => PartyOverview.close());
@@ -17185,7 +17933,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── Start screen ──
-  document.getElementById('btn-new-game').addEventListener('click', () => Game.startNew());
+  document.getElementById('btn-new-game').addEventListener('click', () => {
+    // D3 — guard: starting a new run discards an active save
+    const contBtn = document.getElementById('btn-continue-game');
+    const hasSave = contBtn && !contBtn.disabled;
+    if (hasSave) {
+      showModal('Start a new run?', 'Your current run will be lost!\nBadges and Pokédex are kept.', () => Game.startNew(), true);
+    } else {
+      Game.startNew();
+    }
+  });
   document.getElementById('btn-continue-game').addEventListener('click', () => Game.continueGame());
   document.getElementById('btn-start-league').addEventListener('click', () => LeagueEngine.showPartySelect());
   document.getElementById('btn-open-pokedex').addEventListener('click', () => PokedexEngine.show());

@@ -41,7 +41,7 @@
   --col-node-locked:   #555577;
   --col-node-done:     #2C5F3A;
 
-  /* Type colors */
+  /* Type colors — official game palette, complete set */
   --col-type-normal:   #A8A878;
   --col-type-fire:     #F08030;
   --col-type-water:    #6890F0;
@@ -51,6 +51,20 @@
   --col-type-rock:     #B8A038;
   --col-type-ground:   #E0C068;
   --col-type-poison:   #A040A0;
+  --col-type-ice:      #98D8D8;
+  --col-type-fighting: #C03028;
+  --col-type-flying:   #A890F0;
+  --col-type-bug:      #A8B820;
+  --col-type-ghost:    #705898;
+  --col-type-dragon:   #7038F8;
+  --col-type-dark:     #705848;
+  --col-type-steel:    #B8B8D0;
+  --col-type-fairy:    #EE99AC;
+
+  /* Region accent — red in Kanto, swapped to green by .johto-accent on body */
+  --accent:       #e3350d;
+  --accent-dark:  #aa2008;
+  --accent-glow:  rgba(227,53,13,.3);
 
   /* Spacing & radius */
   --r-sm: 6px;
@@ -405,7 +419,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .start-menu .btn-secondary:hover:not(:disabled) {
   background: rgba(255,255,255,.14);
-  border-color: rgba(255,255,255,.4);
+  border-color: rgba(255,255,255,.68);
 }
 
 /* Tier 2 — league (gold) */
@@ -456,7 +470,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .start-footer {
   font-family: 'Press Start 2P', monospace;
   font-size: .32rem;
-  color: rgba(255,255,255,.35);
+  color: rgba(255,255,255,.65);
   letter-spacing: .25em;
   text-align: center;
   padding: .35rem 0 .2rem;
@@ -2193,7 +2207,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: absolute; top: -6px; right: -6px;
   background: var(--col-yellow); color: #000;
   font-family: 'Press Start 2P', monospace;
-  font-size: .26rem; padding: .15em .3em;
+  font-size: .34rem; padding: .15em .3em;
   border-radius: 3px;
 }
 .training-poke-active {
@@ -2826,7 +2840,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .dex-id {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
+  font-size: .34rem;
   color: var(--col-text-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -2834,7 +2848,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .dex-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem;
+  font-size: .34rem;
   color: var(--col-text);
   white-space: nowrap;
   overflow: hidden;
@@ -3431,7 +3445,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .release-party-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-text);
+  font-size: .34rem; color: var(--col-text);
   word-break: break-all; text-align: center;
 }
 .release-party-hp {
@@ -3439,7 +3453,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .release-party-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-red);
+  font-size: .34rem; color: var(--col-red);
 }
 
 /* ═══════════════════════════════════════════
@@ -3590,7 +3604,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: #e04040;
   color: #fff;
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
+  font-size: .34rem;
   min-width: 14px; height: 14px;
   border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
@@ -3924,7 +3938,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* WHO label */
 .log-who {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem;
+  font-size: .34rem;
   letter-spacing: .05em;
   flex-shrink: 0;
   opacity: .7;
@@ -4044,7 +4058,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .catch-rarity-badge {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; padding: .25em .6em;
+  font-size: .34rem; padding: .25em .6em;
   border-radius: 4px;
 }
 .catch-rarity-common   { background: rgba(180,180,180,.2); color: #aaa; border: 1px solid #888; }
@@ -4114,7 +4128,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .pdx-stat-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-text-dim);
+  font-size: .34rem; color: var(--col-text-dim);
   width: 22px; flex-shrink: 0;
 }
 .pdx-stat-bar-bg {
@@ -4228,7 +4242,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 .pdx-new-banner {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: #ffd700;
+  font-size: .34rem; color: #ffd700;
   text-align: center; text-shadow: 0 0 6px rgba(255,215,0,.6);
 }
 
@@ -4280,7 +4294,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .pdx-data-top {
   display: flex; align-items: baseline; gap: .4rem;
 }
-.pdx-entry-number { font-size: .3rem; color: #559955; }
+.pdx-entry-number { font-size: .34rem; color: #559955; }
 .pdx-entry-name   { font-size: .55rem; color: #aaffaa; }
 
 .pdx-data-types {
@@ -4408,7 +4422,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .tut-path-arrow span {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: rgba(255,255,255,.7);
+  font-size: .34rem; color: rgba(255,255,255,.7);
 }
 
 /* ── Types grid ── */
@@ -4441,7 +4455,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .tut-energy-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-text-dim);
+  font-size: .34rem; color: var(--col-text-dim);
   margin-left: .3rem;
 }
 /* Hand of 3 demo cards displayed in a row */
@@ -4466,7 +4480,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   font-size: .32rem; color: var(--col-yellow);
 }
 .tut-card-icon  { font-size: 1.4rem; }
-.tut-card-name  { font-family: 'Press Start 2P', monospace; font-size: .28rem; color: var(--col-text); }
+.tut-card-name  { font-family: 'Press Start 2P', monospace; font-size: .34rem; color: var(--col-text); }
 .tut-card-dmg   { font-size: .38rem; color: var(--col-yellow); font-weight: 800; }
 
 /* ── Rocket row ── */
@@ -4483,7 +4497,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .tut-rocket-char span {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-text-dim);
+  font-size: .34rem; color: var(--col-text-dim);
 }
 
 /* ── Goal / badges row ── */
@@ -4499,7 +4513,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .tut-badge-icon { font-size: 1.6rem; }
 .tut-badge-num  {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; color: var(--col-text-dim);
+  font-size: .34rem; color: var(--col-text-dim);
 }
 .tut-trophy { font-size: 2.4rem; margin-left: .4rem; filter: drop-shadow(0 0 8px rgba(255,215,0,.6)); }
 
@@ -4697,7 +4711,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .apb-tier-inline .tier-pill {
-  font-size: .24rem;
+  font-size: .34rem;
   padding: 1px 5px;
 }
 .apb-detail-row {
@@ -4722,7 +4736,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   flex-shrink: 0;
 }
 .apb-edit-age-btn:hover {
-  border-color: rgba(255,255,255,.5);
+  border-color: rgba(255,255,255,.72);
   color: #fff;
 }
 .apb-switch-btn {
@@ -4792,7 +4806,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
   background: var(--col-yellow); color: #000;
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; padding: .2em .5em;
+  font-size: .34rem; padding: .2em .5em;
   border-radius: 3px; white-space: nowrap;
 }
 
@@ -4875,14 +4889,14 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: rgba(255,215,0,.06);
 }
 .profile-add-icon {
-  font-size: 2.5rem; color: rgba(255,255,255,.4);
+  font-size: 2.5rem; color: rgba(255,255,255,.68);
   line-height: 1;
   transition: color .15s;
 }
 .profile-card-add:hover .profile-add-icon { color: var(--col-yellow); }
 .profile-add-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .38rem; color: rgba(255,255,255,.4);
+  font-size: .38rem; color: rgba(255,255,255,.68);
 }
 .profile-card-add:hover .profile-add-label { color: var(--col-yellow); }
 
@@ -4965,7 +4979,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
   background: var(--col-yellow); color: #000;
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; padding: .2em .5em;
+  font-size: .34rem; padding: .2em .5em;
   border-radius: 3px; white-space: nowrap;
 }
 
@@ -5045,7 +5059,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   box-shadow: 0 0 10px rgba(255,215,0,.2);
 }
 .profile-add-icon {
-  font-size: 2.5rem; color: rgba(255,255,255,.5); line-height: 1;
+  font-size: 2.5rem; color: rgba(255,255,255,.72); line-height: 1;
 }
 .profile-add-label {
   font-family: 'Press Start 2P', monospace;
@@ -5118,7 +5132,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
   background: var(--col-yellow); color: #000;
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; padding: .2em .5em;
+  font-size: .34rem; padding: .2em .5em;
   border-radius: 3px; white-space: nowrap;
 }
 .profile-sprite-wrap {
@@ -5231,7 +5245,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .eevee-prog-pip {
   font-size: .38rem;
-  color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.68);
   background: rgba(0,0,0,.3);
   border-radius: 3px;
   padding: .1em .35em;
@@ -5315,7 +5329,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .recipe-slot-num {
   font-family: 'Press Start 2P', monospace;
-  font-size: .3rem; color: var(--col-yellow); opacity: .7;
+  font-size: .34rem; color: var(--col-yellow); opacity: .7;
 }
 .recipe-ingredient-icon { font-size: 1.6rem; line-height: 1; }
 .recipe-ingredient-name {
@@ -5353,7 +5367,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: rgba(255,200,80,.08);
 }
 .cz-empty-label {
-  font-size: .38rem; color: rgba(255,255,255,.3);
+  font-size: .38rem; color: rgba(255,255,255,.65);
   font-family: 'Press Start 2P', monospace;
 }
 .cz-icon  { font-size: 1.6rem; line-height: 1; }
@@ -5453,7 +5467,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* Recipe quantity — hidden until math is solved */
 .recipe-qty-hidden {
-  color: rgba(255,255,255,.3);
+  color: rgba(255,255,255,.65);
   letter-spacing: .1em;
 }
 .recipe-slot-revealed {
@@ -5913,7 +5927,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* ── Already-caught Pokédex badge ── */
 .catch-dex-badge {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
+  font-size: .34rem;
   padding: .25em .55em;
   border-radius: 4px;
   background: rgba(80,220,120,.18);
@@ -5926,8 +5940,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* ── Ball count tag inside ball selector ── */
 .ball-count-tag {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
-  color: rgba(255,255,255,.55);
+  font-size: .34rem;
+  color: rgba(255,255,255,.72);
   margin-left: .3em;
 }
 .ball-selected .ball-count-tag {
@@ -6457,7 +6471,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .item-upgrade-btn   { margin-top: .5rem; font-size: .38rem; }
 .item-upgrade-msg   { font-size: .42rem; margin-top: .3rem; min-height: .8rem; }
 .item-upgrade-empty { padding: 1.2rem; text-align: center; }
-.held-tier-badge    { font-size: .28rem; color: #ffd700; vertical-align: super; }
+.held-tier-badge    { font-size: .34rem; color: #ffd700; vertical-align: super; }
 
 /* ═══════════════════════════════════════════
    CARD EFFECT HINT — utility card preview
@@ -6826,12 +6840,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   transition: border-color .15s;
 }
 .james-letter-slot.empty {
-  color: rgba(255,255,255,.3);
-  border-bottom-color: rgba(255,255,255,.4);
+  color: rgba(255,255,255,.65);
+  border-bottom-color: rgba(255,255,255,.68);
   animation: slot-pulse-white 1.6s ease-in-out infinite;
 }
 @keyframes slot-pulse-white {
-  0%,100% { border-bottom-color: rgba(255,255,255,.3); }
+  0%,100% { border-bottom-color: rgba(255,255,255,.65); }
   50%      { border-bottom-color: rgba(255,255,255,.8); }
 }
 .james-letter-slot.correct {
@@ -6986,7 +7000,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .jiggly-dot-pending {
   background: rgba(255,255,255,.08);
   border-color: rgba(255,255,255,.2);
-  color: rgba(255,255,255,.5);
+  color: rgba(255,255,255,.72);
   animation: slot-pulse-white 1.8s ease-in-out infinite;
 }
 .jiggly-dot-playing {
@@ -7025,8 +7039,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border: 2px solid rgba(255,180,220,.3);
   background: rgba(255,255,255,.07);
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
-  color: rgba(255,255,255,.4);
+  font-size: .34rem;
+  color: rgba(255,255,255,.68);
   display: flex; align-items: center; justify-content: center;
 }
 .jiggly-phrase-active {
@@ -8022,7 +8036,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   align-items: center;
   gap: 3px;
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
+  font-size: .34rem;
   padding: 2px 6px;
   border-radius: 20px;
   white-space: nowrap;
@@ -8097,7 +8111,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .age-modal-hint {
   font-size: .40rem;
-  color: rgba(255,255,255,.5);
+  color: rgba(255,255,255,.72);
   text-align: center;
 }
 .age-modal-btns {
@@ -8119,7 +8133,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .age-modal-age-btn:hover {
   background: rgba(255,255,255,.12);
-  border-color: rgba(255,255,255,.4);
+  border-color: rgba(255,255,255,.68);
   transform: scale(1.08);
 }
 .age-modal-selected {
@@ -8281,592 +8295,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 #screen-challenge.giovanni-active .challenge-badge  { color: #c8a060; }
 #screen-challenge.giovanni-active .challenge-intro  { color: rgba(180,150,100,.65); }
+/* Old Giovanni painting CSS removed — replaced by Rocket's Ledger (rk-*) */
 
-/* ── Operator sequence bar ── */
-.gio-seq-bar {
-  display: flex; gap: 5px; justify-content: center;
-  padding: .2rem 0;
-}
-.gio-seq-pip {
-  width: 26px; height: 26px;
-  border-radius: 6px;
-  border: 1.5px solid rgba(200,160,60,.3);
-  background: rgba(255,255,255,.05);
-  font-family: 'Press Start 2P', monospace;
-  font-size: .34rem;
-  color: rgba(255,255,255,.4);
-  display: flex; align-items: center; justify-content: center;
-  transition: all .2s;
-}
-.gio-seq-current {
-  border-color: #ffd700;
-  color: #ffd700;
-  background: rgba(255,215,0,.15);
-  box-shadow: 0 0 10px rgba(255,215,0,.4);
-  transform: scale(1.15);
-}
-.gio-seq-done {
-  border-color: rgba(100,200,100,.4);
-  color: #60cc60;
-  background: rgba(40,140,40,.15);
-}
-
-/* ── Score bar ── */
-.gio-score-bar {
-  display: flex; align-items: center; gap: .35rem;
-  font-family: 'Press Start 2P', monospace;
-  font-size: .38rem;
-}
-.gio-score-label { color: rgba(255,255,255,.4); }
-.gio-score-val   { font-size: .72rem; color: #ffd700; }
-.gio-score-target{ color: rgba(255,255,255,.35); }
-
-/* ── Card base ── */
-.gio-card {
-  will-change: transform;
-  position: relative;
-  width: 110px;
-  height: 140px;
-  border-radius: 12px;
-  border: 2.5px solid rgba(255,255,255,.15);
-  background: linear-gradient(180deg, #1a1a28 0%, #12121e 100%);
-  overflow: hidden;
-  transition: transform .12s, border-color .12s, box-shadow .12s;
-  cursor: default;
-}
-.gio-card-inner {
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: flex-end;
-  position: relative;
-}
-.gio-card-sprite {
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  width: 100%; height: 80%;
-  object-fit: contain;
-  image-rendering: pixelated;
-  filter: drop-shadow(0 4px 8px rgba(0,0,0,.7));
-  transition: opacity .3s;
-}
-.gio-card-name {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .48rem;
-  color: rgba(255,255,255,.6);
-  text-align: center;
-  padding: 0 .2rem;
-  position: relative; z-index: 2;
-}
-.gio-card-val {
-  position: absolute;
-  bottom: 8px; left: 8px;
-  background: rgba(0,0,0,.85);
-  color: #fff;
-  font-family: 'Press Start 2P', monospace;
-  font-size: .65rem;
-  font-weight: bold;
-  min-width: 28px; height: 28px;
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  padding: 0 4px;
-  border: 2px solid rgba(255,215,0,.6);
-  z-index: 3;
-}
-.gio-card-preview {
-  position: absolute;
-  bottom: 36px; left: 50%; transform: translateX(-50%);
-  background: rgba(0,0,0,.85);
-  color: #80ee80;
-  font-family: 'Press Start 2P', monospace;
-  font-size: .24rem;
-  padding: 2px 5px; border-radius: 5px;
-  white-space: nowrap;
-  z-index: 4;
-  pointer-events: none;
-}
-
-/* Choice cards — hoverable, clickable */
-.gio-choice-card {
-  will-change: transform, box-shadow;
-  cursor: pointer;
-  border-color: rgba(255,255,255,.2);
-}
-.gio-choice-card:hover {
-  transform: translateY(-6px) scale(1.04);
-  border-color: #ffd700;
-  box-shadow: 0 8px 24px rgba(255,215,0,.3), 0 0 0 1px rgba(255,215,0,.3);
-}
-.gio-card-chosen {
-  border-color: #ffd700 !important;
-  box-shadow: 0 0 24px rgba(255,215,0,.6) !important;
-}
-
-/* Score animations */
-.gio-score-up   { animation: gio-up   .4s ease; }
-.gio-score-down { animation: gio-down .4s ease; }
-@keyframes gio-up   { 0%,100%{color:#ffd700} 50%{color:#80ff80;transform:scale(1.3)} }
-@keyframes gio-down { 0%,100%{color:#ffd700} 50%{color:#ff6060;transform:scale(1.3)} }
-
-/* Layout areas */
-.gio-choice-area {
-  display: flex; gap: 16px; justify-content: center;
-  padding: .2rem 0;
-}
-.gio-operator-badge {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 1.1rem;
-  color: #ffd700;
-  text-shadow: 0 0 14px rgba(255,215,0,.7);
-  text-align: center;
-  letter-spacing: .05em;
-}
-.gio-player-area {
-  display: flex; justify-content: center;
-}
-.gio-player-card {
-  border-color: rgba(255,215,0,.5) !important;
-  box-shadow: 0 0 16px rgba(255,215,0,.2) !important;
-  cursor: default !important;
-  width: 120px; height: 155px;
-}
-.gio-player-card .gio-card-val {
-  font-size: .8rem;
-  border-color: #ffd700;
-  background: rgba(0,0,0,.9);
-  box-shadow: 0 0 8px rgba(255,215,0,.5);
-}
-
-/* Giovanni portrait + comment */
-.gio-giovanni-row {
-  display: flex; align-items: center; gap: .4rem;
-  width: 100%; padding: 0 .2rem;
-}
-.gio-portrait {
-  width: 36px; height: 36px;
-  object-fit: contain;
-  border-radius: 50%;
-  border: 2px solid rgba(200,160,60,.3);
-  flex-shrink: 0;
-}
-.gio-comment {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .34rem;
-  color: rgba(200,170,100,.0);
-  line-height: 1.5;
-  transition: color .3s;
-  font-style: italic;
-}
-.gio-comment-show { color: rgba(200,170,100,.85) !important; }
-
-/* ═══════════════════════════════════════════
-   BADGE CEREMONY SCREEN
-═══════════════════════════════════════════ */
-#screen-badge {
-  justify-content: center; align-items: center;
-}
-.badge-bg {
-  position: absolute; inset: 0;
-  background: #111;
-  transition: background .5s;
-}
-.badge-ceremony {
-  position: relative; z-index: 1;
-  display: flex; align-items: center; justify-content: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  width: 100%; max-width: 600px;
-}
-.badge-leader-portrait {
-  width: 110px; height: 110px;
-  object-fit: contain;
-  filter: drop-shadow(0 4px 16px rgba(0,0,0,.7));
-  flex-shrink: 0;
-  animation: badge-portrait-in .6s ease both;
-}
-@keyframes badge-portrait-in {
-  from { opacity:0; transform: translateX(-20px); }
-  to   { opacity:1; transform: translateX(0); }
-}
-.badge-centre {
-  display: flex; flex-direction: column; align-items: center; gap: .6rem;
-  flex: 1;
-}
-.badge-title-text {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .65rem;
-  color: #ffd700;
-  text-shadow: 0 0 20px rgba(255,215,0,.6);
-  text-align: center;
-  animation: badge-title-in .7s .2s ease both;
-}
-@keyframes badge-title-in {
-  from { opacity:0; transform: translateY(-10px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-.badge-medallion {
-  font-size: 3rem;
-  animation: badge-pop .5s .5s cubic-bezier(.175,.885,.32,1.5) both;
-  filter: drop-shadow(0 0 18px rgba(255,215,0,.5));
-}
-@keyframes badge-pop {
-  from { opacity:0; transform: scale(0); }
-  to   { opacity:1; transform: scale(1); }
-}
-.badge-farewell {
-  font-family: 'Nunito', sans-serif;
-  font-size: .72rem;
-  color: rgba(255,255,255,.85);
-  text-align: center;
-  font-style: italic;
-  line-height: 1.5;
-  min-height: 1.8rem;
-}
-.badge-watching {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .36rem;
-  color: rgba(200,180,100,.75);
-  text-align: center;
-  line-height: 1.6;
-  min-height: 1.4rem;
-}
-.badge-continue-btn {
-  margin-top: .4rem;
-  animation: badge-btn-in .3s ease both;
-}
-@keyframes badge-btn-in {
-  from { opacity:0; transform: translateY(8px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-
-/* ═══════════════════════════════════════════
-   MAP TITLE CARD SCREEN
-═══════════════════════════════════════════ */
-#screen-maptitle {
-  justify-content: center; align-items: center;
-}
-.maptitle-bg {
-  position: absolute; inset: 0;
-  background: #111;
-}
-.maptitle-centre {
-  position: relative; z-index: 1;
-  display: flex; flex-direction: column;
-  align-items: center; gap: .5rem;
-  text-align: center;
-  animation: maptitle-in .7s ease both;
-}
-@keyframes maptitle-in {
-  from { opacity:0; transform: translateY(16px); }
-  to   { opacity:1; transform: translateY(0); }
-}
-.maptitle-location {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 1.1rem;
-  color: #ffd700;
-  text-shadow: 0 0 30px rgba(255,215,0,.5);
-  letter-spacing: .1em;
-}
-.maptitle-leader {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .48rem;
-  color: rgba(255,255,255,.6);
-  letter-spacing: .05em;
-}
-.maptitle-flavour {
-  font-family: 'Nunito', sans-serif;
-  font-size: .75rem;
-  color: rgba(255,255,255,.5);
-  font-style: italic;
-  max-width: 320px;
-  line-height: 1.5;
-  opacity: 0;
-  transition: opacity .6s ease;
-}
-.maptitle-flavour-in { opacity: 1 !important; }
-
-/* ═══════════════════════════════════════════
-   GAMEOVER — RUN SUMMARY
-═══════════════════════════════════════════ */
-.gameover-pb-banner {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .42rem;
-  color: #ffd700;
-  background: rgba(255,215,0,.12);
-  border: 1.5px solid rgba(255,215,0,.4);
-  border-radius: 8px;
-  padding: .35rem .7rem;
-  text-align: center;
-  animation: pb-pulse 1.5s ease-in-out infinite;
-}
-@keyframes pb-pulse {
-  0%,100% { box-shadow: 0 0 0 rgba(255,215,0,0); }
-  50%      { box-shadow: 0 0 16px rgba(255,215,0,.4); }
-}
-.gameover-run-summary {
-  width: 100%;
-  display: flex; flex-direction: column; align-items: center; gap: .35rem;
-  padding: .4rem 0;
-}
-.go-badge-row {
-  display: flex; gap: 5px; justify-content: center; flex-wrap: wrap;
-}
-.go-badge-pip {
-  font-size: .9rem;
-  opacity: .2;
-  transition: opacity .3s;
-}
-.go-badge-earned { opacity: 1; }
-.go-party-row {
-  display: flex; gap: 4px; justify-content: center; flex-wrap: wrap;
-}
-.go-party-sprite {
-  width: 44px; height: 44px;
-  object-fit: contain;
-  filter: grayscale(40%) drop-shadow(0 2px 4px rgba(0,0,0,.5));
-}
-.go-mvp-line {
-  font-family: 'Nunito', sans-serif;
-  font-size: .60rem;
-  color: rgba(255,255,255,.65);
-  font-style: italic;
-  text-align: center;
-  max-width: 300px;
-}
-.go-taunt-line {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .32rem;
-  color: rgba(200,170,100,.7);
-  text-align: center;
-  font-style: italic;
-  line-height: 1.6;
-  max-width: 300px;
-}
-
-/* ═══════════════════════════════════════════
-   GIOVANNI — GALLERY PAINTING GAME
-═══════════════════════════════════════════ */
-#screen-challenge.giovanni-active {
-  background: linear-gradient(160deg, #0a0a10 0%, #10101c 60%, #0a0a14 100%);
-}
-#screen-challenge.giovanni-active .challenge-badge  {
-  color: #d4af70;
-  letter-spacing: .06em;
-}
-#screen-challenge.giovanni-active .challenge-intro  {
-  color: rgba(200,180,130,.6);
-  font-style: italic;
-}
-
-.giovanni-wrap {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: .25rem !important;
-  width: 100%;
-  padding: 0 !important;         /* remove coin-visual padding in gallery mode */
-}
-/* Strip coin-visual decoration in gallery mode */
-#screen-challenge.giovanni-active .challenge-coin-visual {
-  background: none !important;
-  border: none !important;
-  padding: .2rem 0 !important;
-}
-/* Reduce header gap in gallery mode to give canvas more room */
-#screen-challenge.giovanni-active .challenge-panel {
-  gap: .35rem !important;
-  padding-top: .5rem !important;
-  padding-bottom: .5rem !important;
-}
-#screen-challenge.giovanni-active .challenge-header {
-  padding: .4rem .6rem !important;
-  gap: .2rem !important;
-}
-
-/* ── Canvas ── */
-.gio-canvas-wrap {
-  position: relative;
-  width: min(340px, 92vw);
-  height: min(340px, 92vw);
-  flex-shrink: 0;
-}
-.gio-canvas-svg {
-  width: 100%; height: 100%;
-  border-radius: 10px;
-  border: 2px solid rgba(200,170,100,.3);
-  box-shadow: 0 4px 24px rgba(0,0,0,.6);
-}
-
-/* Zone states */
-.gio-zone {
-  cursor: pointer;
-  transition: filter .1s;
-}
-.gio-zone:hover   { filter: brightness(1.3); }
-.gio-zone-filled  { stroke: rgba(255,255,255,.4) !important; }
-@keyframes zone-wrong-flash {
-  0%,100% { filter: brightness(1); }
-  40%     { filter: brightness(2) saturate(2); }
-}
-.gio-zone-wrong-flash   { animation: zone-wrong-flash .5s ease; }
-@keyframes zone-correct-pulse {
-  0%,100% { filter: brightness(1); }
-  50%     { filter: brightness(1.4) drop-shadow(0 0 4px #fff); }
-}
-.gio-zone-correct-pulse { animation: zone-correct-pulse .6s ease; }
-.gio-zone-corrected     { stroke: rgba(255,255,255,.6) !important; }
-
-/* Reveal sprite */
-.gio-reveal-sprite {
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 70%; height: 70%;
-  object-fit: contain;
-  animation: gio-reveal-in .8s ease both;
-  filter: drop-shadow(0 0 16px rgba(255,215,0,.5));
-}
-@keyframes gio-reveal-in {
-  from { opacity:0; transform: translate(-50%,-50%) scale(.6); }
-  to   { opacity:1; transform: translate(-50%,-50%) scale(1); }
-}
-.gio-reveal-name {
-  position: absolute;
-  bottom: -1.6rem; left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Press Start 2P', monospace;
-  font-size: .42rem;
-  color: #ffd700;
-  white-space: nowrap;
-  text-shadow: 0 0 10px rgba(255,215,0,.5);
-}
-
-/* ── Palette ── */
-.gio-palette {
-  display: flex; gap: 7px; justify-content: center; flex-wrap: wrap;
-  padding: .1rem 0;
-}
-.gio-palette-btn {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  border: 3px solid rgba(255,255,255,.2);
-  background: var(--pal-color);
-  cursor: pointer;
-  transition: transform .1s, border-color .1s, box-shadow .1s;
-  position: relative;
-  display: flex; align-items: center; justify-content: center;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
-}
-.gio-palette-btn:hover {
-  transform: scale(1.12);
-  border-color: rgba(255,255,255,.5);
-}
-.gio-palette-btn:active { transform: scale(.96); }
-.gio-pal-active {
-  border-color: #fff !important;
-  box-shadow: 0 0 0 3px rgba(255,255,255,.4), 0 0 16px var(--pal-color);
-  transform: scale(1.15) !important;
-}
-.gio-pal-num {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .30rem;
-  color: rgba(0,0,0,.7);
-  font-weight: 900;
-  text-shadow: 0 1px 0 rgba(255,255,255,.3);
-  pointer-events: none;
-}
-
-/* ── Controls ── */
-.gio-control-row {
-  display: flex; gap: .5rem; align-items: center; justify-content: center;
-}
-.gio-selected-indicator {
-  display: flex; align-items: center; gap: .3rem;
-  font-family: 'Press Start 2P', monospace;
-  font-size: .34rem;
-  color: rgba(255,255,255,.65);
-  background: rgba(255,255,255,.06);
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 8px;
-  padding: .25rem .5rem;
-  min-width: 100px; text-align: center;
-}
-.gio-sel-swatch {
-  width: 14px; height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,.4);
-  flex-shrink: 0;
-}
-.gio-undo-btn {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .34rem;
-  background: rgba(255,255,255,.07);
-  border: 1px solid rgba(255,255,255,.15);
-  border-radius: 8px;
-  color: rgba(255,255,255,.6);
-  padding: .25rem .5rem;
-  cursor: pointer;
-  transition: background .1s;
-}
-.gio-undo-btn:not(:disabled):hover { background: rgba(255,255,255,.14); }
-.gio-undo-btn:disabled { opacity: .3; cursor: default; }
-
-/* Submit */
-.gio-submit-btn {
-  font-size: .42rem !important;
-  padding: .5em 1.2em !important;
-}
-.gio-submit-btn:disabled { opacity: .3; cursor: not-allowed; filter: grayscale(1); }
-
-/* ── Grade badge ── */
-.gio-grade-badge {
-  display: flex; flex-direction: column; align-items: center; gap: 2px;
-  padding: .4rem .8rem;
-  border-radius: 12px;
-  animation: grade-drop .5s cubic-bezier(.175,.885,.32,1.5) both;
-}
-@keyframes grade-drop {
-  from { opacity:0; transform: translateY(-20px) scale(.8); }
-  to   { opacity:1; transform: translateY(0) scale(1); }
-}
-.gio-grade-0 { background:rgba(200,60,60,.2);   border: 2px solid rgba(200,60,60,.4); }
-.gio-grade-1 { background:rgba(200,160,60,.15); border: 2px solid rgba(200,160,60,.3); }
-.gio-grade-2 { background:rgba(100,180,100,.15);border: 2px solid rgba(100,180,100,.3); }
-.gio-grade-3 { background:rgba(255,215,0,.18);  border: 2px solid rgba(255,215,0,.5);
-               box-shadow: 0 0 20px rgba(255,215,0,.3); }
-.gio-grade-stars { font-size: 1rem; }
-.gio-grade-label {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .40rem;
-  color: #ffd700;
-}
-.gio-grade-score {
-  font-family: 'Press Start 2P', monospace;
-  font-size: .32rem;
-  color: rgba(255,255,255,.5);
-}
-
-/* ── Giovanni portrait + comment ── */
-.gio-giovanni-row {
-  display: flex; align-items: center; gap: .4rem;
-  width: 100%; padding: 0 .2rem;
-}
-.gio-portrait {
-  width: 36px; height: 36px;
-  object-fit: contain;
-  border-radius: 50%;
-  border: 2px solid rgba(200,160,60,.3);
-  flex-shrink: 0;
-}
-.gio-comment {
-  font-family: 'Nunito', sans-serif;
-  font-size: .55rem;
-  color: rgba(200,170,100,.0);
-  line-height: 1.4;
-  transition: color .3s;
-  font-style: italic;
-}
-.gio-comment-show { color: rgba(200,170,100,.85) !important; }
 
 /* ── Transform — copied card from opponent ── */
 .card[data-copied="true"] {
@@ -8966,7 +8396,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .league-party-sub {
   font-family: 'Nunito', sans-serif;
-  font-size: .60rem; color: rgba(255,255,255,.5);
+  font-size: .60rem; color: rgba(255,255,255,.72);
   margin-top: .2rem;
 }
 .league-party-counter {
@@ -9005,12 +8435,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .league-poke-sprite { width: 44px; height: 44px; object-fit: contain; }
 .league-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .22rem; color: var(--col-text);
+  font-size: .34rem; color: var(--col-text);
   margin-top: .15rem; word-break: break-all; line-height: 1.3;
 }
 .league-poke-type {
   font-family: 'Press Start 2P', monospace;
-  font-size: .20rem;
+  font-size: .34rem;
   border-radius: 4px; padding: 1px 3px;
   margin-top: .1rem; display: inline-block;
   color: #fff;
@@ -9088,12 +8518,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .lv-stat-sprite { width: 48px; height: 48px; object-fit: contain; }
 .lv-stat-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; color: var(--col-text);
+  font-size: .34rem; color: var(--col-text);
   margin: .2rem 0;
 }
 .lv-stat-row {
   font-family: 'Press Start 2P', monospace;
-  font-size: .26rem; color: rgba(255,255,255,.55);
+  font-size: .34rem; color: rgba(255,255,255,.72);
   line-height: 1.6;
 }
 .lv-hof-list { width: 100%; display: flex; flex-direction: column; gap: .4rem; }
@@ -9104,7 +8534,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .hof-date {
   font-family: 'Press Start 2P', monospace;
-  font-size: .30rem; color: rgba(200,170,100,.7);
+  font-size: .34rem; color: rgba(200,170,100,.7);
   margin-bottom: .3rem;
 }
 .hof-sprites { display: flex; gap: 4px; flex-wrap: wrap; }
@@ -9156,7 +8586,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .corridor-next-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .30rem; color: rgba(200,170,100,.5);
+  font-size: .34rem; color: rgba(200,170,100,.5);
   letter-spacing: .1em; text-transform: uppercase;
 }
 .corridor-next-name {
@@ -9170,7 +8600,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .corridor-next-hint {
   font-family: 'Nunito', sans-serif;
-  font-size: .62rem; color: rgba(255,255,255,.45);
+  font-size: .62rem; color: rgba(255,255,255,.68);
   font-style: italic; max-width: 280px;
 }
 .corridor-btn { margin-top: .4rem; }
@@ -9298,7 +8728,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .wobbu-attack-label {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; color: rgba(255,255,255,.5); margin-top: .2rem;
+  font-size: .34rem; color: rgba(255,255,255,.72); margin-top: .2rem;
 }
 
 /* Wobbuffet salute */
@@ -9359,7 +8789,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   transition: transform .1s, border-color .1s;
   touch-action: manipulation;
 }
-.wobbu-choice-btn:hover  { border-color: rgba(255,255,255,.5); transform: scale(1.05); }
+.wobbu-choice-btn:hover  { border-color: rgba(255,255,255,.72); transform: scale(1.05); }
 .wobbu-choice-btn:active { transform: scale(.96); }
 .wobbu-correct { border-color: #80e880 !important; background: rgba(80,200,80,.2) !important; }
 .wobbu-choice-type { pointer-events: none; text-transform: capitalize; }
@@ -9397,7 +8827,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .falkner-lane:hover { background: rgba(255,255,255,.2); transform: scale(1.04); }
 .falkner-bird { font-size: 1.2rem; display: block; }
-.falkner-lane-label { font-family:'Press Start 2P',monospace; font-size:.28rem; color:rgba(255,255,255,.6); margin-top:.2rem; }
+.falkner-lane-label { font-family:'Press Start 2P',monospace; font-size: .34rem; color:rgba(255,255,255,.6); margin-top:.2rem; }
 .falkner-correct { border-color: #80e880 !important; background: rgba(80,200,80,.2) !important; }
 .falkner-wrong   { border-color: #e88080 !important; background: rgba(200,80,80,.1) !important; }
 
@@ -9417,25 +8847,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .bugsy-correct { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
 .bugsy-wrong   { border-color:#e88080 !important; background:rgba(200,80,80,.1) !important; }
 
-/* ── Whitney — Rollout Dodge ── */
-#screen-challenge.whitney-active { background: linear-gradient(160deg,#f0b0c8 0%,#e888a8 60%,#c06080 100%); }
-.whitney-lanes { display:flex; gap:.5rem; }
-.whitney-lane {
-  width:80px; height:120px; background:rgba(255,255,255,.15);
-  border:2px solid rgba(255,255,255,.3); border-radius:10px;
-  display:flex; flex-direction:column; align-items:center; justify-content:flex-end;
-  padding-bottom:.4rem; cursor:pointer; transition:background .15s;
-  position:relative; overflow:hidden;
-}
-.whitney-lane:hover { background:rgba(255,255,255,.25); }
-.whitney-lane-emoji { font-size:1.5rem; }
-.whitney-boulder-rolling { font-size:1.8rem; display:block; animation:boulder-fall .3s ease; }
-.whitney-boulder-anim { font-size:1.8rem; display:block; }
-@keyframes boulder-fall { from{transform:translateY(-40px)} to{transform:translateY(0)} }
-.whitney-safe { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
-.whitney-hit  { border-color:#e88080 !important; background:rgba(200,80,80,.2) !important;
-                animation:whitney-shake .3s ease; }
-@keyframes whitney-shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+/* ── Whitney — old rollout dodge CSS removed, replaced by Shake Bar below ── */
 
 /* ── Morty — Ghost Séance ── */
 #screen-challenge.morty-active { background: linear-gradient(160deg,#1a0a2a 0%,#3a1a5a 60%,#0e0618 100%); }
@@ -9468,7 +8880,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border-radius:12px; cursor:pointer;
   transition: transform .1s, border-color .15s;
 }
-.jasmine-btn:hover { transform:scale(1.06); border-color:rgba(255,255,255,.4); }
+.jasmine-btn:hover { transform:scale(1.06); border-color: rgba(255,255,255,.68); }
 .jasmine-flash    { background:rgba(200,220,240,.4) !important; transform:scale(1.12) !important; }
 .jasmine-demo     { box-shadow:0 0 16px rgba(180,200,220,.6); }
 .jasmine-success  { border-color:#80e880 !important; background:rgba(80,200,80,.2) !important; }
@@ -9522,8 +8934,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 @keyframes clair-stop     { to{opacity:0;transform:translateX(-60px) scale(.8)} }
 @keyframes clair-hit-shake{ 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
 .clair-dragon-icon  { font-size:2rem; }
-.clair-dragon-name  { font-family:'Press Start 2P',monospace; font-size:.28rem; color:rgba(255,255,255,.7); margin-top:.2rem; }
-.clair-dragon-label { font-family:'Press Start 2P',monospace; font-size:.26rem; color:rgba(255,255,255,.4); }
+.clair-dragon-name  { font-family:'Press Start 2P',monospace; font-size: .34rem; color:rgba(255,255,255,.7); margin-top:.2rem; }
+.clair-dragon-label { font-family:'Press Start 2P',monospace; font-size: .34rem; color: rgba(255,255,255,.68); }
 .clair-dragon-type-bar { height:8px; border-radius:4px; margin:.3rem auto; width:80px; }
 .clair-choices { display:flex; gap:.4rem; flex-wrap:wrap; justify-content:center; }
 .clair-choice {
@@ -9551,7 +8963,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .falkner-picker-card:hover { transform: scale(1.06); border-color: #ffd700; }
 .falkner-picker-sprite { width: 72px; height: 72px; object-fit: contain; display: block; margin: 0 auto; }
 .falkner-picker-name {
-  font-family: 'Press Start 2P', monospace; font-size: .28rem;
+  font-family: 'Press Start 2P', monospace; font-size: .34rem;
   color: #fff; margin-top: .3rem;
 }
 .falkner-game-wrap { display: flex !important; flex-direction: column !important; align-items: center !important; width: 100%; }
@@ -9682,7 +9094,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .fdh-pts-badge {
   position: absolute;
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem;
+  font-size: .34rem;
   color: #ffd700;
   text-shadow: 1px 1px 0 rgba(0,0,0,.8);
   transform: translateX(-50%);
@@ -9761,7 +9173,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .fdh-miss-panel span {
   font-family: 'Press Start 2P', monospace;
-  font-size: .28rem; color: #ff8080;
+  font-size: .34rem; color: #ff8080;
 }
 /* HUD row */
 .falkner-dh-hud {
@@ -9772,7 +9184,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   text-shadow: 1px 1px 0 rgba(0,0,0,.6);
 }
 .fdh-score  { color: #ffd700; }
-.fdh-wave   { color: rgba(255,255,255,.7); font-size: .28rem; }
+.fdh-wave   { color: rgba(255,255,255,.7); font-size: .34rem; }
 .fdh-balls  { color: #80e8ff; }
 /* Ball pip bar */
 .fdh-ball-bar {
@@ -9785,3 +9197,656 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   transition: opacity .2s;
 }
 .fdh-ball-pip.used { opacity: .2; }
+
+/* ═══════════════════════════════════════════
+   WHITNEY — MILTANK SHAKE BAR
+═══════════════════════════════════════════ */
+#screen-challenge.whitney-active {
+  background: linear-gradient(160deg, #f8e0e8 0%, #f0c8d8 50%, #c87090 100%);
+}
+.whitney-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .4rem !important; width: 100%;
+}
+
+/* ── Order bubble ── */
+.wh-bubble {
+  display: flex; align-items: center; gap: .4rem;
+  background: rgba(255,255,255,.25); border: 1.5px solid rgba(255,255,255,.4);
+  border-radius: 10px; padding: .35rem .6rem;
+  max-width: 320px; width: 100%;
+}
+.wh-customer { font-size: 1.3rem; flex-shrink: 0; }
+.wh-hint {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: #3a1020; line-height: 1.5;
+  transition: opacity 1s;
+}
+
+/* ── Target row ── */
+.wh-target-row {
+  display: flex; align-items: center; gap: .5rem;
+  font-family: 'Press Start 2P', monospace; font-size: .34rem;
+}
+.wh-target-label { color: #4a1828; font-size: .34rem; }
+.wh-target-val   { color: #b01040; font-size: .42rem; }
+.wh-target-berry { font-size: .85rem; }
+
+/* ── Main row ── */
+.wh-main-row {
+  display: flex; gap: .6rem; align-items: flex-end;
+  width: 100%; justify-content: center;
+}
+
+/* ── Order jug ── */
+.wh-jug-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: .3rem;
+  position: relative;
+}
+.wh-jug-container {
+  position: relative;
+  width: 70px; height: 160px;
+  background: rgba(255,255,255,.35);
+  border: 2.5px solid rgba(180,80,120,.4);
+  border-radius: 4px 4px 6px 6px;
+  overflow: hidden;
+  transition: box-shadow .2s;
+}
+.wh-jug-fill {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  height: 0%;
+  background: linear-gradient(180deg, #ffffff, #c8ecff);
+  transition: height .35s ease, background .5s ease;
+}
+.wh-jug-target-line {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: #e03060; z-index: 2;
+  box-shadow: 0 0 4px rgba(220,40,80,.6);
+}
+.wh-jug-markings { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
+.wh-mark {
+  position: absolute; right: 0;
+  display: flex; align-items: center;
+  border-top: 1px solid rgba(180,80,120,.3);
+}
+.wh-mark span {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem; color: #5a2030;
+  margin-left: 2px; white-space: nowrap;
+}
+.wh-jug-readout {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: #b01040;
+}
+.wh-overflow {
+  animation: wh-overflow-shake .3s ease;
+  box-shadow: 0 0 14px rgba(220,40,40,.7) !important;
+}
+@keyframes wh-overflow-shake {
+  0%,100% { transform: translateX(0); }
+  25%     { transform: translateX(-6px); }
+  75%     { transform: translateX(6px); }
+}
+.wh-reset-btn {
+  font-size: .34rem !important; padding: .25rem .5rem !important;
+  height: auto !important; min-width: unset !important;
+}
+.wh-miltank {
+  position: absolute; bottom: -4px; right: -28px;
+  width: 36px; height: 36px; object-fit: contain;
+  opacity: .7; pointer-events: none;
+}
+
+/* ── Pour jugs panel ── */
+.wh-jug-panel {
+  display: flex; flex-direction: column;
+  gap: .35rem; align-items: center;
+}
+.wh-pour-btn {
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  background: rgba(255,255,255,.25); border: 1.5px solid rgba(200,100,140,.3);
+  border-radius: 8px; padding: .3rem .4rem;
+  cursor: pointer; transition: transform .1s, border-color .15s;
+  width: 58px;
+}
+.wh-pour-btn:hover { transform: scale(1.05); border-color: rgba(180,60,100,.6); }
+.wh-pour-btn:active { transform: scale(.95); }
+.wh-pour-jug {
+  width: 32px; border-radius: 3px 3px 5px 5px;
+  border: 1.5px solid rgba(100,140,180,.4);
+  min-height: 18px;
+}
+.wh-pour-label {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: #3a1020;
+}
+
+/* ── Berry tray ── */
+.wh-berry-tray {
+  display: flex; gap: .4rem; flex-wrap: wrap; justify-content: center;
+  padding: .35rem .5rem;
+  background: rgba(255,255,255,.2); border-radius: 10px;
+  border: 1.5px solid rgba(255,255,255,.35);
+  width: 100%; max-width: 320px;
+  min-height: 52px; align-items: center;
+  transition: opacity .3s;
+}
+.wh-berry-locked { opacity: .5; pointer-events: none; }
+.wh-berry-lock-msg {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: #4a1828;
+}
+.wh-berry-btn {
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  background: rgba(255,255,255,.3);
+  border: 2px solid var(--berry-color);
+  border-radius: 10px; padding: .3rem .4rem;
+  cursor: pointer; min-width: 52px;
+  transition: transform .1s, box-shadow .15s;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+.wh-berry-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 0 12px var(--berry-color);
+  background: var(--berry-light);
+}
+.wh-berry-emoji { font-size: 1.4rem; }
+.wh-berry-name  {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: #3a1020;
+}
+
+/* ── Whitney comment popup ── */
+.wh-comment {
+  position: fixed; bottom: 4rem; left: 50%; transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: .32rem; color: #fff;
+  background: rgba(180,40,80,.85);
+  border: 2px solid rgba(255,255,255,.4);
+  border-radius: 8px; padding: .35rem .7rem;
+  text-align: center; white-space: nowrap;
+  z-index: 100;
+  animation: wh-comment-pop .3s ease;
+  pointer-events: none;
+}
+@keyframes wh-comment-pop {
+  from { opacity:0; transform: translateX(-50%) scale(.8); }
+  to   { opacity:1; transform: translateX(-50%) scale(1); }
+}
+
+/* ── Timer bar ── */
+.wh-timer-bar {
+  width: 100%; max-width: 320px; height: 7px;
+  background: rgba(255,255,255,.25); border-radius: 4px; overflow: hidden;
+}
+.wh-timer-fill {
+  height: 100%; width: 100%;
+  background: linear-gradient(90deg, #80e840, #ffd700, #ff4040);
+  border-radius: 4px;
+}
+
+/* ═══ UX PASS — GBA-style readable HUD text (white + dark outline) ═══ */
+.falkner-dh-hud, .fdh-pts-badge, .fdh-catch-pop,
+.wh-jug-readout, .wh-target-val, .wh-hint,
+.bugsy-hint, .jasmine-indicator, .pryce-indicator,
+.wobbu-attack-type, .wobbu-attack-label,
+.clair-dragon-name, .clair-dragon-label,
+.falkner-picker-name, .fdh-wave, .fdh-score, .fdh-balls,
+.logo-sub, .start-footer, .start-region-pill {
+  text-shadow: 1px 1px 0 rgba(0,0,0,.75), -1px -1px 0 rgba(0,0,0,.35);
+}
+/* Dark-text-on-light screens get a light glow instead */
+.wh-target-label, .wh-pour-label, .wh-berry-name, .wh-berry-lock-msg {
+  text-shadow: 0 1px 2px rgba(255,255,255,.8);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   UX PASS — tablet fit, touch targets, type palette, region accent
+═══════════════════════════════════════════════════════════════ */
+
+/* ── C3: canonical type colors on every type-badged button ── */
+.type-badge-btn.type-fire,     .clair-choice.type-fire,     .wobbu-choice-btn.type-fire     { border-color: var(--col-type-fire);     background: rgba(240,128,48,.22); }
+.type-badge-btn.type-water,    .clair-choice.type-water,    .wobbu-choice-btn.type-water    { border-color: var(--col-type-water);    background: rgba(104,144,240,.22); }
+.type-badge-btn.type-grass,    .clair-choice.type-grass,    .wobbu-choice-btn.type-grass    { border-color: var(--col-type-grass);    background: rgba(120,200,80,.22); }
+.type-badge-btn.type-electric, .clair-choice.type-electric, .wobbu-choice-btn.type-electric { border-color: var(--col-type-electric); background: rgba(248,208,48,.22); }
+.type-badge-btn.type-ice,      .clair-choice.type-ice,      .wobbu-choice-btn.type-ice      { border-color: var(--col-type-ice);      background: rgba(152,216,216,.22); }
+.type-badge-btn.type-fighting, .clair-choice.type-fighting, .wobbu-choice-btn.type-fighting { border-color: var(--col-type-fighting); background: rgba(192,48,40,.22); }
+.type-badge-btn.type-psychic,  .clair-choice.type-psychic,  .wobbu-choice-btn.type-psychic  { border-color: var(--col-type-psychic);  background: rgba(248,88,136,.22); }
+.type-badge-btn.type-rock,     .clair-choice.type-rock,     .wobbu-choice-btn.type-rock     { border-color: var(--col-type-rock);     background: rgba(184,160,56,.22); }
+.type-badge-btn.type-ground,   .clair-choice.type-ground,   .wobbu-choice-btn.type-ground   { border-color: var(--col-type-ground);   background: rgba(224,192,104,.22); }
+.type-badge-btn.type-ghost,    .clair-choice.type-ghost,    .wobbu-choice-btn.type-ghost    { border-color: var(--col-type-ghost);    background: rgba(112,88,152,.25); }
+.type-badge-btn.type-bug,      .clair-choice.type-bug,      .wobbu-choice-btn.type-bug      { border-color: var(--col-type-bug);      background: rgba(168,184,32,.22); }
+
+/* Type chips on attack cards in mini-games */
+.wobbu-attack-type.type-fire     { background: var(--col-type-fire); }
+.wobbu-attack-type.type-water    { background: var(--col-type-water); }
+.wobbu-attack-type.type-grass    { background: var(--col-type-grass); }
+.wobbu-attack-type.type-electric { background: var(--col-type-electric); color: #333; }
+.wobbu-attack-type.type-ice      { background: var(--col-type-ice); color: #234; }
+.wobbu-attack-type.type-psychic  { background: var(--col-type-psychic); }
+.wobbu-attack-type.type-rock     { background: var(--col-type-rock); }
+.wobbu-attack-type.type-ground   { background: var(--col-type-ground); color: #432; }
+.wobbu-attack-type.type-poison   { background: var(--col-type-poison); }
+.wobbu-attack-type.type-flying   { background: var(--col-type-flying); }
+.wobbu-attack-type.type-ghost    { background: var(--col-type-ghost); }
+.wobbu-attack-type.type-dragon   { background: var(--col-type-dragon); }
+.wobbu-attack-type.type-dark     { background: var(--col-type-dark); }
+.wobbu-attack-type.type-steel    { background: var(--col-type-steel); color: #334; }
+.wobbu-attack-type.type-fighting { background: var(--col-type-fighting); }
+.wobbu-attack-type.type-bug      { background: var(--col-type-bug); }
+.wobbu-attack-type.type-normal   { background: var(--col-type-normal); color: #333; }
+
+/* ── C5: region accent — primary UI elements follow --accent ── */
+body.johto-accent {
+  --accent:      #2a8a2a;
+  --accent-dark: #1a5a1a;
+  --accent-glow: rgba(42,138,42,.3);
+}
+.start-menu .btn-primary {
+  background: var(--accent);
+  box-shadow: 0 4px 0 var(--accent-dark), 0 0 16px var(--accent-glow);
+}
+.map-header-title { color: var(--accent); }
+
+/* ── B2: 48px touch-target sweep ── */
+button, .map-node-btn, .card, .wh-berry-btn, .wh-pour-btn,
+.clair-choice, .wobbu-choice-btn, .jasmine-btn, .bugsy-scatter-sprite {
+  -webkit-tap-highlight-color: transparent;
+}
+.wh-reset-btn, .pdx-speak-btn, .apb-edit-age-btn {
+  min-height: 48px !important;
+  min-width: 48px !important;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.wh-berry-btn, .wh-pour-btn { min-height: 56px; min-width: 56px; }
+.clair-choice, .wobbu-choice-btn { min-height: 48px; min-width: 64px; }
+/* Press feedback flash — every tap visibly registers */
+button:active:not(:disabled) { filter: brightness(1.25); }
+
+/* ── B5: kill double-tap zoom & text selection in game fields ── */
+body { touch-action: manipulation; }
+.falkner-dh-field, .bugsy-field, .wh-jug-container, .jasmine-grid,
+.pryce-water, .clair-charge, .map-scroll-area {
+  user-select: none; -webkit-user-select: none;
+}
+
+/* ── A4: loading tip styling ── */
+.loading-tip {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem;
+  color: rgba(255,255,255,.85);
+  text-align: center;
+  margin-top: .8rem;
+  max-width: 280px;
+  line-height: 1.8;
+  animation: tip-fade-in .4s ease;
+}
+@keyframes tip-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+/* ── B3: 10" tablet media query (≥900px wide) ── */
+@media (min-width: 900px) {
+  /* Bigger hand cards in battle */
+  .card { width: 112px; min-height: 140px; }
+  .card .card-name { font-size: .42rem; }
+
+  /* Mini-game fields scale up */
+  .falkner-dh-field { width: 520px; height: 380px; }
+  .falkner-dh-hud, .fdh-ball-bar { width: 520px; }
+  .bugsy-field { transform: scale(1.35); transform-origin: top center; margin-bottom: 110px; }
+  .wh-jug-container { width: 90px; height: 210px; }
+  .wh-main-row { gap: 1.2rem; }
+  .jasmine-btn { width: 104px; height: 104px; font-size: 2rem; }
+  .pryce-water { width: 240px; height: 180px; }
+
+  /* Menu panel breathes more */
+  .start-menu { width: min(420px, 60vw); }
+  .start-footer { width: min(420px, 60vw); }
+
+  /* Bigger map nodes for finger accuracy at distance */
+  .map-node-btn { width: 54px; height: 54px; }
+}
+
+/* ── D1: mini-game quit button + rules chip ── */
+.mg-quit-btn {
+  position: absolute; top: .5rem; right: .5rem;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.45);
+  border: 1.5px solid rgba(255,255,255,.35);
+  color: rgba(255,255,255,.85);
+  font-size: .9rem; cursor: pointer;
+  z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.mg-quit-btn:active { background: rgba(0,0,0,.7); }
+.mg-rules-chip {
+  position: absolute; top: .5rem; left: .5rem;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  background: rgba(0,0,0,.45);
+  border: 1.5px solid rgba(255,255,255,.35);
+  color: #ffd700;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; cursor: pointer;
+  z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+.mg-rule-tip {
+  position: absolute; top: 3.6rem; left: 50%; transform: translateX(-50%);
+  max-width: 86%;
+  background: rgba(0,0,0,.85);
+  border: 2px solid #ffd700;
+  border-radius: 10px;
+  padding: .5rem .8rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #fff; line-height: 1.8;
+  text-align: center;
+  z-index: 60;
+  animation: tip-fade-in .25s ease;
+  pointer-events: none;
+}
+
+/* ── D4: badge pips in map location badge ── */
+.nav-badge-pips {
+  display: flex; gap: 3px; justify-content: center;
+  margin-top: 2px;
+}
+.badge-pip {
+  font-size: .45rem;
+  color: rgba(255,255,255,.65);
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
+.badge-pip.earned { color: #ffd700; }
+
+/* ── D3/D6: modal cancel button ── */
+.modal-cancel-btn {
+  margin-top: .5rem;
+  width: 100%;
+  font-size: .42rem;
+}
+
+/* ═══ A6: shared results card ═══ */
+.results-card-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.65);
+  display: none; align-items: center; justify-content: center;
+  z-index: 500;
+}
+.results-card {
+  background: linear-gradient(170deg, #1a1a32, #0e0e20);
+  border: 3px solid #ffd700;
+  border-radius: 16px;
+  padding: 1.1rem 1.4rem;
+  text-align: center;
+  width: min(340px, 88vw);
+  animation: rc-pop .35s cubic-bezier(.2,1.4,.4,1);
+  box-shadow: 0 0 40px rgba(255,215,0,.25), 0 8px 24px rgba(0,0,0,.6);
+}
+.results-card.rc-lost { border-color: rgba(255,255,255,.3); box-shadow: 0 8px 24px rgba(0,0,0,.6); }
+@keyframes rc-pop { from { transform: scale(.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.rc-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .52rem; color: #fff; line-height: 1.6;
+  margin-bottom: .5rem;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.rc-newbest {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem; color: #ffd700;
+  animation: rc-newbest-pulse .8s ease infinite alternate;
+  margin-bottom: .35rem;
+}
+@keyframes rc-newbest-pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+.rc-stars { display: flex; justify-content: center; gap: .25rem; margin: .4rem 0; }
+.rc-star {
+  font-size: 1.5rem; color: rgba(255,255,255,.25);
+  animation: rc-star-in .4s ease both;
+}
+.rc-star.filled { color: #ffd700; text-shadow: 0 0 10px rgba(255,215,0,.6); }
+@keyframes rc-star-in { from { transform: scale(0) rotate(-40deg); } to { transform: scale(1) rotate(0); } }
+.rc-score {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: #fff; margin: .25rem 0;
+}
+.rc-best {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: rgba(255,255,255,.65); margin-bottom: .2rem;
+}
+.rc-detail {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .34rem; color: rgba(255,255,255,.8); line-height: 1.8;
+  margin: .35rem 0;
+}
+.rc-gold {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: #ffd700; margin: .4rem 0;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.rc-token {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #80e8ff;
+  background: rgba(80,180,255,.12);
+  border: 1.5px solid rgba(80,180,255,.4);
+  border-radius: 8px; padding: .35rem .5rem;
+  margin: .35rem 0; line-height: 1.7;
+}
+.rc-done { width: 100%; margin-top: .5rem; }
+
+/* ═══ CHUCK — TRAINING CLOCK ═══ */
+#screen-challenge.chuck-active {
+  background: linear-gradient(160deg, #6a4a20 0%, #8a6a38 50%, #4a3010 100%);
+}
+.chuck-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .45rem !important; width: 100%;
+}
+.chuck-say {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: #fff; line-height: 1.9;
+  background: rgba(0,0,0,.35); border: 1.5px solid rgba(255,220,150,.35);
+  border-radius: 10px; padding: .45rem .7rem;
+  max-width: 330px; text-align: center;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.chuck-clock-row { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+.chuck-clock-btn {
+  background: rgba(255,255,255,.1); border: 2.5px solid rgba(255,220,150,.3);
+  border-radius: 14px; padding: .35rem; cursor: pointer;
+  transition: transform .12s, border-color .15s;
+}
+.chuck-clock-btn:hover:not(:disabled) { transform: scale(1.06); border-color: #ffd700; }
+.chuck-correct { border-color: #80e880 !important; box-shadow: 0 0 14px rgba(80,220,80,.6) !important; }
+.chuck-wrong   { border-color: #e88080 !important; animation: wh-overflow-shake .3s ease; }
+#chuck-set-clock { border-radius: 14px; padding: .3rem; transition: box-shadow .2s; }
+.chuck-readout {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .6rem; color: #ffd700;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.chuck-ctrl-row { display: flex; gap: .5rem; }
+.chuck-ctrl-btn { min-height: 52px; min-width: 100px; font-size: .42rem !important; }
+.chuck-submit   { min-height: 52px; width: min(280px, 80vw); }
+.chuck-answer {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #80e880;
+  display: flex; align-items: center; gap: .5rem;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+
+/* ═══ OAK — SORTING LAB ═══ */
+#screen-challenge.oak-active {
+  background: linear-gradient(160deg, #e8e0d0 0%, #c8d8c0 50%, #a0b8a0 100%);
+}
+.oak-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .5rem !important; width: 100%;
+}
+.oak-belt {
+  position: relative;
+  width: min(340px, 90vw); height: 110px;
+  background: repeating-linear-gradient(90deg, #555 0 22px, #666 22px 44px);
+  border: 3px solid #333; border-radius: 10px;
+  overflow: hidden;
+}
+.oak-poke {
+  position: absolute; top: 12px; left: -70px;
+  width: 64px; height: 64px; object-fit: contain;
+  animation: oak-slide linear forwards;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,.5));
+}
+@keyframes oak-slide { from { left: -70px; } to { left: 110%; } }
+.oak-poke-name {
+  position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace; font-size: .34rem;
+  color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,.8);
+}
+.oak-baskets { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+.oak-basket {
+  min-width: 96px; min-height: 64px;
+  background: linear-gradient(180deg, #c89858, #9a6a30);
+  border: 2.5px solid #6a4418; border-radius: 0 0 14px 14px;
+  border-top-width: 6px;
+  font-family: 'Press Start 2P', monospace; cursor: pointer;
+  transition: transform .12s;
+  padding: .3rem .4rem;
+}
+.oak-basket:hover:not(:disabled) { transform: scale(1.06); }
+.oak-basket-label { font-size: .36rem; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,.7); line-height: 1.7; }
+.oak-correct { border-color: #2a8a2a !important; box-shadow: 0 0 14px rgba(80,220,80,.7) !important; }
+.oak-wrong   { border-color: #c03028 !important; animation: wh-overflow-shake .3s ease; }
+
+/* ═══ SNORLAX — WEIGH STATION ═══ */
+#screen-challenge.snorlax-active {
+  background: linear-gradient(160deg, #2a4a3a 0%, #3a6a4a 50%, #1a3020 100%);
+}
+.snorlax-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .45rem !important; width: 100%;
+}
+.snx-question {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: #fff; line-height: 1.9;
+  text-align: center; max-width: 330px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.snx-pick-row, .snx-shelf { display: flex; gap: .5rem; flex-wrap: wrap; justify-content: center; }
+.snx-pick {
+  display: flex; flex-direction: column; align-items: center; gap: .15rem;
+  background: rgba(255,255,255,.1); border: 2px solid rgba(255,255,255,.25);
+  border-radius: 12px; padding: .4rem .55rem; cursor: pointer;
+  min-width: 88px; min-height: 96px;
+  transition: transform .12s, border-color .15s;
+}
+.snx-pick:hover:not(:disabled) { transform: scale(1.05); border-color: #ffd700; }
+.snx-sprite { width: 56px; height: 56px; object-fit: contain; image-rendering: pixelated; }
+.snx-name { font-family: 'Press Start 2P', monospace; font-size: .32rem; color: #fff; text-shadow: 1px 1px 0 rgba(0,0,0,.7); }
+.snx-kg   { font-family: 'Press Start 2P', monospace; font-size: .36rem; color: #ffd700; text-shadow: 1px 1px 0 rgba(0,0,0,.7); }
+.snx-correct { border-color: #80e880 !important; box-shadow: 0 0 12px rgba(80,220,80,.6) !important; }
+.snx-wrong   { border-color: #e88080 !important; }
+.snx-picked  { border-color: #80c8ff !important; opacity: .65; }
+.snx-scale { display: flex; flex-direction: column; align-items: center; }
+.snx-beam {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  width: 250px; padding: 0 6px;
+  border-top: 6px solid #c8a050; border-radius: 3px;
+  transition: transform .5s cubic-bezier(.3,1.4,.4,1);
+  transform-origin: center top;
+}
+.snx-pan {
+  width: 84px; min-height: 52px;
+  background: rgba(160,120,60,.4);
+  border: 2.5px solid #c8a050; border-top: none;
+  border-radius: 0 0 40px 40px;
+  display: flex; align-items: center; justify-content: center;
+  flex-wrap: wrap; gap: 2px; padding: 4px;
+}
+.snx-pan-sprite { width: 36px; height: 36px; object-fit: contain; image-rendering: pixelated; }
+.snx-pan-kg { font-family: 'Press Start 2P', monospace; font-size: .4rem; color: #ffd700; text-shadow: 1px 1px 0 rgba(0,0,0,.7); }
+.snx-base { font-size: 1.6rem; margin-top: -6px; }
+.snx-balanced .snx-beam { transform: rotate(0deg) !important; border-top-color: #80e880; }
+.snx-tipped   .snx-beam { border-top-color: #e88080; }
+.snx-verdict {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #fff; text-align: center;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7); line-height: 1.8;
+}
+
+/* ═══ GIOVANNI — ROCKET'S LEDGER ═══ */
+#screen-challenge.rocketmoney-active {
+  background: linear-gradient(160deg, #0a0a0a 0%, #1a1018 60%, #0e0a12 100%);
+}
+.rk-wrap {
+  display: flex !important; flex-direction: column !important;
+  align-items: center !important; gap: .45rem !important; width: 100%;
+}
+.rk-prompt {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #d8c8a8; line-height: 1.9;
+  text-align: center; max-width: 330px;
+  background: rgba(200,160,96,.08); border: 1.5px solid rgba(200,160,96,.3);
+  border-radius: 10px; padding: .45rem .65rem;
+}
+.rk-ledger {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: #ffd700;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.8);
+}
+.rk-math b { color: #ff8080; }
+.rk-tray {
+  width: min(320px, 88vw); min-height: 70px;
+  background: rgba(255,255,255,.06);
+  border: 2px dashed rgba(200,160,96,.4); border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: .2rem; padding: .4rem;
+  transition: border-color .2s;
+}
+.rk-tray.rk-correct { border-color: #80e880; border-style: solid; box-shadow: 0 0 14px rgba(80,220,80,.4); }
+.rk-tray.rk-wrong   { border-color: #e88080; border-style: solid; animation: wh-overflow-shake .3s ease; }
+.rk-tray-coins { display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; }
+.rk-coin-mini {
+  font-family: 'Press Start 2P', monospace; font-size: .32rem;
+  border-radius: 50%; width: 30px; height: 30px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: #2a2010;
+}
+.rk-tray-total {
+  font-family: 'Press Start 2P', monospace; font-size: .55rem;
+  color: #ffd700; text-shadow: 1px 1px 0 rgba(0,0,0,.8);
+}
+.rk-tray-total.rk-over { color: #ff7060; }
+.rk-coin-row { display: flex; gap: .5rem; }
+.rk-coin {
+  width: 60px; height: 60px; border-radius: 50%;
+  font-family: 'Press Start 2P', monospace; font-size: .4rem;
+  cursor: pointer; color: #2a2010;
+  border: 3px solid rgba(0,0,0,.35);
+  box-shadow: 0 3px 0 rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.4);
+  transition: transform .1s;
+}
+.rk-coin:hover:not(:disabled)  { transform: scale(1.08); }
+.rk-coin:active:not(:disabled) { transform: scale(.94) translateY(2px); }
+.rk-coin-1,  .rk-coin-mini.rk-coin-1  { background: radial-gradient(circle at 35% 30%, #d8b888, #a8845a); }
+.rk-coin-5,  .rk-coin-mini.rk-coin-5  { background: radial-gradient(circle at 35% 30%, #d0d0d8, #909098); }
+.rk-coin-10, .rk-coin-mini.rk-coin-10 { background: radial-gradient(circle at 35% 30%, #ffe080, #d0a020); }
+.rk-coin-50, .rk-coin-mini.rk-coin-50 { background: radial-gradient(circle at 35% 30%, #ffd700, #b8860b); border-color: #8a6a00; }
+.rk-actions { display: flex; gap: .5rem; }
+.rk-clear  { min-height: 52px; font-size: .4rem !important; }
+.rk-submit { min-height: 52px; min-width: 160px; }
+.rk-verdict {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #d8c8a8; text-align: center; line-height: 1.8;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+
+/* ═══ A1: best-score chip on intro screens ═══ */
+.intro-best-chip {
+  position: absolute; top: .6rem; right: .6rem;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .36rem; color: #ffd700;
+  background: rgba(0,0,0,.55); border: 1.5px solid rgba(255,215,0,.5);
+  border-radius: 20px; padding: .3rem .6rem;
+  z-index: 30; text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
