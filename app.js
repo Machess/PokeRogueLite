@@ -1498,20 +1498,33 @@ let _saveDebounceTimer = null;
 function saveGame(immediate = false) {
   const p = getActiveProfile();
   if (!p) return;
+  if (!GameState || !GameState.party) return;   // never persist a null/empty run
+  const doWrite = () => {
+    let ok = false;
+    try {
+      localStorage.setItem(saveKey(p), JSON.stringify(GameState));
+      // Verify the write actually persisted and is parseable
+      const check = localStorage.getItem(saveKey(p));
+      ok = !!check && check.length > 2;
+    } catch (e) {
+      console.error('saveGame: write failed', e);
+      ok = false;
+    }
+    _updateProfileMeta(p, ok);   // only mark hasActiveSave when the write succeeded
+    return ok;
+  };
   // Critical saves (end of battle, purchases) use immediate=true
   if (immediate) {
     clearTimeout(_saveDebounceTimer);
     _saveDebounceTimer = null;
-    try { localStorage.setItem(saveKey(p), JSON.stringify(GameState)); } catch(e) {}
-    _updateProfileMeta(p);
+    doWrite();
     return;
   }
   // In-battle and rapid saves are debounced — collapse multiple calls into one write
   if (_saveDebounceTimer) return;
   _saveDebounceTimer = setTimeout(() => {
     _saveDebounceTimer = null;
-    try { localStorage.setItem(saveKey(p), JSON.stringify(GameState)); } catch(e) {}
-    _updateProfileMeta(p);
+    doWrite();
   }, 400);
 }
 function loadGame() {
@@ -1526,7 +1539,10 @@ function deleteSave() {
   const p = getActiveProfile();
   if (!p) return;
   try { localStorage.removeItem(saveKey(p)); } catch(e) {}
-  _updateProfileMeta(p);
+  // Explicitly clear the flag — save no longer exists
+  const profiles = loadProfiles();
+  const meta = profiles.find(pr => pr.key === p);
+  if (meta) { meta.hasActiveSave = false; saveProfiles(profiles); }
 }
 
 // ── Unlocks ───────────────────────────────────────────────────────────────────
@@ -1572,7 +1588,7 @@ function saveProfiles(profiles) {
 }
 
 // Update the metadata card for a profile (called after save/delete)
-function _updateProfileMeta(profileKey) {
+function _updateProfileMeta(profileKey, saveConfirmed = true) {
   const profiles = loadProfiles();
   const idx = profiles.findIndex(p => p.key === profileKey);
   if (idx < 0) return;
@@ -1586,7 +1602,8 @@ function _updateProfileMeta(profileKey) {
     meta.trainerName     = GameState.trainerName     || meta.name || '';
     const starter = GameState.party?.find(p => p.isStarter);
     if (starter?.spriteUrl) meta.starterSprite = starter.spriteUrl;
-    meta.hasActiveSave  = true;
+    // Only claim an active save when the write was actually verified
+    if (saveConfirmed) meta.hasActiveSave = true;
   }
   saveProfiles(profiles);
 }
@@ -3955,6 +3972,8 @@ const ProfileEngine = {
 
   // ── Open profile screen ───────────────────────────────────────────────────
   show(fromStart = true) {
+    // Flush any pending debounced save before we leave an active run
+    if (GameState && GameState.party) saveGame(true);
     this._fromStart = fromStart;
     showScreen('profiles');
     this._render();
@@ -4404,8 +4423,17 @@ const Game = {
 
   continueGame() {
     const saved = loadGame();
-    if (!saved) {
-      showModal('No Save Found', 'Start a New Game first!');
+    if (!saved || !saved.party) {
+      // Self-heal: the meta flag was stale (save lost or never written). Clear it
+      // so the button correctly shows "No Save" instead of lying.
+      const p = getActiveProfile();
+      if (p) {
+        const profiles = loadProfiles();
+        const meta = profiles.find(pr => pr.key === p);
+        if (meta) { meta.hasActiveSave = false; saveProfiles(profiles); }
+      }
+      ProfileEngine._updateStartScreen();
+      showModal('No Save Found', 'That run could not be loaded.\nStart a New Game to play!');
       return;
     }
     GameState = saved;
@@ -4609,7 +4637,7 @@ const Game = {
     GameState.nodesSinceRocket    = 0;
     GameState._lastRocketCheckAt  = 0;
     hideLoading();
-    saveGame();   // first save — also updates profile meta with starterId
+    saveGame(true);   // first save — immediate so the run is instantly persisted
     MapEngine.show();
   },
 
@@ -4628,7 +4656,7 @@ const Game = {
 
   goToMenu() {
     SoundEngine.stopSFX();
-    saveGame();
+    saveGame(true);          // immediate — must complete before GameState is cleared
     GameState = null;
     ProfileEngine._updateStartScreen();
     showScreen('start');
@@ -17865,6 +17893,29 @@ function hasStatus(st, who, status) {
 // ─── INIT — wire all buttons here, zero inline onclick in HTML ────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  // ── Save integrity migration — repair damage from the old null-save bug ──
+  // Any save that parses to null/non-object, or lacks a party, is corrupt.
+  // Purge it and sync each profile's hasActiveSave flag to the real save state.
+  try {
+    const profiles = loadProfiles();
+    let changed = false;
+    profiles.forEach(meta => {
+      const raw = localStorage.getItem(saveKey(meta.key));
+      let valid = false;
+      if (raw && raw !== 'null' && raw.length > 2) {
+        try {
+          const parsed = JSON.parse(raw);
+          valid = !!(parsed && typeof parsed === 'object' && Array.isArray(parsed.party) && parsed.party.length);
+        } catch (_) { valid = false; }
+      }
+      if (!valid && raw !== null) {
+        localStorage.removeItem(saveKey(meta.key));   // drop corrupt "null" save
+      }
+      if (meta.hasActiveSave !== valid) { meta.hasActiveSave = valid; changed = true; }
+    });
+    if (changed) saveProfiles(profiles);
+  } catch (e) { console.error('save migration failed', e); }
+
   // D5 — universal tap blip on any enabled button (delegated, capture phase)
   document.addEventListener('pointerdown', e => {
     const btn = e.target.closest('button');
