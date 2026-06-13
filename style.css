@@ -1689,7 +1689,12 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   flex-shrink: 0;
 }
 .trainer-sprite {
-  height: 220px;
+  height: 180px;
+  max-height: 32vh;
+  width: auto;
+  max-width: 240px;
+  object-fit: contain;
+  object-position: bottom center;
   image-rendering: pixelated;
   filter: drop-shadow(4px 4px 0 rgba(0,0,0,.5));
   animation: trainer-enter .6s cubic-bezier(.34,1.56,.64,1) forwards;
@@ -9891,4 +9896,122 @@ body { touch-action: manipulation; }
   background: rgba(0,0,0,.55); border: 1.5px solid rgba(255,215,0,.5);
   border-radius: 20px; padding: .3rem .6rem;
   z-index: 30; text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+
+/* ═══════════════════════════════════════════
+   BADGE CEREMONY  (post-gym transition)
+═══════════════════════════════════════════ */
+#screen-badge {
+  position: relative;
+  justify-content: center; align-items: center;
+  overflow: hidden;
+}
+.badge-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg,#2a1a4a,#1a1030);  /* JS overrides per-gym */
+  z-index: 0;
+  animation: badge-bg-drift 8s ease-in-out infinite alternate;
+}
+@keyframes badge-bg-drift {
+  from { filter: brightness(1); }
+  to   { filter: brightness(1.15); }
+}
+.badge-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(0,0,0,.55) 100%);
+}
+.badge-ceremony {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 1rem; padding: 1.5rem 1rem; width: 100%; max-width: 420px;
+  text-align: center;
+}
+.badge-leader-portrait {
+  width: 150px; height: 150px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 16px rgba(0,0,0,.6));
+  animation: badge-portrait-in .6s cubic-bezier(.2,1.3,.4,1) both;
+}
+@keyframes badge-portrait-in {
+  from { opacity: 0; transform: scale(.6) translateY(20px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.badge-centre { display: flex; flex-direction: column; align-items: center; gap: .7rem; width: 100%; }
+.badge-title-text {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .7rem; color: var(--col-yellow);
+  text-shadow: 2px 2px 0 rgba(0,0,0,.6), 0 0 18px rgba(255,215,0,.4);
+}
+.badge-medallion {
+  font-size: 3rem;
+  animation: badge-medal-pop .6s cubic-bezier(.2,1.5,.4,1) .3s both,
+             badge-medal-shine 2.5s ease-in-out 1s infinite;
+  filter: drop-shadow(0 0 14px rgba(255,215,0,.6));
+}
+@keyframes badge-medal-pop {
+  from { opacity: 0; transform: scale(0) rotate(-180deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes badge-medal-shine {
+  0%,100% { transform: scale(1) rotate(0); }
+  50%      { transform: scale(1.08) rotate(4deg); }
+}
+.badge-farewell {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem; color: #fff; line-height: 1.9;
+  max-width: 340px; min-height: 2.4em;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.badge-watching {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: rgba(200,200,255,.8); line-height: 1.9;
+  font-style: italic; max-width: 340px; min-height: 1.6em;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.7);
+}
+.badge-continue-btn { margin-top: .6rem; font-size: .55rem; padding: .8em 2em; }
+
+/* ═══════════════════════════════════════════
+   MAP TITLE CARD  (region/route intro)
+═══════════════════════════════════════════ */
+#screen-maptitle {
+  position: relative;
+  justify-content: center; align-items: center;
+  overflow: hidden;
+}
+.maptitle-bg {
+  position: absolute; inset: 0;
+  background: linear-gradient(160deg,#1a2a4a,#0a1020);  /* JS overrides per-gym */
+  z-index: 0;
+  animation: badge-bg-drift 8s ease-in-out infinite alternate;
+}
+.maptitle-bg::after {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,.6) 100%);
+}
+.maptitle-centre {
+  position: relative; z-index: 2;
+  display: flex; flex-direction: column; align-items: center;
+  gap: .8rem; padding: 2rem 1rem; text-align: center;
+  animation: maptitle-in .7s ease both;
+}
+@keyframes maptitle-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.maptitle-location {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.1rem; color: #fff;
+  text-shadow: 3px 3px 0 rgba(0,0,0,.6), 0 0 24px rgba(255,255,255,.3);
+  line-height: 1.5;
+}
+.maptitle-leader {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .5rem; color: var(--col-yellow);
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
+.maptitle-flavour {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .38rem; color: rgba(255,255,255,.75);
+  line-height: 1.9; max-width: 320px; min-height: 1.6em;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
 }
