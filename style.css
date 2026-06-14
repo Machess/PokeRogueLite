@@ -375,11 +375,10 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: rgba(0,0,0,.52);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border-radius: 18px 18px 0 0;
+  border-radius: 18px;
   border: 1.5px solid rgba(255,255,255,.13);
-  border-bottom: none;
-  padding: .7rem .8rem .5rem;
-  margin-top: auto;              /* push to bottom of screen */
+  padding: .9rem .8rem .6rem;
+  margin-top: .4rem;             /* sit just below the profile banner */
   flex-shrink: 0;
   transition: border-color .4s;
 }
@@ -473,15 +472,16 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   color: rgba(255,255,255,.65);
   letter-spacing: .25em;
   text-align: center;
-  padding: .35rem 0 .2rem;
+  padding: .4rem .8rem;
   z-index: var(--z-content);
   width: min(340px, 90vw);
-  background: rgba(0,0,0,.52);
+  background: rgba(0,0,0,.42);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1.5px solid rgba(255,255,255,.13);
-  border-top: 1px solid rgba(255,255,255,.08);
-  border-radius: 0 0 0 0;
+  border: 1.5px solid rgba(255,255,255,.1);
+  border-radius: 12px;
+  margin-top: .5rem;
+  box-sizing: border-box;
   transition: border-color .4s;
 }
 
@@ -8081,13 +8081,21 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .tier-pill {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   font-family: 'Press Start 2P', monospace;
-  font-size: .34rem;
-  padding: 2px 6px;
+  font-size: .32rem;
+  padding: 3px 7px;
   border-radius: 20px;
   white-space: nowrap;
-  letter-spacing: .02em;
+  letter-spacing: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* Inside the narrow profile card, scale the pill text down so it never clips */
+.profile-tier-row .tier-pill {
+  font-size: .28rem;
+  padding: 3px 5px;
 }
 .tier-pill-1 { background: rgba(60,160,60,.25);  color: #80ee80; border: 1px solid rgba(80,200,80,.4); }
 .tier-pill-2 { background: rgba(200,160,0,.2);   color: #ffe060; border: 1px solid rgba(220,180,0,.4); }
@@ -8097,6 +8105,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .profile-tier-row {
   display: flex;
   justify-content: center;
+  width: 100%;
   margin: 2px 0 3px;
 }
 
