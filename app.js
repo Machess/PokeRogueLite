@@ -4062,6 +4062,7 @@ const ProfileEngine = {
         <div class="profile-name">${meta.name}</div>
         <div class="profile-tier-row">${this._tierLabel(meta.difficultyTier, meta.trainerAge)}</div>
         ${badgeBar}
+        <div class="profile-wins-row ${this._progressCls(meta)}">${this._progressLabel(meta)}</div>
         <div class="profile-last-saved">${this._timeAgo(meta.lastSaved)}</div>
         <div class="profile-actions">
           <button class="btn-pixel btn-primary profile-play-btn"
@@ -4125,6 +4126,28 @@ const ProfileEngine = {
     const { emoji, label, cls } = map[t] || map[2];
     const ageRange = t === 1 ? '6–7' : t === 2 ? '8–9' : '10+';
     return `<span class="tier-pill ${cls}">${emoji} Age ${ageRange} · ${label}</span>`;
+  },
+
+  // Progress toward the next region milestone — shared by all three UI surfaces.
+  // mode 'full'  → "🏆 Championships 2/3"
+  // mode 'short' → "🏆 2/3" (for the compact start-screen banner)
+  _progressLabel(meta, mode = 'full') {
+    const w = Math.min(meta.totalWins || 0, 3);
+    const lw = meta.leagueWins || 0;
+    if (meta.johtoUnlocked) {
+      return mode === 'short' ? '🌿 Johto ✓' : '🌿 Johto unlocked ✓';
+    }
+    if (meta.leagueUnlocked) {
+      return mode === 'short' ? `⚔️ ${lw}/1` : `⚔️ League: ${lw}/1 won`;
+    }
+    return mode === 'short' ? `🏆 ${w}/3` : `🏆 Championships ${w}/3`;
+  },
+
+  // CSS class describing which milestone tier the label is at (for colouring)
+  _progressCls(meta) {
+    if (meta.johtoUnlocked)  return 'pw-johto';
+    if (meta.leagueUnlocked) return 'pw-league';
+    return 'pw-kanto';
   },
 
   _selectProfile(key, goLeague = false) {
@@ -4219,9 +4242,12 @@ const ProfileEngine = {
         spriteEl.style.display = meta.starterSprite ? '' : 'none';
       }
 
-      // Inline tier pill
+      // Inline tier pill + win-progress pill
       const tierInline = document.getElementById('apb-tier-inline');
-      if (tierInline) tierInline.innerHTML = this._tierLabel(tier, meta.trainerAge);
+      if (tierInline) {
+        tierInline.innerHTML = this._tierLabel(tier, meta.trainerAge) +
+          `<span class="apb-wins-pill ${this._progressCls(meta)}">${this._progressLabel(meta, 'short')}</span>`;
+      }
 
       // Detail line — badge progress + timestamp
       const detailEl = document.getElementById('apb-detail');
@@ -15732,181 +15758,95 @@ const TYPE_ICONS = {
 // mode: 'habitat'  — given location description, pick who lives there
 // buffType determines the reward applied on correct answer
 
-const FISHING_PUZZLES = [
-  // ══ TIER 1 — identify only, 2 clues, 3 choices ════════════════════════════
-  {
-    tier:1, mode:'identify', pokemonName:'Magikarp', pokemonId:129, buffType:'water',
-    clues:['It splashes uselessly near the surface.','Its bright orange and gold scales flash in the sun.'],
-    summary:'A helpless, bright-scaled fish that just keeps splashing.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Magikarp','Goldeen','Horsea'],
-    explanation:'Magikarp is famous for being almost completely useless — until it evolves into the fearsome Gyarados!',
-    mistyFluff_right:'YES! Even I almost tossed it back. Never underestimate a Magikarp!',
-    mistyFluff_wrong:'Those orange scales and hopeless splashing — that\'s Magikarp all over!',
-  },
-  {
-    tier:1, mode:'identify', pokemonName:'Goldeen', pokemonId:118, buffType:'water',
-    clues:['It has a flowing white tail like a bridal veil.','A sharp pointed horn sits on its forehead.'],
-    summary:'A graceful, horn-bearing fish gliding through clear water.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Seaking','Goldeen','Magikarp'],
-    explanation:'Goldeen is called the Water Queen for its elegant swimming and beautiful veil-like tail.',
-    mistyFluff_right:'That\'s my favourite! Goldeen is grace and power combined.',
-    mistyFluff_wrong:'That veil tail and that horn — that\'s Goldeen! The Water Queen!',
-  },
-  {
-    tier:1, mode:'identify', pokemonName:'Psyduck', pokemonId:54, buffType:'psychic',
-    clues:['It holds its head with both hands — it always has a headache.','It looks confused but releases psychic power when in pain.'],
-    summary:'A yellow duck with a permanent headache hiding psychic power.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Psyduck','Slowpoke','Poliwag'],
-    explanation:'Psyduck is Water and Psychic type. Its constant headaches are suppressed psychic energy looking for release.',
-    mistyFluff_right:'Ugh — PSYDUCK! Of course it ended up on my line. Story of my life.',
-    mistyFluff_wrong:'That confused face and head-holding — that\'s Psyduck! My problem Pokémon.',
-  },
-  {
-    tier:1, mode:'identify', pokemonName:'Poliwag', pokemonId:60, buffType:'water',
-    clues:['Its round body is almost see-through.','A spiral swirls clearly on its belly.'],
-    summary:'A round translucent tadpole with a spiral on its belly.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Poliwag','Shellder','Seel'],
-    explanation:'Poliwag is pure Water type. The spiral on its belly is its intestines visible through its transparent skin.',
-    mistyFluff_right:'Poliwag! Those tiny legs and that spiral are unmistakable.',
-    mistyFluff_wrong:'Transparent body, spiral belly — that\'s Poliwag! A classic pond Pokémon.',
-  },
-  // ══ TIER 2 — identify + weakness + habitat, 4 choices, 3 clues ════════════
-  {
-    tier:2, mode:'identify', pokemonName:'Tentacool', pokemonId:72, buffType:'poison',
-    clues:['Almost completely transparent — nearly invisible in water.','Two red crystal eyes float above long trailing tentacles.','Its sting causes paralysis.'],
-    summary:'A near-invisible jellyfish whose toxic tentacles paralyse prey.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Tentacool','Shellder','Seel','Horsea'],
-    explanation:'Tentacool is Water and Poison type. It absorbs sunlight through its crystal eyes and uses it as energy.',
-    mistyFluff_right:'Tentacool! Transparent, tentacled, toxic — hard to spot but hard to forget.',
-    mistyFluff_wrong:'Crystal eyes and paralysing tentacles — that\'s Tentacool, Water and Poison type!',
-  },
-  {
-    tier:2, mode:'identify', pokemonName:'Slowpoke', pokemonId:79, buffType:'psychic',
-    clues:['It dangles its tail as bait without realising.','Pink, pudgy, and completely unaware of its surroundings.','It has psychic power but is too slow to notice it.'],
-    summary:'A dopey pink creature that is unknowingly psychic.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Slowpoke','Psyduck','Poliwhirl','Jigglypuff'],
-    explanation:'Slowpoke is Water and Psychic type. It takes 5 seconds for pain to register. Its tail is a Shellder magnet.',
-    mistyFluff_right:'Slowpoke! It probably hasn\'t noticed it\'s been caught yet.',
-    mistyFluff_wrong:'Pink, dopey, oblivious — that\'s Slowpoke, Water and Psychic!',
-  },
-  {
-    tier:2, mode:'weakness', pokemonName:'Gyarados', pokemonId:130, buffType:'electric',
-    clues:['It is enormous, serpentine, and absolutely furious.','It destroys cities when enraged.','Surprisingly — it is NOT a Dragon type.'],
-    summary:'A terrifying sea serpent that is Water and Flying — not Dragon.',
-    question:'What type hits Gyarados hardest?',
-    choices:['electric','grass','fire','rock'],
-    explanation:'Gyarados is Water AND Flying — so Electric deals 4× damage! Most trainers expect Dragon and use Ice instead.',
-    mistyFluff_right:'YES! Electric hits Gyarados for 4×. Flying type is the surprise. Don\'t forget it!',
-    mistyFluff_wrong:'Gyarados is Water AND Flying — Electric hits both for 4× total. Dragon instinct was wrong!',
-  },
-  {
-    tier:2, mode:'identify', pokemonName:'Horsea', pokemonId:116, buffType:'water',
-    clues:['It squirts ink when threatened.','It wraps its tail around coral to avoid being swept away.','Small, blue-scaled, with a curled snout.'],
-    summary:'A small blue seahorse that anchors itself and stuns prey with ink.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Horsea','Seadra','Goldeen','Staryu'],
-    explanation:'Horsea is pure Water type. It uses its snout like a jet to propel itself rapidly through water.',
-    mistyFluff_right:'Horsea! So tiny but so fast in the water. Adorable and fierce.',
-    mistyFluff_wrong:'Blue scales, curled snout, ink jet — that\'s Horsea! Pure Water type.',
-  },
-  {
-    tier:2, mode:'habitat', pokemonName:'Zubat', pokemonId:41, buffType:'poison',
-    clues:['I was fishing in a dark underground water cave.','Something flew at me — no eyes, uses sound to navigate.','It hangs upside down in the dark when resting.'],
-    summary:'A blind, cave-dwelling flier found near underground water.',
-    question:'What did Misty find in the cave?',
-    choices:['Zubat','Tentacool','Seel','Gastly'],
-    explanation:'Zubat is Poison and Flying type, found in dark caves near water all across Kanto. It has no eyes at all.',
-    mistyFluff_right:'Zubat! Not what I was fishing for AT ALL. This cave is infested with them.',
-    mistyFluff_wrong:'Dark cave, no eyes, sonar — that\'s Zubat! Poison and Flying, not a water type at all.',
-  },
-  {
-    tier:2, mode:'identify', pokemonName:'Krabby', pokemonId:98, buffType:'water',
-    clues:['Its claws are comically oversized for its body.','It builds foam nests on sandy beaches.','It lives at the water\'s edge and guards its territory fiercely.'],
-    summary:'A foam-building, oversized-claw crab at the water\'s edge.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Krabby','Kingler','Shellder','Poliwag'],
-    explanation:'Krabby is pure Water type. Its enormous claws help it burrow in sand. The foam it produces signals good health.',
-    mistyFluff_right:'Krabby! Those claws are twice its body size. Classic beach Pokémon.',
-    mistyFluff_wrong:'Oversized claws, foam nests, sandy beaches — that\'s Krabby! Pure Water type.',
-  },
-  // ══ TIER 3 — all modes, subtle clues, 4 choices, clever decoys ══════════════
-  {
-    tier:3, mode:'identify', pokemonName:'Dratini', pokemonId:147, buffType:'dragon',
-    clues:['It sheds its skin continuously as it grows — reportedly metres long.','It lives deep underwater and was thought to be a myth for decades.','Pure white and serpentine, with a small white horn.'],
-    summary:'A legendary deep-water serpent once thought to be fictional.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Dratini','Horsea','Seadra','Dragonair'],
-    explanation:'Dratini is pure Dragon type — not Water! It lives in deep whirlpools, rarely seen above 1,800m depth.',
-    mistyFluff_right:'DRATINI! I\'ve fished for one of these for YEARS. This is a legendary catch!',
-    mistyFluff_wrong:'Deep water, serpentine, constantly shedding — that\'s Dratini! A Dragon type, not Water!',
-  },
-  {
-    tier:3, mode:'weakness', pokemonName:'Lapras', pokemonId:131, buffType:'electric',
-    clues:['It is Water and Ice type, gentle, and loves carrying people.','Near-extinct from overhunting — extremely rare.','It communicates telepathically and sings haunting songs at night.'],
-    summary:'A gentle Water/Ice ferry Pokémon, nearly extinct.',
-    question:'Which type hits Lapras most effectively?',
-    choices:['electric','fire','fighting','rock'],
-    explanation:'Lapras is Water AND Ice. Electric is 2× effective and cleanly targets both types without confusion.',
-    mistyFluff_right:'Electric! Water AND Ice — Electric is reliable against both. Protect these Pokémon.',
-    mistyFluff_wrong:'Lapras is Water AND Ice — Electric hits both types reliably. Fire only gets the Ice half.',
-  },
-  {
-    tier:3, mode:'identify', pokemonName:'Starmie', pokemonId:121, buffType:'psychic',
-    clues:['Its core glows with a red light no scientist can explain.','It rotates to swim in any direction at extremely high speed.','It transmits unknown signals into the night sky.'],
-    summary:'A rotating star with a glowing core that signals into space.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Starmie','Staryu','Jolteon','Cloyster'],
-    explanation:'Starmie is Water and Psychic type. Its glowing core may be communicating with something beyond Earth.',
-    mistyFluff_right:'STARMIE! My strongest Pokémon. If you know Starmie you know me.',
-    mistyFluff_wrong:'Rotating star, glowing core, space signals — that\'s Starmie! Water AND Psychic.',
-  },
-  {
-    tier:3, mode:'habitat', pokemonName:'Jynx', pokemonId:124, buffType:'ice',
-    clues:['I found this near a frozen underwater cave in the far north.','It walks with a hypnotic swaying rhythm, as if dancing.','It communicates only through song and gesture — no spoken language.'],
-    summary:'A dancing, singing humanoid from frozen northern water caves.',
-    question:'What did Misty find in the frozen cave?',
-    choices:['Jynx','Dewgong','Lapras','Seel'],
-    explanation:'Jynx is Ice and Psychic type — found near frozen caves and northern waterways. Its dance is complex communication.',
-    mistyFluff_right:'Jynx! Ice and Psychic. I was NOT expecting that from an underwater cave.',
-    mistyFluff_wrong:'Dancing, singing, frozen cave — that\'s Jynx! Ice and Psychic, not Water at all.',
-  },
-  {
-    tier:3, mode:'identify', pokemonName:'Dewgong', pokemonId:87, buffType:'ice',
-    clues:['It loves to sleep on ice floes in sub-zero water.','The colder the temperature, the faster it swims — opposite of most.','Smooth, white, perfectly streamlined.'],
-    summary:'A streamlined white seal that thrives in freezing water.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Dewgong','Seel','Lapras','Cloyster'],
-    explanation:'Dewgong is Water and Ice type. It stores thermal energy and converts it to speed in colder temperatures.',
-    mistyFluff_right:'Dewgong! Beautiful swimmer. It actually speeds up in colder water — fascinating Pokémon.',
-    mistyFluff_wrong:'Smooth white body, ice-lover, speeds up in cold — that\'s Dewgong! Water and Ice.',
-  },
-  {
-    tier:3, mode:'weakness', pokemonName:'Tentacruel', pokemonId:73, buffType:'electric',
-    clues:['It has 80 tentacles and can expand them to trap an entire ship.','It is Water and Poison type.','It leads entire shoals of Tentacool with psychic signals.'],
-    summary:'A giant poisonous jellyfish commanding shoals with psychic control.',
-    question:'What type hits Tentacruel hardest?',
-    choices:['electric','psychic','ground','fire'],
-    explanation:'Tentacruel is Water and Poison. Electric is 2× on Water. Ground has zero effect on its Flying-adjacent profile — don\'t be fooled.',
-    mistyFluff_right:'Electric! Tentacruel is Water/Poison — Electric hits the Water side cleanly.',
-    mistyFluff_wrong:'Tentacruel is Water AND Poison — Electric hits the Water type. Ground does nothing here.',
-  },
-  {
-    tier:3, mode:'identify', pokemonName:'Cloyster', pokemonId:91, buffType:'ice',
-    clues:['Its shell is harder than any known material — nothing can crack it.','It opens only to attack, firing spikes as high-velocity projectiles.','Inside the impenetrable shell is a second, fragile black inner shell.'],
-    summary:'An impenetrable spike-shooter hiding a second shell within.',
-    question:'Which Pokémon did Misty hook?',
-    choices:['Cloyster','Shellder','Kingler','Dewgong'],
-    explanation:'Cloyster is Water and Ice type. No modern technology can crack its outer shell. The inner black shell is its actual body.',
-    mistyFluff_right:'Cloyster! Incredible defence. Nobody and nothing cracks that shell.',
-    mistyFluff_wrong:'Indestructible shell, spike projectiles, inner black shell — that\'s Cloyster! Water and Ice.',
-  },
+// ─── MISTY'S MYSTERY CATCH — 40 famous Pokémon, generated puzzles ─────────────
+// Each entry: id, name, type, 2–3 short clue fragments, optional custom fluff.
+// The generator shuffles clues, slices by tier, and builds type-aware decoys so
+// repetition is rare and clue order never gives the answer away by position.
+
+const MISTY_POKEMON = [
+  // ── Water-leaning (Misty's specialty) ──
+  { id:129, name:'Magikarp',  type:'water',    clues:['It splashes uselessly near the surface.','Its bright orange and gold scales flash in the sun.','It is famous for being almost completely helpless.'], fluffR:'Even I almost tossed it back. Never underestimate a Magikarp!', fluffW:'Orange scales and hopeless splashing — that\'s Magikarp all over!' },
+  { id:130, name:'Gyarados',  type:'water',    clues:['A massive serpent that erupts from the water in a fury.','Its gaping jaws and blue scales strike fear into trainers.','It evolves from the most helpless of fish.'], fluffR:'Gyarados! From useless fish to raging dragon. Respect it.', fluffW:'That roaring serpent could only be Gyarados!' },
+  { id:118, name:'Goldeen',   type:'water',    clues:['It has a flowing white tail like a bridal veil.','A sharp pointed horn sits on its forehead.','It is called the Water Queen for its grace.'], fluffR:'Goldeen! Grace and power combined. My favourite.', fluffW:'That veil tail and horn — the Water Queen, Goldeen!' },
+  { id:119, name:'Seaking',   type:'water',    clues:['Its powerful horn can bore through solid rock.','Bright orange with bold black stripes.','It fiercely guards its eggs in the autumn.'], fluffR:'Seaking! A devoted parent and a tough fighter.', fluffW:'That drilling horn belongs to Seaking!' },
+  { id:54,  name:'Psyduck',   type:'water',    clues:['It holds its head with both hands — always a headache.','A plain yellow duck with a baffled expression.','When its headache peaks, it unleashes psychic power.'], fluffR:'Ugh — PSYDUCK! Story of my life. Of course you got it.', fluffW:'That confused face and head-holding — Psyduck! My problem Pokémon.' },
+  { id:60,  name:'Poliwag',   type:'water',    clues:['Its round body is almost see-through.','A clear spiral swirls on its belly.','Its legs are so new it can barely walk.'], fluffR:'Poliwag! Those tiny legs and that spiral are unmistakable.', fluffW:'Transparent body, spiral belly — that\'s Poliwag!' },
+  { id:72,  name:'Tentacool', type:'water',    clues:['Almost transparent — nearly invisible in the water.','Two red crystal-like eyes float above it.','Its trailing tentacles can sting and paralyse.'], fluffR:'Tentacool! Sneaky and dangerous. Watch those tentacles.', fluffW:'Those red crystal eyes give it away — Tentacool!' },
+  { id:120, name:'Staryu',    type:'water',    clues:['A golden core glows at the centre of its body.','Shaped like a five-pointed star.','It can regrow any limb that is torn off.'], fluffR:'Staryu! That glowing core never stops shining.', fluffW:'A star shape with a glowing core — Staryu!' },
+  { id:121, name:'Starmie',   type:'water',    clues:['Its jewel-like core flashes in seven colours.','Two star shapes spin on top of each other.','Some believe it signals to outer space.'], fluffR:'Starmie! Mysterious and beautiful. A cosmic Pokémon.', fluffW:'That spinning jewelled core is pure Starmie!' },
+  { id:98,  name:'Krabby',    type:'water',    clues:['It has two large, snapping pincers.','It burrows into beach sand to hide.','If a pincer breaks off, it simply grows back.'], fluffR:'Krabby! Quick to pinch, quick to flee.', fluffW:'Those snapping claws on the beach — Krabby!' },
+  { id:116, name:'Horsea',    type:'water',    clues:['A tiny seahorse that drifts among the coral.','It spits ink to escape from danger.','It anchors itself with its curled tail in storms.'], fluffR:'Horsea! Small but clever in a current.', fluffW:'That little curled tail belongs to Horsea!' },
+  { id:79,  name:'Slowpoke',  type:'water',    clues:['It sits by the water dipping its tail to fish.','It is so slow it forgets it feels pain.','Its blank stare hides a surprisingly deep mind.'], fluffR:'Slowpoke! It will get there... eventually.', fluffW:'That dreamy tail-dipping fisher is Slowpoke!' },
+  { id:131, name:'Lapras',    type:'water',    clues:['A gentle giant that ferries people across the sea.','It sings a hauntingly beautiful melody.','A large grey shell rises from its back.'], fluffR:'Lapras! Kind-hearted and rare. Treasure it.', fluffW:'That gentle singing ferry is Lapras!' },
+  { id:134, name:'Vaporeon',  type:'water',    clues:['Its cells are so like water it can melt away in it.','A sleek blue evolution of Eevee.','Fins and a mermaid-like tail help it swim.'], fluffR:'Vaporeon! It practically becomes the water itself.', fluffW:'That watery blue Eevee form is Vaporeon!' },
+  { id:9,   name:'Blastoise', type:'water',    clues:['Two powerful water cannons rise from its shell.','The final evolution of a tiny turtle.','It can blast water with pinpoint accuracy.'], fluffR:'Blastoise! Those cannons hit a can from far away.', fluffW:'Twin water cannons mean Blastoise!' },
+  { id:7,   name:'Squirtle',  type:'water',    clues:['A small turtle that hides in its brown shell.','It squirts water at foes with surprising force.','A popular first partner for new trainers.'], fluffR:'Squirtle! A classic starter. Good taste.', fluffW:'That little shelled squirter is Squirtle!' },
+  { id:90,  name:'Shellder',  type:'water',    clues:['A clam whose tongue can stretch over a metre.','It clamps shut on anything that comes near.','Its hard shell protects a soft body inside.'], fluffR:'Shellder! Snap — be careful of that bite.', fluffW:'That snapping clam is Shellder!' },
+  { id:86,  name:'Seel',      type:'water',    clues:['It loves frozen, icy seas.','A single horn on its head cuts through ice.','It swims gracefully even in freezing water.'], fluffR:'Seel! Right at home in the cold.', fluffW:'That ice-loving swimmer is Seel!' },
+
+  // ── Iconic non-water (Misty: "this washed up near the shore") ──
+  { id:25,  name:'Pikachu',   type:'electric', clues:['Electric sparks crackle from its red cheeks.','A yellow mouse with a lightning-bolt tail.','It is the most famous Pokémon of all.'], fluffR:'Pikachu! Everyone knows that one. Shocking choice.', fluffW:'Those sparking cheeks could only be Pikachu!' },
+  { id:26,  name:'Raichu',    type:'electric', clues:['Its long tail ends in a lightning-bolt shape.','An orange evolution that stores huge voltage.','It grounds excess electricity through its tail.'], fluffR:'Raichu! Pikachu all grown up and powered up.', fluffW:'That high-voltage orange mouse is Raichu!' },
+  { id:6,   name:'Charizard', type:'fire',     clues:['A flame burns at the tip of its tail.','A great dragon-like creature with broad wings.','The final form of a popular fire starter.'], fluffR:'Charizard! Powerful — and it knows it.', fluffW:'That flaming-tailed flyer is Charizard!' },
+  { id:4,   name:'Charmander',type:'fire',     clues:['A small lizard with a flame on its tail-tip.','If its tail flame goes out, it is in danger.','A popular first partner for new trainers.'], fluffR:'Charmander! Keep that tail flame burning.', fluffW:'A flame-tailed lizard means Charmander!' },
+  { id:1,   name:'Bulbasaur', type:'grass',    clues:['A green seed grows on its back.','Part plant, part toad-like creature.','It basks in sunlight to grow stronger.'], fluffR:'Bulbasaur! A sturdy little starter.', fluffW:'That seed-backed creature is Bulbasaur!' },
+  { id:133, name:'Eevee',     type:'normal',   clues:['A fluffy brown fox with a bushy tail.','It can evolve into many different forms.','Its unstable genes adapt to its surroundings.'], fluffR:'Eevee! So many possibilities in one little fox.', fluffW:'That fluffy adaptable fox is Eevee!' },
+  { id:143, name:'Snorlax',   type:'normal',   clues:['An enormous Pokémon that mostly sleeps and eats.','It can block an entire road with its body.','It only wakes for a very special flute.'], fluffR:'Snorlax! Good luck getting it to move.', fluffW:'That giant sleeping mountain is Snorlax!' },
+  { id:94,  name:'Gengar',    type:'ghost',    clues:['A grinning purple shadow that hides in the dark.','It is said to be a shadow that steals warmth.','Its mischievous laugh echoes at night.'], fluffR:'Gengar! Spooky — it loves a good scare.', fluffW:'That grinning purple shadow is Gengar!' },
+  { id:39,  name:'Jigglypuff',type:'normal',   clues:['A round pink balloon with big blue eyes.','Its lullaby puts everyone to sleep.','It pouts and scribbles on sleeping faces.'], fluffR:'Jigglypuff! Don\'t fall asleep during its song.', fluffW:'That round pink singer is Jigglypuff!' },
+  { id:52,  name:'Meowth',    type:'normal',   clues:['A cream-coloured cat with a gold coin on its head.','It loves shiny, round objects.','It is famous as a certain trio\'s mascot.'], fluffR:'Meowth! Always after something shiny.', fluffW:'That coin-headed cat is Meowth!' },
+  { id:150, name:'Mewtwo',    type:'psychic',  clues:['A powerful Pokémon created in a laboratory.','It bends spoons and minds with its psychic power.','It was cloned from a rare ancient Pokémon.'], fluffR:'Mewtwo?! On my line?! That is extraordinary.', fluffW:'That fierce psychic clone is Mewtwo!' },
+  { id:151, name:'Mew',       type:'psychic',  clues:['A tiny pink Pokémon said to be very rare.','It contains the DNA of every Pokémon.','It floats playfully and is hard to catch.'], fluffR:'Mew! The rarest catch of my life!', fluffW:'That playful pink rarity is Mew!' },
+  { id:149, name:'Dragonite', type:'dragon',   clues:['A friendly orange dragon with small wings.','Despite its size, it can circle the globe fast.','It is known to rescue sailors lost at sea.'], fluffR:'Dragonite! Powerful, and surprisingly kind.', fluffW:'That gentle orange dragon is Dragonite!' },
+  { id:95,  name:'Onix',      type:'rock',     clues:['A giant serpent made of boulders.','It burrows underground at fifty miles an hour.','A rock on its head acts like a compass.'], fluffR:'Onix! A rock snake — Brock\'s favourite.', fluffW:'That boulder serpent is Onix!' },
+  { id:74,  name:'Geodude',   type:'rock',     clues:['It looks just like a rock with two arms.','People often trip over it by mistake.','It flexes its arms to show off its strength.'], fluffR:'Geodude! Easy to miss — until it moves.', fluffW:'That rock-with-arms is Geodude!' },
+  { id:66,  name:'Machop',    type:'fighting', clues:['A small grey Pokémon with bulging muscles.','It trains constantly to build its strength.','It can lift things many times its own weight.'], fluffR:'Machop! Always working out.', fluffW:'That muscular little fighter is Machop!' },
+  { id:16,  name:'Pidgey',    type:'flying',   clues:['A small, common brown bird.','It kicks up sand to blind its foes.','New trainers often catch one first.'], fluffR:'Pidgey! Common, but a loyal first catch.', fluffW:'That little brown bird is Pidgey!' },
+  { id:19,  name:'Rattata',   type:'normal',   clues:['A small purple rodent with big front teeth.','Its teeth never stop growing.','It is found almost everywhere.'], fluffR:'Rattata! Quick and everywhere.', fluffW:'Those ever-growing teeth mean Rattata!' },
+  { id:37,  name:'Vulpix',    type:'fire',     clues:['A small fox with six curled tails.','Its tails grow and split as it ages.','Warm flames flicker inside its body.'], fluffR:'Vulpix! Six beautiful tails.', fluffW:'That six-tailed fox is Vulpix!' },
+  { id:58,  name:'Growlithe', type:'fire',     clues:['A loyal orange-and-black puppy Pokémon.','It bravely defends its trainer and territory.','It has a keen sense of smell.'], fluffR:'Growlithe! Loyal to the very end.', fluffW:'That brave striped pup is Growlithe!' },
+  { id:35,  name:'Clefairy',  type:'fairy',    clues:['A pink, star-loving Pokémon.','It is said to gather on moonlit nights.','It bounces in a charming, floaty way.'], fluffR:'Clefairy! Said to come from the moon.', fluffW:'That moonlit pink dancer is Clefairy!' },
+  { id:69,  name:'Bellsprout',type:'grass',    clues:['A yellow plant on a thin, bending stem.','Its mouth-like head snaps up bugs.','It sways and bends to dodge attacks.'], fluffR:'Bellsprout! Floppy but quick.', fluffW:'That bending plant is Bellsprout!' },
+  { id:132, name:'Ditto',     type:'normal',   clues:['A pink blob that can copy anything.','It transforms into any Pokémon it sees.','When it relaxes, it returns to its blobby form.'], fluffR:'Ditto! Could be anything — but it\'s a blob.', fluffW:'That shape-shifting pink blob is Ditto!' },
 ];
+
+// Build one identify puzzle for the given tier from MISTY_POKEMON.
+// tier 1: 2 clues / 3 choices · tier 2: 2 clues / 4 choices · tier 3: 1 clue / 4 choices.
+function _buildMistyPuzzle(tier, excludeIds) {
+  excludeIds = excludeIds || [];
+  const avail = MISTY_POKEMON.filter(p => !excludeIds.includes(p.id));
+  const pool  = avail.length ? avail : MISTY_POKEMON;
+  const target = pool[Math.floor(Math.random() * pool.length)];
+
+  const clueCount   = tier >= 3 ? 1 : 2;
+  const choiceCount = tier === 1 ? 3 : 4;
+
+  // Shuffle the target's clues so position never gives the answer away
+  const shuffledClues = shuffle([...target.clues]).slice(0, clueCount);
+
+  // Decoys — prefer same-type Pokémon so it tests real knowledge, then fill
+  const sameType = shuffle(MISTY_POKEMON.filter(p => p.type === target.type && p.name !== target.name));
+  const others   = shuffle(MISTY_POKEMON.filter(p => p.type !== target.type && p.name !== target.name));
+  const decoys   = [...sameType, ...others].slice(0, choiceCount - 1).map(p => p.name);
+  const choices  = shuffle([target.name, ...decoys]);
+
+  const buffType = ['water','electric','psychic','poison','ice','dragon'].includes(target.type)
+    ? target.type : 'water';
+
+  return {
+    tier, mode:'identify',
+    pokemonName: target.name,
+    pokemonId:   target._idFix || target.id,
+    buffType,
+    clues:       shuffledClues,
+    summary:     target.clues[0],
+    question:    'Which Pokémon did Misty hook?',
+    choices,
+    explanation: `${target.name} is a ${target.type}-type Pokémon. ${target.clues.join(' ')}`,
+    mistyFluff_right: target.fluffR || `Yes! That's ${target.name}!`,
+    mistyFluff_wrong: target.fluffW || `That was ${target.name}!`,
+  };
+}
 
 const FISHING_BUFF_MAP = {
   water:    { apply: () => { GameState.fishingBuff = { type:'water',    mult:1.3 }; },
@@ -15946,10 +15886,13 @@ const FishingEngine = {
     this._clueIdx  = 0;
 
     const tier = GameState.difficultyTier || 2;
-    let pool   = FISHING_PUZZLES.filter(p => p.tier === tier);
-    if (!pool.length) pool = FISHING_PUZZLES;
-    this._puzzle = pool[Math.floor(Math.random() * pool.length)] || null;
+    // Build a generated puzzle, avoiding the last few Pokémon so repeats are rare
+    if (!GameState._mistyRecent) GameState._mistyRecent = [];
+    this._puzzle = _buildMistyPuzzle(tier, GameState._mistyRecent);
     if (!this._puzzle) { MapEngine.completeNode(GameState.currentNodeIndex); MapEngine.show(); return; }
+    // Track recent catches — keep the last 12 so they don't recur soon
+    GameState._mistyRecent.push(this._puzzle.pokemonId);
+    if (GameState._mistyRecent.length > 12) GameState._mistyRecent.shift();
 
     showScreen('boss');
     BossEngine._isRocket    = false;
@@ -16912,6 +16855,27 @@ const VictoryEngine = {
     if (totalWins === 2) subText = 'Two victories. A letter was intercepted at the Pokémon Centre. It had your name on it.';
     if (totalWins >= 3)  subText = 'Three victories. Something important awaits you.';
     document.getElementById('victory-sub').textContent = subText;
+
+    // ── Win tracker — explicit championship progress toward the League ────────
+    const vpEl = document.getElementById('victory-progress');
+    if (vpEl) {
+      if (GameState.region === 'johto') {
+        vpEl.textContent = '';
+        vpEl.style.display = 'none';
+      } else {
+        vpEl.style.display = '';
+        const w = Math.min(totalWins, 3);
+        if (profiles[profIdx]?.leagueUnlocked && totalWins >= 3) {
+          vpEl.textContent = '⚔️ The League is unlocked! Check the main menu.';
+          vpEl.className   = 'victory-progress pw-league';
+        } else {
+          const left = 3 - w;
+          vpEl.textContent = `🏆 Kanto Championships: ${w}/3` +
+            (left > 0 ? ` — ${left} more to unlock the League!` : '');
+          vpEl.className   = 'victory-progress pw-kanto';
+        }
+      }
+    }
 
     // ── Favourite ─────────────────────────────────────────────────────────────
     const fav = party.reduce((best, p) =>

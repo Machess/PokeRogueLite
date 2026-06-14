@@ -5605,14 +5605,14 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: rgba(42,160,200,.12);
   border: 1px solid rgba(42,160,200,.45);
   border-radius: var(--r-md);
-  padding: .45rem .65rem;
-  font-size: .56rem; color: var(--col-text);
-  line-height: 1.55;
+  padding: .6rem .8rem;
+  font-size: .74rem; color: var(--col-text);
+  line-height: 1.65;
   position: relative;
 }
 .fishing-bubble::before {
   content: '💬';
-  margin-right: .3rem; font-size: .6rem;
+  margin-right: .35rem; font-size: .78rem;
 }
 .fishing-bubble-typing { opacity: .8; }
 .fishing-bubble-shown  { opacity: 1; }
@@ -5623,15 +5623,15 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   border: 1px solid rgba(80,220,180,.3);
   border-left: 3px solid rgba(80,220,180,.6);
   border-radius: var(--r-md);
-  padding: .5rem .7rem;
-  font-size: .56rem; color: var(--col-text); line-height: 1.6;
+  padding: .55rem .8rem;
+  font-size: .64rem; color: var(--col-text); line-height: 1.65;
   font-style: italic; margin-top: .3rem;
 }
 
 /* ── Next clue button ── */
 .fishing-next-btn {
-  align-self: flex-end; font-size: .4rem !important;
-  padding: .4em .8em !important; margin-top: .2rem;
+  align-self: flex-end; font-size: .46rem !important;
+  padding: .45em .9em !important; margin-top: .25rem;
   border-color: rgba(42,160,200,.5) !important;
   color: #4fc3e8 !important;
 }
@@ -7964,10 +7964,10 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: rgba(20,80,140,.55);
   border: 1px solid rgba(80,160,220,.4);
   border-radius: 10px;
-  padding: .35rem .5rem;
-  font-size: .44rem;
-  color: #c8e8ff;
-  line-height: 1.5;
+  padding: .55rem .75rem;
+  font-size: .72rem;
+  color: #d8f0ff;
+  line-height: 1.65;
 }
 .fishing-bubble-float {
   animation: bubble-float-up .4s cubic-bezier(0,.8,.4,1) forwards;
@@ -7980,9 +7980,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .fishing-bubble-shown { opacity: 1; }
 .fishing-next-btn {
   align-self: center;
-  font-size: .38rem !important;
-  padding: .3rem .6rem !important;
-  margin-top: .15rem;
+  font-size: .5rem !important;
+  padding: .5rem .9rem !important;
+  margin-top: .3rem;
 }
 
 /* ── Sprite choice cards ── */
@@ -10054,4 +10054,47 @@ body { touch-action: manipulation; }
   opacity: .55;
   filter: grayscale(.3);
   transition: opacity .2s, filter .2s;
+}
+
+/* ═══ WIN TRACKER — championship/league progress ═══ */
+/* Shared milestone colour tiers */
+.pw-kanto  { color: #ffd700; }   /* working toward League — gold */
+.pw-league { color: #c89cff; }   /* League unlocked, toward Johto — purple */
+.pw-johto  { color: #6ee87a; }   /* Johto unlocked — green */
+
+/* Surface 1 — profile card row */
+.profile-wins-row {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem;
+  text-align: center;
+  margin: 3px 0 2px;
+  letter-spacing: -.01em;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.5);
+}
+
+/* Surface 2 — start-screen banner pill (next to tier pill) */
+.apb-wins-pill {
+  display: inline-block;
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem;
+  padding: 2px 6px;
+  margin-left: 4px;
+  border-radius: 20px;
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.18);
+  vertical-align: middle;
+  white-space: nowrap;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
+
+/* Surface 3 — victory screen progress line */
+.victory-progress {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  line-height: 1.7;
+  text-align: center;
+  margin: .4rem auto .2rem;
+  max-width: 340px;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+  animation: tip-fade-in .5s ease;
 }
