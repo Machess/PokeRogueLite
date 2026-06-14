@@ -15189,6 +15189,10 @@ const TrainingEngine = {
   },
 
   improve() {
+    // Guard: once an upgrade is applied the button becomes "Done ✓", but the
+    // permanent click listener is still attached. Without this guard, pressing
+    // "Done" would re-enter improve() and apply the upgrade a second time.
+    if (this._upgradeJustDone) return;
     if (this.mode === 'upgrade') {
       if (this.selected.length !== 2) return;
 
