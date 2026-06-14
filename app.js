@@ -2009,6 +2009,29 @@ const ActiveEngine = {
 // Track the active intro typewriter so a new call can always cancel the old one
 let _bossIntroInterval = null;
 
+// Shared cancellable typewriter for any boss-screen intro dialogue.
+// Cancels any in-flight intro first so stale text can never bleed across screens.
+// Returns nothing; wires tap-to-skip on #trainer-intro automatically.
+function typeBossIntro(text, speed, onDone) {
+  if (_bossIntroInterval) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; }
+  const el = document.getElementById('dialogue-text');
+  if (el) el.textContent = '';
+  let ci = 0;
+  const finish = () => {
+    if (_bossIntroInterval) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; }
+    if (el) el.textContent = text;
+    if (onDone) onDone();
+  };
+  _bossIntroInterval = setInterval(() => {
+    const d = document.getElementById('dialogue-text');
+    if (!d) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; return; }
+    d.textContent += text[ci++];
+    if (ci >= text.length) finish();
+  }, speed || 22);
+  const wrap = document.getElementById('trainer-intro');
+  if (wrap) wrap.onclick = () => finish();
+}
+
 function showBossIntro(opts) {
   // Cancel any still-running typewriter from a previous intro
   if (_bossIntroInterval) { clearInterval(_bossIntroInterval); _bossIntroInterval = null; }
@@ -3552,7 +3575,10 @@ const TeamRocketChallenge = {
   // Pick a random character and show their challenge
   show(onComplete) {
     this._onComplete = onComplete;
-    const chars = ['meowth', 'jessie', 'james', 'wobbuffet'];
+    // Wobbuffet is a Johto-only encounter; Kanto uses the original trio
+    const chars = (GameState.region === 'johto')
+      ? ['meowth', 'jessie', 'james', 'wobbuffet']
+      : ['meowth', 'jessie', 'james'];
     const pool  = chars.filter(c => c !== this._type);
     this._type  = pool[Math.floor(Math.random() * pool.length)];
     GameState.nodesSinceRocket = 0;
@@ -5869,14 +5895,9 @@ const TrainerBattleEngine = {
     if (startBtn) startBtn.style.display = 'none';
 
     const fluff = getTrainerFluff(trainerType);
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += fluff[ci++];
-      if (ci >= fluff.length) {
-        clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Battle! ▶'; }
-      }
-    }, 30);
+    typeBossIntro(fluff, 30, () => {
+      if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Battle! ▶'; }
+    });
 
     this._isActive = true;
     // TrainerBattleEngine does NOT register with ActiveEngine — it uses
@@ -7168,14 +7189,9 @@ const BossEngine = {
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'Battle! ▶'; }
     document.getElementById('btn-dialogue-next').style.display = 'none';
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += boss.dialogue[ci++];
-      if (ci >= boss.dialogue.length) {
-        clearInterval(iv);
-        if (startBtn) startBtn.style.display = '';
-      }
-    }, 22);
+    typeBossIntro(boss.dialogue, 22, () => {
+      if (startBtn) startBtn.style.display = '';
+    });
   },
 
   async start(node) {
@@ -7246,20 +7262,10 @@ const BossEngine = {
       `<div class="boss-poke-pip" id="boss-pip-${i}"></div>`).join('');
 
     // Typewriter — button only appears after dialogue completes AND team is loaded
-    let ci = 0;
     const dialogue = boss.dialogue || '';
-    const finishIntro = () => {
-      clearInterval(iv);
-      document.getElementById('dialogue-text').textContent = dialogue;
+    typeBossIntro(dialogue, 22, () => {
       if (startBtn) startBtn.style.display = '';
-    };
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += dialogue[ci++];
-      if (ci >= dialogue.length) finishIntro();
-    }, 22);
-    // A5 — tap to skip
-    const introWrapB = document.getElementById('trainer-intro');
-    if (introWrapB) introWrapB.onclick = () => finishIntro();
+    });
   },
 
   startBattle() {
@@ -7869,14 +7875,9 @@ const SurgeEngine = {
     const name = GameState.trainerName || 'Trainer';
     const intro = SURGE_INTROS[Math.floor(Math.random() * SURGE_INTROS.length)]
       .replace('{name}', name);
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) {
-        clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Begin Drill! ⚡'; }
-      }
-    }, 22);
+    typeBossIntro(intro, 22, () => {
+      if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Begin Drill! ⚡'; }
+    });
   },
 
   startGame() {
@@ -8178,14 +8179,9 @@ const ErikaEngine = {
     const name  = GameState.trainerName || 'Trainer';
     const intro = ERIKA_INTROS[Math.floor(Math.random() * ERIKA_INTROS.length)]
       .replace('{name}', name);
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) {
-        clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Enter the Lab 🌸'; }
-      }
-    }, 26);
+    typeBossIntro(intro, 26, () => {
+      if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Enter the Lab 🌸'; }
+    });
   },
 
   startGame() {
@@ -8640,17 +8636,9 @@ const NinjaMemoryEngine = {
     const name  = GameState.trainerName || 'Trainer';
     const intro = NINJA_MEMORY_INTROS[Math.floor(Math.random() * NINJA_MEMORY_INTROS.length)]
       .replace('{name}', name);
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) {
-        clearInterval(iv);
-        if (startBtn) {
-          startBtn.style.display  = '';
-          startBtn.textContent    = 'Enter the Dojo 🥷';
-        }
-      }
-    }, 24);
+    typeBossIntro(intro, 24, () => {
+      if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Enter the Dojo 🥷'; }
+    });
   },
 
   startGame() {
@@ -9087,14 +9075,9 @@ const BlaineEngine = {
     const name  = GameState.trainerName || 'Trainer';
     const intro = BLAINE_INTROS[Math.floor(Math.random() * BLAINE_INTROS.length)]
       .replace('{name}', name);
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) {
-        clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Start Experiment 🔥'; }
-      }
-    }, 22);
+    typeBossIntro(intro, 22, () => {
+      if (startBtn) { startBtn.style.display = ''; startBtn.textContent = 'Start Experiment 🔥'; }
+    });
   },
 
   startGame() {
@@ -9400,14 +9383,9 @@ const SabrinaEngine = {
     const name  = GameState.trainerName || 'Trainer';
     const intro = SABRINA_INTROS[Math.floor(Math.random() * SABRINA_INTROS.length)]
       .replace('{name}', name);
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) {
-        clearInterval(iv);
-        if (startBtn) { startBtn.style.display = ''; startBtn.textContent = `Save ${this._pokeName}! 🔮`; }
-      }
-    }, 26);
+    typeBossIntro(intro, 26, () => {
+      if (startBtn) { startBtn.style.display = ''; startBtn.textContent = `Save ${this._pokeName}! 🔮`; }
+    });
   },
 
   startGame() {
@@ -10583,22 +10561,6 @@ const ChallengeSelectEngine = {
   },
 };
 
-// ─── GIOVANNI ENGINE — Gallery Painting Game ─────────────────────────────────
-
-// Type colour palette — matches CSS variables exactly
-const GIO_PALETTE = [
-  { num:1, type:'electric', hex:'#F8D030', label:'Electric', dark:false },
-  { num:2, type:'fire',     hex:'#F08030', label:'Fire',     dark:false },
-  { num:3, type:'water',    hex:'#6890F0', label:'Water',    dark:false },
-  { num:4, type:'grass',    hex:'#78C850', label:'Grass',    dark:false },
-  { num:5, type:'psychic',  hex:'#F85888', label:'Psychic',  dark:false },
-  { num:6, type:'normal',   hex:'#C8B878', label:'Cream',    dark:false },
-  { num:7, type:'poison',   hex:'#A040A0', label:'Poison',   dark:false },
-  { num:8, type:'ground',   hex:'#C8A040', label:'Ground',   dark:false },
-];
-
-// Each painting: abstract geometric zones + the Pokémon hidden inside
-// Points are [x%, y%] percentage of a 200×200 viewBox
 // ─── GIOVANNI ENGINE — "Rocket's Ledger" — teaches money & change ────────────
 // Giovanni audits Team Rocket's loot. Pay exact amounts and make change
 // using gold coins. Tier 1: pay exact price. Tier 2: make change.
@@ -11201,14 +11163,9 @@ const WobbuffetEngine = {
     document.getElementById('btn-dialogue-next').style.display = 'none';
 
     const intro = "WOBBUFFET!! (Jessie's Poké Ball burst open again. Wobbuffet has appeared and is saluting the incoming attacks. Help it counter them all!)";
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += intro[ci++];
-      if (ci >= intro.length) {
-        clearInterval(iv);
-        if (startBtn) startBtn.style.display = '';
-      }
-    }, 18);
+    typeBossIntro(intro, 18, () => {
+      if (startBtn) startBtn.style.display = '';
+    });
 
     SoundEngine.playBGM('mini_game.mp3');
   },
@@ -15963,14 +15920,9 @@ const FishingEngine = {
       `Oh! ${name}! Perfect timing. Something's on my line right now. Listen carefully — what do you think it is?`,
     ];
     const openLine = INTROS[Math.floor(Math.random() * INTROS.length)];
-    let ci = 0;
-    const iv = setInterval(() => {
-      document.getElementById('dialogue-text').textContent += openLine[ci++];
-      if (ci >= openLine.length) {
-        clearInterval(iv);
-        if (startBtn) startBtn.style.display = '';
-      }
-    }, 26);
+    typeBossIntro(openLine, 26, () => {
+      if (startBtn) startBtn.style.display = '';
+    });
   },
 
   startGame() {
