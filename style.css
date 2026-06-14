@@ -2233,8 +2233,15 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .training-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .52rem; color: var(--col-text);
+  font-size: .36rem; color: var(--col-text);
   margin-bottom: .15rem;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.5);
 }
 .training-poke-level {
   font-size: .5rem; color: var(--col-text-dim);
@@ -2403,20 +2410,28 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   background: var(--col-card);
   border: 2px solid var(--col-green);
   border-radius: var(--r-md);
-  padding: .5rem;
+  padding: .5rem .4rem;
   text-align: center;
-  width: 80px;
+  width: 84px;
   box-shadow: 0 0 10px rgba(61,170,92,.3);
+  box-sizing: border-box;
 }
 .heal-poke-card img {
-  width: 56px; height: 56px;
+  width: 52px; height: 52px;
   image-rendering: pixelated;
 }
 .heal-poke-name {
   font-family: 'Press Start 2P', monospace;
-  font-size: .52rem;
-  color: var(--col-text-dim);
-  margin-top: .2rem;
+  font-size: .34rem;
+  color: var(--col-text);
+  margin-top: .35rem;
+  line-height: 1.3;
+  letter-spacing: -.02em;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.5);
 }
 
 /* ═══════════════════════════════════════════
@@ -9911,12 +9926,15 @@ body { touch-action: manipulation; }
    BADGE CEREMONY  (post-gym transition)
 ═══════════════════════════════════════════ */
 #screen-badge {
-  position: relative;
+  position: fixed;
+  inset: 0;
   justify-content: center; align-items: center;
   overflow: hidden;
 }
 .badge-bg {
-  position: absolute; inset: 0;
+  position: fixed;
+  inset: 0;
+  width: 100vw; height: 100vh;
   background: linear-gradient(160deg,#2a1a4a,#1a1030);  /* JS overrides per-gym */
   z-index: 0;
   animation: badge-bg-drift 8s ease-in-out infinite alternate;
@@ -9926,7 +9944,8 @@ body { touch-action: manipulation; }
   to   { filter: brightness(1.15); }
 }
 .badge-bg::after {
-  content: ''; position: absolute; inset: 0;
+  content: ''; position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
   background: radial-gradient(ellipse at 50% 40%, transparent 30%, rgba(0,0,0,.55) 100%);
 }
 .badge-ceremony {
@@ -9983,18 +10002,22 @@ body { touch-action: manipulation; }
    MAP TITLE CARD  (region/route intro)
 ═══════════════════════════════════════════ */
 #screen-maptitle {
-  position: relative;
+  position: fixed;
+  inset: 0;
   justify-content: center; align-items: center;
   overflow: hidden;
 }
 .maptitle-bg {
-  position: absolute; inset: 0;
+  position: fixed;
+  inset: 0;
+  width: 100vw; height: 100vh;
   background: linear-gradient(160deg,#1a2a4a,#0a1020);  /* JS overrides per-gym */
   z-index: 0;
   animation: badge-bg-drift 8s ease-in-out infinite alternate;
 }
 .maptitle-bg::after {
-  content: ''; position: absolute; inset: 0;
+  content: ''; position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
   background: radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,.6) 100%);
 }
 .maptitle-centre {
@@ -10023,4 +10046,12 @@ body { touch-action: manipulation; }
   font-size: .38rem; color: rgba(255,255,255,.75);
   line-height: 1.9; max-width: 320px; min-height: 1.6em;
   text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
+
+/* Lock the boss/rocket hand during faint & opponent-switch windows */
+.hand-locked {
+  pointer-events: none;
+  opacity: .55;
+  filter: grayscale(.3);
+  transition: opacity .2s, filter .2s;
 }

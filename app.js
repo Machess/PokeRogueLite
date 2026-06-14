@@ -2007,6 +2007,28 @@ const ActiveEngine = {
 // repeating 20 identical lines of DOM setup.
 // opts: { gymIndex, portrait, name, introText, btnLabel, onReady }
 // Track the active intro typewriter so a new call can always cancel the old one
+// ── fitText — shrink an element's font just enough that its text fits on one
+// line within its box. Keeps short names at full size; only long names shrink.
+// Call after the element is in the DOM. minPx guards against illegibly small text.
+function fitText(el, minPx = 7) {
+  if (!el) return;
+  // Reset to CSS-defined size first
+  el.style.fontSize = '';
+  const parentW = el.clientWidth || el.offsetWidth;
+  if (!parentW) return;
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  // Shrink until the text no longer overflows its own width
+  let guard = 24;
+  while (el.scrollWidth > el.clientWidth && size > minPx && guard-- > 0) {
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+
+function fitAllText(selector, root = document) {
+  root.querySelectorAll(selector).forEach(el => fitText(el));
+}
+
 let _bossIntroInterval = null;
 
 // Shared cancellable typewriter for any boss-screen intro dialogue.
@@ -7287,6 +7309,7 @@ const BossEngine = {
     BattleEngine._battleOver       = false;
     BattleEngine._itemUsedThisTurn = false;
     this._isOver                   = false;
+    this._switching                = false;   // input lock — clear at battle start
     const activeDeck = player.deck || GameState.deck;
     this.bState = {
       player: { ...player },
@@ -7386,6 +7409,8 @@ const BossEngine = {
 
     const handEl = document.getElementById('boss-hand-area');
     handEl.innerHTML = '';
+    // During a faint/switch the hand is locked — dim it and ignore clicks
+    handEl.classList.toggle('hand-locked', !!(this._isOver || this._switching));
     st.hand.forEach((card, i) => {
       const el = BattleEngine._makeCardEl.call({ state: st }, card, i);
       el.onclick = () => this.playCard(i);
@@ -7434,8 +7459,13 @@ const BossEngine = {
   _log(html)      { BattleEngine._writeLog.call({ isBoss: true }, 'enemy',  `<span class="log-sys">${html}</span>`); },
 
   playCard(idx) {
+    // Block input while an opponent is fainting/switching, the battle is over,
+    // or a switch is mid-animation. Without this, spamming cards lands damage on
+    // the next opponent the instant it loads, wiping a whole Rocket team at once.
+    if (this._isOver || this._battleOver || this._switching) return;
     const st   = this.bState;
     const card = st.hand[idx];
+    if (!card) return;
     const cost = card.cost ?? 1;
     if (st.energy < cost) return;
     st.hand.splice(idx, 1);
@@ -7463,6 +7493,7 @@ const BossEngine = {
   },
 
   endTurn() {
+    if (this._isOver || this._battleOver || this._switching) return;
     const st = this.bState;
 
     // End Turn warning — no energy spent
@@ -7562,9 +7593,14 @@ const BossEngine = {
 
   _checkDefeated() {
     const st = this.bState;
+    // Re-entry guard: if we're already processing a faint/switch, don't start
+    // another one (stacked setTimeouts could otherwise advance oppIdx multiple
+    // times and skip the whole enemy team).
+    if (this._switching) return true;
     if (st.opp.hp <= 0) {
       this.oppTeam[this.oppIdx].hp = 0;
-      this._isOver = true;
+      this._isOver    = true;
+      this._switching = true;   // lock input until the next opp is loaded
 
       // Faint animation — same as wild battle
       const oppSpriteEl = document.getElementById('boss-opp-sprite');
@@ -7673,6 +7709,13 @@ const BossEngine = {
           st.oppAccDebuff      = 0;
           st.leechTurns        = 0;
           st.leechStacks       = 0;
+          // Reset the faint animation/visibility for the incoming sprite
+          const oppSpriteEl = document.getElementById('boss-opp-sprite');
+          if (oppSpriteEl) {
+            oppSpriteEl.classList.remove('pokemon-faint');
+            oppSpriteEl.style.visibility = 'visible';
+          }
+          this._switching = false;   // unlock input — next opp fully loaded
           this._render();  // sprite reset happens here — animation is already done
         }
       }, 750); // wait for faint animation to finish
@@ -15065,6 +15108,7 @@ const TrainingEngine = {
       card.onclick = () => this._startWithPokemon(i);
       grid.appendChild(card);
     });
+    requestAnimationFrame(() => fitAllText('.training-poke-name', grid));
   },
 
   // ── Step 2: Load chosen Pokémon's deck and show cards ─────────────────────
@@ -16230,6 +16274,8 @@ const HealEngine = {
                      <div class="heal-poke-name">${p.name}</div>`;
       partyEl.appendChild(d);
     });
+    // Shrink any long names so they fit their card without clipping
+    requestAnimationFrame(() => fitAllText('.heal-poke-name', partyEl));
   },
 
   finish() {
@@ -16895,9 +16941,10 @@ const VictoryEngine = {
         <img src="${p.spriteUrl}" alt="${p.name}"
              onerror="this.src='assets/sprites/${p.id}.png'"
              style="width:56px;height:56px;image-rendering:pixelated" />
-        <div class="heal-poke-name" style="font-size:.35rem">${p.name}</div>`;
+        <div class="heal-poke-name">${p.name}</div>`;
       partyEl.appendChild(d);
     });
+    requestAnimationFrame(() => fitAllText('.heal-poke-name', partyEl));
 
     // ── Stars ─────────────────────────────────────────────────────────────────
     const starsEl = document.getElementById('victory-stars');
