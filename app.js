@@ -7581,7 +7581,14 @@ const BossEngine = {
           GameState.party[GameState.activePokemonIndex].hp = st.player.hp;
           MapEngine.completeNode(GameState.currentNodeIndex);
 
-          if (this._isRocket) {
+          // The gym-victory path (award badge + advance map) must ONLY run on a
+          // real gym boss node. Rocket battles come from mystery/rocket nodes, so
+          // anything that is not a 'boss' node is treated as a Rocket win. This
+          // makes the branch authoritative regardless of the _isRocket flag state.
+          const curNode   = GameState.map?.[GameState.currentNodeIndex];
+          const isGymBoss = curNode?.type === 'boss' && !this._isRocket;
+
+          if (!isGymBoss) {
             this._isRocket = false;
             if (!GameState.stats) GameState.stats = {};
             GameState.stats.totalBattlesWon = (GameState.stats.totalBattlesWon || 0) + 1;
@@ -10769,6 +10776,9 @@ const RocketBattleEngine = {
 
   async start(node) {
     showLoading();
+    // Clear any stale mini-game engine registration so btn-start-boss-battle
+    // routes to THIS rocket battle, not a leftover engine from a prior node.
+    ActiveEngine.clear();
 
     // ── Pick team based on starter level ─────────────────────────────────────
     const starter = GameState.party.find(p => p.isStarter);
