@@ -1947,7 +1947,7 @@ function generateMap(bossIndex) {
       if (isReturning) injectChallenge(8);
     }
 
-    // ── GIOVANNI NODE — Power Rankings math game, from bi>=8 ─────────────────
+    // ── GIOVANNI NODE — Rocket's Ledger money game, from bi>=8 ───────────────
     if (bi >= 8 || isReturning) {
       const SPEC2 = [...SPECIAL, 'challenge'];
       const gcands = nodes.filter(n => n.row === 6 && !SPEC2.includes(n.type));
@@ -10452,10 +10452,10 @@ const CHALLENGE_SELECT_MENU = [
   {
     key:    'giovanni',
     type:   'giovanni_node',
-    emoji:  '🃏',
-    name:   "Giovanni's Power Rankings",
-    desc:   'Math card strategy game',
-    reward: '⭐ Card power bonus or intel',
+    emoji:  '💰',
+    name:   "Rocket's Ledger",
+    desc:   'Money & making change',
+    reward: '⭐ 10% shop discount',
     engine: () => GiovanniEngine,
   },
 ];
