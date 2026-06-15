@@ -16124,6 +16124,10 @@ const FishingEngine = {
   _answered:   false,
 
   start(node) {
+    if (!GameState || !GameState.party) {
+      console.warn('FishingEngine.start: no active run — start a game first.');
+      return;
+    }
     this._node     = node;
     this._isActive = true;
     ActiveEngine.set(this);
@@ -16143,7 +16147,13 @@ const FishingEngine = {
     BossEngine._isRocket    = false;
     CookingEngine._isActive = false;
 
+    // Use the boss-intro background treatment like other boss-screen mini-games
+    const bgEl  = document.querySelector('#screen-boss .battle-bg');
     const bgImg = document.querySelector('#screen-boss .battle-bg-img');
+    if (bgEl)  {
+      bgEl.classList.add('boss-intro-mode');
+      bgEl.style.background = 'linear-gradient(180deg,#aee3f5 0%,#5bb8e0 45%,#2a7aa8 100%)';
+    }
     if (bgImg) { bgImg.src = ''; bgImg.style.opacity = '0'; }
 
     document.getElementById('trainer-intro').style.display    = 'flex';
@@ -16178,6 +16188,10 @@ const FishingEngine = {
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     document.getElementById('trainer-intro').style.display = 'none';
 
+    // Clear the intro background so it can't bleed into a later boss battle
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) { bgEl.classList.remove('boss-intro-mode'); bgEl.style.background = ''; }
+
     // Tier 1 (ages 6–7): no angling — straight to a full, generous clue set.
     // Tier 2–3: play the Cast & Reel angling game first; how well you angle
     // decides how many clues you get (great = +1, good = 0, sloppy = −1).
@@ -16209,6 +16223,14 @@ const FishingEngine = {
   // accuracy maps to a clue bonus. Tier 3 has a smaller/faster zone than tier 2.
   _playAngling(onDone) {
     const tier = GameState.difficultyTier || 2;
+    // Switch to the challenge screen — the angling renders into #challenge-coin-visual
+    // which lives there, not on #screen-boss.
+    showScreen('challenge');
+    const sc = document.getElementById('screen-challenge');
+    sc.classList.remove(...CHALLENGE_CLASSES);
+    sc.classList.add('fishing-active');
+    SoundEngine.playBGM('pallet_town_theme.mp3');
+
     const cv = document.getElementById('challenge-coin-visual');
     const img = document.getElementById('challenge-character-img');
     if (img) { img.src = 'assets/misty.png'; img.style.display = ''; }
