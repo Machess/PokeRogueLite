@@ -13054,13 +13054,13 @@ const OakSortEngine = {
     hideLoading();
 
     showBossIntro({
-      gymIndex: 0, portrait: 'oak.png', gameKey: 'oak',
+      gymIndex: 0, portrait: 'prof_oak.png', gameKey: 'oak',
       name: 'Professor Oak', btnLabel: '🔬 Help Sort!',
       introText: "Oh dear, oh dear! My research Pokémon got all mixed up! Help me sort them into the right groups — look carefully at each one as it passes!",
     });
-    // Oak portrait fallback if missing
+    // Oak portrait fallback if missing — hide rather than show a wrong Pokémon
     const t = document.getElementById('boss-trainer-sprite');
-    if (t) t.onerror = () => { t.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png'; };
+    if (t) t.onerror = () => { t.style.visibility = 'hidden'; };
   },
 
   startGame() {
@@ -13085,7 +13085,7 @@ const OakSortEngine = {
     const poke = this._queue[this._round];
 
     const cv = setupChallengeScreen({
-      portrait: 'oak.png', badge: `🔬 Sort by ${this._rule.label}!`,
+      portrait: 'prof_oak.png', badge: `🔬 Sort by ${this._rule.label}!`,
       intro: `${this._round + 1}/${this._queue.length} — ${this._hits} sorted right`,
       wrapClass: 'oak-wrap', screenClass: 'oak-active',
     });
