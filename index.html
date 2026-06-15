@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=113" />
+  <link rel="stylesheet" href="style.css?v=114" />
 </head>
 <body>
 
@@ -758,10 +758,13 @@
     <div class="heal-sparkle-field" id="heal-sparkles"></div>
   </div>
   <div class="heal-center">
-    <div class="heal-icon">✨</div>
     <h1 class="screen-title">Pokémon Center</h1>
-    <div class="heal-dialogue" id="heal-dialogue">
-      Welcome! We restore your tired Pokémon to full health. Have a good trip!
+    <div class="heal-joy-row">
+      <div class="heal-speech-bubble" id="heal-speech">
+        Welcome! We'll restore your tired Pokémon to full health. ♥
+      </div>
+      <img class="heal-joy-portrait" src="assets/nurse_joy.png" alt="Nurse Joy"
+           id="heal-joy-portrait" onerror="this.style.display='none'" />
     </div>
     <div class="heal-party" id="heal-party"></div>
     <button class="btn-pixel btn-primary heal-btn" id="btn-heal-finish">Thank you! ▶</button>
@@ -1024,6 +1027,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=191"></script>
+<script src="app.js?v=193"></script>
 </body>
 </html>

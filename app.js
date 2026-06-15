@@ -16235,9 +16235,40 @@ const FishingEngine = {
 };
 
 
+const NURSE_JOY_LINES = [
+  "Welcome to the Pokémon Center! Let's get your team back to full health. ♥",
+  "Your Pokémon look tired — leave them with me! They'll be good as new in no time.",
+  "All patched up! Chansey and I will take good care of them. Come back any time!",
+  "A trainer who rests their Pokémon is a trainer who wins! Here you go — all healed. ♥",
+  "We hope to see you again soon… but stay safe out there, okay?",
+  "There you are — rested and ready! Your Pokémon are happy to see you.",
+  "Take a deep breath. Everyone's healthy again and raring to go! ♥",
+  "Healing complete! Give them lots of love on your journey, won't you?",
+];
+// Lines for when the party was badly hurt before healing
+const NURSE_JOY_LINES_HURT = [
+  "Oh my, they were in rough shape! Good thing you stopped by. All better now. ♥",
+  "That was a tough battle, wasn't it? Don't worry — they're fully recovered now.",
+  "Goodness! Let's never let them get that hurt again. There — all healed up!",
+];
+
 const HealEngine = {
   start(node) {
     showScreen('heal');
+
+    // Pick a Nurse Joy fluff line — context-aware if the party was badly hurt.
+    // Must read HP BEFORE the heal loop below restores everyone to full.
+    const totalHp = GameState.party.reduce((s, p) => s + (p.maxHp || 1), 0);
+    const curHp   = GameState.party.reduce((s, p) => s + Math.max(0, p.hp || 0), 0);
+    const hurtFrac = totalHp ? 1 - (curHp / totalHp) : 0;
+    const pool = hurtFrac >= 0.5 ? NURSE_JOY_LINES_HURT : NURSE_JOY_LINES;
+    const line = pool[Math.floor(Math.random() * pool.length)];
+    const speechEl = document.getElementById('heal-speech');
+    if (speechEl) speechEl.textContent = line;
+    // Reset portrait in case a prior missing-file run hid it
+    const joyEl = document.getElementById('heal-joy-portrait');
+    if (joyEl) joyEl.style.display = '';
+
     // Apply heal center background
     const healBg = document.getElementById('heal-bg');
     if (healBg) {

@@ -2389,19 +2389,69 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   display: flex; flex-direction: column;
   align-items: center; gap: 1rem;
 }
-.heal-icon {
-  font-size: 3rem;
-  animation: float 2s ease-in-out infinite;
+/* ── Nurse Joy hero row: speech bubble + portrait ── */
+.heal-joy-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: .4rem;
+  max-width: 460px;
+  margin-top: .2rem;
 }
-.heal-dialogue {
-  font-size: .85rem;
-  color: var(--col-text);
-  max-width: 380px;
+.heal-joy-portrait {
+  width: auto; height: 150px;
+  max-height: 26vh;
+  max-width: 150px;
+  object-fit: contain;
+  object-position: bottom center;
+  image-rendering: auto;
+  filter: drop-shadow(3px 4px 0 rgba(0,0,0,.35));
+  flex-shrink: 0;
+  animation: heal-joy-in .5s cubic-bezier(.34,1.56,.64,1) both,
+             heal-joy-bob 3s ease-in-out .5s infinite;
+}
+@keyframes heal-joy-in {
+  0%   { transform: translateY(20px) scale(.85); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
+}
+@keyframes heal-joy-bob {
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-5px); }
+}
+.heal-speech-bubble {
+  position: relative;
+  background: rgba(255,255,255,.95);
+  color: #5a2a3a;
+  font-size: .58rem;
   line-height: 1.6;
-  background: rgba(10,10,26,.8);
-  border: 2px solid var(--col-border);
-  border-radius: var(--r-md);
-  padding: .8rem 1.2rem;
+  text-align: left;
+  border-radius: 14px;
+  border: 2px solid #ff9ec0;
+  padding: .7rem .9rem;
+  max-width: 240px;
+  box-shadow: 0 3px 10px rgba(180,80,120,.25);
+  align-self: center;
+  animation: heal-bubble-in .45s ease .15s both;
+}
+/* Bubble tail pointing toward Joy (to the right) */
+.heal-speech-bubble::after {
+  content: '';
+  position: absolute;
+  right: -11px; bottom: 22px;
+  border: 7px solid transparent;
+  border-left-color: #ff9ec0;
+}
+.heal-speech-bubble::before {
+  content: '';
+  position: absolute;
+  right: -7px; bottom: 24px;
+  border: 5px solid transparent;
+  border-left-color: rgba(255,255,255,.95);
+  z-index: 1;
+}
+@keyframes heal-bubble-in {
+  0%   { transform: scale(.8) translateY(8px); opacity: 0; }
+  100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 .heal-party {
   display: flex; gap: .7rem; flex-wrap: wrap;
