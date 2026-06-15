@@ -494,7 +494,7 @@ const CHALLENGE_CLASSES = [
   // Johto + Wobbuffet
   'falkner-active','bugsy-active','whitney-active','morty-active',
   'jasmine-active','pryce-active','clair-active','wobbu-active','chuck-active',
-  'oak-active','snorlax-active','rocketmoney-active',
+  'oak-active','snorlax-active','rocketmoney-active','jenny-active',
 ];
 
 const NODE_ICONS = {
@@ -502,7 +502,7 @@ const NODE_ICONS = {
   boss: '💀', mystery: '❓', cooking: '🍳', fishing: '🎣',
   jigglypuff_node: '🎵', surge_node: '⚡', erika_node: '🧪',
   ninja_node: '🥷', sabrina_node: '🔮', blaine_node: '🔥',
-  giovanni_node: '💰', wobbuffet_node: '🛡️',
+  giovanni_node: '💰', wobbuffet_node: '🛡️', jenny_node: '🚓',
   // Johto gym mini-games
   falkner_node: '🪶', bugsy_node: '🐛', whitney_node: '🎀',
   morty_node: '👻', jasmine_node: '⚙️', pryce_node: '❄️', clair_node: '🐉',
@@ -2235,6 +2235,7 @@ const MG_RULES = {
   'oak-active':      'Tap the basket each Pokémon belongs in!',
   'snorlax-active':  'Compare weights and balance the scale!',
   'rocketmoney-active': 'Count the coins to pay the exact amount!',
+  'jenny-active':    'Read the police report, then tap the matching Pokémon!',
   'wobbu-active':    'Tap the super-effective counter before the attack lands!',
 };
 
@@ -4425,7 +4426,7 @@ const Game = {
                  totalBossesBeaten: 0, totalNodesCompleted: 0 },
         gold: 0, items: [], masterBallUsed: false,
         trainerName: '', trainerAge: 10, difficultyTier: 2,
-        nodesSinceRocket: 0, _lastRocketCheckAt: 0,
+        nodesSinceRocket: 0, _lastRocketCheckAt: 0, rocketShieldNodes: 0,
         _isNewProfile: true,  // flag so confirmStarter creates the profile
       };
       showScreen('register');
@@ -4487,7 +4488,7 @@ const Game = {
       trainerName:    carriedName,
       trainerAge:     carriedAge,
       difficultyTier: carriedTier,
-      nodesSinceRocket: 0, _lastRocketCheckAt: 0,
+      nodesSinceRocket: 0, _lastRocketCheckAt: 0, rocketShieldNodes: 0,
     };
 
     // Skip register → intro → tutorial for returning players.
@@ -4531,6 +4532,7 @@ const Game = {
     // Backfill new counter fields for saves that predate them
     if (!GameState.nodesSinceRocket)    GameState.nodesSinceRocket    = 0;
     if (!GameState._lastRocketCheckAt)  GameState._lastRocketCheckAt  = 0;
+    if (GameState.rocketShieldNodes == null) GameState.rocketShieldNodes = 0;
     if (!GameState.stats) GameState.stats = {};
     if (!GameState.stats.totalBattlesWon)     GameState.stats.totalBattlesWon     = GameState.stats.battlesWon || 0;
     if (!GameState.stats.totalBossesBeaten)   GameState.stats.totalBossesBeaten   = GameState.bossesDefeated  || 0;
@@ -5747,6 +5749,7 @@ const MapEngine = {
         }
         break;
       case 'mystery':  MysteryEngine.start(node);              break;
+      case 'jenny_node':      JennyEngine.start(node);           break;
       case 'cooking':         CookingEngine.start(node);        break;
       case 'fishing':         FishingEngine.start(node);         break;
       case 'jigglypuff_node': JigglypuffEngine.start(node);      break;
@@ -10802,12 +10805,19 @@ const MysteryEngine = {
   start(node) {
     const beaten = GameState.bossesDefeated || 0;
 
+    // Officer Jenny's patrol shield: no Team Rocket in Mystery nodes for a few
+    // nodes after helping her. Decrement once per Mystery node visited.
+    const shielded = (GameState.rocketShieldNodes || 0) > 0;
+    if (shielded) GameState.rocketShieldNodes--;
+
     const pool = [
       { weight: 3, fn: () => CatchEngine.start(node, 'rare') },
-      { weight: 2, fn: () => RocketBattleEngine.start(node) },
       { weight: 2, fn: () => OakSortEngine.start(node) },
       { weight: 2, fn: () => SnorlaxEngine.start(node) },
     ];
+    // Rocket only appears when the patrol shield is down
+    if (!shielded) pool.push({ weight: 2, fn: () => RocketBattleEngine.start(node) });
+    if (beaten >= 1) pool.push({ weight: 2, fn: () => JennyEngine.start(node) });
     if (beaten >= 2) pool.push({ weight: 2, fn: () => JigglypuffEngine.start(node) });
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
     if (beaten >= 4) pool.push({ weight: 2, fn: () => ErikaEngine.start(node) });
@@ -13325,6 +13335,179 @@ const SnorlaxEngine = {
       modalTitle: this._hits >= 5 ? '⚖️ Perfectly Balanced!' : won ? '⚖️ Snorlax Moves!' : '⚖️ Snorlax Snores On...',
       modalBody: `${this._hits}/5 weighed right\n+${gold}💰` +
         (won ? '\n\nSnorlax lumbers off the road!' : ''),
+    });
+  },
+};
+
+// ─── OFFICER JENNY ENGINE — "Lost & Found Patrol" ───────────────────────────
+// A trainer reports a lost Pokémon. Jenny reads you the police report (clues,
+// all up-front), and you pick the matching suspect from a sprite line-up.
+// Deliberately NOT like Misty: clues are GIVEN, not earned; no timing/angling;
+// pure calm deduction. Tier 3 adds a "narrow it down" elimination step.
+// Reward: tier-scaled prize money + 5-node Team Rocket patrol shield.
+const JENNY_LINES = [
+  "Officer on duty! A trainer's Pokémon has gone missing. Read the report and help me find it!",
+  "Another lost Pokémon case! Let's match the description to the right suspect. ♥",
+  "Citizens are counting on us, Officer. Study the report carefully!",
+  "Police work is detective work! Find the Pokémon that fits every clue.",
+];
+
+const JennyEngine = {
+  _isActive: false, _node: null, _round: 0, _hits: 0, _suspects: [],
+
+  async start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
+    ActiveEngine.set(this);
+
+    showLoading();
+    // Pre-fetch sprites for a pool drawn from the famous-Pokémon table
+    const picks = shuffle([...MISTY_POKEMON]).slice(0, 14);
+    this._suspects = (await Promise.all(picks.map(async p => {
+      const d = await fetchPoke(p.id).catch(() => null);
+      return {
+        id: p.id, name: p.name, type: p.type, clues: p.clues,
+        sprite: d ? getSpriteUrl(d) :
+          `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
+      };
+    }))).filter(Boolean);
+    hideLoading();
+
+    showBossIntro({
+      gymIndex: 0, portrait: 'officer_jenny.png', gameKey: 'jenny',
+      name: 'Officer Jenny', btnLabel: '🚓 Start Patrol!',
+      introText: JENNY_LINES[Math.floor(Math.random() * JENNY_LINES.length)],
+    });
+    const t = document.getElementById('boss-trainer-sprite');
+    if (t) t.onerror = () => { t.style.visibility = 'hidden'; };
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  _showRound() {
+    if (this._round >= 5 || this._suspects.length < 4) { this._finish(); return; }
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+
+    // Pick the lost Pokémon + line-up of suspects (type-aware decoys)
+    const target   = this._suspects[Math.floor(Math.random() * this._suspects.length)];
+    const lineupN  = tier === 1 ? 3 : tier === 2 ? 4 : 6;
+    const sameType = shuffle(this._suspects.filter(s => s.type === target.type && s.id !== target.id));
+    const others   = shuffle(this._suspects.filter(s => s.type !== target.type && s.id !== target.id));
+    const decoys   = [...sameType, ...others].slice(0, lineupN - 1);
+    let lineup     = shuffle([target, ...decoys]);
+
+    // The report — number of clue lines scales with tier (more help for little ones)
+    const clueCount = tier === 1 ? 3 : tier === 2 ? 2 : 2;
+    const report = shuffle([...target.clues]).slice(0, clueCount);
+
+    const cv = setupChallengeScreen({
+      portrait: 'officer_jenny.png', badge: '🚓 Lost & Found Patrol',
+      intro: `Case ${this._round + 1}/5 — ${this._hits} solved`,
+      wrapClass: 'jenny-wrap', screenClass: 'jenny-active',
+    });
+
+    // Police report card
+    const reportEl = document.createElement('div');
+    reportEl.className = 'jenny-report';
+    reportEl.innerHTML =
+      `<div class="jenny-report-head">📋 POLICE REPORT</div>` +
+      report.map(c => `<div class="jenny-report-line">• ${c}</div>`).join('');
+    cv.appendChild(reportEl);
+
+    // Tier 3 — "narrow it down" elimination step before the final pick
+    const proceed = (finalLineup) => {
+      const q = document.createElement('div');
+      q.className = 'jenny-question';
+      q.textContent = 'Who is the missing Pokémon?';
+      cv.appendChild(q);
+
+      const grid = document.createElement('div');
+      grid.className = 'jenny-lineup';
+      finalLineup.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'jenny-suspect';
+        btn.innerHTML = `<img src="${s.sprite}" class="jenny-suspect-sprite pixel-sprite"><span class="jenny-suspect-name">${s.name}</span>`;
+        btn.addEventListener('click', () => {
+          grid.querySelectorAll('.jenny-suspect').forEach(x => x.disabled = true);
+          const correct = s.id === target.id;
+          btn.classList.add(correct ? 'jenny-correct' : 'jenny-wrong');
+          if (!correct) {
+            // Highlight the right one
+            grid.querySelectorAll('.jenny-suspect').forEach((x, i) => {
+              if (finalLineup[i].id === target.id) x.classList.add('jenny-correct');
+            });
+          }
+          if (correct) this._hits++;
+          setTimeout(() => { this._round++; this._showRound(); }, 1500);
+        });
+        grid.appendChild(btn);
+      });
+      cv.appendChild(grid);
+    };
+
+    if (tier === 3) {
+      // Elimination: name an attribute the target has; tap away those that lack it.
+      const elimMsg = document.createElement('div');
+      elimMsg.className = 'jenny-elim-msg';
+      elimMsg.textContent = `The report says the suspect is a ${target.type}-type. Tap away the ones that DON'T match!`;
+      cv.appendChild(elimMsg);
+
+      const grid = document.createElement('div');
+      grid.className = 'jenny-lineup';
+      lineup.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'jenny-suspect jenny-elim';
+        btn.innerHTML = `<img src="${s.sprite}" class="jenny-suspect-sprite pixel-sprite"><span class="jenny-suspect-name">${s.name}</span>`;
+        btn.addEventListener('click', () => {
+          if (s.type === target.type) {
+            btn.classList.add('jenny-shake');
+            setTimeout(() => btn.classList.remove('jenny-shake'), 300);
+            return; // can't eliminate a matching-type one
+          }
+          btn.classList.add('jenny-eliminated');
+          btn.disabled = true;
+        });
+        grid.appendChild(btn);
+      });
+      cv.appendChild(grid);
+
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'btn-pixel btn-primary jenny-narrow-btn';
+      nextBtn.textContent = 'Narrow it down ▶';
+      nextBtn.addEventListener('click', () => {
+        // Survivors = matching type (plus the target guaranteed)
+        const survivors = lineup.filter(s => s.type === target.type);
+        const finalSet = survivors.length >= 2 ? survivors : lineup;
+        elimMsg.remove(); grid.remove(); nextBtn.remove();
+        proceed(finalSet);
+      });
+      cv.appendChild(nextBtn);
+    } else {
+      proceed(lineup);
+    }
+  },
+
+  _finish() {
+    const won  = this._hits >= 4;
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
+    const gold = won ? baseGold : Math.floor(baseGold / 2);
+
+    // Reward: patrol shield — no Team Rocket in Mystery nodes for 5 nodes
+    if (won) GameState.rocketShieldNodes = 5;
+
+    completeChallenge({
+      screenClass: 'jenny-active', won,
+      goldReward: gold,
+      score: this._hits, maxScore: 5, gameKey: 'jenny',
+      modalTitle: this._hits >= 5 ? '🚓 Case Closed — Perfect!' : won ? '🚓 Great Police Work!' : '🚓 Cases Still Open...',
+      modalBody: `${this._hits}/5 cases solved\n+${gold}💰` +
+        (won ? '\n\nPatrols stepped up! Team Rocket will lay low for a while. ♥' : ''),
     });
   },
 };
@@ -15869,13 +16052,17 @@ const MISTY_POKEMON = [
 
 // Build one identify puzzle for the given tier from MISTY_POKEMON.
 // tier 1: 2 clues / 3 choices · tier 2: 2 clues / 4 choices · tier 3: 1 clue / 4 choices.
-function _buildMistyPuzzle(tier, excludeIds) {
+function _buildMistyPuzzle(tier, excludeIds, clueBonus) {
   excludeIds = excludeIds || [];
+  clueBonus  = clueBonus || 0;
   const avail = MISTY_POKEMON.filter(p => !excludeIds.includes(p.id));
   const pool  = avail.length ? avail : MISTY_POKEMON;
   const target = pool[Math.floor(Math.random() * pool.length)];
 
-  const clueCount   = tier >= 3 ? 1 : 2;
+  // Base clue count by tier, adjusted by angling performance (clueBonus).
+  // Floored at 1 so the puzzle is always solvable; capped at all available clues.
+  const baseClue    = tier >= 3 ? 1 : 2;
+  const clueCount   = Math.max(1, Math.min(target.clues.length, baseClue + clueBonus));
   const choiceCount = tier === 1 ? 3 : 4;
 
   // Shuffle the target's clues so position never gives the answer away
@@ -15896,6 +16083,7 @@ function _buildMistyPuzzle(tier, excludeIds) {
     pokemonId:   target._idFix || target.id,
     buffType,
     clues:       shuffledClues,
+    _allClues:   [...target.clues],
     summary:     target.clues[0],
     question:    'Which Pokémon did Misty hook?',
     choices,
@@ -15989,7 +16177,104 @@ const FishingEngine = {
     const startBtn = document.getElementById('btn-start-boss-battle');
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     document.getElementById('trainer-intro').style.display = 'none';
-    this._showClueStage();
+
+    // Tier 1 (ages 6–7): no angling — straight to a full, generous clue set.
+    // Tier 2–3: play the Cast & Reel angling game first; how well you angle
+    // decides how many clues you get (great = +1, good = 0, sloppy = −1).
+    const tier = GameState.difficultyTier || 2;
+    if (tier >= 2) {
+      this._playAngling((clueBonus) => {
+        this._rebuildPuzzleClues(clueBonus);
+        this._showClueStage();
+      });
+    } else {
+      this._rebuildPuzzleClues(1);  // tier 1 gets the most generous clue set
+      this._showClueStage();
+    }
+  },
+
+  // Re-slice the current puzzle's clues based on angling performance, keeping the
+  // same target Pokémon and answer choices.
+  _rebuildPuzzleClues(clueBonus) {
+    const p = this._puzzle;
+    if (!p || !p._allClues) return;
+    const tier = GameState.difficultyTier || 2;
+    const baseClue = tier >= 3 ? 1 : 2;
+    const n = Math.max(1, Math.min(p._allClues.length, baseClue + (clueBonus || 0)));
+    p.clues = shuffle([...p._allClues]).slice(0, n);
+  },
+
+  // ── Cast & Reel angling minigame (tier 2–3 only) ─────────────────────────
+  // A marker sweeps a bar with a sweet-spot zone; tap to hook. No fail-out —
+  // accuracy maps to a clue bonus. Tier 3 has a smaller/faster zone than tier 2.
+  _playAngling(onDone) {
+    const tier = GameState.difficultyTier || 2;
+    const cv = document.getElementById('challenge-coin-visual');
+    const img = document.getElementById('challenge-character-img');
+    if (img) { img.src = 'assets/misty.png'; img.style.display = ''; }
+    document.getElementById('challenge-badge').textContent = '🎣 Cast & Reel!';
+    document.getElementById('challenge-intro').textContent = 'Tap when the marker hits the green zone to hook it!';
+    document.getElementById('challenge-result').style.display       = 'none';
+    document.getElementById('challenge-continue-btn').style.display = 'none';
+    document.getElementById('challenge-question').style.display     = 'none';
+    document.getElementById('challenge-answer-btns').innerHTML      = '';
+
+    // Tier-scaled difficulty
+    const zoneW   = tier >= 3 ? 22 : 40;     // sweet-spot width (% of bar)
+    const bullW   = tier >= 3 ? 8  : 14;     // bullseye width (% of bar)
+    const speed   = tier >= 3 ? 1.7 : 1.15;  // sweeps per second
+    const zoneL   = 50 - zoneW / 2;          // centered zone
+    const bullL   = 50 - bullW / 2;
+
+    cv.style.display = 'block';
+    cv.className = 'angling-area';
+    cv.innerHTML = `
+      <div class="angling-water"></div>
+      <div class="angling-bar">
+        <div class="angling-zone" style="left:${zoneL}%;width:${zoneW}%"></div>
+        <div class="angling-bull" style="left:${bullL}%;width:${bullW}%"></div>
+        <div class="angling-marker" id="angling-marker"></div>
+      </div>
+      <button class="btn-pixel btn-primary angling-hook-btn" id="angling-hook-btn">HOOK! 🎣</button>
+      <div class="angling-feedback" id="angling-feedback"></div>`;
+
+    const marker = document.getElementById('angling-marker');
+    const btn    = document.getElementById('angling-hook-btn');
+    let pos = 0, dir = 1, raf = null, last = performance.now(), done = false;
+
+    const step = (now) => {
+      const dt = (now - last) / 1000; last = now;
+      pos += dir * speed * 100 * dt;
+      if (pos >= 100) { pos = 100; dir = -1; }
+      if (pos <= 0)   { pos = 0;   dir =  1; }
+      if (marker) marker.style.left = pos + '%';
+      if (!done) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+
+    const hook = () => {
+      if (done) return;
+      done = true;
+      cancelAnimationFrame(raf);
+      btn.disabled = true;
+      // Score by where the marker landed
+      let bonus, msg, cls;
+      if (pos >= bullL && pos <= bullL + bullW) {
+        bonus = 1; msg = 'PERFECT CATCH! ⭐'; cls = 'angling-perfect';
+        SoundEngine.playSFX('correct.mp3', 0.7);
+      } else if (pos >= zoneL && pos <= zoneL + zoneW) {
+        bonus = 0; msg = 'Nice hook!'; cls = 'angling-good';
+        SoundEngine.playSFX('correct.mp3', 0.5);
+      } else {
+        bonus = -1; msg = 'It thrashed free a bit... murky clues!'; cls = 'angling-sloppy';
+      }
+      const fb = document.getElementById('angling-feedback');
+      if (fb) { fb.textContent = msg; fb.className = `angling-feedback ${cls}`; }
+      if (marker) marker.classList.add('angling-marker-stop');
+      setTimeout(() => onDone(bonus), 1100);
+    };
+
+    btn.addEventListener('click', hook);
   },
 
   _showClueStage() {

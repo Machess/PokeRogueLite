@@ -10209,3 +10209,144 @@ body { touch-action: manipulation; }
   60%  { transform: scale(1.15) translateY(-6px); opacity: 1; }
   100% { transform: scale(1) translateY(0); opacity: 1; }
 }
+
+/* ═══ OFFICER JENNY — LOST & FOUND PATROL ═══ */
+.jenny-report {
+  background: rgba(20,30,60,.85);
+  border: 2px solid #5a8ad8;
+  border-radius: 10px;
+  padding: .6rem .8rem;
+  margin: 0 auto .6rem;
+  max-width: 320px;
+  text-align: left;
+}
+.jenny-report-head {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .42rem;
+  color: #8ec0ff;
+  letter-spacing: .05em;
+  margin-bottom: .4rem;
+  text-align: center;
+}
+.jenny-report-line {
+  font-size: .6rem;
+  color: #e8f0ff;
+  line-height: 1.6;
+  margin: .15rem 0;
+}
+.jenny-question, .jenny-elim-msg {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .44rem;
+  color: var(--col-text);
+  line-height: 1.5;
+  margin: .4rem auto;
+  max-width: 320px;
+}
+.jenny-elim-msg { color: #ffcf6e; }
+.jenny-lineup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  justify-content: center;
+  margin: .5rem auto;
+  max-width: 380px;
+}
+.jenny-suspect {
+  background: rgba(255,255,255,.06);
+  border: 2px solid rgba(120,160,220,.4);
+  border-radius: 10px;
+  padding: .4rem;
+  width: 84px;
+  display: flex; flex-direction: column; align-items: center; gap: .2rem;
+  cursor: pointer;
+  transition: transform .12s, border-color .12s, background .12s;
+}
+.jenny-suspect:hover:not(:disabled) { transform: translateY(-3px); border-color: #8ec0ff; }
+.jenny-suspect-sprite { width: 56px; height: 56px; image-rendering: pixelated; }
+.jenny-suspect-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .3rem;
+  color: var(--col-text);
+  text-align: center;
+  line-height: 1.2;
+}
+.jenny-correct {
+  border-color: #4ade80 !important;
+  background: rgba(74,222,128,.22) !important;
+  animation: jenny-pop .35s ease;
+}
+.jenny-wrong {
+  border-color: #f87171 !important;
+  background: rgba(248,113,113,.2) !important;
+}
+@keyframes jenny-pop {
+  0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); }
+}
+.jenny-eliminated {
+  opacity: .3;
+  filter: grayscale(1);
+  border-color: rgba(120,120,120,.4) !important;
+}
+.jenny-shake { animation: jenny-shake-anim .3s ease; }
+@keyframes jenny-shake-anim {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); } 75% { transform: translateX(4px); }
+}
+.jenny-narrow-btn {
+  font-size: .5rem !important;
+  margin: .5rem auto 0;
+  display: block;
+}
+
+/* ═══ MISTY — CAST & REEL ANGLING ═══ */
+.angling-area {
+  display: flex; flex-direction: column; align-items: center;
+  gap: .7rem; padding: .5rem 0;
+}
+.angling-water {
+  width: 90%; max-width: 340px; height: 36px;
+  background: linear-gradient(180deg,#3a9ad8,#1a6aa8);
+  border-radius: 8px;
+  box-shadow: inset 0 -4px 8px rgba(0,0,0,.25);
+  position: relative; overflow: hidden;
+  animation: angling-ripple 2s linear infinite;
+}
+@keyframes angling-ripple {
+  0% { background-position: 0 0; } 100% { background-position: 40px 0; }
+}
+.angling-bar {
+  position: relative;
+  width: 90%; max-width: 340px; height: 26px;
+  background: rgba(10,20,40,.8);
+  border: 2px solid #5a8ad8;
+  border-radius: 13px;
+  overflow: hidden;
+}
+.angling-zone {
+  position: absolute; top: 0; height: 100%;
+  background: rgba(74,222,128,.45);
+  border-left: 1px solid rgba(74,222,128,.8);
+  border-right: 1px solid rgba(74,222,128,.8);
+}
+.angling-bull {
+  position: absolute; top: 0; height: 100%;
+  background: rgba(255,215,0,.6);
+}
+.angling-marker {
+  position: absolute; top: -3px; left: 0;
+  width: 6px; height: calc(100% + 6px);
+  background: #fff;
+  border-radius: 3px;
+  box-shadow: 0 0 6px rgba(255,255,255,.9);
+  transform: translateX(-50%);
+}
+.angling-marker-stop { background: #ffe66e; }
+.angling-hook-btn { font-size: .55rem !important; padding: .5rem 1.4rem !important; }
+.angling-feedback {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .46rem; line-height: 1.5; min-height: 1.2em;
+  text-align: center;
+}
+.angling-perfect { color: #ffd700; animation: jenny-pop .4s ease; }
+.angling-good    { color: #6ee87a; }
+.angling-sloppy  { color: #ff9e6e; }
