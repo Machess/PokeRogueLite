@@ -2416,15 +2416,22 @@ const SoundEngine = {
   // Play a one-shot SFX. Kills any in-progress SFX first so sounds never stack.
   playSFX(file, volume) {
     if (this._muted) return;
-    if (this._sfxNode) {
-      try { this._sfxNode.pause(); this._sfxNode.currentTime = 0; } catch(e) {}
-      this._sfxNode = null;
+    try {
+      if (this._sfxNode) {
+        try { this._sfxNode.pause(); this._sfxNode.currentTime = 0; } catch(e) {}
+        this._sfxNode = null;
+      }
+      const audio = new Audio(this._path(file));
+      audio.volume = volume ?? this._sfxVolume;
+      // Missing files (404) must never break game flow
+      audio.addEventListener('error', () => { if (this._sfxNode === audio) this._sfxNode = null; });
+      const p = audio.play();
+      if (p && typeof p.catch === 'function') p.catch(() => {});
+      this._sfxNode = audio;
+      audio.addEventListener('ended', () => { if (this._sfxNode === audio) this._sfxNode = null; });
+    } catch (e) {
+      // Swallow any synchronous audio errors — sound is never critical
     }
-    const audio = new Audio(this._path(file));
-    audio.volume = volume ?? this._sfxVolume;
-    audio.play().catch(() => {});
-    this._sfxNode = audio;
-    audio.addEventListener('ended', () => { if (this._sfxNode === audio) this._sfxNode = null; });
   },
 
   // Debounced SFX — ignores rapid repeated calls within delay ms (mobile hover spam)
@@ -2487,6 +2494,29 @@ const SoundEngine = {
     } catch (_) {}
   },
   playRecovery() { this.playSFX('pokemon_recovery.mp3', 0.7); },
+
+  // Synthesized success chime — a rising two-note arpeggio. Used where a
+  // 'correct' sound is wanted without depending on an audio file.
+  playCorrect() {
+    if (this._muted) return;
+    try {
+      if (!this._audioCtx) this._audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const ctx = this._audioCtx;
+      const notes = [660, 880, 1175];   // E5 → A5 → D6
+      notes.forEach((f, i) => {
+        const osc  = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        const t = ctx.currentTime + i * 0.08;
+        osc.frequency.setValueAtTime(f, t);
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.09, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t); osc.stop(t + 0.2);
+      });
+    } catch (_) {}
+  },
   // ── Pokédex voice — Web Speech API ────────────────────────────────────────
   _dexVoice: null,
   _voicesReady: false,
@@ -12594,6 +12624,44 @@ const JasmineEngine = {
 // Tier 1: tap each shape to tally. Tier 2-3: highlight a type, pick the count.
 // When the field is clear, the Pokémon "frozen inside" is revealed.
 // Reward: gold (8/12/16) + "Frozen First Strike" buff on a clean job.
+// Non-overlapping placement using true Euclidean distance. If the field gets
+// crowded, it relaxes the spacing and finally falls back to a clean grid so
+// every shape always lands in a distinct, visible spot.
+function _prycePlacements(count, fieldW, fieldH, size, pad = 8) {
+  const placed = [];
+  const minGap0 = size * 0.9;
+  for (let i = 0; i < count; i++) {
+    let pos = null;
+    // Try progressively smaller spacing so dense fields still fit
+    for (let relax = 0; relax < 4 && !pos; relax++) {
+      const minGap = minGap0 * (1 - relax * 0.18);
+      for (let attempt = 0; attempt < 60; attempt++) {
+        const x = pad + Math.random() * (fieldW - size - pad * 2);
+        const y = pad + Math.random() * (fieldH - size - pad * 2);
+        const ok = placed.every(p => {
+          const dx = p.x - x, dy = p.y - y;
+          return Math.sqrt(dx * dx + dy * dy) >= minGap;
+        });
+        if (ok) { pos = { x, y }; break; }
+      }
+    }
+    // Guaranteed fallback — clean grid cell
+    if (!pos) {
+      const cols = Math.max(1, Math.floor((fieldW - pad * 2) / (size + 6)));
+      const col  = i % cols;
+      const row  = Math.floor(i / cols);
+      pos = {
+        x: pad + col * (size + 6),
+        y: pad + row * (size + 6),
+      };
+      // Keep within the field vertically
+      pos.y = Math.min(pos.y, fieldH - size - pad);
+    }
+    placed.push(pos);
+  }
+  return placed;
+}
+
 const PRYCE_SHAPES = [
   { key:'circle',   label:'Circles',    emoji:'⚪', color:'#7ecbff' },
   { key:'square',   label:'Squares',    emoji:'🟦', color:'#6ea8ff' },
@@ -12731,11 +12799,17 @@ const PryceEngine = {
     field.style.height = FIELD_H + 'px';
     cv.appendChild(field);
 
-    // Place ALL remaining shapes (current type + not-yet-cleared types)
+    // Place ALL remaining shapes (current type + not-yet-cleared types).
+    // Use proper circle-packing placement so shapes never stack and hide each
+    // other (the generic _bugPlacements only checks one axis and can overlap).
     const remaining = this._shapes.filter(s => !this._order.slice(0, this._typeIdx).includes(s.type));
-    const positions = _bugPlacements(remaining.length, FIELD_W, FIELD_H, SIZE);
-    remaining.forEach((sh, i) => {
-      const pos = positions[i];
+    const positions = _prycePlacements(remaining.length, FIELD_W, FIELD_H, SIZE);
+    // Draw active (current-type) shapes LAST so they sit on top and are clearly
+    // countable, never buried under dimmed shapes of other types.
+    const ordered = remaining
+      .map((sh, i) => ({ sh, pos: positions[i] }))
+      .sort((a, b) => (a.sh.type === curType ? 1 : 0) - (b.sh.type === curType ? 1 : 0));
+    ordered.forEach(({ sh, pos }) => {
       const el = document.createElement('div');
       el.className = 'pryce-shape' + (sh.type === curType ? ' pryce-shape-active' : ' pryce-shape-dim');
       el.style.left = pos.x + 'px';
@@ -12831,7 +12905,7 @@ const PryceEngine = {
     field.querySelectorAll('.pryce-shape-active').forEach((el, i) => {
       setTimeout(() => el.classList.add('pryce-shatter'), i * 40);
     });
-    if (correct) SoundEngine.playSFX('correct.mp3', 0.5);
+    if (correct) SoundEngine.playCorrect();
     setTimeout(() => {
       this._typeIdx++;
       this._renderField();
@@ -12856,7 +12930,7 @@ const PryceEngine = {
       </div>
       <div class="pryce-reveal-name">It was a ${this._revealPoke.name}!</div>`;
     cv.appendChild(block);
-    SoundEngine.playSFX('correct.mp3', 0.7);
+    SoundEngine.playCorrect();
 
     const btn = document.createElement('button');
     btn.className = 'btn-pixel btn-primary pryce-confirm';
@@ -16471,10 +16545,10 @@ const FishingEngine = {
       let bonus, msg, cls;
       if (pos >= bullL && pos <= bullL + bullW) {
         bonus = 1; msg = 'PERFECT CATCH! ⭐'; cls = 'angling-perfect';
-        SoundEngine.playSFX('correct.mp3', 0.7);
+        SoundEngine.playCorrect();
       } else if (pos >= zoneL && pos <= zoneL + zoneW) {
         bonus = 0; msg = 'Nice hook!'; cls = 'angling-good';
-        SoundEngine.playSFX('correct.mp3', 0.5);
+        SoundEngine.playCorrect();
       } else {
         bonus = -1; msg = 'It thrashed free a bit... murky clues!'; cls = 'angling-sloppy';
       }
