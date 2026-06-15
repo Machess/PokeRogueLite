@@ -11241,17 +11241,74 @@ const WobbuffetEngine = {
     if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = 'WOBBUFFET! ▶'; }
     document.getElementById('btn-dialogue-next').style.display = 'none';
 
-    const intro = "WOBBUFFET!! (Jessie's Poké Ball burst open again. Wobbuffet has appeared and is saluting the incoming attacks. Help it counter them all!)";
-    typeBossIntro(intro, 18, () => {
-      if (startBtn) startBtn.style.display = '';
+    // ── Pokéball-burst reveal: ball shakes, pops, Wobbuffet appears + cry ─────
+    this._playBallReveal(() => {
+      const intro = "WOBBUFFET!! (Jessie's Poké Ball burst open again. Wobbuffet has appeared and is saluting the incoming attacks. Help it counter them all!)";
+      typeBossIntro(intro, 18, () => {
+        if (startBtn) startBtn.style.display = '';
+      });
     });
 
     SoundEngine.playBGM('mini_game.mp3');
   },
 
+  // Show a Pokéball that wobbles then bursts; Wobbuffet pops out as it does,
+  // with the wobbuffet.mp3 cry. Calls onDone when the burst finishes.
+  _playBallReveal(onDone) {
+    const wrap       = document.getElementById('trainer-sprite-wrap');
+    const trainerImg = document.getElementById('boss-trainer-sprite');
+    if (!wrap || !trainerImg) { if (onDone) onDone(); return; }
+
+    // Hide Wobbuffet until the ball bursts
+    trainerImg.style.visibility = 'hidden';
+
+    // Remove any leftover ball from a previous run
+    document.getElementById('wob-reveal-ball')?.remove();
+
+    const ball = document.createElement('img');
+    ball.id        = 'wob-reveal-ball';
+    ball.src       = 'assets/pokeball.png';
+    ball.className = 'wob-reveal-ball';
+    ball.onerror   = () => { ball.textContent = '⚪'; };
+    wrap.appendChild(ball);
+
+    // Burst flash element
+    const flash = document.createElement('div');
+    flash.className = 'wob-reveal-flash';
+    flash.id = 'wob-reveal-flash';
+    wrap.appendChild(flash);
+
+    // Sequence: drop+wobble (900ms) → cry + burst → reveal Wobbuffet
+    setTimeout(() => {
+      // Cry plays right as the ball opens
+      SoundEngine.playSFX('wobbuffet.mp3', 0.9);
+      ball.classList.add('wob-reveal-ball-burst');
+      flash.classList.add('wob-reveal-flash-go');
+      // Reveal Wobbuffet popping out
+      setTimeout(() => {
+        trainerImg.style.visibility = 'visible';
+        trainerImg.classList.remove('wob-pop-in');
+        void trainerImg.offsetWidth;        // restart animation
+        trainerImg.classList.add('wob-pop-in');
+      }, 120);
+      // Clean up ball + flash, then continue to dialogue
+      setTimeout(() => {
+        ball.remove();
+        flash.remove();
+        if (onDone) onDone();
+      }, 520);
+    }, 900);
+  },
+
   startGame() {
     this._isActive = false;
     ActiveEngine.clear();
+
+    // Clear any leftover reveal state so it can't bleed into the battle/next boss
+    document.getElementById('wob-reveal-ball')?.remove();
+    document.getElementById('wob-reveal-flash')?.remove();
+    const _ts = document.getElementById('boss-trainer-sprite');
+    if (_ts) { _ts.classList.remove('wob-pop-in'); _ts.style.visibility = 'visible'; }
 
     // Build 5-round sequence — no repeat types in a row
     const pool = shuffle([...WOBBU_ATTACKS]);
