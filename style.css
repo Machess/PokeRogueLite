@@ -9013,34 +9013,107 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 
 /* ── Pryce — Ice Fishing ── */
 #screen-challenge.pryce-active { background: linear-gradient(160deg,#203848 0%,#406080 60%,#102030 100%); }
-.pryce-water {
-  width:180px; height:140px; background:rgba(20,60,100,.6);
-  border:2px solid rgba(140,200,240,.3); border-radius:12px;
-  position:relative; overflow:hidden; display:flex;
-  align-items:center; justify-content:center;
+
+/* ── Ice Sculpture Restoration ── */
+.pryce-prompt {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .46rem; line-height: 1.6; color: #d8f0ff;
+  text-align: center; margin: .3rem auto .5rem; max-width: 320px;
 }
-.pryce-surface {
-  position:absolute; top:50%; left:0; right:0; height:2px;
-  background:rgba(140,200,240,.4);
+.pryce-prompt b { color: #8ed8ff; }
+.pryce-field {
+  position: relative; margin: 0 auto;
+  background: linear-gradient(160deg, rgba(180,220,255,.12), rgba(120,180,230,.06));
+  border: 2px solid rgba(150,200,240,.35);
+  border-radius: 12px;
+  box-shadow: inset 0 0 24px rgba(140,200,255,.15);
+  overflow: hidden;
 }
-.pryce-bobber {
-  font-size:2rem; position:absolute; top:30%;
-  transition: top .3s ease;
-  cursor:default;
+.pryce-shape {
+  position: absolute;
+  cursor: pointer;
+  transition: transform .12s, filter .12s, opacity .3s;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.4));
 }
-.pryce-dip { top:55% !important; animation:bobber-dip .2s ease; }
-.pryce-miss { animation:bobber-miss .3s ease; }
-@keyframes bobber-dip  { 0%{top:30%} 50%{top:65%} 100%{top:55%} }
-@keyframes bobber-miss { 0%,100%{opacity:1} 50%{opacity:.3} }
-.pryce-tap-btn {
-  position:absolute; bottom:10px; left:50%; transform:translateX(-50%);
-  font-family:'Press Start 2P',monospace; font-size:.38rem; color:#fff;
-  background:rgba(80,160,220,.4); border:2px solid rgba(140,200,240,.5);
-  border-radius:8px; padding:.3rem .7rem; cursor:pointer;
-  animation:tap-pulse 1s ease-in-out infinite;
+.pryce-shape-dim { opacity: .35; filter: grayscale(.6) drop-shadow(0 2px 3px rgba(0,0,0,.3)); pointer-events: none; }
+.pryce-shape-active:hover { transform: scale(1.12); }
+.pryce-glow { animation: pryce-glow-pulse 1.2s ease-in-out infinite; }
+@keyframes pryce-glow-pulse {
+  0%,100% { filter: drop-shadow(0 0 2px rgba(180,230,255,.6)); }
+  50%     { filter: drop-shadow(0 0 8px rgba(180,230,255,1)); }
 }
-@keyframes tap-pulse { 0%,100%{opacity:.7} 50%{opacity:1} }
-.pryce-indicator { font-family:'Press Start 2P',monospace; font-size:.38rem; color:#a0d0f0; }
+.pryce-tapped { transform: scale(1.05); }
+.pryce-tapped svg { filter: drop-shadow(0 0 6px #6effd0); }
+.pryce-tapped::after {
+  content: '✓'; position: absolute; top: -4px; right: -4px;
+  font-size: .7rem; color: #6effd0; text-shadow: 0 0 3px #000;
+}
+.pryce-shatter { animation: pryce-shatter-anim .5s ease-out forwards; pointer-events: none; }
+@keyframes pryce-shatter-anim {
+  0%   { transform: scale(1) rotate(0); opacity: 1; }
+  40%  { transform: scale(1.2) rotate(8deg); opacity: 1; filter: brightness(2); }
+  100% { transform: scale(.2) rotate(-20deg) translateY(20px); opacity: 0; }
+}
+.pryce-counter {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .7rem; color: #fff; text-align: center;
+  margin: .5rem auto .2rem;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
+.pryce-num-row {
+  display: flex; flex-wrap: wrap; gap: .4rem;
+  justify-content: center; margin: .6rem auto; max-width: 320px;
+}
+.pryce-num-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .6rem; color: #fff;
+  width: 44px; height: 44px;
+  background: rgba(80,140,200,.4);
+  border: 2px solid rgba(150,200,240,.6);
+  border-radius: 10px; cursor: pointer;
+  transition: transform .12s, background .12s;
+}
+.pryce-num-btn:hover:not(:disabled) { transform: translateY(-3px); background: rgba(110,180,230,.6); }
+.pryce-num-correct {
+  background: rgba(74,222,128,.4) !important;
+  border-color: #4ade80 !important;
+  animation: jenny-pop .35s ease;
+}
+.pryce-num-wrong {
+  background: rgba(248,113,113,.35) !important;
+  border-color: #f87171 !important;
+}
+.pryce-confirm { font-size: .5rem !important; margin: .5rem auto 0; display: block; }
+/* Reveal */
+.pryce-reveal { display: flex; flex-direction: column; align-items: center; gap: .6rem; margin: .5rem 0; }
+.pryce-ice-block {
+  position: relative;
+  width: 150px; height: 150px;
+  background: linear-gradient(150deg, rgba(190,230,255,.35), rgba(120,180,230,.2));
+  border: 3px solid rgba(180,225,255,.5);
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 0 24px rgba(150,210,255,.4), inset 0 0 20px rgba(255,255,255,.25);
+  animation: pryce-reveal-in .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes pryce-reveal-in {
+  0% { transform: scale(.7); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.pryce-reveal-sprite { width: 110px; height: 110px; image-rendering: pixelated; }
+.pryce-ice-shine {
+  position: absolute; top: 0; left: -60%;
+  width: 50%; height: 100%;
+  background: linear-gradient(105deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: pryce-shine 2.2s ease-in-out infinite;
+}
+@keyframes pryce-shine { 0% { left: -60%; } 60%,100% { left: 120%; } }
+.pryce-reveal-name {
+  font-family: 'Press Start 2P', monospace;
+  font-size: .55rem; color: #8ed8ff;
+  text-shadow: 1px 1px 0 rgba(0,0,0,.6);
+}
 
 /* ── Clair — Dragon Tamer ── */
 #screen-challenge.clair-active { background: linear-gradient(160deg,#1a0800 0%,#4a1800 60%,#0a0400 100%); }
@@ -9510,7 +9583,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 /* ═══ UX PASS — GBA-style readable HUD text (white + dark outline) ═══ */
 .falkner-dh-hud, .fdh-pts-badge, .fdh-catch-pop,
 .wh-jug-readout, .wh-target-val, .wh-hint,
-.bugsy-hint, .jasmine-indicator, .pryce-indicator,
+.bugsy-hint, .jasmine-indicator, .pryce-prompt,
 .wobbu-attack-type, .wobbu-attack-label,
 .clair-dragon-name, .clair-dragon-label,
 .falkner-picker-name, .fdh-wave, .fdh-score, .fdh-balls,
@@ -9588,7 +9661,7 @@ button:active:not(:disabled) { filter: brightness(1.25); }
 /* ── B5: kill double-tap zoom & text selection in game fields ── */
 body { touch-action: manipulation; }
 .falkner-dh-field, .bugsy-field, .wh-jug-container, .jasmine-grid,
-.pryce-water, .clair-charge, .map-scroll-area {
+.pryce-field, .clair-charge, .map-scroll-area {
   user-select: none; -webkit-user-select: none;
 }
 
@@ -9618,7 +9691,6 @@ body { touch-action: manipulation; }
   .wh-jug-container { width: 90px; height: 210px; }
   .wh-main-row { gap: 1.2rem; }
   .jasmine-btn { width: 104px; height: 104px; font-size: 2rem; }
-  .pryce-water { width: 240px; height: 180px; }
 
   /* Menu panel breathes more */
   .start-menu { width: min(420px, 60vw); }

@@ -2229,7 +2229,7 @@ const MG_RULES = {
   'whitney-active':  'Pour jugs to hit the exact target line — then pick the berry!',
   'morty-active':    'Flip cards and match the ghost pairs!',
   'jasmine-active':  'Watch the anvils flash, then repeat the pattern!',
-  'pryce-active':    'Tap exactly when the bobber dips below the line!',
+  'pryce-active':    'Count how many of each shape there are to reveal the sculpture!',
   'clair-active':    'Tap the type that beats the incoming dragon!',
   'chuck-active':    'Read the time and set the clock for Chuck!',
   'oak-active':      'Tap the basket each Pokémon belongs in!',
@@ -12588,19 +12588,83 @@ const JasmineEngine = {
   },
 };
 
-// ─── PRYCE ENGINE — "Ice Fishing" (Timed tap as bobber dips) ─────────────────
-// A fishing bobber bobs on ice water. Tap exactly when it dips below the line.
-// 5 casts. Window shrinks each cast. Perfect timing = rare catch.
-const PryceEngine = {
-  _isActive:false, _node:null, _round:0, _hits:0, _timeouts:[],
+// ─── PRYCE ENGINE — "Ice Sculpture Restoration" (count shapes, reveal Pokémon) ─
+// Pryce's ice sculptures melted into scattered geometric shards. The player
+// clears the field one shape-type at a time by indicating how many there are.
+// Tier 1: tap each shape to tally. Tier 2-3: highlight a type, pick the count.
+// When the field is clear, the Pokémon "frozen inside" is revealed.
+// Reward: gold (8/12/16) + "Frozen First Strike" buff on a clean job.
+const PRYCE_SHAPES = [
+  { key:'circle',   label:'Circles',    emoji:'⚪', color:'#7ecbff' },
+  { key:'square',   label:'Squares',    emoji:'🟦', color:'#6ea8ff' },
+  { key:'triangle', label:'Triangles',  emoji:'🔺', color:'#9d8cff' },
+  { key:'rectangle',label:'Rectangles', emoji:'▬',  color:'#5ce0d0' },
+  { key:'hexagon',  label:'Hexagons',   emoji:'⬡',  color:'#8ad9a0' },
+  { key:'diamond',  label:'Diamonds',   emoji:'🔷', color:'#b0e0ff' },
+  { key:'star',     label:'Stars',      emoji:'⭐', color:'#ffe08a' },
+];
 
-  start(node) {
-    this._node = node; this._isActive = true; this._round = 0; this._hits = 0; this._timeouts = [];
+// Return the SVG inner markup for a shape of given type, sized to `s` px.
+function _pryceShapeSVG(type, s, color) {
+  const c = s / 2;
+  const stroke = 'rgba(255,255,255,.85)';
+  const common = `fill="${color}" stroke="${stroke}" stroke-width="2" opacity="0.9"`;
+  switch (type) {
+    case 'circle':
+      return `<circle cx="${c}" cy="${c}" r="${c - 3}" ${common}/>`;
+    case 'square':
+      return `<rect x="3" y="3" width="${s - 6}" height="${s - 6}" rx="3" ${common}/>`;
+    case 'rectangle':
+      return `<rect x="2" y="${s * 0.25}" width="${s - 4}" height="${s * 0.5}" rx="3" ${common}/>`;
+    case 'triangle':
+      return `<polygon points="${c},4 ${s - 4},${s - 4} 4,${s - 4}" ${common}/>`;
+    case 'diamond':
+      return `<polygon points="${c},3 ${s - 3},${c} ${c},${s - 3} 3,${c}" ${common}/>`;
+    case 'hexagon': {
+      const pts = [];
+      for (let i = 0; i < 6; i++) {
+        const a = Math.PI / 180 * (60 * i - 30);
+        pts.push(`${(c + (c - 4) * Math.cos(a)).toFixed(1)},${(c + (c - 4) * Math.sin(a)).toFixed(1)}`);
+      }
+      return `<polygon points="${pts.join(' ')}" ${common}/>`;
+    }
+    case 'star': {
+      const pts = [];
+      for (let i = 0; i < 10; i++) {
+        const r = i % 2 === 0 ? c - 3 : (c - 3) * 0.45;
+        const a = Math.PI / 180 * (36 * i - 90);
+        pts.push(`${(c + r * Math.cos(a)).toFixed(1)},${(c + r * Math.sin(a)).toFixed(1)}`);
+      }
+      return `<polygon points="${pts.join(' ')}" ${common}/>`;
+    }
+    default:
+      return `<circle cx="${c}" cy="${c}" r="${c - 3}" ${common}/>`;
+  }
+}
+
+const PryceEngine = {
+  _isActive:false, _node:null, _hits:0, _totalTypes:0,
+  _shapes:[], _counts:{}, _order:[], _typeIdx:0, _revealPoke:null,
+
+  async start(node) {
+    this._node = node; this._isActive = true; this._hits = 0; this._typeIdx = 0;
     ActiveEngine.set(this);
+
+    showLoading();
+    // Pick the hidden Pokémon "frozen inside" from the famous list
+    const pk = MISTY_POKEMON[Math.floor(Math.random() * MISTY_POKEMON.length)];
+    const d  = await fetchPoke(pk.id).catch(() => null);
+    this._revealPoke = {
+      name: pk.name,
+      sprite: d ? getSpriteUrl(d) :
+        `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pk.id}.png`,
+    };
+    hideLoading();
+
     showBossIntro({
       gymIndex: 6, portrait: 'pryce.png',
-      name: 'Pryce', btnLabel: 'Cast the Line ❄️',
-      introText: "Ice fishing requires patience and precision. The cold does not wait for the unprepared. Watch the bobber — tap when it dips below the line.",
+      name: 'Pryce', btnLabel: 'Restore the Sculpture ❄️',
+      introText: "Disaster! My ice sculptures melted overnight and collapsed into a jumble of frozen shapes. Help me sort the shards — count how many of each shape there are, and we shall see what was hidden within.",
     });
   },
 
@@ -12609,92 +12673,216 @@ const PryceEngine = {
     document.getElementById('trainer-intro').style.display = 'none';
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
-    this._showRound();
+
+    // Build the shape set for this tier
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const typeCount = tier === 1 ? (2 + Math.floor(Math.random() * 2))     // 2-3 types
+                    : tier === 2 ? (3 + Math.floor(Math.random() * 2))     // 3-4
+                    :              (4 + Math.floor(Math.random() * 2));     // 4-5
+    const maxPer    = tier === 1 ? 4 : tier === 2 ? 6 : 8;
+
+    // Tier 1 uses only the easy/distinct shapes
+    const palette = tier === 1
+      ? PRYCE_SHAPES.filter(s => ['circle','square','triangle'].includes(s.key))
+      : PRYCE_SHAPES;
+    const chosen = shuffle([...palette]).slice(0, Math.min(typeCount, palette.length));
+
+    this._shapes = [];
+    this._counts = {};
+    this._order  = chosen.map(s => s.key);
+    chosen.forEach(sh => {
+      const n = 1 + Math.floor(Math.random() * maxPer);
+      this._counts[sh.key] = n;
+      for (let i = 0; i < n; i++) this._shapes.push({ type: sh.key, color: sh.color, id: `${sh.key}_${i}`, tallied: false });
+    });
+    this._totalTypes = chosen.length;
+    this._typeIdx    = 0;
+
+    this._renderField();
   },
 
-  _showRound() {
-    if (this._round >= 5) { this._finish(); return; }
-    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
-    const tier = GameState.difficultyTier || 2;
+  _renderField() {
+    if (this._typeIdx >= this._order.length) { this._reveal(); return; }
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
 
-    const cv = setupChallengeScreen({ portrait:'pryce.png', badge:'❄️ Ice Fishing',
-      intro: `Cast ${this._round + 1}/5`,
-      wrapClass: 'pryce-wrap', screenClass: 'pryce-active' });
+    const cv = setupChallengeScreen({
+      portrait:'pryce.png', badge:'❄️ Ice Sculpture Restoration',
+      intro:`Shape ${this._typeIdx + 1}/${this._totalTypes} — clear them all!`,
+      wrapClass:'pryce-wrap', screenClass:'pryce-active',
+    });
 
-    // Bobber display
-    const bobberWrap = document.createElement('div');
-    bobberWrap.className = 'pryce-water';
-    bobberWrap.innerHTML = `
-      <div class="pryce-surface"></div>
-      <div class="pryce-bobber" id="pryce-bobber">🎣</div>
-      <div class="pryce-tap-btn" id="pryce-tap-btn">TAP!</div>`;
-    cv.appendChild(bobberWrap);
+    const curType = this._order[this._typeIdx];
+    const curMeta = PRYCE_SHAPES.find(s => s.key === curType);
 
-    const indicator = document.createElement('div');
-    indicator.className = 'pryce-indicator';
-    indicator.id = 'pryce-indicator';
-    indicator.textContent = 'Waiting…';
-    cv.appendChild(indicator);
+    // Prompt
+    const prompt = document.createElement('div');
+    prompt.className = 'pryce-prompt';
+    prompt.innerHTML = tier === 1
+      ? `Tap every <b>${curMeta.label.slice(0, -1).toLowerCase()}</b> ${curMeta.emoji} you can find!`
+      : `How many <b>${curMeta.label.toLowerCase()}</b> ${curMeta.emoji} are there?`;
+    cv.appendChild(prompt);
 
-    let tapped    = false;
-    let inWindow  = false;
+    // The ice field
+    const FIELD_W = 320, FIELD_H = 220, SIZE = tier === 3 ? 38 : 46;
+    const field = document.createElement('div');
+    field.className = 'pryce-field';
+    field.id = 'pryce-field';
+    field.style.width = FIELD_W + 'px';
+    field.style.height = FIELD_H + 'px';
+    cv.appendChild(field);
 
-    // Random delay before bobber dips
-    const waitMs   = 2500 + Math.random() * 2000;
-    // Window gets shorter each round/tier
-    const windowMs = Math.max(700, 1600 - this._round * 80 - (tier - 1) * 100);
+    // Place ALL remaining shapes (current type + not-yet-cleared types)
+    const remaining = this._shapes.filter(s => !this._order.slice(0, this._typeIdx).includes(s.type));
+    const positions = _bugPlacements(remaining.length, FIELD_W, FIELD_H, SIZE);
+    remaining.forEach((sh, i) => {
+      const pos = positions[i];
+      const el = document.createElement('div');
+      el.className = 'pryce-shape' + (sh.type === curType ? ' pryce-shape-active' : ' pryce-shape-dim');
+      el.style.left = pos.x + 'px';
+      el.style.top  = pos.y + 'px';
+      el.style.width = el.style.height = SIZE + 'px';
+      el.dataset.type = sh.type;
+      el.dataset.id   = sh.id;
+      el.innerHTML = `<svg viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}">${_pryceShapeSVG(sh.type, SIZE, sh.color)}</svg>`;
+      field.appendChild(el);
+    });
 
-    const tapBtn = () => {
-      document.getElementById('pryce-tap-btn')?.addEventListener('click', () => {
-        if (tapped) return;
-        tapped = true;
-        this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
-        const bobber = document.getElementById('pryce-bobber');
-        const ind    = document.getElementById('pryce-indicator');
-        if (inWindow) {
-          this._hits++;
-          if (bobber) bobber.textContent = '🐟';
-          if (ind)    ind.textContent    = 'Got one! ✓';
-        } else {
-          if (bobber) bobber.classList.add('pryce-miss');
-          if (ind)    ind.textContent = 'Too early!';
-        }
-        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 800));
+    if (tier === 1) this._tallyMode(cv, field, curType, curMeta);
+    else            this._choiceMode(cv, field, curType, curMeta);
+  },
+
+  // Tier 1 — tap each shape of the current type; they light up and count.
+  _tallyMode(cv, field, curType, curMeta) {
+    let tapped = 0;
+    const target = this._counts[curType];
+
+    const counter = document.createElement('div');
+    counter.className = 'pryce-counter';
+    counter.id = 'pryce-counter';
+    counter.textContent = `${curMeta.emoji} 0`;
+    cv.appendChild(counter);
+
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'btn-pixel btn-primary pryce-confirm';
+    confirmBtn.textContent = 'All found! ▶';
+    confirmBtn.disabled = true;
+
+    field.querySelectorAll('.pryce-shape-active').forEach(el => {
+      el.addEventListener('click', () => {
+        if (el.classList.contains('pryce-tapped')) return;
+        el.classList.add('pryce-tapped');
+        tapped++;
+        counter.textContent = `${curMeta.emoji} ${tapped}`;
+        if (tapped >= target) confirmBtn.disabled = false;
       });
-    };
-    tapBtn();
+    });
 
-    // Start bobber dip
-    this._timeouts.push(setTimeout(() => {
-      inWindow = true;
-      const bobber = document.getElementById('pryce-bobber');
-      const ind    = document.getElementById('pryce-indicator');
-      if (bobber) bobber.classList.add('pryce-dip');
-      if (ind)    ind.textContent = 'NOW!';
-      // Window closes
-      this._timeouts.push(setTimeout(() => {
-        inWindow = false;
-        if (!tapped) {
-          tapped = true;
-          if (bobber) bobber.classList.remove('pryce-dip');
-          if (ind)    ind.textContent = 'Missed!';
-          this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 800));
+    confirmBtn.addEventListener('click', () => {
+      const correct = tapped === target;
+      this._resolveType(correct, target, tapped, field, curType);
+    });
+    cv.appendChild(confirmBtn);
+  },
+
+  // Tier 2-3 — highlight the type, choose the count from buttons.
+  _choiceMode(cv, field, curType, curMeta) {
+    const target = this._counts[curType];
+
+    // Glow-pulse the active shapes so they're countable
+    field.querySelectorAll('.pryce-shape-active').forEach(el => el.classList.add('pryce-glow'));
+
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const maxOpt = tier === 2 ? 8 : 10;
+    // Build number options around the true count
+    const opts = new Set([target]);
+    while (opts.size < Math.min(5, maxOpt)) {
+      const delta = (Math.floor(Math.random() * 5) - 2);
+      const v = target + delta;
+      if (v >= 1 && v <= maxOpt) opts.add(v);
+    }
+    const optArr = shuffle([...opts]);
+
+    const row = document.createElement('div');
+    row.className = 'pryce-num-row';
+    optArr.forEach(n => {
+      const btn = document.createElement('button');
+      btn.className = 'pryce-num-btn';
+      btn.textContent = n;
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.pryce-num-btn').forEach(b => b.disabled = true);
+        const correct = n === target;
+        btn.classList.add(correct ? 'pryce-num-correct' : 'pryce-num-wrong');
+        if (!correct) {
+          row.querySelectorAll('.pryce-num-btn').forEach(b => {
+            if (+b.textContent === target) b.classList.add('pryce-num-correct');
+          });
         }
-      }, windowMs));
-    }, waitMs));
+        setTimeout(() => this._resolveType(correct, target, n, field, curType), correct ? 500 : 1300);
+      });
+      row.appendChild(btn);
+    });
+    cv.appendChild(row);
+  },
+
+  // Shatter the cleared type, advance. Correct first-try counts toward score.
+  _resolveType(correct, target, picked, field, curType) {
+    if (correct) this._hits++;
+    // Shatter animation on the active shapes
+    field.querySelectorAll('.pryce-shape-active').forEach((el, i) => {
+      setTimeout(() => el.classList.add('pryce-shatter'), i * 40);
+    });
+    if (correct) SoundEngine.playSFX('correct.mp3', 0.5);
+    setTimeout(() => {
+      this._typeIdx++;
+      this._renderField();
+    }, 700);
+  },
+
+  // All shapes cleared — reveal the Pokémon frozen inside.
+  _reveal() {
+    const cv = setupChallengeScreen({
+      portrait:'pryce.png', badge:'❄️ The Sculpture Revealed!',
+      intro:'The ice clears...', wrapClass:'pryce-wrap', screenClass:'pryce-active',
+    });
+
+    const block = document.createElement('div');
+    block.className = 'pryce-reveal';
+    block.innerHTML = `
+      <div class="pryce-ice-block">
+        <img src="${this._revealPoke.sprite}" alt="${this._revealPoke.name}"
+             class="pryce-reveal-sprite pixel-sprite"
+             onerror="this.onerror=null;this.style.display='none'"/>
+        <div class="pryce-ice-shine"></div>
+      </div>
+      <div class="pryce-reveal-name">It was a ${this._revealPoke.name}!</div>`;
+    cv.appendChild(block);
+    SoundEngine.playSFX('correct.mp3', 0.7);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn-pixel btn-primary pryce-confirm';
+    btn.textContent = 'Wonderful! ▶';
+    btn.addEventListener('click', () => this._finish());
+    cv.appendChild(btn);
   },
 
   _finish() {
-    const gold = this._hits >= 5 ? 28 : this._hits >= 3 ? 16 : 7;
+    const total = this._totalTypes || 1;
+    const won   = this._hits >= Math.ceil(total * 0.7);   // 70%+ correct = success
+    const perfect = this._hits >= total;
+    const tier  = Math.min(GameState.difficultyTier || 2, 3);
+    const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
+    // Reward scales with accuracy; mistakes reduce gold
+    const gold = Math.round(baseGold * (this._hits / total));
+
     completeChallenge({
-      screenClass: 'pryce-active', won: this._hits >= 4,
-      goldReward: gold,
-      score: this._hits, maxScore: 5, gameKey: 'pryce',
-      tokenLabel: this._hits === 5 ? 'Cold Precision — next catch rate doubled!' : null,
-      effects: this._hits === 5 ? { pryce_catch_bonus: true } : {},
-      modalTitle: this._hits >= 5 ? '❄️ Master Angler!' : '❄️ Ice Fishing',
-      modalBody: `${this._hits}/5 catches\n+${gold}💰` +
-        (this._hits === 5 ? '\n\n⭐ Cold Precision — next Pokémon catch has doubled catch rate!' : ''),
+      screenClass: 'pryce-active', won,
+      goldReward: Math.max(gold, won ? Math.floor(baseGold / 2) : 2),
+      score: this._hits, maxScore: total, gameKey: 'pryce',
+      tokenLabel: perfect ? 'Frozen First Strike — opponent skips its first move!' : null,
+      effects: perfect ? { freezeFirst: true } : {},
+      modalTitle: perfect ? '❄️ Flawless Restoration!' : won ? '❄️ Sculpture Restored!' : '❄️ A Bit Melted...',
+      modalBody: `${this._hits}/${total} shapes counted right\n+${Math.max(gold, won ? Math.floor(baseGold/2) : 2)}💰` +
+        (perfect ? '\n\n⭐ Frozen First Strike — the next opponent skips its first move!' : ''),
     });
   },
 };
