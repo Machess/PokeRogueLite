@@ -11256,7 +11256,7 @@ const ROCKET_RUNNER_FLUFF = {
     intro:"Meowth! We dug holes allll over this path! Let's see ya get past 'em, twerp!",
     win:"Nyaaa! How'd ya jump all those?! The boss ain't gonna like this...",
     lose:"Hahaha! Right into our hole! That's what ya get!" },
-  jessie: { name:'Jessie', img:'jessie.png',
+  jessie: { name:'Jessie', img:'jessi.png',
     intro:"Prepare for trouble! These pitfalls will stop you in your tracks!",
     win:"Impossible! You leapt over every single one! Uuurgh!",
     lose:"Hahaha! Down you go! Team Rocket strikes again!" },
@@ -11326,6 +11326,8 @@ const RocketRunnerEngine = {
       </div>
       <div class="runner-ground"></div>
       <div class="runner-goal" id="runner-goal"></div>
+      <img class="runner-jenny" id="runner-jenny" src="assets/officer_jenny.png"
+           onerror="this.onerror=null;this.style.display='none'"/>
       <img class="runner-trainer" id="runner-trainer" src="assets/trainer_run.png"
            onerror="this.onerror=null;this.src='assets/trainer_stand.png'"/>`;
     cv.appendChild(field);
@@ -11338,6 +11340,7 @@ const RocketRunnerEngine = {
     this._obstacles = []; this._coins = [];
     this._dist = 0; this._goal = this._cfg.goal; this._speed = this._cfg.speed;
     this._coinsGot = 0;
+    this._jennyShown = false;
     this._spawnGap = 600; this._coinSpawnGap = 1200;
     this._lastT = performance.now();
 
@@ -11387,19 +11390,31 @@ const RocketRunnerEngine = {
     const dEl = document.getElementById('runner-dist');
     if (dEl) dEl.textContent = distM + 'm';
 
-    // Spawn obstacles (holes)
+    // Spawn obstacles — but stop in the final stretch so the run ends cleanly
+    // (no obstacle appears then vanishes the instant the goal is hit).
+    const inHomeStretch = this._dist >= this._goal - 750;
     this._spawnGap -= this._speed * dt;
-    if (this._spawnGap <= 0) {
+    if (this._spawnGap <= 0 && !inHomeStretch) {
       // Mix holes with jumpable Pokémon (Arbok / Koffing) in every tier
       if (Math.random() < 0.45) this._spawnPoke(FIELD_W);
       else                      this._spawnHole(FIELD_W);
       this._spawnGap = this._cfg.gapMin + Math.random() * (this._cfg.gapMax - this._cfg.gapMin);
     }
-    // Spawn coins
+    // Spawn coins (also stop in the home stretch)
     this._coinSpawnGap -= this._speed * dt;
-    if (this._coinSpawnGap <= 0) {
+    if (this._coinSpawnGap <= 0 && !inHomeStretch) {
       this._spawnCoin(FIELD_W);
       this._coinSpawnGap = 900 + Math.random() * 1400;
+    }
+
+    // As the goal nears, slide Officer Jenny in from the right edge so it looks
+    // like the trainer is running toward her — a clear, satisfying finish line.
+    if (inHomeStretch && !this._jennyShown) {
+      this._jennyShown = true;
+      const jenny = document.getElementById('runner-jenny');
+      if (jenny) jenny.classList.add('runner-jenny-in');
+      const goalEl = document.getElementById('runner-goal');
+      if (goalEl) goalEl.classList.add('runner-goal-show');
     }
 
     // Move + collide obstacles
@@ -11501,9 +11516,19 @@ const RocketRunnerEngine = {
     this._running = false;
     cancelAnimationFrame(this._raf);
     this._cleanupInput();
+    // Make sure Jenny is present even on a very short field
+    const jenny = document.getElementById('runner-jenny');
+    if (jenny) jenny.classList.add('runner-jenny-in');
     document.getElementById('runner-goal')?.classList.add('runner-goal-reached');
-    this._trainer?.classList.add('runner-cheer');
-    setTimeout(() => this._finish(true), 700);
+    // Trainer dashes up to Jenny, then they celebrate together
+    this._trainer?.classList.add('runner-arrive');
+    setTimeout(() => {
+      this._trainer?.classList.remove('runner-arrive');
+      this._trainer?.classList.add('runner-cheer');
+      jenny?.classList.add('runner-jenny-cheer');
+    }, 700);
+    // Longer beat so the arrival reads before the results card
+    setTimeout(() => this._finish(true), 1700);
   },
 
   _cleanupInput() {

@@ -10480,6 +10480,25 @@ body { touch-action: manipulation; }
 .runner-trainer.runner-cheer { animation: runner-cheer-anim .5s ease infinite alternate !important; }
 @keyframes runner-cheer-anim { 0%{transform:translateY(0)} 100%{transform:translateY(-8px)} }
 
+/* Officer Jenny waiting at the finish line */
+.runner-jenny {
+  position:absolute; bottom:30%; right:-70px;
+  width:46px; height:auto; max-height:54px;
+  object-fit:contain; object-position:bottom center;
+  image-rendering:pixelated; z-index:4;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,.4));
+  transition: right 1.4s ease-out;
+}
+.runner-jenny-in { right: 28px; }
+.runner-jenny-cheer { animation: runner-jenny-wave .4s ease infinite alternate; }
+@keyframes runner-jenny-wave { 0%{transform:translateY(0) rotate(-2deg)} 100%{transform:translateY(-5px) rotate(2deg)} }
+/* Trainer dashes the last few steps toward Jenny */
+.runner-trainer.runner-arrive {
+  animation: none;
+  transition: left .7s ease-out;
+  left: 200px !important;
+}
+
 .runner-hole {
   position:absolute; bottom:0; height:30%;
   background: linear-gradient(180deg,#1a1208 0%,#000 100%);
@@ -10520,7 +10539,9 @@ body { touch-action: manipulation; }
   position:absolute; bottom:30%; right:-40px; width:14px; height:50px;
   background: repeating-linear-gradient(45deg,#fff 0 6px,#222 6px 12px);
   z-index:3; opacity:0;
+  transition: right 1.4s ease-out, opacity .4s ease;
 }
+.runner-goal-show { opacity:1; right: 64px; }
 .runner-goal-reached { opacity:1; animation: runner-goal-wave .4s ease; }
 @keyframes runner-goal-wave { 0%{transform:scale(.5)} 100%{transform:scale(1)} }
 
