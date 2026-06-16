@@ -6203,6 +6203,12 @@ const BattleEngine = {
       this._briefedBonus = fx.briefedDmgBonus;
       this._logPlayer(`⚡ BRIEFED! +${Math.round((fx.briefedDmgBonus - 1) * 100)}% damage this battle! (Surge's intel)`);
     }
+    if (fx.courageBonus) {
+      // Courage buff (from escaping Team Rocket in Dig Dash) — reuses the same
+      // damage-multiplier mechanism but with its own message.
+      this._briefedBonus = fx.courageBonus;
+      this._logPlayer(`🔥 COURAGE! +${Math.round((fx.courageBonus - 1) * 100)}% damage this battle! (You outran Team Rocket!)`);
+    }
     if (fx.clarityBuff) {
       this._clarityBuff = true;
       this._logPlayer(`🥷 Clarity! Status durations halved this battle. (Ninja focus)`);
@@ -11575,10 +11581,10 @@ const RocketRunnerEngine = {
       // Prize money scales with distance + coins collected (coin bonus capped
       // so the now-plentiful coins reward skill without ballooning the economy)
       gold = baseGold + Math.min(this._coinsGot, 30) + Math.floor(distM / 25);
-      // Courage buff — +10% damage next battle (reuse briefedDmgBonus plumbing)
+      // Courage buff — +10% damage next battle (its own effect flag so the
+      // battle log credits Courage, not Surge's briefing)
       GameState.pendingPlayerEffects = GameState.pendingPlayerEffects || {};
-      GameState.pendingPlayerEffects.briefedDmgBonus = 1.10;
-      GameState.pendingPlayerEffects.briefedBattles  = 1;
+      GameState.pendingPlayerEffects.courageBonus = 1.10;
     } else {
       // Small penalty: lose a little gold + HP, run ends
       gold = Math.max(2, this._coinsGot * 2);
