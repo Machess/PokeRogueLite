@@ -11292,9 +11292,9 @@ const RocketRunnerEngine = {
     const tier = Math.min(GameState.difficultyTier || 2, 3);
     // Tier config: base speed (px/s), gap range (ms), goal distance, gravity, jump
     const CFG = {
-      1: { speed:170, goal:2600, gapMin:1500, gapMax:2100, grav:1500, jump:560 },
-      2: { speed:215, goal:3400, gapMin:1100, gapMax:1700, grav:1650, jump:600 },
-      3: { speed:265, goal:4200, gapMin:850,  gapMax:1350, grav:1800, jump:640 },
+      1: { speed:170, goal:5400, gapMin:340, gapMax:520, grav:1500, jump:560 },
+      2: { speed:215, goal:7000, gapMin:300, gapMax:460, grav:1650, jump:600 },
+      3: { speed:265, goal:8600, gapMin:260, gapMax:400, grav:1800, jump:640 },
     };
     this._cfg = CFG[tier];
 
@@ -11341,7 +11341,7 @@ const RocketRunnerEngine = {
     this._dist = 0; this._goal = this._cfg.goal; this._speed = this._cfg.speed;
     this._coinsGot = 0;
     this._jennyShown = false;
-    this._spawnGap = 600; this._coinSpawnGap = 1200;
+    this._spawnGap = 500; this._coinSpawnGap = 600;
     this._lastT = performance.now();
 
     // Input — jump
@@ -11400,11 +11400,13 @@ const RocketRunnerEngine = {
       else                      this._spawnHole(FIELD_W);
       this._spawnGap = this._cfg.gapMin + Math.random() * (this._cfg.gapMax - this._cfg.gapMin);
     }
-    // Spawn coins (also stop in the home stretch)
+    // Spawn coins as TRAILS/ARCS (Mario-style pathing) — far more coins, often
+    // arcing up so grabbing them naturally guides a well-timed jump. Stops in
+    // the home stretch.
     this._coinSpawnGap -= this._speed * dt;
     if (this._coinSpawnGap <= 0 && !inHomeStretch) {
-      this._spawnCoin(FIELD_W);
-      this._coinSpawnGap = 900 + Math.random() * 1400;
+      this._spawnCoinTrail(FIELD_W);
+      this._coinSpawnGap = 420 + Math.random() * 520;   // much more frequent
     }
 
     // As the goal nears, slide Officer Jenny in from the right edge so it looks
@@ -11491,16 +11493,41 @@ const RocketRunnerEngine = {
     this._obstacles.push({ el, x: fieldW, w: pick.w, h: pick.h, kind: 'poke' });
   },
 
-  _spawnCoin(fieldW) {
-    // Coins float at a jumpable height
-    const y = -(46 + Math.random() * 34);   // height above ground
+  // Spawn a single coin at a given x offset and height (negative y = higher up)
+  _spawnCoinAt(x, y) {
     const el = document.createElement('div');
     el.className = 'runner-coin';
     el.textContent = '🪙';
-    el.style.left = fieldW + 'px';
+    el.style.left = x + 'px';
     el.style.bottom = (62 - y) + 'px';
     this._field.appendChild(el);
-    this._coins.push({ el, x: fieldW, y, got: false });
+    this._coins.push({ el, x, y, got: false });
+  },
+
+  // Spawn a TRAIL of coins — Mario-style pathing. Patterns:
+  //  • line: a straight row at a low, runnable height
+  //  • arc:  coins rising then falling, tracing a jump path (guides a jump)
+  //  • stair: ascending steps
+  _spawnCoinTrail(fieldW) {
+    const patterns = ['line', 'arc', 'arc', 'stair'];   // arcs weighted higher
+    const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+    const n = 4 + Math.floor(Math.random() * 4);        // 4–7 coins per trail
+    const spacing = 30;
+    for (let i = 0; i < n; i++) {
+      const x = fieldW + i * spacing;
+      let y;
+      if (pattern === 'line') {
+        y = -(40 + Math.random() * 10);
+      } else if (pattern === 'arc') {
+        // Parabola peaking in the middle — traces a jump
+        const t = i / (n - 1);                 // 0..1
+        const arc = Math.sin(t * Math.PI);     // 0..1..0
+        y = -(38 + arc * 64);
+      } else { // stair
+        y = -(36 + i * 12);
+      }
+      this._spawnCoinAt(x, y);
+    }
   },
 
   _fall(hole) {
@@ -11545,8 +11572,9 @@ const RocketRunnerEngine = {
 
     let gold, penaltyMsg = '';
     if (escaped) {
-      // Prize money scales with distance + coins collected
-      gold = baseGold + this._coinsGot * 2 + Math.floor(distM / 20);
+      // Prize money scales with distance + coins collected (coin bonus capped
+      // so the now-plentiful coins reward skill without ballooning the economy)
+      gold = baseGold + Math.min(this._coinsGot, 30) + Math.floor(distM / 25);
       // Courage buff — +10% damage next battle (reuse briefedDmgBonus plumbing)
       GameState.pendingPlayerEffects = GameState.pendingPlayerEffects || {};
       GameState.pendingPlayerEffects.briefedDmgBonus = 1.10;
