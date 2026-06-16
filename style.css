@@ -10422,3 +10422,98 @@ body { touch-action: manipulation; }
 .angling-perfect { color: #ffd700; animation: jenny-pop .4s ease; }
 .angling-good    { color: #6ee87a; }
 .angling-sloppy  { color: #ff9e6e; }
+
+/* ═══ ROCKET RUNNER — "DIG DASH" ═══ */
+#screen-challenge.runner-active { background: linear-gradient(160deg,#2a2a3e 0%,#1a1a2e 100%); }
+.runner-wrap { display:flex; flex-direction:column; align-items:center; gap:.6rem; width:100%; }
+.runner-start-wrap { display:flex; justify-content:center; padding:1.5rem 0; }
+.runner-start-btn { font-size:.5rem !important; padding:.7rem 1.2rem !important; }
+
+.runner-field {
+  position: relative;
+  width: min(340px, 92vw);
+  height: 180px;
+  background: linear-gradient(180deg,#3a4a6a 0%,#5a6a8a 70%,#6a7a9a 71%);
+  border: 2px solid rgba(150,170,210,.4);
+  border-radius: 12px;
+  overflow: hidden;
+  margin: 0 auto;
+  touch-action: manipulation;
+  user-select: none;
+}
+.runner-sky {
+  position:absolute; inset:0 0 30% 0;
+  background: radial-gradient(circle at 80% 30%, rgba(255,255,255,.08), transparent 40%);
+}
+.runner-ground {
+  position:absolute; left:0; right:0; bottom:0; height:30%;
+  background: repeating-linear-gradient(90deg,#6a5a3a 0 24px,#5a4a30 24px 48px);
+  border-top: 3px solid #7a6a4a;
+}
+.runner-hud {
+  position:absolute; top:6px; left:8px; right:8px;
+  display:flex; justify-content:space-between;
+  font-family:'Press Start 2P',monospace; font-size:.42rem; color:#fff;
+  text-shadow:1px 1px 0 rgba(0,0,0,.6); z-index:5;
+}
+.runner-trainer {
+  position:absolute; left:48px; bottom:30%;
+  width:38px; height:auto; max-height:44px;
+  object-fit:contain; object-position:bottom center;
+  image-rendering:pixelated; z-index:4;
+  filter: drop-shadow(2px 3px 0 rgba(0,0,0,.4));
+  animation: runner-bob .35s ease-in-out infinite alternate;
+}
+/* Bob like the Chrome dino's run cycle */
+@keyframes runner-bob {
+  0%   { transform: translateY(0) scaleY(1); }
+  100% { transform: translateY(-2px) scaleY(1.04); }
+}
+.runner-trainer.runner-jumping { animation: none; }
+.runner-trainer.runner-fall {
+  animation: runner-fall-anim .8s ease-in forwards !important;
+}
+@keyframes runner-fall-anim {
+  0%   { transform: translateY(0) rotate(0); opacity:1; }
+  100% { transform: translateY(60px) rotate(90deg); opacity:0; }
+}
+.runner-trainer.runner-cheer { animation: runner-cheer-anim .5s ease infinite alternate !important; }
+@keyframes runner-cheer-anim { 0%{transform:translateY(0)} 100%{transform:translateY(-8px)} }
+
+.runner-hole {
+  position:absolute; bottom:0; height:30%;
+  background: linear-gradient(180deg,#1a1208 0%,#000 100%);
+  border-radius: 0 0 4px 4px;
+  border-top: 2px solid #3a2a1a;
+  z-index:3;
+  box-shadow: inset 0 4px 6px rgba(0,0,0,.7);
+}
+.runner-hole::before {
+  content:''; position:absolute; top:-2px; left:0; right:0; height:3px;
+  background: rgba(20,12,6,.8);
+}
+.runner-coin {
+  position:absolute; font-size:1.1rem; z-index:4;
+  filter: drop-shadow(0 0 4px rgba(255,215,0,.8));
+  animation: runner-coin-spin 1s linear infinite;
+}
+@keyframes runner-coin-spin {
+  0%,100% { transform: scaleX(1); } 50% { transform: scaleX(.3); }
+}
+.runner-coin-got { animation: runner-coin-pop .25s ease forwards !important; }
+@keyframes runner-coin-pop {
+  0% { transform: scale(1); opacity:1; }
+  100% { transform: scale(1.8) translateY(-12px); opacity:0; }
+}
+.runner-goal {
+  position:absolute; bottom:30%; right:-40px; width:14px; height:50px;
+  background: repeating-linear-gradient(45deg,#fff 0 6px,#222 6px 12px);
+  z-index:3; opacity:0;
+}
+.runner-goal-reached { opacity:1; animation: runner-goal-wave .4s ease; }
+@keyframes runner-goal-wave { 0%{transform:scale(.5)} 100%{transform:scale(1)} }
+
+@media (min-width: 900px) {
+  .runner-field { width: 520px; height: 240px; }
+  .runner-trainer { width: 52px; max-height: 60px; }
+}

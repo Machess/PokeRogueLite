@@ -494,7 +494,7 @@ const CHALLENGE_CLASSES = [
   // Johto + Wobbuffet
   'falkner-active','bugsy-active','whitney-active','morty-active',
   'jasmine-active','pryce-active','clair-active','wobbu-active','chuck-active',
-  'oak-active','snorlax-active','rocketmoney-active','jenny-active',
+  'oak-active','snorlax-active','rocketmoney-active','jenny-active','runner-active',
 ];
 
 const NODE_ICONS = {
@@ -2236,6 +2236,7 @@ const MG_RULES = {
   'snorlax-active':  'Compare weights and balance the scale!',
   'rocketmoney-active': 'Count the coins to pay the exact amount!',
   'jenny-active':    'Read the police report, then tap the matching Pokémon!',
+  'runner-active':   'Tap or press Space to jump over the holes. Grab coins. Reach the goal!',
   'wobbu-active':    'Tap the super-effective counter before the attack lands!',
 };
 
@@ -3628,16 +3629,21 @@ const TeamRocketChallenge = {
   // Pick a random character and show their challenge
   show(onComplete) {
     this._onComplete = onComplete;
-    // Wobbuffet is a Johto-only encounter; Kanto uses the original trio
+    // Wobbuffet is a Johto-only encounter; Kanto uses the original trio.
+    // 'runner' is the Dig Dash escape mini-game — available in both regions.
     const chars = (GameState.region === 'johto')
-      ? ['meowth', 'jessie', 'james', 'wobbuffet']
-      : ['meowth', 'jessie', 'james'];
+      ? ['meowth', 'jessie', 'james', 'wobbuffet', 'runner']
+      : ['meowth', 'jessie', 'james', 'runner'];
     const pool  = chars.filter(c => c !== this._type);
     this._type  = pool[Math.floor(Math.random() * pool.length)];
     GameState.nodesSinceRocket = 0;
 
     if (this._type === 'meowth')     this._showMeowth();
     else if (this._type === 'jessie') this._showJessie();
+    else if (this._type === 'runner') {
+      RocketRunnerEngine._onComplete = this._onComplete;
+      RocketRunnerEngine.start({ type:'runner', idx: GameState.currentNodeIndex, row: 0 });
+    }
     else if (this._type === 'wobbuffet') {
       // WobbuffetEngine uses the boss-screen intro flow
       const fakeNode = { type:'wobbuffet_node', idx: GameState.currentNodeIndex, row: 0 };
@@ -11240,6 +11246,288 @@ const WOBBU_ATTACKS = [
 ];
 
 const WOBBU_WRONG_POOL = ['fire','water','grass','electric','ice','psychic','rock','ground'];
+
+// ─── ROCKET RUNNER ENGINE — "Dig Dash" (endless-runner escape mini-game) ─────
+// Team Rocket dug pit-traps across the route. The trainer auto-runs; tap/space
+// to jump the holes and grab floating coins. Reach the finish to escape with
+// prize money + a Courage buff. Fall in a hole → small penalty, run ends.
+const ROCKET_RUNNER_FLUFF = {
+  meowth: { name:'Meowth', img:'meowth.png',
+    intro:"Meowth! We dug holes allll over this path! Let's see ya get past 'em, twerp!",
+    win:"Nyaaa! How'd ya jump all those?! The boss ain't gonna like this...",
+    lose:"Hahaha! Right into our hole! That's what ya get!" },
+  jessie: { name:'Jessie', img:'jessie.png',
+    intro:"Prepare for trouble! These pitfalls will stop you in your tracks!",
+    win:"Impossible! You leapt over every single one! Uuurgh!",
+    lose:"Hahaha! Down you go! Team Rocket strikes again!" },
+  james:  { name:'James', img:'james.png',
+    intro:"...and make it double! Mind the holes, they're frightfully deep!",
+    win:"Oh dear, they got away again, Jessie...",
+    lose:"Ha! Caught in our clever trap! Well, mostly Jessie's trap." },
+};
+
+const RocketRunnerEngine = {
+  _onComplete: null, _node: null,
+  _raf: null, _running: false,
+  _trainer: null, _field: null,
+  _x: 0, _vy: 0, _y: 0, _grounded: true,
+  _obstacles: [], _coins: [],
+  _dist: 0, _goal: 0, _speed: 0, _coinsGot: 0,
+  _spawnGap: 0, _coinSpawnGap: 0, _fluff: null,
+  _lastT: 0,
+
+  start(node) {
+    this._node = node;
+    // Pick a random Rocket member to taunt the player
+    const keys = Object.keys(ROCKET_RUNNER_FLUFF);
+    this._fluff = ROCKET_RUNNER_FLUFF[keys[Math.floor(Math.random() * keys.length)]];
+
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    // Tier config: base speed (px/s), gap range (ms), goal distance, gravity, jump
+    const CFG = {
+      1: { speed:170, goal:2600, gapMin:1500, gapMax:2100, grav:1500, jump:560 },
+      2: { speed:215, goal:3400, gapMin:1100, gapMax:1700, grav:1650, jump:600 },
+      3: { speed:265, goal:4200, gapMin:850,  gapMax:1350, grav:1800, jump:640 },
+    };
+    this._cfg = CFG[tier];
+
+    const cv = setupChallengeScreen({
+      portrait: this._fluff.img, badge: '🏃 Dig Dash — Escape Team Rocket!',
+      intro: this._fluff.intro,
+      wrapClass: 'runner-wrap', screenClass: 'runner-active',
+    });
+
+    // Intro overlay with a Start button (so the player isn't dropped cold)
+    const startWrap = document.createElement('div');
+    startWrap.className = 'runner-start-wrap';
+    startWrap.innerHTML = `<button class="btn-pixel btn-primary runner-start-btn" id="runner-start-btn">Run! 🏃 (tap / space to jump)</button>`;
+    cv.appendChild(startWrap);
+    document.getElementById('runner-start-btn').addEventListener('click', () => this._begin(cv));
+  },
+
+  _begin(cv) {
+    cv.innerHTML = '';
+    // Build field
+    const field = document.createElement('div');
+    field.className = 'runner-field';
+    field.id = 'runner-field';
+    field.innerHTML = `
+      <div class="runner-sky"></div>
+      <div class="runner-hud">
+        <span id="runner-dist">0m</span>
+        <span id="runner-coins">🪙 0</span>
+      </div>
+      <div class="runner-ground"></div>
+      <div class="runner-goal" id="runner-goal"></div>
+      <img class="runner-trainer" id="runner-trainer" src="assets/trainer_run.png"
+           onerror="this.onerror=null;this.src='assets/trainer_stand.png'"/>`;
+    cv.appendChild(field);
+    this._field = field;
+    this._trainer = document.getElementById('runner-trainer');
+
+    // State
+    this._running = true;
+    this._x = 0; this._vy = 0; this._y = 0; this._grounded = true;
+    this._obstacles = []; this._coins = [];
+    this._dist = 0; this._goal = this._cfg.goal; this._speed = this._cfg.speed;
+    this._coinsGot = 0;
+    this._spawnGap = 600; this._coinSpawnGap = 1200;
+    this._lastT = performance.now();
+
+    // Input — jump
+    this._jumpHandler = (e) => {
+      if (e.type === 'keydown' && e.code !== 'Space' && e.code !== 'ArrowUp') return;
+      if (e.type === 'keydown') e.preventDefault();
+      this._jump();
+    };
+    document.addEventListener('keydown', this._jumpHandler);
+    field.addEventListener('pointerdown', this._jumpHandler);
+
+    SoundEngine.playBGM('teamrocket_battle.mp3');
+    this._raf = requestAnimationFrame((t) => this._loop(t));
+  },
+
+  _jump() {
+    if (!this._running) return;
+    if (this._grounded) {
+      this._vy = -this._cfg.jump;
+      this._grounded = false;
+      this._trainer?.classList.add('runner-jumping');
+      SoundEngine.playTap();
+    }
+  },
+
+  _loop(now) {
+    if (!this._running) return;
+    const dt = Math.min((now - this._lastT) / 1000, 0.05);
+    this._lastT = now;
+
+    const FIELD_W = this._field.clientWidth || 340;
+    const GROUND_Y = 0;            // trainer bottom rests on ground (CSS bottom)
+
+    // Physics — vertical
+    if (!this._grounded) {
+      this._vy += this._cfg.grav * dt;
+      this._y  += this._vy * dt;
+      if (this._y >= 0) { this._y = 0; this._vy = 0; this._grounded = true; this._trainer?.classList.remove('runner-jumping'); }
+    }
+    if (this._trainer) this._trainer.style.transform = `translateY(${this._y}px)`;
+
+    // Distance + gentle speed ramp
+    this._speed += 4 * dt;        // slow escalation
+    this._dist  += this._speed * dt;
+    const distM = Math.floor(this._dist / 40);
+    const dEl = document.getElementById('runner-dist');
+    if (dEl) dEl.textContent = distM + 'm';
+
+    // Spawn obstacles (holes)
+    this._spawnGap -= this._speed * dt;
+    if (this._spawnGap <= 0) {
+      this._spawnHole(FIELD_W);
+      this._spawnGap = this._cfg.gapMin + Math.random() * (this._cfg.gapMax - this._cfg.gapMin);
+    }
+    // Spawn coins
+    this._coinSpawnGap -= this._speed * dt;
+    if (this._coinSpawnGap <= 0) {
+      this._spawnCoin(FIELD_W);
+      this._coinSpawnGap = 900 + Math.random() * 1400;
+    }
+
+    // Move + collide obstacles
+    const TRAINER_X = 48, TRAINER_W = 34, TRAINER_H = 40;
+    for (let i = this._obstacles.length - 1; i >= 0; i--) {
+      const o = this._obstacles[i];
+      o.x -= this._speed * dt;
+      o.el.style.left = o.x + 'px';
+      // Collision: trainer overlaps hole horizontally AND is on the ground
+      const overlap = (TRAINER_X + TRAINER_W > o.x + 6) && (TRAINER_X < o.x + o.w - 6);
+      if (overlap && this._y > -18) {   // not jumping high enough
+        this._fall(o);
+        return;
+      }
+      if (o.x < -o.w) { o.el.remove(); this._obstacles.splice(i, 1); }
+    }
+
+    // Move + collect coins
+    for (let i = this._coins.length - 1; i >= 0; i--) {
+      const c = this._coins[i];
+      c.x -= this._speed * dt;
+      c.el.style.left = c.x + 'px';
+      const cy = c.y;   // coin's vertical offset (negative = up)
+      const tTop = this._y - TRAINER_H;
+      const hit = (TRAINER_X + TRAINER_W > c.x) && (TRAINER_X < c.x + 24) &&
+                  (tTop < cy + 24) && (this._y > cy - 24);
+      if (hit && !c.got) {
+        c.got = true;
+        c.el.classList.add('runner-coin-got');
+        this._coinsGot++;
+        const cEl = document.getElementById('runner-coins');
+        if (cEl) cEl.textContent = '🪙 ' + this._coinsGot;
+        SoundEngine.playTap();
+        setTimeout(() => { c.el.remove(); }, 250);
+        this._coins.splice(i, 1);
+        continue;
+      }
+      if (c.x < -30) { c.el.remove(); this._coins.splice(i, 1); }
+    }
+
+    // Goal reached?
+    if (this._dist >= this._goal) { this._win(); return; }
+
+    this._raf = requestAnimationFrame((t) => this._loop(t));
+  },
+
+  _spawnHole(fieldW) {
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const w = tier === 1 ? 38 : tier === 2 ? (38 + Math.random() * 18) : (40 + Math.random() * 30);
+    const el = document.createElement('div');
+    el.className = 'runner-hole';
+    el.style.width = w + 'px';
+    el.style.left = fieldW + 'px';
+    this._field.appendChild(el);
+    this._obstacles.push({ el, x: fieldW, w });
+  },
+
+  _spawnCoin(fieldW) {
+    // Coins float at a jumpable height
+    const y = -(46 + Math.random() * 34);   // height above ground
+    const el = document.createElement('div');
+    el.className = 'runner-coin';
+    el.textContent = '🪙';
+    el.style.left = fieldW + 'px';
+    el.style.bottom = (62 - y) + 'px';
+    this._field.appendChild(el);
+    this._coins.push({ el, x: fieldW, y, got: false });
+  },
+
+  _fall(hole) {
+    this._running = false;
+    cancelAnimationFrame(this._raf);
+    this._cleanupInput();
+    this._trainer?.classList.add('runner-fall');
+    SoundEngine.stopBGM();
+    setTimeout(() => this._finish(false), 900);
+  },
+
+  _win() {
+    this._running = false;
+    cancelAnimationFrame(this._raf);
+    this._cleanupInput();
+    document.getElementById('runner-goal')?.classList.add('runner-goal-reached');
+    this._trainer?.classList.add('runner-cheer');
+    setTimeout(() => this._finish(true), 700);
+  },
+
+  _cleanupInput() {
+    if (this._jumpHandler) {
+      document.removeEventListener('keydown', this._jumpHandler);
+      this._field?.removeEventListener('pointerdown', this._jumpHandler);
+    }
+  },
+
+  _finish(escaped) {
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const distM = Math.floor(this._dist / 40);
+    const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
+
+    let gold, penaltyMsg = '';
+    if (escaped) {
+      // Prize money scales with distance + coins collected
+      gold = baseGold + this._coinsGot * 2 + Math.floor(distM / 20);
+      // Courage buff — +10% damage next battle (reuse briefedDmgBonus plumbing)
+      GameState.pendingPlayerEffects = GameState.pendingPlayerEffects || {};
+      GameState.pendingPlayerEffects.briefedDmgBonus = 1.10;
+      GameState.pendingPlayerEffects.briefedBattles  = 1;
+    } else {
+      // Small penalty: lose a little gold + HP, run ends
+      gold = Math.max(2, this._coinsGot * 2);
+      const lead = GameState.party[GameState.activePokemonIndex];
+      if (lead) lead.hp = Math.max(1, lead.hp - Math.ceil(lead.maxHp * 0.12));
+      const lostGold = Math.min(GameState.gold || 0, 5);
+      GameState.gold = (GameState.gold || 0) - lostGold;
+      penaltyMsg = `\n\nTeam Rocket caught up! −${lostGold}💰 and your lead Pokémon got a little hurt.`;
+    }
+    GameState.gold = (GameState.gold || 0) + gold;
+    saveGame();
+
+    // Clean up the screen
+    const sc = document.getElementById('screen-challenge');
+    if (sc) sc.classList.remove('runner-active');
+    const cv = document.getElementById('challenge-coin-visual');
+    if (cv) { cv.innerHTML = ''; cv.className = 'challenge-coin-visual'; }
+
+    const title = escaped ? '🏃 Escaped!' : '💢 Tripped Up!';
+    const body  = escaped
+      ? `You dashed ${distM}m and grabbed ${this._coinsGot} coins!\n+${gold}💰\n\n⭐ Courage! +10% damage in your next battle!\n\n"${this._fluff.win}"`
+      : `You made it ${distM}m before falling.\n+${gold}💰${penaltyMsg}\n\n"${this._fluff.lose}"`;
+
+    showModal(title, body, () => {
+      showScreen('map');
+      MapEngine.renderParty();
+      if (this._onComplete) { const cb = this._onComplete; this._onComplete = null; cb(); }
+    });
+  },
+};
 
 const WobbuffetEngine = {
   _isActive: false,
