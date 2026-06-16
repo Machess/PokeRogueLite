@@ -11276,11 +11276,18 @@ const RocketRunnerEngine = {
   _spawnGap: 0, _coinSpawnGap: 0, _fluff: null,
   _lastT: 0,
 
-  start(node) {
+  async start(node) {
     this._node = node;
     // Pick a random Rocket member to taunt the player
     const keys = Object.keys(ROCKET_RUNNER_FLUFF);
     this._fluff = ROCKET_RUNNER_FLUFF[keys[Math.floor(Math.random() * keys.length)]];
+
+    // Prefetch Arbok (24) + Koffing (109) sprites for the jumpable obstacles
+    this._pokeSprites = {};
+    await Promise.all([24, 109].map(async id => {
+      const d = await fetchPoke(id).catch(() => null);
+      if (d) this._pokeSprites[id] = getSpriteUrl(d);
+    }));
 
     const tier = Math.min(GameState.difficultyTier || 2, 3);
     // Tier config: base speed (px/s), gap range (ms), goal distance, gravity, jump
@@ -11383,7 +11390,9 @@ const RocketRunnerEngine = {
     // Spawn obstacles (holes)
     this._spawnGap -= this._speed * dt;
     if (this._spawnGap <= 0) {
-      this._spawnHole(FIELD_W);
+      // Mix holes with jumpable Pokémon (Arbok / Koffing) in every tier
+      if (Math.random() < 0.45) this._spawnPoke(FIELD_W);
+      else                      this._spawnHole(FIELD_W);
       this._spawnGap = this._cfg.gapMin + Math.random() * (this._cfg.gapMax - this._cfg.gapMin);
     }
     // Spawn coins
@@ -11399,9 +11408,12 @@ const RocketRunnerEngine = {
       const o = this._obstacles[i];
       o.x -= this._speed * dt;
       o.el.style.left = o.x + 'px';
-      // Collision: trainer overlaps hole horizontally AND is on the ground
-      const overlap = (TRAINER_X + TRAINER_W > o.x + 6) && (TRAINER_X < o.x + o.w - 6);
-      if (overlap && this._y > -18) {   // not jumping high enough
+      const horiz = (TRAINER_X + TRAINER_W > o.x + 6) && (TRAINER_X < o.x + o.w - 6);
+      // Holes: hit if overlapping while on/near the ground (didn't jump high enough).
+      // Pokémon: stand ON the ground with a height — hit if overlapping while the
+      // trainer's feet are below the top of the sprite (didn't clear it).
+      const clearedBy = o.kind === 'poke' ? (o.h - 6) : 18;
+      if (horiz && this._y > -clearedBy) {
         this._fall(o);
         return;
       }
@@ -11445,7 +11457,23 @@ const RocketRunnerEngine = {
     el.style.width = w + 'px';
     el.style.left = fieldW + 'px';
     this._field.appendChild(el);
-    this._obstacles.push({ el, x: fieldW, w });
+    this._obstacles.push({ el, x: fieldW, w, kind: 'hole' });
+  },
+
+  // A Pokémon (Arbok or Koffing) sitting on the ground — jump over it.
+  _spawnPoke(fieldW) {
+    const pick = Math.random() < 0.5
+      ? { id: 24, name: 'Arbok',   h: 36, w: 36 }
+      : { id: 109, name: 'Koffing', h: 30, w: 30 };
+    const el = document.createElement('img');
+    el.className = 'runner-poke pixel-sprite';
+    el.alt = pick.name;
+    el.src = (this._pokeSprites && this._pokeSprites[pick.id])
+      || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pick.id}.png`;
+    el.style.width = el.style.height = pick.w + 'px';
+    el.style.left = fieldW + 'px';
+    this._field.appendChild(el);
+    this._obstacles.push({ el, x: fieldW, w: pick.w, h: pick.h, kind: 'poke' });
   },
 
   _spawnCoin(fieldW) {

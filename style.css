@@ -10488,6 +10488,17 @@ body { touch-action: manipulation; }
   z-index:3;
   box-shadow: inset 0 4px 6px rgba(0,0,0,.7);
 }
+/* Jumpable Pokémon obstacle (Arbok / Koffing) sitting on the ground */
+.runner-poke {
+  position:absolute; bottom:30%;
+  object-fit:contain; object-position:bottom center;
+  image-rendering:pixelated; z-index:3;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,.4));
+  animation: runner-poke-wiggle .4s ease-in-out infinite alternate;
+}
+@keyframes runner-poke-wiggle {
+  0% { transform: translateY(0) scaleX(1); } 100% { transform: translateY(-1px) scaleX(1.06); }
+}
 .runner-hole::before {
   content:''; position:absolute; top:-2px; left:0; right:0; height:3px;
   background: rgba(20,12,6,.8);
