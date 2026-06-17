@@ -5438,6 +5438,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   margin: .4rem auto 0;
   width: max-content; max-width: 92vw;
 }
+/* When the recipe card has no content (e.g. the cookware-choice step), don't
+   render an empty bordered box. */
+.cooking-recipe:empty { display: none; }
 .recipe-slot {
   background: rgba(255,255,255,.08);
   border: 2px solid rgba(255,200,80,.3);
