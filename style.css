@@ -2399,9 +2399,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   margin-top: .2rem;
 }
 .heal-joy-portrait {
-  width: auto; height: 150px;
-  max-height: 26vh;
-  max-width: 150px;
+  width: auto; height: 230px;
+  max-height: 36vh;
+  max-width: 230px;
   object-fit: contain;
   object-position: bottom center;
   image-rendering: auto;
@@ -2422,14 +2422,14 @@ button:disabled { opacity: .45; cursor: not-allowed; }
   position: relative;
   background: rgba(255,255,255,.95);
   color: #5a2a3a;
-  font-size: .58rem;
-  line-height: 1.6;
+  font-size: 1.1rem;
+  line-height: 1.5;
   text-align: left;
-  border-radius: 14px;
-  border: 2px solid #ff9ec0;
-  padding: .7rem .9rem;
-  max-width: 240px;
-  box-shadow: 0 3px 10px rgba(180,80,120,.25);
+  border-radius: 16px;
+  border: 3px solid #ff9ec0;
+  padding: 1rem 1.2rem;
+  max-width: 340px;
+  box-shadow: 0 3px 12px rgba(180,80,120,.3);
   align-self: center;
   animation: heal-bubble-in .45s ease .15s both;
 }
@@ -2437,15 +2437,15 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .heal-speech-bubble::after {
   content: '';
   position: absolute;
-  right: -11px; bottom: 22px;
-  border: 7px solid transparent;
+  right: -14px; bottom: 26px;
+  border: 9px solid transparent;
   border-left-color: #ff9ec0;
 }
 .heal-speech-bubble::before {
   content: '';
   position: absolute;
-  right: -7px; bottom: 24px;
-  border: 5px solid transparent;
+  right: -9px; bottom: 28px;
+  border: 6px solid transparent;
   border-left-color: rgba(255,255,255,.95);
   z-index: 1;
 }
