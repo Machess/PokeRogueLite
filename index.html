@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=117" />
+  <link rel="stylesheet" href="style.css?v=120" />
 </head>
 <body>
 
@@ -778,23 +778,20 @@
   <div class="cooking-bg"></div>
 
   <!-- Recipe card -->
-  <div class="cooking-section-label">📋 Today's Recipe — copy it exactly!</div>
   <div class="cooking-recipe" id="cooking-recipe"></div>
 
-  <!-- Player drop zones -->
-  <div class="cooking-section-label">🥄 Your preparation — place in order</div>
-  <div class="cooking-zones" id="cooking-zones"></div>
+  <!-- The cooking stage: vessel choice, then the pan/pot/bowl with ingredients -->
+  <div class="cooking-stage" id="cooking-stage"></div>
 
   <!-- Pantry -->
-  <div class="cooking-section-label">🧺 Pantry — tap to select, then tap a slot</div>
   <div class="cooking-pantry" id="cooking-pantry"></div>
 
-  <!-- Submit -->
-  <button class="btn-pixel btn-primary cooking-submit-btn" id="btn-cooking-submit" disabled>
-    Fill all 3 slots first
+  <!-- Serve -->
+  <button class="btn-pixel btn-primary cooking-submit-btn" id="btn-cooking-submit" style="display:none">
+    🍽️ Serve it up!
   </button>
 
-  <!-- Math overlay — shown when placing an ingredient -->
+  <!-- Math overlay — shown when adding an ingredient -->
   <div class="cooking-math-overlay" id="cooking-math-overlay" style="display:none">
     <div class="cooking-math-card">
       <div class="cooking-math-title" id="cooking-math-question">How many do you need?</div>
@@ -1027,6 +1024,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=200"></script>
+<script src="app.js?v=206"></script>
 </body>
 </html>
