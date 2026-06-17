@@ -10600,19 +10600,19 @@ body { touch-action: manipulation; }
 .cook-vessel-wrong { animation: jenny-shake-anim .4s ease; border-color:#f87171 !important; }
 
 /* The big cooking vessel with ingredients inside */
-.cook-vessel-stage { position: relative; width: 200px; height: 170px; margin: 0 auto; }
+.cook-vessel-stage { position: relative; width: 300px; height: 250px; margin: 0 auto; max-width: 92vw; }
 .cook-vessel-big {
   position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 180px; height: auto; max-height: 150px; object-fit: contain;
+  width: 280px; height: auto; max-height: 230px; object-fit: contain;
   image-rendering: pixelated; filter: drop-shadow(2px 4px 4px rgba(0,0,0,.4));
 }
-.cook-vessel-big-emoji { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); }
+.cook-vessel-big-emoji { position:absolute; bottom:6px; left:50%; transform:translateX(-50%); font-size: 7rem; }
 .cook-vessel-contents {
-  position: absolute; bottom: 38px; left: 50%; transform: translateX(-50%);
-  display: flex; flex-wrap: wrap; gap: 2px; justify-content: center;
-  width: 110px; z-index: 2;
+  position: absolute; bottom: 58px; left: 50%; transform: translateX(-50%);
+  display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; align-items: center;
+  width: 170px; z-index: 2;
 }
-.cook-in-vessel { font-size: 1.5rem; line-height: 1; animation: cook-drop-in .4s cubic-bezier(.34,1.56,.64,1) both; }
+.cook-in-vessel { font-size: 2.1rem; line-height: 1; animation: cook-drop-in .4s cubic-bezier(.34,1.56,.64,1) both; }
 @keyframes cook-drop-in {
   0% { transform: translateY(-50px) scale(.5); opacity: 0; }
   100% { transform: translateY(0) scale(1); opacity: 1; }
@@ -10675,3 +10675,27 @@ body { touch-action: manipulation; }
   font-family:'Press Start 2P',monospace; font-size:.6rem; color:#ffd98a;
   text-shadow:1px 1px 0 rgba(0,0,0,.5); text-align:center;
 }
+/* Brock's in-character line on the reveal */
+.cook-reveal-fluff {
+  display: flex; align-items: flex-end; gap: .5rem;
+  max-width: 90vw; width: 480px; margin: .7rem auto 0;
+  animation: heal-bubble-in .45s ease .2s both;
+}
+.cook-reveal-brock {
+  width: 80px; height: auto; max-height: 92px;
+  object-fit: contain; object-position: bottom center;
+  image-rendering: pixelated; flex-shrink: 0;
+  filter: drop-shadow(2px 2px 0 rgba(0,0,0,.4));
+}
+.cook-reveal-speech {
+  position: relative;
+  background: rgba(255,255,255,.96); color: #5a3a1a;
+  font-size: 1.15rem; line-height: 1.5; text-align: left;
+  border-radius: 14px; border: 3px solid #ffcf8a;
+  padding: .9rem 1.1rem; box-shadow: 0 3px 12px rgba(120,80,30,.3);
+}
+.cook-reveal-speech::after {
+  content:''; position:absolute; left:-13px; bottom:18px;
+  border:9px solid transparent; border-right-color:#ffcf8a;
+}
+

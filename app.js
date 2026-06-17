@@ -16336,6 +16336,20 @@ const COOKING_RECIPES = [
     buff:{ key:'cookEndurance', label:'Endurance — survive a fatal hit once' } },
 ];
 
+// Brock's warm, in-character line said on the dish reveal, keyed by dish id.
+const BROCK_DISH_FLUFF = {
+  omelette:   "A fluffy omelette! Eggs, milk and cheese — my Pokémon's favourite breakfast!",
+  pancakes:   "Golden pancakes! Flour, eggs and milk whisked just right. Don't forget the syrup!",
+  friedrice:  "Sizzling fried rice! The secret's adding the egg right after the rice. Delicious!",
+  pokepuffs:  "Poképuffs! My specialty — light, sweet and berry-filled. Pokémon adore these!",
+  veggiesoup: "A hearty veggie soup! Carrot, potato and onion simmered slow. Good for the soul!",
+  pasta:      "Tomato pasta! Garlic and tomato make the sauce sing. A trainer's classic!",
+  stew:       "A rich, meaty stew! Slow-simmered with potato and herbs — this'll keep you strong!",
+  smoothie:   "A berry smoothie! Blended with banana and a drizzle of honey. So refreshing!",
+  fruitsalad: "A bright fruit salad! Apple, berries, banana and orange — vitamins in every bite!",
+  trailmix:   "Trail mix! Nuts, berries and seeds — the perfect snack for a long journey!",
+};
+
 const VESSEL_META = {
   pan:  { img:'pan.png',  emoji:'🍳', label:'Pan',  verb:'fry'  },
   pot:  { img:'pot.png',  emoji:'🍲', label:'Pot',  verb:'boil' },
@@ -16759,6 +16773,7 @@ const CookingEngine = {
     if (submitBtn) submitBtn.style.display = 'none';
 
     const vm = VESSEL_META[this._vessel];
+    const fluff = good ? (BROCK_DISH_FLUFF[this._recipe.id] || '') : '';
     stage.innerHTML = `
       <div class="cook-reveal">
         <div class="cook-reveal-plate">
@@ -16767,12 +16782,18 @@ const CookingEngine = {
           <div class="cook-reveal-shine"></div>
         </div>
         <div class="cook-reveal-name">${good ? '' : 'A messy '}${this._recipe.name}!</div>
+        ${fluff ? `<div class="cook-reveal-fluff">
+          <img src="assets/brock.png" class="cook-reveal-brock"
+               onerror="this.onerror=null;this.style.display='none'"/>
+          <div class="cook-reveal-speech">${fluff}</div>
+        </div>` : ''}
       </div>`;
     SoundEngine.playCorrect && good && SoundEngine.playCorrect();
 
     const headline = perfect ? '🍽️ Perfect Dish!' : good ? '🍱 Tasty!' : '😬 A Bit Off...';
     const healMsg  = good ? 'Your whole team is fully healed! ♥' : 'Your team ate a little and recovered some HP.';
-    const quote    = _cookingQuote(perfect ? 'perfect' : good ? 'partial' : 'wrong');
+    const quote    = good ? (BROCK_DISH_FLUFF[this._recipe.id] || _cookingQuote('perfect'))
+                          : _cookingQuote('wrong');
     const body = `${this._recipe.name} — ${correctSlots}/${total} steps right.\n${healMsg}${buffMsg}\n\n"${quote}" — Brock`;
 
     setTimeout(() => {
@@ -16780,7 +16801,7 @@ const CookingEngine = {
         MapEngine.completeNode(GameState.currentNodeIndex);
         MapEngine.show();
       });
-    }, 1400);
+    }, 3600);
   },
 };
 
