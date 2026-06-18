@@ -493,7 +493,7 @@ const CHALLENGE_CLASSES = [
   'challenge-select-active','giovanni-active',
   // Johto + Wobbuffet
   'falkner-active','bugsy-active','whitney-active','morty-active',
-  'jasmine-active','pryce-active','clair-active','wobbu-active','chuck-active',
+  'jasmine-active','pryce-active','clair-active','wobbu-active','chuck-active','togepi-active',
   'oak-active','snorlax-active','rocketmoney-active','jenny-active','runner-active',
 ];
 
@@ -506,7 +506,7 @@ const NODE_ICONS = {
   // Johto gym mini-games
   falkner_node: '🪶', bugsy_node: '🐛', whitney_node: '🎀',
   morty_node: '👻', jasmine_node: '⚙️', pryce_node: '❄️', clair_node: '🐉',
-  chuck_node: '🕐',
+  chuck_node: '🕐', togepi_node: '⏳',
   challenge: '🎮',
 };
 const NODE_MYSTERY_ICON = '❓';
@@ -1883,6 +1883,7 @@ function generateMap(bossIndex) {
       { key:'pryce',   type:'pryce_node',   row:2, minBi:6 },
       { key:'clair',   type:'clair_node',   row:3, minBi:7 },
       { key:'falkner', type:'falkner_node', row:2, minBi:0 },
+      { key:'togepi',  type:'togepi_node',  row:3, minBi:2 },
     ];
     const MG_SCHEDULE = GameState?.region === 'johto' ? JOHTO_MG_SCHEDULE : KANTO_MG_SCHEDULE;
 
@@ -1906,7 +1907,7 @@ function generateMap(bossIndex) {
           !['cooking','fishing','boss','jigglypuff_node','surge_node',
             'erika_node','ninja_node','sabrina_node','blaine_node',
             'falkner_node','bugsy_node','whitney_node','morty_node',
-            'jasmine_node','pryce_node','clair_node','chuck_node'].includes(n.type)
+            'jasmine_node','pryce_node','clair_node','chuck_node','togepi_node'].includes(n.type)
         );
         if (candidates.length > 0) {
           const target = candidates[Math.floor(Math.random() * candidates.length)];
@@ -1933,7 +1934,7 @@ function generateMap(bossIndex) {
                          'jigglypuff_node','surge_node','erika_node',
                          'ninja_node','sabrina_node','blaine_node',
                          'falkner_node','bugsy_node','whitney_node','morty_node',
-                         'jasmine_node','pryce_node','clair_node','chuck_node'];
+                         'jasmine_node','pryce_node','clair_node','chuck_node','togepi_node'];
 
     const injectChallenge = (row) => {
       const cands = nodes.filter(n => n.row === row && !SPECIAL.includes(n.type));
@@ -2232,6 +2233,7 @@ const MG_RULES = {
   'pryce-active':    'Count how many of each shape there are to reveal the sculpture!',
   'clair-active':    'Tap the type that beats the incoming dragon!',
   'chuck-active':    'Read the time and set the clock for Chuck!',
+  'togepi-active':   'Work out how long Togepi froze time — the elapsed duration!',
   'oak-active':      'Tap the basket each Pokémon belongs in!',
   'snorlax-active':  'Compare weights and balance the scale!',
   'rocketmoney-active': 'Count the coins to pay the exact amount!',
@@ -5806,6 +5808,7 @@ const MapEngine = {
       case 'pryce_node':      PryceEngine.start(node);           break;
       case 'clair_node':      ClairEngine.start(node);           break;
       case 'chuck_node':      ChuckEngine.start(node);           break;
+      case 'togepi_node':     TogepiEngine.start(node);          break;
     }
   },
 
@@ -6260,6 +6263,8 @@ const BattleEngine = {
                               this._logPlayer(`🐛 Bug Research — enemy attack -15% this battle!`); }
     if (fx.chuckDiscipline) { this.state.energy = (this.state.energy || 0) + 1;
                               this._logPlayer(`🕐 Chuck's Discipline — +1 energy this turn!`); }
+    if (fx.luckyCharm)      { this.state.oppSkipped = true;
+                              this._logPlayer(`✨ Lucky Charm! ${this.state.opp.name}'s first attack misses! (Togepi's blessing)`); }
     // ── Brock's Kitchen dish buffs ──────────────────────────────────────────
     if (fx.cookSunnyStart)   { this.state.energy = (this.state.energy || 0) + 1;
                                this._logPlayer(`🍳 Sunny Start — +1 energy this turn! (Brock's omelette)`); }
@@ -13692,6 +13697,256 @@ const ChuckEngine = {
       tokenLabel: this._hits === 5 ? 'Discipline — +1 energy first turn!' : null,
       modalTitle: this._hits === 5 ? '🕐 Perfect Timing!' : won ? '🕐 Well Trained!' : '🕐 Back to Training!',
       modalBody: `${this._hits}/5 clocks correct\n+${gold}💰`,
+    });
+  },
+};
+
+// ─── TOGEPI ENGINE — "Time Freeze" (elapsed-time / duration) ─────────────────
+// Togepi accidentally freezes time! Two clocks are shown: when time STOPPED and
+// when it STARTED again. The player works out how LONG time was frozen (elapsed
+// duration). Tier 2-3 add a reverse mode (given a duration + start, find the end
+// time). Distinct from Chuck (who teaches reading/setting a single clock).
+// Reward: Lucky Charm — the opponent's first attack misses next battle.
+const TogepiEngine = {
+  _isActive:false, _node:null, _round:0, _hits:0,
+  _setH:0, _setM:0, _target:null,
+
+  start(node) {
+    this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
+    ActiveEngine.set(this);
+    showBossIntro({
+      gymIndex: 0, portrait: 'togepi.png', gameKey: 'togepi',
+      name: 'Togepi', btnLabel: '⏳ Start!',
+      introText: "Togepiii! ✨ Togepi waved its little arms and... everything FROZE! Can you tell how long time stood still? Look at the two clocks and help time start again!",
+    });
+    const t = document.getElementById('boss-trainer-sprite');
+    if (t) t.onerror = () => { t.style.visibility = 'hidden'; };
+  },
+
+  startGame() {
+    this._isActive = false; ActiveEngine.clear();
+    document.getElementById('trainer-intro').style.display = 'none';
+    const bgEl = document.querySelector('#screen-boss .battle-bg');
+    if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    this._showRound();
+  },
+
+  // Random start time, tier-scaled granularity
+  _randStart(tier) {
+    const h = 1 + Math.floor(Math.random() * 12);
+    let m;
+    if (tier === 1) m = 0;                                   // on the hour
+    else if (tier === 2) m = [0, 15, 30, 45][Math.floor(Math.random() * 4)];
+    else m = [0,5,10,15,20,25,30,35,40,45,50,55][Math.floor(Math.random() * 12)];
+    return { h, m };
+  },
+
+  // Tier-scaled duration in minutes
+  _randDuration(tier) {
+    if (tier === 1) return [15, 30, 45, 60][Math.floor(Math.random() * 4)];
+    if (tier === 2) return [30, 45, 60, 75, 90][Math.floor(Math.random() * 5)];
+    return [25, 40, 45, 50, 65, 70, 80, 95][Math.floor(Math.random() * 8)];
+  },
+
+  _addMinutes(t, mins) {
+    const total = (t.h % 12) * 60 + t.m + mins;
+    const h = (Math.floor(total / 60) % 12);
+    return { h: h === 0 ? 12 : h, m: total % 60 };
+  },
+
+  // Friendly duration words
+  _durWords(mins) {
+    const h = Math.floor(mins / 60), m = mins % 60;
+    if (mins === 15) return '15 minutes';
+    if (mins === 30) return 'half an hour';
+    if (mins === 45) return '45 minutes';
+    if (mins === 60) return '1 hour';
+    if (h > 0 && m === 0) return `${h} hour${h>1?'s':''}`;
+    if (h > 0) return `${h}h ${m}m`;
+    return `${m} minutes`;
+  },
+
+  _showRound() {
+    if (this._round >= 5) { this._finish(); return; }
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const cv = setupChallengeScreen({
+      portrait: 'togepi.png', badge: '⏳ Time Freeze',
+      intro: `Round ${this._round + 1}/5 — ${this._hits} correct`,
+      wrapClass: 'togepi-wrap', screenClass: 'togepi-active',
+    });
+    // Tier 1 always duration mode; tier 2-3 sometimes reverse mode
+    const reverse = tier >= 2 && Math.random() < 0.4;
+    if (reverse) this._roundReverse(cv, tier);
+    else         this._roundDuration(cv, tier);
+  },
+
+  // ── Duration mode: two clocks, how long was time frozen? ─────────────────
+  _roundDuration(cv, tier) {
+    const start = this._randStart(tier);
+    const dur   = this._randDuration(tier);
+    const end   = this._addMinutes(start, dur);
+
+    const say = document.createElement('div');
+    say.className = 'togepi-say';
+    say.innerHTML = `Togepi froze time! ✨<br>How long did time stand still?`;
+    cv.appendChild(say);
+
+    // Two clocks: stopped → started
+    const clocks = document.createElement('div');
+    clocks.className = 'togepi-clocks';
+    clocks.innerHTML = `
+      <div class="togepi-clock-box">
+        <div class="togepi-clock-label">Time STOPPED</div>
+        <div id="togepi-clock-a" class="togepi-clock-frozen">${_clockSVG(start.h, start.m, 120)}</div>
+        <div class="togepi-clock-time">${start.h}:${String(start.m).padStart(2,'0')}</div>
+      </div>
+      <div class="togepi-arrow">➡️</div>
+      <div class="togepi-clock-box">
+        <div class="togepi-clock-label">Time STARTED</div>
+        <div id="togepi-clock-b" class="togepi-clock-frozen">${_clockSVG(start.h, start.m, 120)}</div>
+        <div class="togepi-clock-time">${end.h}:${String(end.m).padStart(2,'0')}</div>
+      </div>`;
+    cv.appendChild(clocks);
+
+    // Animate the SECOND clock's hands sweeping from start → end (tier 1-2)
+    if (tier <= 2) this._animateHands('togepi-clock-b', start, end);
+    else document.getElementById('togepi-clock-b').innerHTML = _clockSVG(end.h, end.m, 120);
+
+    // Build duration options
+    const opts = new Set([dur]);
+    const pool = tier === 1 ? [15,30,45,60] : tier === 2 ? [15,30,45,60,75,90] : [25,40,45,50,65,70,80,95,100];
+    while (opts.size < (tier === 1 ? 3 : 4)) {
+      opts.add(pool[Math.floor(Math.random() * pool.length)]);
+    }
+    const optArr = shuffle([...opts]);
+
+    const row = document.createElement('div');
+    row.className = 'togepi-opts';
+    optArr.forEach(m => {
+      const btn = document.createElement('button');
+      btn.className = 'togepi-opt-btn';
+      btn.textContent = this._durWords(m);
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.togepi-opt-btn').forEach(b => b.disabled = true);
+        const correct = m === dur;
+        btn.classList.add(correct ? 'togepi-correct' : 'togepi-wrong');
+        if (!correct) {
+          row.querySelectorAll('.togepi-opt-btn').forEach(b => {
+            if (b.textContent === this._durWords(dur)) b.classList.add('togepi-correct');
+          });
+        } else { this._hits++; this._unfreeze(); }
+        setTimeout(() => { this._round++; this._showRound(); }, correct ? 1100 : 1800);
+      });
+      row.appendChild(btn);
+    });
+    cv.appendChild(row);
+  },
+
+  // ── Reverse mode (tier 2-3): given start + duration, what time restarted? ─
+  _roundReverse(cv, tier) {
+    const start = this._randStart(tier);
+    const dur   = this._randDuration(tier);
+    const end   = this._addMinutes(start, dur);
+
+    const say = document.createElement('div');
+    say.className = 'togepi-say';
+    say.innerHTML = `Togepi froze time at <b>${start.h}:${String(start.m).padStart(2,'0')}</b> for <b>${this._durWords(dur)}</b>.<br>What time did it start again?`;
+    cv.appendChild(say);
+
+    const clocks = document.createElement('div');
+    clocks.className = 'togepi-clocks';
+    clocks.innerHTML = `
+      <div class="togepi-clock-box">
+        <div class="togepi-clock-label">Time STOPPED</div>
+        <div class="togepi-clock-frozen">${_clockSVG(start.h, start.m, 120)}</div>
+        <div class="togepi-clock-time">${start.h}:${String(start.m).padStart(2,'0')}</div>
+      </div>
+      <div class="togepi-arrow">➡️</div>
+      <div class="togepi-clock-box">
+        <div class="togepi-clock-label">Time STARTED</div>
+        <div class="togepi-clock-frozen togepi-clock-mystery">${_clockSVG(12, 0, 120)}<div class="togepi-q">?</div></div>
+        <div class="togepi-clock-time">?:??</div>
+      </div>`;
+    cv.appendChild(clocks);
+
+    // Options are end-times
+    const opts = new Set([`${end.h}:${String(end.m).padStart(2,'0')}`]);
+    while (opts.size < 4) {
+      const dd = this._randDuration(tier);
+      const e2 = this._addMinutes(start, dd);
+      opts.add(`${e2.h}:${String(e2.m).padStart(2,'0')}`);
+    }
+    const optArr = shuffle([...opts]);
+    const answer = `${end.h}:${String(end.m).padStart(2,'0')}`;
+
+    const row = document.createElement('div');
+    row.className = 'togepi-opts';
+    optArr.forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'togepi-opt-btn';
+      btn.textContent = s;
+      btn.addEventListener('click', () => {
+        row.querySelectorAll('.togepi-opt-btn').forEach(b => b.disabled = true);
+        const correct = s === answer;
+        btn.classList.add(correct ? 'togepi-correct' : 'togepi-wrong');
+        if (!correct) {
+          row.querySelectorAll('.togepi-opt-btn').forEach(b => {
+            if (b.textContent === answer) b.classList.add('togepi-correct');
+          });
+        } else { this._hits++; this._unfreeze(); }
+        setTimeout(() => { this._round++; this._showRound(); }, correct ? 1100 : 1800);
+      });
+      row.appendChild(btn);
+    });
+    cv.appendChild(row);
+  },
+
+  // Sweep a clock's hands from one time to another over ~1.4s
+  _animateHands(elId, from, to) {
+    const el = document.getElementById(elId);
+    if (!el) return;
+    const fromTotal = (from.h % 12) * 60 + from.m;
+    let toTotal = (to.h % 12) * 60 + to.m;
+    if (toTotal <= fromTotal) toTotal += 720;   // wrap forward
+    const steps = 28, dur = 1400;
+    let i = 0;
+    const tick = () => {
+      const frac = i / steps;
+      const cur = fromTotal + (toTotal - fromTotal) * frac;
+      const h = Math.floor(cur / 60) % 12, m = Math.round(cur % 60);
+      el.innerHTML = _clockSVG(h === 0 ? 12 : h, m, 120);
+      if (i++ < steps) setTimeout(tick, dur / steps);
+      else el.innerHTML = _clockSVG(to.h, to.m, 120);
+    };
+    tick();
+  },
+
+  // Visual: lift the frozen tint when answered correctly
+  _unfreeze() {
+    const sc = document.getElementById('screen-challenge');
+    if (sc) {
+      sc.classList.add('togepi-unfreeze');
+      setTimeout(() => sc.classList.remove('togepi-unfreeze'), 1000);
+    }
+    SoundEngine.playCorrect && SoundEngine.playCorrect();
+  },
+
+  _finish() {
+    const won  = this._hits >= 4;
+    const perfect = this._hits >= 5;
+    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
+    const gold = won ? baseGold : Math.floor(baseGold / 2);
+
+    completeChallenge({
+      screenClass: 'togepi-active', won,
+      goldReward: gold,
+      effects: won ? { luckyCharm: true } : {},
+      score: this._hits, maxScore: 5, gameKey: 'togepi',
+      tokenLabel: won ? "Lucky Charm — opponent's first attack misses!" : null,
+      modalTitle: perfect ? '⏳ Perfect Timing!' : won ? '✨ Time Restored!' : '⏳ Time Got Away...',
+      modalBody: `${this._hits}/5 correct\n+${gold}💰` +
+        (won ? "\n\n✨ Lucky Charm! The next opponent's first attack will miss!" : ''),
     });
   },
 };
