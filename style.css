@@ -2399,8 +2399,8 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 .heal-scene {
   position: relative; z-index: var(--z-content);
   width: 100%; max-width: 560px;
-  margin: auto auto 0;
-  height: min(56vh, 460px);
+  margin: auto auto 80px;
+  height: min(50vh, 420px);
   align-self: center;
 }
 /* Layer 1 — Joy + Chansey, anchored at the bottom BEHIND the counter */
@@ -2461,7 +2461,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 }
 .heal-speech-bubble {
   position: absolute;
-  top: 18%; left: 5%;
+  top: 54%; left: 5%;
   z-index: 6;
   max-width: 300px;
   background: rgba(255,255,255,.96);
