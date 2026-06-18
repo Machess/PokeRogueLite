@@ -1865,7 +1865,10 @@ function generateMap(bossIndex) {
     const unlocks   = loadUnlocks();
     const isReturning = (unlocks.completedWith?.length || 0) > 0;
 
-    // Build the full schedule — which mini-game maps to which node type and row
+    // Build the full schedule — which mini-game maps to which node type and row.
+    // Officer Jenny appears mid-map (row 5 ±1) in BOTH regions so the player has
+    // nodes left afterward to benefit from her "no Team Rocket" patrol shield.
+    const jennyRow = 5 + (Math.floor(Math.random() * 3) - 1);   // 4, 5, or 6
     const KANTO_MG_SCHEDULE = [
       { key:'jigglypuff', type:'jigglypuff_node', row:3, minBi:2 },
       { key:'surge',      type:'surge_node',      row:2, minBi:3 },
@@ -1873,6 +1876,7 @@ function generateMap(bossIndex) {
       { key:'ninja',      type:'ninja_node',       row:2, minBi:5 },
       { key:'sabrina',    type:'sabrina_node',    row:2, minBi:6 },
       { key:'blaine',     type:'blaine_node',     row:2, minBi:7 },
+      { key:'jenny',      type:'jenny_node',      row:jennyRow, minBi:1 },
     ];
     const JOHTO_MG_SCHEDULE = [
       { key:'bugsy',   type:'bugsy_node',   row:2, minBi:1 },
@@ -1884,6 +1888,7 @@ function generateMap(bossIndex) {
       { key:'clair',   type:'clair_node',   row:3, minBi:7 },
       { key:'falkner', type:'falkner_node', row:2, minBi:0 },
       { key:'togepi',  type:'togepi_node',  row:3, minBi:2 },
+      { key:'jenny',   type:'jenny_node',   row:jennyRow, minBi:1 },
     ];
     const MG_SCHEDULE = GameState?.region === 'johto' ? JOHTO_MG_SCHEDULE : KANTO_MG_SCHEDULE;
 
@@ -1907,7 +1912,7 @@ function generateMap(bossIndex) {
           !['cooking','fishing','boss','jigglypuff_node','surge_node',
             'erika_node','ninja_node','sabrina_node','blaine_node',
             'falkner_node','bugsy_node','whitney_node','morty_node',
-            'jasmine_node','pryce_node','clair_node','chuck_node','togepi_node'].includes(n.type)
+            'jasmine_node','pryce_node','clair_node','chuck_node','togepi_node','jenny_node'].includes(n.type)
         );
         if (candidates.length > 0) {
           const target = candidates[Math.floor(Math.random() * candidates.length)];
@@ -1934,7 +1939,7 @@ function generateMap(bossIndex) {
                          'jigglypuff_node','surge_node','erika_node',
                          'ninja_node','sabrina_node','blaine_node',
                          'falkner_node','bugsy_node','whitney_node','morty_node',
-                         'jasmine_node','pryce_node','clair_node','chuck_node','togepi_node'];
+                         'jasmine_node','pryce_node','clair_node','chuck_node','togepi_node','jenny_node'];
 
     const injectChallenge = (row) => {
       const cands = nodes.filter(n => n.row === row && !SPECIAL.includes(n.type));
@@ -10626,6 +10631,46 @@ const CHALLENGE_SELECT_MENU = [
     reward: '⭐ 10% shop discount',
     engine: () => GiovanniEngine,
   },
+  {
+    key:    'jenny',
+    type:   'jenny_node',
+    emoji:  '🚓',
+    name:   "Lost & Found Patrol",
+    desc:   'Match the lost Pokémon',
+    reward: '🚓 No Team Rocket for 5 nodes',
+    region: 'both',
+    engine: () => JennyEngine,
+  },
+  {
+    key:    'oak',
+    type:   'oak_node',
+    emoji:  '🔬',
+    name:   "Oak's Sorting Lab",
+    desc:   'Sort Pokémon by type',
+    reward: '💰 Big gold reward',
+    region: 'both',
+    engine: () => OakSortEngine,
+  },
+  {
+    key:    'snorlax',
+    type:   'snorlax_node',
+    emoji:  '⚖️',
+    name:   "Snorlax's Scale",
+    desc:   'Guess which is heavier',
+    reward: '💰 Big gold reward',
+    region: 'both',
+    engine: () => SnorlaxEngine,
+  },
+  {
+    key:    'togepi',
+    type:   'togepi_node',
+    emoji:  '⏳',
+    name:   "Togepi's Time Freeze",
+    desc:   'How long did time stop?',
+    reward: "✨ Lucky Charm — enemy's first attack misses",
+    region: 'johto',
+    engine: () => TogepiEngine,
+  },
 ];
 
 const ChallengeSelectEngine = {
@@ -10639,14 +10684,22 @@ const ChallengeSelectEngine = {
     const bi        = GameState.bossesDefeated || 0;
 
     // Build available options: unlocked mini-games for this profile
-    const MG_MIN_BI = { jigglypuff:2, fishing:2, surge:3, erika:4, ninja:5, sabrina:6, blaine:7, giovanni:8 };
+    const region = GameState.region || 'kanto';
+    const MG_MIN_BI = { jigglypuff:2, fishing:2, surge:3, erika:4, ninja:5, sabrina:6, blaine:7, giovanni:8,
+                        jenny:1, oak:1, snorlax:1, togepi:2 };
     const available = CHALLENGE_SELECT_MENU.filter(m => {
+      // Region gating: entries tagged 'johto' only in Johto; 'both' everywhere;
+      // untagged (the original gym games) keep their existing behaviour.
+      if (m.region === 'johto' && region !== 'johto') return false;
       if (bi < (MG_MIN_BI[m.key] || 0)) return false;
+      // Jenny/Oak/Snorlax/Togepi are always offerable once their minBi is met;
+      // the rest use the existing unlock rules.
+      if (['jenny','oak','snorlax','togepi'].includes(m.key)) return true;
       return isReturn || unlocks.miniGamesUnlocked.includes(m.key) || m.key === 'fishing';
     });
 
-    // How many to offer: tier 1 = 2, tier 2 = 3, tier 3 = 4 (capped by available)
-    const maxOffer  = tier <= 1 ? 2 : tier === 2 ? 3 : 4;
+    // How many to offer: up to 6 cards (capped by what's available)
+    const maxOffer  = 6;
     const offered   = shuffle([...available]).slice(0, maxOffer);
 
     // Build challenge screen
@@ -10906,7 +10959,7 @@ const MysteryEngine = {
     ];
     // Rocket only appears when the patrol shield is down
     if (!shielded) pool.push({ weight: 2, fn: () => RocketBattleEngine.start(node) });
-    if (beaten >= 1) pool.push({ weight: 2, fn: () => JennyEngine.start(node) });
+    if (beaten >= 1) pool.push({ weight: 1, fn: () => JennyEngine.start(node) });
     if (beaten >= 2) pool.push({ weight: 2, fn: () => JigglypuffEngine.start(node) });
     if (beaten >= 3) pool.push({ weight: 2, fn: () => SurgeEngine.start(node) });
     if (beaten >= 4) pool.push({ weight: 2, fn: () => ErikaEngine.start(node) });

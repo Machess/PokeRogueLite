@@ -8299,6 +8299,9 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 ═══════════════════════════════════════════ */
 #screen-challenge.challenge-select-active {
   background: linear-gradient(160deg, #0d0d1a 0%, #12102a 60%, #0d0d1a 100%);
+  justify-content: flex-start;
+  overflow-y: auto;
+  padding: 1rem 0 2rem;
 }
 #screen-challenge.challenge-select-active .challenge-badge {
   color: #c8a0ff;
