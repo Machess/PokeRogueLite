@@ -5680,6 +5680,27 @@ const MapEngine = {
       ).join('');
     }
 
+    // ── Officer Jenny's patrol shield indicator ────────────────────────────
+    // Shows when the "no Team Rocket in Mystery nodes" buff is active, with the
+    // number of shielded nodes remaining.
+    {
+      const shield = GameState.rocketShieldNodes || 0;
+      let shieldEl = document.getElementById('nav-rocket-shield');
+      if (shield > 0) {
+        if (!shieldEl) {
+          shieldEl = document.createElement('div');
+          shieldEl.id = 'nav-rocket-shield';
+          shieldEl.className = 'nav-rocket-shield';
+          document.getElementById('nav-location').appendChild(shieldEl);
+        }
+        shieldEl.style.display = '';
+        shieldEl.title = `Officer Jenny's patrol: no Team Rocket for ${shield} more node${shield === 1 ? '' : 's'}`;
+        shieldEl.innerHTML = `<span class="nav-shield-icon">🛡️</span><span class="nav-shield-count">No Rocket ×${shield}</span>`;
+      } else if (shieldEl) {
+        shieldEl.style.display = 'none';
+      }
+    }
+
     // ── Find available choices ──────────────────────────────────────────────
     // With the decision-graph structure, multiple rows may have unlocked nodes
     // (all children of the previously completed node are unlocked at once).
