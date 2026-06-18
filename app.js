@@ -17717,63 +17717,137 @@ const NURSE_JOY_LINES_HURT = [
 ];
 
 const HealEngine = {
+  _timers: [],
+
   start(node) {
     showScreen('heal');
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
 
-    // Pick a Nurse Joy fluff line — context-aware if the party was badly hurt.
-    // Must read HP BEFORE the heal loop below restores everyone to full.
-    const totalHp = GameState.party.reduce((s, p) => s + (p.maxHp || 1), 0);
-    const curHp   = GameState.party.reduce((s, p) => s + Math.max(0, p.hp || 0), 0);
+    const party = GameState.party;
+
+    // Greeting line — context-aware if the party was badly hurt (read HP first)
+    const totalHp = party.reduce((s, p) => s + (p.maxHp || 1), 0);
+    const curHp   = party.reduce((s, p) => s + Math.max(0, p.hp || 0), 0);
     const hurtFrac = totalHp ? 1 - (curHp / totalHp) : 0;
-    const pool = hurtFrac >= 0.5 ? NURSE_JOY_LINES_HURT : NURSE_JOY_LINES;
-    const line = pool[Math.floor(Math.random() * pool.length)];
+    const greet = (hurtFrac >= 0.5 ? NURSE_JOY_LINES_HURT : NURSE_JOY_LINES)[
+      Math.floor(Math.random() * (hurtFrac >= 0.5 ? NURSE_JOY_LINES_HURT : NURSE_JOY_LINES).length)];
     const speechEl = document.getElementById('heal-speech');
-    if (speechEl) speechEl.textContent = line;
-    // Reset portrait in case a prior missing-file run hid it
+    if (speechEl) speechEl.textContent = greet;
+
     const joyEl = document.getElementById('heal-joy-portrait');
     if (joyEl) joyEl.style.display = '';
+    const chanseyEl = document.getElementById('heal-chansey');
+    if (chanseyEl) chanseyEl.style.display = '';
 
-    // Apply heal center background
+    // Background
     const healBg = document.getElementById('heal-bg');
     if (healBg) {
       healBg.style.background = 'linear-gradient(180deg,#fff0f4 0%,#ffe0e8 50%,#ffd0e0 100%)';
       const img = new Image();
-      img.onload  = () => { healBg.style.background = `url('assets/backgrounds/bg_heal.png') center center / cover no-repeat`; };
+      img.onload = () => { healBg.style.background = `url('assets/backgrounds/bg_heal.png') center center / cover no-repeat`; };
       img.src = 'assets/backgrounds/bg_heal.png';
     }
-    setTimeout(() => SoundEngine.playRecovery(), 400);
-    // Create sparkles
+
+    // Sparkles
     const field = document.getElementById('heal-sparkles');
-    field.innerHTML = '';
-    for (let i = 0; i < 30; i++) {
-      const s = document.createElement('div');
-      s.className = 'sparkle';
-      s.style.left   = Math.random() * 100 + '%';
-      s.style.top    = Math.random() * 100 + '%';
-      s.style.animationDuration = (1 + Math.random() * 2) + 's';
-      s.style.animationDelay   = (Math.random() * 2) + 's';
-      s.style.width = s.style.height = (2 + Math.random() * 4) + 'px';
-      field.appendChild(s);
+    if (field) {
+      field.innerHTML = '';
+      for (let i = 0; i < 30; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle';
+        s.style.left = Math.random() * 100 + '%';
+        s.style.top  = Math.random() * 100 + '%';
+        s.style.animationDuration = (1 + Math.random() * 2) + 's';
+        s.style.animationDelay = (Math.random() * 2) + 's';
+        s.style.width = s.style.height = (2 + Math.random() * 4) + 'px';
+        field.appendChild(s);
+      }
     }
-    // Heal all
-    GameState.party.forEach(p => { p.hp = p.maxHp; });
-    saveGame();
-    // Show party
-    const partyEl = document.getElementById('heal-party');
-    partyEl.innerHTML = '';
-    GameState.party.forEach(p => {
-      const d = document.createElement('div');
-      d.className = 'heal-poke-card';
-      d.innerHTML = `<img src="${p.spriteUrl}" alt="${p.name}"
-                         onerror="this.src='assets/sprites/${p.id}.png'" />
-                     <div class="heal-poke-name">${p.name}</div>`;
-      partyEl.appendChild(d);
+
+    const finishBtn = document.getElementById('btn-heal-finish');
+    if (finishBtn) finishBtn.style.display = 'none';
+
+    // ── Build the healing machine: a dome with one slot per party member ────
+    const machine = document.getElementById('heal-machine');
+    const n = party.length;
+    machine.innerHTML = `
+      <div class="heal-machine-dome"></div>
+      <div class="heal-machine-body">
+        <div class="heal-slots" id="heal-slots"></div>
+      </div>`;
+    const slots = document.getElementById('heal-slots');
+    party.forEach((p, i) => {
+      const slot = document.createElement('div');
+      slot.className = 'heal-slot';
+      slot.innerHTML = `
+        <img class="heal-slot-poke" src="${p.spriteUrl}" alt="${p.name}"
+             onerror="this.src='assets/sprites/${p.id}.png'"/>
+        <img class="heal-slot-ball" src="assets/pokeball.png"
+             onerror="this.onerror=null;this.replaceWith(Object.assign(document.createElement('div'),{className:'heal-slot-ball-emoji',textContent:'🔴'}))"/>
+        <div class="heal-slot-light"></div>`;
+      slots.appendChild(slot);
     });
-    // Shrink any long names so they fit their card without clipping
-    requestAnimationFrame(() => fitAllText('.heal-poke-name', partyEl));
+    // Hide the old static party grid (machine replaces it)
+    const partyEl = document.getElementById('heal-party');
+    if (partyEl) partyEl.innerHTML = '';
+
+    const slotEls = Array.from(slots.querySelectorAll('.heal-slot'));
+
+    // ── Animation sequence ──────────────────────────────────────────────────
+    // 1) Recall: each Pokémon shrinks into its ball, staggered
+    slotEls.forEach((el, i) => {
+      this._timers.push(setTimeout(() => el.classList.add('heal-recall'), 300 + i * 220));
+    });
+
+    const recallDone = 300 + n * 220 + 300;
+
+    // 2) Balls + dome lights blink in a sweep while the healing jingle plays
+    this._timers.push(setTimeout(() => {
+      machine.classList.add('heal-blinking');
+      slotEls.forEach((el, i) => {
+        el.style.setProperty('--blink-delay', (i * 0.18) + 's');
+        el.classList.add('heal-blink');
+      });
+      SoundEngine.playRecovery();
+      this._timers.push(setTimeout(() => SoundEngine.playRecovery(), 1400));
+    }, recallDone));
+
+    const blinkDur = 2600;
+
+    // 3) Heal the party (do the actual restore mid-blink)
+    this._timers.push(setTimeout(() => {
+      party.forEach(p => { p.hp = p.maxHp; });
+      saveGame();
+    }, recallDone + 600));
+
+    // 4) Final flash, then release Pokémon at full HP
+    this._timers.push(setTimeout(() => {
+      machine.classList.remove('heal-blinking');
+      machine.classList.add('heal-flash');
+      slotEls.forEach(el => { el.classList.remove('heal-blink'); });
+    }, recallDone + blinkDur));
+
+    this._timers.push(setTimeout(() => {
+      machine.classList.remove('heal-flash');
+      slotEls.forEach((el, i) => {
+        this._timers.push(setTimeout(() => {
+          el.classList.remove('heal-recall');
+          el.classList.add('heal-release');
+        }, i * 160));
+      });
+    }, recallDone + blinkDur + 250));
+
+    // 5) Completion line + Continue button
+    this._timers.push(setTimeout(() => {
+      if (speechEl) speechEl.textContent = "Your Pokémon are all healed! We hope to see you again! ♥";
+      if (finishBtn) { finishBtn.style.display = ''; finishBtn.classList.add('heal-btn-in'); }
+    }, recallDone + blinkDur + 250 + n * 160 + 400));
   },
 
   finish() {
+    this._timers.forEach(t => clearTimeout(t));
+    this._timers = [];
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },

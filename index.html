@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=120" />
+  <link rel="stylesheet" href="style.css?v=132" />
 </head>
 <body>
 
@@ -757,18 +757,34 @@
   <div class="heal-bg" id="heal-bg">
     <div class="heal-sparkle-field" id="heal-sparkles"></div>
   </div>
-  <div class="heal-center">
-    <h1 class="screen-title">Pokémon Center</h1>
-    <div class="heal-joy-row">
-      <div class="heal-speech-bubble" id="heal-speech">
-        Welcome! We'll restore your tired Pokémon to full health. ♥
-      </div>
+  <div class="heal-vignette"></div>
+
+  <h1 class="screen-title heal-title">Pokémon Center</h1>
+
+  <!-- Speech bubble (floats above the counter, points at Joy) -->
+  <div class="heal-speech-bubble" id="heal-speech">
+    Welcome! We'll restore your tired Pokémon to full health. ♥
+  </div>
+
+  <!-- The scene: Joy/Chansey behind, counter in front, machine on the counter -->
+  <div class="heal-scene">
+    <!-- Layer 1: Joy + Chansey, anchored behind the counter -->
+    <div class="heal-staff">
       <img class="heal-joy-portrait" src="assets/nurse_joy.png" alt="Nurse Joy"
            id="heal-joy-portrait" onerror="this.style.display='none'" />
+      <img class="heal-chansey" src="assets/chansey.png" alt="Chansey"
+           id="heal-chansey" onerror="this.style.display='none'" />
     </div>
-    <div class="heal-party" id="heal-party"></div>
-    <button class="btn-pixel btn-primary heal-btn" id="btn-heal-finish">Thank you! ▶</button>
+    <!-- Layer 2: the counter (front face drawn over Joy's lower body) -->
+    <div class="heal-counter">
+      <div class="heal-counter-top"></div>
+      <div class="heal-counter-front"></div>
+      <!-- Layer 3: the healing machine sitting ON the counter top -->
+      <div class="heal-machine" id="heal-machine"></div>
+    </div>
   </div>
+
+  <button class="btn-pixel btn-primary heal-btn" id="btn-heal-finish" style="display:none">Thank you! ▶</button>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -1024,6 +1040,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=206"></script>
+<script src="app.js?v=214"></script>
 </body>
 </html>
