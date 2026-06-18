@@ -17771,6 +17771,7 @@ const HealEngine = {
     // ── Build the healing machine: a dome with one slot per party member ────
     const machine = document.getElementById('heal-machine');
     const n = party.length;
+    machine.className = 'heal-machine' + (n >= 5 ? ' heal-machine-compact' : '');
     machine.innerHTML = `
       <div class="heal-machine-dome"></div>
       <div class="heal-machine-body">

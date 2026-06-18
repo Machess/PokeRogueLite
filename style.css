@@ -10827,7 +10827,7 @@ body { touch-action: manipulation; }
   position: absolute; left: 50%; top: -34px;
   transform: translateX(-50%);
   z-index: 3;
-  width: max-content; max-width: 92%;
+  width: max-content; max-width: 98vw;
 }
 .heal-machine-dome {
   height: 22px; margin: 0 18px;
@@ -10849,8 +10849,17 @@ body { touch-action: manipulation; }
   padding: .9rem 1.1rem; box-shadow: 0 5px 14px rgba(150,90,120,.35);
 }
 .heal-slots {
-  display: flex; gap: .8rem; justify-content: center; flex-wrap: wrap;
+  display: flex; gap: .5rem; justify-content: center; flex-wrap: nowrap;
 }
+/* Compact layout for 5-6 Pokémon so they always fit one row + the button stays clear */
+.heal-machine-compact .heal-slots { gap: .3rem; }
+.heal-machine-compact .heal-slot { width: 54px; height: 66px; }
+.heal-machine-compact .heal-slot-poke { width: 50px; height: 50px; }
+.heal-machine-compact .heal-slot-ball,
+.heal-machine-compact .heal-slot-ball-emoji { width: 32px; height: 32px; bottom: 16px; }
+.heal-machine-compact .heal-slot-ball-emoji { font-size: 28px; }
+.heal-machine-compact .heal-slot-light { width: 15px; height: 15px; }
+.heal-machine-compact .heal-machine-body { padding: .7rem .8rem; }
 .heal-slot {
   position: relative; width: 76px; height: 90px;
   display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
