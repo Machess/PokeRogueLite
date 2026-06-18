@@ -2097,6 +2097,9 @@ function showBossIntro(opts) {
   document.getElementById('dialogue-name').textContent = opts.name;
   document.getElementById('dialogue-text').textContent = '';
 
+  // Optional character cry/sound played as the intro appears (like Wobbuffet)
+  if (opts.cry) SoundEngine.playSFX(opts.cry, opts.cryVol ?? 0.8);
+
   const startBtn = document.getElementById('btn-start-boss-battle');
   if (startBtn) { startBtn.style.display = 'none'; startBtn.textContent = opts.btnLabel || 'Begin ▶'; }
   document.getElementById('btn-dialogue-next').style.display = 'none';
@@ -13770,6 +13773,7 @@ const TogepiEngine = {
     showBossIntro({
       gymIndex: 0, portrait: 'togepi.png', gameKey: 'togepi',
       name: 'Togepi', btnLabel: '⏳ Start!',
+      cry: 'togepi.mp3',
       introText: "Togepiii! ✨ Togepi waved its little arms and... everything FROZE! Can you tell how long time stood still? Look at the two clocks and help time start again!",
     });
     const t = document.getElementById('boss-trainer-sprite');
@@ -14362,6 +14366,7 @@ const JennyEngine = {
     showBossIntro({
       gymIndex: 0, portrait: 'officer_jenny.png', gameKey: 'jenny',
       name: 'Officer Jenny', btnLabel: '🚓 Start Patrol!',
+      cry: 'officer_jenny.mp3',
       introText: JENNY_LINES[Math.floor(Math.random() * JENNY_LINES.length)],
     });
     const t = document.getElementById('boss-trainer-sprite');
