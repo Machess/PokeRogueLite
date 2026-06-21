@@ -2282,6 +2282,11 @@ function completeChallenge(opts) {
 
   if (opts.won) SoundEngine.playFanfare();
 
+  // Adaptive difficulty — record this result and nudge the skill's tier
+  if (opts.gameKey && opts.score !== undefined && opts.maxScore) {
+    recordSkillResult(opts.gameKey, opts.score, opts.maxScore);
+  }
+
   saveGame();
 
   const finish = () => {
@@ -2319,6 +2324,80 @@ function completeChallenge(opts) {
 function getActivePokemon()  { return GameState.party?.[GameState.activePokemonIndex] ?? null; }
 function getParty()          { return GameState.party ?? []; }
 function getTier()           { return GameState.difficultyTier ?? 2; }
+
+// ─── ADAPTIVE PER-SKILL DIFFICULTY ───────────────────────────────────────────
+// The age-derived difficultyTier is the STARTING anchor. Each theoretical skill
+// then drifts up or down (within 1-3) based on a rolling success rate, so a child
+// can be advanced at counting but still building elapsed-time, etc. Reflex/timing
+// games are intentionally excluded — they stay on the base age tier.
+const SKILL_OF_GAME = {
+  togepi: 'time',     chuck: 'time',
+  giovanni: 'money',
+  pryce: 'counting',
+  oak: 'sorting',
+  snorlax: 'comparison',
+  brock: 'math',      cooking: 'math',
+  misty: 'reading',   fishing: 'reading',
+  bugsy: 'spelling',  james: 'spelling',
+  whitney: 'spelling',
+  // (reflex/timing games like runner, falkner, wobbuffet are NOT listed — they
+  //  use the base age tier and never adapt)
+};
+const ADAPTIVE_SKILLS = ['time','money','counting','sorting','comparison','math','reading','spelling'];
+
+// Ensure the per-profile skill table exists, seeded from the age tier.
+function _ensureSkillLevels() {
+  if (!GameState.skillLevels) GameState.skillLevels = {};
+  const anchor = GameState.difficultyTier || 2;
+  ADAPTIVE_SKILLS.forEach(sk => {
+    if (!GameState.skillLevels[sk]) {
+      GameState.skillLevels[sk] = { tier: anchor, recent: [], played: 0 };
+    }
+  });
+  return GameState.skillLevels;
+}
+
+// The tier an engine should use for its questions. Theoretical games pass their
+// gameKey; anything unmapped falls back to the base age tier.
+function getSkillTier(gameKey) {
+  const skill = SKILL_OF_GAME[gameKey];
+  if (!skill) return GameState.difficultyTier ?? 2;
+  const levels = _ensureSkillLevels();
+  return levels[skill]?.tier ?? (GameState.difficultyTier ?? 2);
+}
+
+// Record one mini-game result and adapt that skill's tier. Called from
+// completeChallenge with the gameKey + score/maxScore it already receives.
+function recordSkillResult(gameKey, score, maxScore) {
+  const skill = SKILL_OF_GAME[gameKey];
+  if (!skill || !maxScore) return;
+  const levels = _ensureSkillLevels();
+  const s = levels[skill];
+  const ratio = score / maxScore;
+  s.recent.push(ratio >= 0.6 ? 1 : 0);
+  if (s.recent.length > 6) s.recent.shift();
+  s.played = (s.played || 0) + 1;
+  s.lastRatio = ratio;
+
+  // Need at least 3 plays before adapting, and a streak (hysteresis) to move —
+  // so a single good/bad game never yo-yos the difficulty.
+  if (s.recent.length >= 3) {
+    const last4 = s.recent.slice(-4);
+    const passes = last4.reduce((a, b) => a + b, 0);
+    if (last4.length >= 3 && passes === last4.length && ratio >= 0.8 && s.tier < 3) {
+      s.tier++;                      // promote: aced the recent streak
+      s._justChanged = 'up';
+      s.recent = [];                 // new tier earns its own fresh streak
+    } else if (last4.length >= 3 && passes <= Math.floor(last4.length / 3) && s.tier > 1) {
+      s.tier--;                      // ease: struggling on the recent streak
+      s._justChanged = 'down';
+      s.recent = [];
+    } else {
+      s._justChanged = null;
+    }
+  }
+}
+
 function getBossCount()      { return GameState.bossesDefeated ?? 0; }
 function getGold()           { return GameState.gold ?? 0; }
 function addGold(amount)     { GameState.gold = getGold() + amount; }
@@ -10866,7 +10945,7 @@ const GiovanniEngine = {
 
   _showRound() {
     if (this._round >= 5) { this._finish(); return; }
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('giovanni'), 3);
     const r    = this._genRound(tier);
     this._target = r.target;
     this._paid   = 0;
@@ -13242,7 +13321,7 @@ const PryceEngine = {
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
 
     // Build the shape set for this tier
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('pryce'), 3);
     const typeCount = tier === 1 ? (2 + Math.floor(Math.random() * 2))     // 2-3 types
                     : tier === 2 ? (3 + Math.floor(Math.random() * 2))     // 3-4
                     :              (4 + Math.floor(Math.random() * 2));     // 4-5
@@ -13270,7 +13349,7 @@ const PryceEngine = {
 
   _renderField() {
     if (this._typeIdx >= this._order.length) { this._reveal(); return; }
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('pryce'), 3);
 
     const cv = setupChallengeScreen({
       portrait:'pryce.png', badge:'❄️ Ice Sculpture Restoration',
@@ -13364,7 +13443,7 @@ const PryceEngine = {
     // Glow-pulse the active shapes so they're countable
     field.querySelectorAll('.pryce-shape-active').forEach(el => el.classList.add('pryce-glow'));
 
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('pryce'), 3);
     const maxOpt = tier === 2 ? 8 : 10;
     // Build number options around the true count
     const opts = new Set([target]);
@@ -13442,7 +13521,7 @@ const PryceEngine = {
     const total = this._totalTypes || 1;
     const won   = this._hits >= Math.ceil(total * 0.7);   // 70%+ correct = success
     const perfect = this._hits >= total;
-    const tier  = Math.min(GameState.difficultyTier || 2, 3);
+    const tier  = Math.min(getSkillTier('pryce'), 3);
     const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
     // Reward scales with accuracy; mistakes reduce gold
     const gold = Math.round(baseGold * (this._hits / total));
@@ -13639,7 +13718,7 @@ const ChuckEngine = {
 
   _showRound() {
     if (this._round >= 5) { this._finish(); return; }
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('chuck'), 3);
 
     const cv = setupChallengeScreen({
       portrait: 'chuck.png', badge: '🕐 Training Clock',
@@ -13846,7 +13925,7 @@ const TogepiEngine = {
 
   _showRound() {
     if (this._round >= 5) { this._finish(); return; }
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('togepi'), 3);
     const cv = setupChallengeScreen({
       portrait: 'togepi.png', badge: '⏳ Time Freeze',
       intro: `Round ${this._round + 1}/5 — ${this._hits} correct`,
@@ -14012,7 +14091,7 @@ const TogepiEngine = {
   _finish() {
     const won  = this._hits >= 4;
     const perfect = this._hits >= 5;
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('togepi'), 3);
     const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
     const gold = won ? baseGold : Math.floor(baseGold / 2);
 
@@ -14103,7 +14182,7 @@ const OakSortEngine = {
     if (this._round >= this._queue.length) { this._finish(); return; }
     this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
 
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('oak'), 3);
     const poke = this._queue[this._round];
 
     const cv = setupChallengeScreen({
@@ -14216,7 +14295,7 @@ const SnorlaxEngine = {
 
   _showRound() {
     if (this._round >= 5 || this._pokes.length < 4) { this._finish(); return; }
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
+    const tier = Math.min(getSkillTier('snorlax'), 3);
 
     const cv = setupChallengeScreen({
       portrait: 'snorlax_block.png', badge: '⚖️ Weigh Station',
@@ -14604,7 +14683,7 @@ const BugsyEngine = {
     if (this._round >= 5) { this._finish(); return; }
     this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
 
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('bugsy');
 
     // Tier-based config
     const CFG = {
@@ -16821,7 +16900,7 @@ const CookingEngine = {
 
   start(node) {
     this._node = node;
-    const data = _pickCookingRecipe(GameState.difficultyTier || 2);
+    const data = _pickCookingRecipe(getSkillTier('cooking'));
     this._recipe = data.recipe;
     this._vessel = data.vessel;
     this._slots  = data.slots;       // ordered required ingredients (with math)
@@ -16897,7 +16976,7 @@ const CookingEngine = {
 
   // ── Step 1: pick the right cookware ──────────────────────────────────────
   _renderVesselChoice() {
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('cooking');
     const stage = document.getElementById('cooking-stage');
     const vm = VESSEL_META[this._vessel];
     stage.innerHTML = `
@@ -16937,7 +17016,7 @@ const CookingEngine = {
 
   // ── Step 2: add ingredients into the vessel, in order ────────────────────
   _renderCooking() {
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('cooking');
     const vm = VESSEL_META[this._vessel];
     const stage = document.getElementById('cooking-stage');
 
@@ -17042,7 +17121,7 @@ const CookingEngine = {
 
   _showMathModal(slot, idx) {
     const ch   = slot.math;
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('cooking');
     const overlay = document.getElementById('cooking-math-overlay');
     document.getElementById('cooking-math-question').textContent = `How many ${slot.name} does the recipe need?`;
     document.getElementById('cooking-math-qty-hint').textContent = ch.question;
@@ -17291,7 +17370,7 @@ const FishingEngine = {
     this._answered = false;
     this._clueIdx  = 0;
 
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('fishing');
     // Build a generated puzzle, avoiding the last few Pokémon so repeats are rare
     if (!GameState._mistyRecent) GameState._mistyRecent = [];
     this._puzzle = _buildMistyPuzzle(tier, GameState._mistyRecent);
@@ -17352,7 +17431,7 @@ const FishingEngine = {
     // Tier 1 (ages 6–7): no angling — straight to a full, generous clue set.
     // Tier 2–3: play the Cast & Reel angling game first; how well you angle
     // decides how many clues you get (great = +1, good = 0, sloppy = −1).
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('fishing');
     if (tier >= 2) {
       this._playAngling((clueBonus) => {
         this._rebuildPuzzleClues(clueBonus);
@@ -17369,7 +17448,7 @@ const FishingEngine = {
   _rebuildPuzzleClues(clueBonus) {
     const p = this._puzzle;
     if (!p || !p._allClues) return;
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('fishing');
     const baseClue = tier >= 3 ? 1 : 2;
     const n = Math.max(1, Math.min(p._allClues.length, baseClue + (clueBonus || 0)));
     p.clues = shuffle([...p._allClues]).slice(0, n);
@@ -17379,7 +17458,7 @@ const FishingEngine = {
   // A marker sweeps a bar with a sweet-spot zone; tap to hook. No fail-out —
   // accuracy maps to a clue bonus. Tier 3 has a smaller/faster zone than tier 2.
   _playAngling(onDone) {
-    const tier = GameState.difficultyTier || 2;
+    const tier = getSkillTier('fishing');
     // Switch to the challenge screen — the angling renders into #challenge-coin-visual
     // which lives there, not on #screen-boss.
     showScreen('challenge');
