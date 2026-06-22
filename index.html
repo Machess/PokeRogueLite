@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=132" />
+  <link rel="stylesheet" href="style.css?v=137" />
 </head>
 <body>
 
@@ -69,10 +69,18 @@
     <hr class="start-menu-divider">
     <button class="btn-pixel btn-util"      id="btn-open-pokedex"  disabled>📖 Pokédex</button>
     <button class="btn-pixel btn-util"      id="btn-select-profile">👤 Profile</button>
+    <button class="btn-pixel btn-util"      id="btn-open-parent">🔒 Grown-ups</button>
   </div>
   <div class="start-footer">Catch · Battle · Evolve</div>
   <button class="btn-reset-all" id="btn-reset-all" title="Wipe all saved data and start fresh">⚠ Reset All Data</button>
   <button class="mute-btn start-mute-btn" id="btn-mute-start" title="Toggle music">🔊</button>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SCREEN: PARENT DASHBOARD (PIN-gated)
+═══════════════════════════════════════════ -->
+<div id="screen-parent" class="screen">
+  <div class="parent-wrap" id="parent-wrap"></div>
 </div>
 
 <!-- ═══════════════════════════════════════════
@@ -1040,6 +1048,6 @@
   <div class="pokedex-grid" id="pokedex-grid"></div>
 </div>
 
-<script src="app.js?v=214"></script>
+<script src="app.js?v=217"></script>
 </body>
 </html>

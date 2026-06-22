@@ -10928,3 +10928,86 @@ body { touch-action: manipulation; }
   z-index: 7;
 }
 .heal-btn-in { animation: heal-bubble-in .4s ease both; }
+
+/* ═══ PARENT DASHBOARD ═══ */
+#screen-parent {
+  background: linear-gradient(160deg, #1a2030 0%, #232c42 100%);
+  justify-content: flex-start; align-items: center;
+  overflow-y: auto; padding: 1rem 0 2rem;
+}
+.parent-wrap { width: 100%; max-width: 560px; padding: 0 1rem; }
+
+/* PIN gate */
+.parent-gate {
+  display: flex; flex-direction: column; align-items: center; gap: .8rem;
+  margin: 2rem auto; max-width: 320px; text-align: center;
+}
+.parent-gate-icon { font-size: 3rem; }
+.parent-gate-title {
+  font-family: 'Press Start 2P', monospace; font-size: .8rem; color: #cfe0ff;
+}
+.parent-gate-sub { font-size: .85rem; color: #9fb0cc; line-height: 1.5; }
+.parent-pin-input {
+  font-family: 'Press Start 2P', monospace; font-size: 1.4rem; text-align: center;
+  letter-spacing: .5rem; width: 160px; padding: .6rem;
+  border: 2px solid #5a7aa8; border-radius: 10px;
+  background: rgba(255,255,255,.95); color: #223;
+}
+.parent-gate-msg { font-size: .8rem; color: #ff9e9e; min-height: 1.2em; }
+
+/* Header */
+.parent-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .3rem; }
+.parent-title { font-family: 'Press Start 2P', monospace; font-size: .85rem; color: #cfe0ff; }
+.parent-intro { font-size: .82rem; color: #9fb0cc; line-height: 1.5; margin-bottom: 1rem; }
+.parent-empty { color: #9fb0cc; text-align: center; padding: 2rem; }
+
+/* Per-child card */
+.parent-card {
+  background: rgba(255,255,255,.05);
+  border: 1.5px solid rgba(150,180,230,.25);
+  border-radius: 14px; padding: 1rem; margin-bottom: 1.2rem;
+}
+.parent-card-head { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; margin-bottom: .5rem; }
+.parent-child-name { font-family: 'Press Start 2P', monospace; font-size: .7rem; color: #ffd98a; }
+.parent-child-age { font-size: .75rem; color: #9fb0cc; }
+.parent-child-region { font-size: .7rem; color: #8fb0d8; margin-left: auto; }
+.parent-summary {
+  font-size: .88rem; color: #dde6f5; line-height: 1.6;
+  background: rgba(120,160,220,.12); border-radius: 10px; padding: .6rem .8rem; margin-bottom: .7rem;
+}
+.parent-summary b { color: #ffe08a; }
+.parent-engage {
+  display: flex; flex-wrap: wrap; gap: .8rem; font-size: .78rem; color: #b8c6dc; margin-bottom: .7rem;
+}
+.parent-flags { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .8rem; }
+.pt-flag { font-size: .72rem; padding: .2rem .55rem; border-radius: 999px; }
+.pt-flag-strong { background: rgba(74,222,128,.2); color: #8ff0b0; border: 1px solid rgba(74,222,128,.4); }
+.pt-flag-grow   { background: rgba(255,200,120,.18); color: #ffd98a; border: 1px solid rgba(255,200,120,.4); }
+
+/* Skill rows */
+.pt-skill-list { display: flex; flex-direction: column; gap: .6rem; }
+.pt-skill {
+  background: rgba(0,0,0,.18); border-radius: 10px; padding: .6rem .7rem;
+}
+.pt-skill-untouched { display: flex; align-items: center; gap: .5rem; opacity: .5; }
+.pt-skill-head { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+.pt-skill-icon { font-size: 1.1rem; }
+.pt-skill-name { font-size: .85rem; color: #e6eef8; font-weight: 600; }
+.pt-skill-note { font-size: .75rem; color: #8090a8; margin-left: auto; }
+.pt-skill-level {
+  margin-left: auto; font-family: 'Press Start 2P', monospace; font-size: .4rem;
+  padding: .2rem .5rem; border-radius: 6px;
+}
+.pt-tier1 { background: rgba(140,200,255,.2); color: #aed4ff; }
+.pt-tier2 { background: rgba(255,200,120,.2); color: #ffd98a; }
+.pt-tier3 { background: rgba(74,222,128,.22); color: #8ff0b0; }
+.pt-skill-bar { height: 8px; background: rgba(255,255,255,.1); border-radius: 4px; overflow: hidden; margin-bottom: .4rem; }
+.pt-skill-fill { height: 100%; background: linear-gradient(90deg, #6fa8ff, #8ff0b0); border-radius: 4px; transition: width .6s ease; }
+.pt-skill-stats { display: flex; flex-wrap: wrap; gap: .6rem; font-size: .76rem; color: #b8c6dc; }
+.pt-stat { white-space: nowrap; }
+.pt-up { color: #8ff0b0; } .pt-down { color: #ffb088; } .pt-steady { color: #b8c6dc; }
+.pt-fast { color: #8ff0b0; } .pt-mid { color: #ffd98a; } .pt-slow { color: #c8b0e0; }
+.pt-plays { color: #8090a8; margin-left: auto; }
+.pt-skill-games { font-size: .72rem; color: #7888a0; margin-top: .35rem; }
+
+.parent-footer { text-align: center; margin-top: 1rem; }

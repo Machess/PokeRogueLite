@@ -2379,6 +2379,24 @@ function recordSkillResult(gameKey, score, maxScore) {
   s.played = (s.played || 0) + 1;
   s.lastRatio = ratio;
 
+  // Lifetime accuracy (for the parent dashboard) — running totals
+  s.totalScore = (s.totalScore || 0) + score;
+  s.totalMax   = (s.totalMax || 0) + maxScore;
+  s.lastPlayed = Date.now();
+
+  // Response speed: average seconds-per-question, derived from how long the
+  // whole mini-game took divided by the number of questions (maxScore). Rolled
+  // into a lifetime average so the dashboard can show "thinks quickly / takes
+  // their time" without needing per-answer instrumentation in every engine.
+  if (_skillGameStart && maxScore > 0) {
+    const elapsed = Date.now() - _skillGameStart;
+    if (elapsed > 500 && elapsed < 600000) {            // ignore idle/away outliers
+      const avgThisGame = elapsed / maxScore;
+      s.avgMs = s.avgMs ? Math.round(s.avgMs * 0.7 + avgThisGame * 0.3) : Math.round(avgThisGame);
+    }
+  }
+  _skillGameStart = 0;
+
   // Need at least 3 plays before adapting, and a streak (hysteresis) to move —
   // so a single good/bad game never yo-yos the difficulty.
   if (s.recent.length >= 3) {
@@ -2396,6 +2414,13 @@ function recordSkillResult(gameKey, score, maxScore) {
       s._justChanged = null;
     }
   }
+}
+
+// Timing: when an adaptive mini-game's intro/first round begins, stamp the start.
+// Used to derive average response speed for the parent dashboard.
+let _skillGameStart = 0;
+function skillTimerBegin(gameKey) {
+  _skillGameStart = SKILL_OF_GAME[gameKey] ? Date.now() : 0;
 }
 
 function getBossCount()      { return GameState.bossesDefeated ?? 0; }
@@ -4141,6 +4166,231 @@ async function runEvolutions(evolutions, onDone) {
 // ─── GAME CONTROLLER ─────────────────────────────────────────────────────────
 
 // ─── PROFILE ENGINE ──────────────────────────────────────────────────────────
+
+
+// ─── PARENT DASHBOARD — PIN-gated learning HUD for grown-ups ─────────────────
+// Shows concrete per-skill progress for each child profile: skill level, accuracy,
+// improvement trend, response speed, strengths/struggles, and engagement. All data
+// is local (no accounts/uploads) and framed for growth (never shaming).
+const PARENT_PIN_KEY = 'pokerogue_parent_pin_v1';
+
+const SKILL_DISPLAY = {
+  time:       { label: 'Telling & Elapsed Time', icon: '🕐', games: 'Chuck, Togepi' },
+  money:      { label: 'Money & Making Change',  icon: '💰', games: 'Giovanni' },
+  counting:   { label: 'Counting',               icon: '🔢', games: 'Pryce' },
+  sorting:    { label: 'Sorting & Categories',   icon: '🗂️', games: 'Oak' },
+  comparison: { label: 'Comparing Amounts',      icon: '⚖️', games: 'Snorlax' },
+  math:       { label: 'Arithmetic & Sequencing',icon: '➕', games: 'Brock' },
+  reading:    { label: 'Reading & Clues',        icon: '📖', games: 'Misty' },
+  spelling:   { label: 'Spelling & Letters',     icon: '🔤', games: 'Bugsy, James' },
+};
+const TIER_WORD = { 1: 'Beginner', 2: 'Growing', 3: 'Confident' };
+
+const ParentDashboardEngine = {
+  _authed: false,
+
+  open() {
+    showScreen('parent');
+    const hasPin = !!localStorage.getItem(PARENT_PIN_KEY);
+    if (this._authed) { this._renderDashboard(); }
+    else if (hasPin)  { this._renderPinEntry(); }
+    else              { this._renderPinSetup(); }
+  },
+
+  // ── First-time PIN setup ──────────────────────────────────────────────────
+  _renderPinSetup() {
+    const wrap = document.getElementById('parent-wrap');
+    wrap.innerHTML = `
+      <div class="parent-gate">
+        <div class="parent-gate-icon">🔒</div>
+        <h2 class="parent-gate-title">Grown-ups Area</h2>
+        <p class="parent-gate-sub">Create a 4-digit PIN so only grown-ups can see the learning dashboard.</p>
+        <input class="parent-pin-input" id="parent-pin-input" type="tel" inputmode="numeric"
+               maxlength="4" placeholder="• • • •" autocomplete="off" />
+        <div class="parent-gate-msg" id="parent-gate-msg"></div>
+        <button class="btn-pixel btn-primary" id="parent-pin-save">Set PIN</button>
+        <button class="btn-pixel btn-util" id="parent-back">◂ Back</button>
+      </div>`;
+    document.getElementById('parent-pin-save').onclick = () => {
+      const v = document.getElementById('parent-pin-input').value.trim();
+      if (!/^\d{4}$/.test(v)) { document.getElementById('parent-gate-msg').textContent = 'Please enter 4 digits.'; return; }
+      localStorage.setItem(PARENT_PIN_KEY, v);
+      this._authed = true;
+      this._renderDashboard();
+    };
+    document.getElementById('parent-back').onclick = () => showScreen('start');
+  },
+
+  // ── PIN entry ─────────────────────────────────────────────────────────────
+  _renderPinEntry() {
+    const wrap = document.getElementById('parent-wrap');
+    wrap.innerHTML = `
+      <div class="parent-gate">
+        <div class="parent-gate-icon">🔒</div>
+        <h2 class="parent-gate-title">Grown-ups Area</h2>
+        <p class="parent-gate-sub">Enter your PIN to view the learning dashboard.</p>
+        <input class="parent-pin-input" id="parent-pin-input" type="tel" inputmode="numeric"
+               maxlength="4" placeholder="• • • •" autocomplete="off" />
+        <div class="parent-gate-msg" id="parent-gate-msg"></div>
+        <button class="btn-pixel btn-primary" id="parent-pin-go">Enter</button>
+        <button class="btn-pixel btn-util" id="parent-back">◂ Back</button>
+      </div>`;
+    const submit = () => {
+      const v = document.getElementById('parent-pin-input').value.trim();
+      if (v === localStorage.getItem(PARENT_PIN_KEY)) { this._authed = true; this._renderDashboard(); }
+      else document.getElementById('parent-gate-msg').textContent = 'Incorrect PIN. Try again.';
+    };
+    document.getElementById('parent-pin-go').onclick = submit;
+    document.getElementById('parent-pin-input').onkeydown = (e) => { if (e.key === 'Enter') submit(); };
+    document.getElementById('parent-back').onclick = () => showScreen('start');
+  },
+
+  // ── Read every profile's saved skill data ─────────────────────────────────
+  _gatherProfiles() {
+    const profiles = loadProfiles();
+    const out = [];
+    profiles.forEach(p => {
+      let save = null;
+      try { const d = localStorage.getItem(saveKey(p.key)); if (d) save = JSON.parse(d); } catch (e) {}
+      out.push({
+        key: p.key,
+        name: p.trainerName || p.name || 'Trainer',
+        age: p.trainerAge ?? save?.trainerAge ?? null,
+        baseTier: p.difficultyTier ?? save?.difficultyTier ?? 2,
+        skills: save?.skillLevels || {},
+        stats: save?.stats || {},
+        region: save?.region || 'kanto',
+        bosses: save?.bossesDefeated || 0,
+      });
+    });
+    return out;
+  },
+
+  _trendArrow(recent) {
+    if (!recent || recent.length < 2) return { sym: '→', cls: 'pt-steady', word: 'steady' };
+    const half = Math.ceil(recent.length / 2);
+    const first = recent.slice(0, half), last = recent.slice(half);
+    const avg = a => a.reduce((x, y) => x + y, 0) / (a.length || 1);
+    const d = avg(last) - avg(first);
+    if (d > 0.15) return { sym: '↑', cls: 'pt-up', word: 'improving' };
+    if (d < -0.15) return { sym: '↓', cls: 'pt-down', word: 'needs practice' };
+    return { sym: '→', cls: 'pt-steady', word: 'steady' };
+  },
+
+  _speedWord(ms) {
+    if (!ms) return null;
+    if (ms < 4000)  return { word: 'thinks quickly', cls: 'pt-fast' };
+    if (ms < 9000)  return { word: 'steady pace',     cls: 'pt-mid' };
+    return { word: 'takes their time', cls: 'pt-slow' };
+  },
+
+  _renderDashboard() {
+    const wrap = document.getElementById('parent-wrap');
+    const profiles = this._gatherProfiles();
+
+    let html = `
+      <div class="parent-header">
+        <h2 class="parent-title">📊 Learning Dashboard</h2>
+        <button class="btn-pixel btn-util parent-exit" id="parent-exit">◂ Done</button>
+      </div>
+      <p class="parent-intro">A friendly snapshot of what each child is practicing and how they're growing. Everything stays on this device.</p>`;
+
+    if (!profiles.length) {
+      html += `<div class="parent-empty">No profiles yet. Start a game first!</div>`;
+    }
+
+    profiles.forEach(prof => {
+      const skillKeys = Object.keys(SKILL_DISPLAY);
+      const played = skillKeys.filter(k => prof.skills[k]?.played > 0);
+
+      // Compute per-skill rows + collect strengths/struggles
+      const rows = [];
+      const ranked = [];
+      skillKeys.forEach(sk => {
+        const s = prof.skills[sk];
+        const meta = SKILL_DISPLAY[sk];
+        if (!s || !s.played) {
+          rows.push(`<div class="pt-skill pt-skill-untouched">
+            <span class="pt-skill-icon">${meta.icon}</span>
+            <span class="pt-skill-name">${meta.label}</span>
+            <span class="pt-skill-note">not tried yet</span>
+          </div>`);
+          return;
+        }
+        const acc = s.totalMax ? Math.round((s.totalScore / s.totalMax) * 100) : 0;
+        const trend = this._trendArrow(s.recent);
+        const speed = this._speedWord(s.avgMs);
+        ranked.push({ sk, acc, played: s.played, tier: s.tier });
+        rows.push(`
+          <div class="pt-skill">
+            <div class="pt-skill-head">
+              <span class="pt-skill-icon">${meta.icon}</span>
+              <span class="pt-skill-name">${meta.label}</span>
+              <span class="pt-skill-level pt-tier${s.tier}">${TIER_WORD[s.tier]}</span>
+            </div>
+            <div class="pt-skill-bar"><div class="pt-skill-fill" style="width:${acc}%"></div></div>
+            <div class="pt-skill-stats">
+              <span class="pt-stat">${acc}% correct</span>
+              <span class="pt-stat ${trend.cls}">${trend.sym} ${trend.word}</span>
+              ${speed ? `<span class="pt-stat ${speed.cls}">⚡ ${speed.word}</span>` : ''}
+              <span class="pt-stat pt-plays">${s.played} played</span>
+            </div>
+            <div class="pt-skill-games">Practiced in: ${meta.games}</div>
+          </div>`);
+      });
+
+      // Strengths (highest accuracy, >=2 plays) and "still practicing" (lowest)
+      const eligible = ranked.filter(r => r.played >= 2);
+      const strengths = [...eligible].sort((a, b) => b.acc - a.acc).slice(0, 2);
+      const struggles = [...eligible].sort((a, b) => a.acc - b.acc).slice(0, 2);
+      const nameOf = sk => SKILL_DISPLAY[sk].label;
+
+      let summary = '';
+      if (eligible.length >= 2) {
+        const str = strengths.map(r => nameOf(r.sk)).join(' and ');
+        const stg = struggles.filter(r => !strengths.find(s => s.sk === r.sk)).map(r => nameOf(r.sk)).join(' and ');
+        summary = `${prof.name} is doing well with <b>${str.toLowerCase()}</b>` +
+                  (stg ? `, and is still building <b>${stg.toLowerCase()}</b> — the game is giving a little more practice there.` : '.');
+      } else if (played.length) {
+        summary = `${prof.name} is just getting started — more skills will appear here as they play.`;
+      } else {
+        summary = `${prof.name} hasn't played any learning games yet.`;
+      }
+
+      const totalGames = skillKeys.reduce((sum, k) => sum + (prof.skills[k]?.played || 0), 0);
+
+      html += `
+        <div class="parent-card">
+          <div class="parent-card-head">
+            <span class="parent-child-name">${prof.name}</span>
+            ${prof.age != null ? `<span class="parent-child-age">age ${prof.age}</span>` : ''}
+            <span class="parent-child-region">${prof.region === 'johto' ? 'Johto' : 'Kanto'} · ${prof.bosses} badges</span>
+          </div>
+          <div class="parent-summary">${summary}</div>
+          <div class="parent-engage">
+            <span>🎮 ${totalGames} learning games played</span>
+            <span>🗺️ ${prof.stats.totalNodesCompleted || 0} stops completed</span>
+            <span>⚔️ ${prof.stats.totalBattlesWon || prof.stats.battlesWon || 0} battles won</span>
+          </div>
+          ${strengths.length ? `<div class="parent-flags">
+            ${strengths.map(r => `<span class="pt-flag pt-flag-strong">💪 ${nameOf(r.sk)}</span>`).join('')}
+            ${struggles.filter(r => !strengths.find(s => s.sk === r.sk)).map(r => `<span class="pt-flag pt-flag-grow">🌱 ${nameOf(r.sk)}</span>`).join('')}
+          </div>` : ''}
+          <div class="pt-skill-list">${rows.join('')}</div>
+        </div>`;
+    });
+
+    html += `
+      <div class="parent-footer">
+        <button class="btn-pixel btn-util" id="parent-change-pin">Change PIN</button>
+      </div>`;
+
+    wrap.innerHTML = html;
+    document.getElementById('parent-exit').onclick = () => { this._authed = false; showScreen('start'); };
+    const cp = document.getElementById('parent-change-pin');
+    if (cp) cp.onclick = () => { localStorage.removeItem(PARENT_PIN_KEY); this._renderPinSetup(); };
+  },
+};
 
 const ProfileEngine = {
 
@@ -10906,6 +11156,7 @@ const GiovanniEngine = {
   start(node) {
     this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
     ActiveEngine.set(this);
+    skillTimerBegin('giovanni');
     showBossIntro({
       gymIndex: 7, portrait: 'giovanni.png', gameKey: 'giovanni',
       name: 'Giovanni', btnLabel: '💰 Open the Ledger',
@@ -13295,6 +13546,7 @@ const PryceEngine = {
   async start(node) {
     this._node = node; this._isActive = true; this._hits = 0; this._typeIdx = 0;
     ActiveEngine.set(this);
+    skillTimerBegin('pryce');
 
     showLoading();
     // Pick the hidden Pokémon "frozen inside" from the famous list
@@ -13695,6 +13947,7 @@ const ChuckEngine = {
   start(node) {
     this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
     ActiveEngine.set(this);
+    skillTimerBegin('chuck');
     showBossIntro({
       gymIndex: 4, portrait: 'chuck.png',
       name: 'Chuck', btnLabel: '🕐 Start Training!',
@@ -13885,6 +14138,7 @@ const TogepiEngine = {
     document.getElementById('trainer-intro').style.display = 'none';
     const bgEl = document.querySelector('#screen-boss .battle-bg');
     if (bgEl) bgEl.classList.remove('boss-intro-mode');
+    skillTimerBegin('togepi');
     this._showRound();
   },
 
@@ -14145,6 +14399,7 @@ const OakSortEngine = {
   async start(node) {
     this._node = node; this._isActive = true; this._round = 0; this._hits = 0; this._timeouts = [];
     ActiveEngine.set(this);
+    skillTimerBegin('oak');
 
     showLoading();
     await Promise.all(OAK_POKEMON.map(async p => {
@@ -14266,6 +14521,7 @@ const SnorlaxEngine = {
   async start(node) {
     this._node = node; this._isActive = true; this._round = 0; this._hits = 0;
     ActiveEngine.set(this);
+    skillTimerBegin('snorlax');
 
     showLoading();
     const picks = shuffle([...SNORLAX_POOL]).slice(0, 12);
@@ -19681,6 +19937,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-start-league').addEventListener('click', () => LeagueEngine.showPartySelect());
   document.getElementById('btn-open-pokedex').addEventListener('click', () => PokedexEngine.show());
   document.getElementById('btn-select-profile').addEventListener('click', () => ProfileEngine.show());
+  document.getElementById('btn-open-parent').addEventListener('click', () => ParentDashboardEngine.open());
   document.getElementById('btn-switch-profile').addEventListener('click', () => ProfileEngine.show());
   document.getElementById('btn-profiles-back').addEventListener('click', () => {
     ProfileEngine._updateStartScreen();
