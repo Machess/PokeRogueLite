@@ -11011,3 +11011,32 @@ body { touch-action: manipulation; }
 .pt-skill-games { font-size: .72rem; color: #7888a0; margin-top: .35rem; }
 
 .parent-footer { text-align: center; margin-top: 1rem; }
+
+/* ═══ PARENT DASHBOARD — charts ═══ */
+.parent-pie-block { margin: .6rem 0 .8rem; }
+.pt-chart-title {
+  font-size: .8rem; color: #cfe0ff; margin-bottom: .4rem; display: flex; gap: .5rem; align-items: baseline; flex-wrap: wrap;
+}
+.pt-zone-key, .pt-chart-note { font-size: .68rem; color: #8090a8; font-weight: 400; }
+.pt-svg { width: 100%; height: auto; display: block; }
+.pt-axis { font-size: 7px; fill: #8090a8; font-family: sans-serif; }
+.pt-chart-empty { font-size: .78rem; color: #8090a8; padding: .6rem; text-align: center; font-style: italic; }
+.pt-charts-toggle {
+  margin-top: .5rem; background: rgba(120,160,220,.15); border: 1px solid rgba(150,180,230,.3);
+  color: #aed4ff; font-size: .76rem; padding: .3rem .7rem; border-radius: 8px; cursor: pointer;
+}
+.pt-charts-toggle:hover { background: rgba(120,160,220,.28); }
+.pt-charts { margin-top: .6rem; display: flex; flex-direction: column; gap: 1rem; }
+.pt-chart-block {
+  background: rgba(0,0,0,.22); border-radius: 10px; padding: .6rem .7rem;
+}
+.pt-chart-note { display: block; margin-top: .3rem; line-height: 1.4; }
+/* Pie */
+.pt-pie-wrap { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.pt-pie-legend { display: flex; flex-direction: column; gap: .25rem; }
+.pt-pie-leg { font-size: .78rem; color: #cdd8ea; display: flex; align-items: center; gap: .4rem; }
+.pt-pie-leg b { color: #fff; }
+.pt-pie-dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+/* Bars */
+.pt-bar-lbl { font-size: 9px; fill: #cdd8ea; font-family: sans-serif; }
+.pt-bar-val { font-size: 9px; fill: #fff; font-family: sans-serif; }

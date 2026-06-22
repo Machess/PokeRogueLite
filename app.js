@@ -2388,14 +2388,22 @@ function recordSkillResult(gameKey, score, maxScore) {
   // whole mini-game took divided by the number of questions (maxScore). Rolled
   // into a lifetime average so the dashboard can show "thinks quickly / takes
   // their time" without needing per-answer instrumentation in every engine.
+  let gameMs = 0;
   if (_skillGameStart && maxScore > 0) {
     const elapsed = Date.now() - _skillGameStart;
     if (elapsed > 500 && elapsed < 600000) {            // ignore idle/away outliers
-      const avgThisGame = elapsed / maxScore;
-      s.avgMs = s.avgMs ? Math.round(s.avgMs * 0.7 + avgThisGame * 0.3) : Math.round(avgThisGame);
+      gameMs = Math.round(elapsed / maxScore);
+      s.avgMs = s.avgMs ? Math.round(s.avgMs * 0.7 + gameMs * 0.3) : gameMs;
     }
   }
   _skillGameStart = 0;
+
+  // Per-play history log (for the parent dashboard graphs). One small record per
+  // game: timestamp, the tier it was PLAYED at, accuracy, and ms-per-question.
+  // Capped so localStorage never bloats but keeps a long overview window.
+  if (!s.log) s.log = [];
+  s.log.push({ t: Date.now(), tier: s.tier, acc: Math.round(ratio * 100), ms: gameMs || null });
+  if (s.log.length > 60) s.log.shift();   // keep ~60 plays (≥50 requested)
 
   // Need at least 3 plays before adapting, and a streak (hysteresis) to move —
   // so a single good/bad game never yo-yos the difficulty.
@@ -4186,6 +4194,112 @@ const SKILL_DISPLAY = {
 };
 const TIER_WORD = { 1: 'Beginner', 2: 'Growing', 3: 'Confident' };
 
+
+// ─── PARENT DASHBOARD — SVG mini-charts (dependency-free) ────────────────────
+// Chart type matched to data type: line for trends over time, horizontal bars
+// for distribution magnitude, pie for share-of-whole.
+const PtChart = {
+  // Line chart for a metric over plays. opts: {values[], w,h, color, band:[lo,hi],
+  // invert (lower=better for speed), label, markers[] (indices where tier changed)}
+  line(values, opts = {}) {
+    const w = opts.w || 240, h = opts.h || 90, pad = 22;
+    const vals = values.filter(v => v != null);
+    if (vals.length < 2) return `<div class="pt-chart-empty">Play a few more games to see a trend.</div>`;
+    const max = opts.max != null ? opts.max : Math.max(...vals);
+    const min = opts.min != null ? opts.min : Math.min(...vals);
+    const range = (max - min) || 1;
+    const x = i => pad + (i / (values.length - 1)) * (w - pad - 6);
+    const y = v => {
+      const norm = (v - min) / range;            // 0..1 low..high
+      const yy = opts.invert ? norm : 1 - norm;   // invert for "lower is better"
+      return 6 + yy * (h - pad);
+    };
+    // Healthy-zone band (accuracy only) — a gentle reference, not a target
+    let band = '';
+    if (opts.band) {
+      const yTop = y(opts.band[1]), yBot = y(opts.band[0]);
+      band = `<rect x="${pad}" y="${Math.min(yTop,yBot)}" width="${w-pad-6}" height="${Math.abs(yBot-yTop)}"
+                fill="rgba(120,200,150,.13)" />
+              <line x1="${pad}" y1="${yTop}" x2="${w-6}" y2="${yTop}" stroke="rgba(120,200,150,.3)" stroke-dasharray="3 3"/>
+              <line x1="${pad}" y1="${yBot}" x2="${w-6}" y2="${yBot}" stroke="rgba(120,200,150,.3)" stroke-dasharray="3 3"/>`;
+    }
+    // Path
+    let d = '';
+    values.forEach((v, i) => { if (v == null) return; d += (d ? ' L' : 'M') + x(i) + ' ' + y(v); });
+    // Tier-change markers
+    let marks = '';
+    (opts.markers || []).forEach(m => {
+      marks += `<circle cx="${x(m.i)}" cy="${y(values[m.i])}" r="3.5" fill="${m.dir==='up'?'#8ff0b0':'#ffb088'}" stroke="#1a2030" stroke-width="1"/>`;
+    });
+    // Dots
+    let dots = '';
+    values.forEach((v, i) => { if (v != null) dots += `<circle cx="${x(i)}" cy="${y(v)}" r="2" fill="${opts.color||'#6fa8ff'}"/>`; });
+    // Axis labels
+    const loLbl = opts.fmt ? opts.fmt(min) : min;
+    const hiLbl = opts.fmt ? opts.fmt(max) : max;
+    return `<svg viewBox="0 0 ${w} ${h+14}" class="pt-svg">
+      ${band}
+      <path d="${d}" fill="none" stroke="${opts.color||'#6fa8ff'}" stroke-width="2" stroke-linejoin="round"/>
+      ${dots}${marks}
+      <text x="2" y="10" class="pt-axis">${opts.invert?loLbl:hiLbl}</text>
+      <text x="2" y="${h}" class="pt-axis">${opts.invert?hiLbl:loLbl}</text>
+      <text x="${pad}" y="${h+12}" class="pt-axis">${opts.startLbl||'earlier'}</text>
+      <text x="${w-6}" y="${h+12}" class="pt-axis" text-anchor="end">${opts.endLbl||'recent'}</text>
+    </svg>`;
+  },
+
+  // Horizontal bars — distribution/magnitude. data: [{label, value, color}]
+  bars(data, opts = {}) {
+    const w = opts.w || 240, rowH = 22, gap = 6;
+    const total = data.reduce((s, d) => s + d.value, 0) || 1;
+    const max = Math.max(...data.map(d => d.value), 1);
+    const labelW = 70, barW = w - labelW - 38;
+    let rows = '';
+    data.forEach((d, i) => {
+      const yy = i * (rowH + gap);
+      const bw = (d.value / max) * barW;
+      const pct = Math.round((d.value / total) * 100);
+      rows += `
+        <text x="0" y="${yy+15}" class="pt-bar-lbl">${d.label}</text>
+        <rect x="${labelW}" y="${yy+4}" width="${barW}" height="14" rx="4" fill="rgba(255,255,255,.08)"/>
+        <rect x="${labelW}" y="${yy+4}" width="${Math.max(bw,2)}" height="14" rx="4" fill="${d.color||'#6fa8ff'}"/>
+        <text x="${labelW+barW+4}" y="${yy+15}" class="pt-bar-val">${pct}%</text>`;
+    });
+    return `<svg viewBox="0 0 ${w} ${data.length*(rowH+gap)}" class="pt-svg">${rows}</svg>`;
+  },
+
+  // Pie chart — share of whole. data: [{label, value, color}]
+  pie(data, opts = {}) {
+    const size = opts.size || 120, r = size/2 - 2, cx = size/2, cy = size/2;
+    const total = data.reduce((s, d) => s + d.value, 0);
+    if (!total) return `<div class="pt-chart-empty">No data yet.</div>`;
+    let a0 = -Math.PI/2, slices = '', legend = '';
+    data.forEach(d => {
+      const frac = d.value / total;
+      const a1 = a0 + frac * Math.PI * 2;
+      const large = frac > 0.5 ? 1 : 0;
+      const x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0);
+      const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+      // full-circle guard
+      if (frac >= 0.999) {
+        slices += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${d.color}"/>`;
+      } else {
+        slices += `<path d="M${cx} ${cy} L${x0.toFixed(1)} ${y0.toFixed(1)} A${r} ${r} 0 ${large} 1 ${x1.toFixed(1)} ${y1.toFixed(1)} Z" fill="${d.color}"/>`;
+      }
+      const pct = Math.round(frac*100);
+      legend += `<div class="pt-pie-leg"><span class="pt-pie-dot" style="background:${d.color}"></span>${d.label} <b>${pct}%</b></div>`;
+      a0 = a1;
+    });
+    return `<div class="pt-pie-wrap">
+      <svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" class="pt-svg">${slices}</svg>
+      <div class="pt-pie-legend">${legend}</div>
+    </div>`;
+  },
+};
+
+// Palette for skills/games so colors are stable across charts
+const PT_PALETTE = ['#6fa8ff','#8ff0b0','#ffd98a','#ff9ec0','#c8b0e0','#7de0d0','#ffb088','#a0d8ff'];
+
 const ParentDashboardEngine = {
   _authed: false,
 
@@ -4321,6 +4435,47 @@ const ParentDashboardEngine = {
         const trend = this._trendArrow(s.recent);
         const speed = this._speedWord(s.avgMs);
         ranked.push({ sk, acc, played: s.played, tier: s.tier });
+        // Build the per-skill charts from the play log
+        const log = s.log || [];
+        const accSeries = log.map(e => e.acc);
+        const msSeries  = log.map(e => e.ms);
+        const tierSeries = log.map(e => e.tier);
+        // Tier-change markers for annotating the accuracy/speed lines
+        const markers = [];
+        for (let k = 1; k < tierSeries.length; k++) {
+          if (tierSeries[k] > tierSeries[k-1]) markers.push({ i: k, dir: 'up' });
+          else if (tierSeries[k] < tierSeries[k-1]) markers.push({ i: k, dir: 'down' });
+        }
+        // Time-in-tier distribution (how many plays at each tier)
+        const tierCounts = [1,2,3].map(t => ({
+          label: TIER_WORD[t], value: log.filter(e => e.tier === t).length,
+          color: t===1?'#aed4ff':t===2?'#ffd98a':'#8ff0b0'
+        })).filter(d => d.value > 0);
+
+        const charts = log.length >= 2 ? `
+          <div class="pt-charts" id="pt-charts-${prof.key}-${sk}" style="display:none">
+            <div class="pt-chart-block">
+              <div class="pt-chart-title">📈 Difficulty level over time</div>
+              ${PtChart.line(tierSeries, { color:'#ffd98a', min:1, max:3, h:70,
+                 fmt:v=>TIER_WORD[Math.round(v)]||v, startLbl:'first plays', endLbl:'now' })}
+            </div>
+            <div class="pt-chart-block">
+              <div class="pt-chart-title">🎯 Accuracy over time <span class="pt-zone-key">▩ healthy zone</span></div>
+              ${PtChart.line(accSeries, { color:'#8ff0b0', min:0, max:100, band:[60,85],
+                 markers, fmt:v=>v+'%', startLbl:'earlier', endLbl:'recent' })}
+              <div class="pt-chart-note">The shaded band (60–85%) is just a comfortable challenge range — not a target to chase. Dips often follow a difficulty increase, then recover.</div>
+            </div>
+            ${msSeries.some(v=>v!=null) ? `<div class="pt-chart-block">
+              <div class="pt-chart-title">⚡ Answer speed over time <span class="pt-zone-key">lower = faster</span></div>
+              ${PtChart.line(msSeries, { color:'#6fa8ff', invert:true,
+                 fmt:v=>(v/1000).toFixed(1)+'s', markers, startLbl:'earlier', endLbl:'recent' })}
+            </div>` : ''}
+            ${tierCounts.length ? `<div class="pt-chart-block">
+              <div class="pt-chart-title">⏱️ Time spent at each level</div>
+              ${PtChart.bars(tierCounts)}
+            </div>` : ''}
+          </div>` : '';
+
         rows.push(`
           <div class="pt-skill">
             <div class="pt-skill-head">
@@ -4336,6 +4491,7 @@ const ParentDashboardEngine = {
               <span class="pt-stat pt-plays">${s.played} played</span>
             </div>
             <div class="pt-skill-games">Practiced in: ${meta.games}</div>
+            ${charts ? `<button class="pt-charts-toggle" data-target="pt-charts-${prof.key}-${sk}">View charts ▾</button>${charts}` : ''}
           </div>`);
       });
 
@@ -4359,6 +4515,17 @@ const ParentDashboardEngine = {
 
       const totalGames = skillKeys.reduce((sum, k) => sum + (prof.skills[k]?.played || 0), 0);
 
+      // "Most-played skills" pie — share of practice across skills
+      const playData = skillKeys
+        .map((k, i) => ({ label: SKILL_DISPLAY[k].label.split(' ')[0], value: prof.skills[k]?.played || 0, color: PT_PALETTE[i % PT_PALETTE.length] }))
+        .filter(d => d.value > 0)
+        .sort((a, b) => b.value - a.value);
+      const pieBlock = playData.length >= 2 ? `
+        <div class="parent-pie-block">
+          <div class="pt-chart-title">🥧 What ${prof.name} practices most</div>
+          ${PtChart.pie(playData)}
+        </div>` : '';
+
       html += `
         <div class="parent-card">
           <div class="parent-card-head">
@@ -4372,6 +4539,7 @@ const ParentDashboardEngine = {
             <span>🗺️ ${prof.stats.totalNodesCompleted || 0} stops completed</span>
             <span>⚔️ ${prof.stats.totalBattlesWon || prof.stats.battlesWon || 0} battles won</span>
           </div>
+          ${pieBlock}
           ${strengths.length ? `<div class="parent-flags">
             ${strengths.map(r => `<span class="pt-flag pt-flag-strong">💪 ${nameOf(r.sk)}</span>`).join('')}
             ${struggles.filter(r => !strengths.find(s => s.sk === r.sk)).map(r => `<span class="pt-flag pt-flag-grow">🌱 ${nameOf(r.sk)}</span>`).join('')}
@@ -4389,6 +4557,16 @@ const ParentDashboardEngine = {
     document.getElementById('parent-exit').onclick = () => { this._authed = false; showScreen('start'); };
     const cp = document.getElementById('parent-change-pin');
     if (cp) cp.onclick = () => { localStorage.removeItem(PARENT_PIN_KEY); this._renderPinSetup(); };
+    // Chart drill-down toggles
+    wrap.querySelectorAll('.pt-charts-toggle').forEach(btn => {
+      btn.onclick = () => {
+        const panel = document.getElementById(btn.dataset.target);
+        if (!panel) return;
+        const open = panel.style.display !== 'none';
+        panel.style.display = open ? 'none' : '';
+        btn.textContent = open ? 'View charts ▾' : 'Hide charts ▴';
+      };
+    });
   },
 };
 
