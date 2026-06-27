@@ -7,6 +7,56 @@
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  THEME CONFIG — all swappable display vocabulary lives here.
+//  Phase 1 of de-coupling from the borrowed IP: every player-facing NOUN that
+//  identifies the franchise is defined once here, so re-theming the whole game
+//  into an original "creature" world becomes a single-file edit instead of a
+//  codebase-wide hunt. Internal IDs, variable names, and API keys are NOT
+//  themed (they're invisible to players); only display strings route through this.
+//
+//  To re-skin: change the values below. Nothing else needs to know the lore.
+// ═══════════════════════════════════════════════════════════════════════════
+const THEME = {
+  // Core franchise nouns
+  creature:        'Pokémon',     // a single monster
+  creaturePlural:  'Pokémon',     // many monsters
+  ball:            'Poké Ball',   // the capture item
+  ballPlural:      'Poké Balls',
+  dex:             'Pokédex',     // the collection/encyclopedia
+  player:          'Trainer',     // the human player role
+  badge:           'Badge',       // the mastery reward for beating a region boss
+  badgePlural:     'Badges',
+  bossRole:        'Gym Leader',  // the skill-area boss
+  restStop:        'Pokémon Center', // the healing location
+  caretaker:       'Nurse Joy',   // the healer character
+  ranger:          'Officer Jenny',  // the patrol character
+  antagonists:     'Team Rocket', // the recurring antagonist group
+  // Regions / world areas (campaign acts)
+  region1:         'Kanto',
+  region2:         'Johto',
+  // Tagline-ish
+  worldName:       'the Pokémon world',
+};
+
+// Convenience accessors so call sites read naturally and stay terse.
+const T = THEME;
+
+// Phase 1 helper: stamp THEME vocabulary onto any static element carrying a
+// [data-theme="<key>"] attribute. Optional [data-theme-tpl="… {v} …"] wraps the
+// value in a template; [data-theme-prefix] prepends. Lets static HTML labels be
+// re-skinned purely from the THEME config.
+function _applyTheme() {
+  document.querySelectorAll('[data-theme]').forEach(el => {
+    const key = el.getAttribute('data-theme');
+    const val = THEME[key];
+    if (val == null) return;
+    const tpl = el.getAttribute('data-theme-tpl');
+    const pre = el.getAttribute('data-theme-prefix') || '';
+    el.textContent = tpl ? tpl.replace('{v}', val) : (pre + val);
+  });
+}
+
 const POKEAPI = 'https://pokeapi.co/api/v2';
 
 const STARTERS = [
@@ -2891,20 +2941,24 @@ function capitalize(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 // Returns damage multiplier for attacking type vs defending type
 const TYPE_CHART = {
   // Gen 1 Kanto types only — dark and steel did not exist in Gen 1
-  normal:   { rock:.5, ghost:0 },
+  // Note: in this kids' game we use heavy RESISTANCE (0.5) instead of hard
+  // immunity (0) for the Normal/Ghost matchups, so a child with an all-Normal
+  // team can never hit an unwinnable dead-end. Other matchups keep their flavor;
+  // the battle stalemate-breaker (below) guarantees no fight can last forever.
+  normal:   { rock:.5, ghost:.5 },
   fire:     { fire:.5, water:.5, rock:.5, dragon:.5, grass:2, ice:2, bug:2 },
   water:    { water:.5, grass:.5, dragon:.5, fire:2, ground:2, rock:2 },
   grass:    { fire:.5, grass:.5, poison:.5, flying:.5, bug:.5, dragon:.5, water:2, ground:2, rock:2 },
-  electric: { grass:.5, electric:.5, dragon:.5, ground:0, water:2, flying:2 },
+  electric: { grass:.5, electric:.5, dragon:.5, ground:.25, water:2, flying:2 },
   ice:      { water:.5, ice:.5, fire:.5, grass:2, ground:2, flying:2, dragon:2 },
-  fighting: { poison:.5, bug:.5, psychic:.5, flying:.5, ghost:0, normal:2, ice:2, rock:2 },
+  fighting: { poison:.5, bug:.5, psychic:.5, flying:.5, ghost:.5, normal:2, ice:2, rock:2 },
   poison:   { poison:.5, ground:.5, rock:.5, ghost:.5, grass:2 },
-  ground:   { grass:.5, bug:.5, flying:0, fire:2, electric:2, poison:2, rock:2 },
+  ground:   { grass:.5, bug:.5, flying:.25, fire:2, electric:2, poison:2, rock:2 },
   flying:   { electric:.5, rock:.5, grass:2, fighting:2, bug:2 },
   psychic:  { psychic:.5, fighting:2, poison:2 },
   bug:      { fire:.5, fighting:.5, flying:.5, ghost:.5, grass:2, psychic:2 },
   rock:     { fighting:.5, ground:.5, fire:2, ice:2, flying:2, bug:2 },
-  ghost:    { normal:0, ghost:2, psychic:2 },
+  ghost:    { normal:.5, ghost:2, psychic:2 },
   dragon:   { dragon:2 },
   fairy:    { fire:.5, poison:.5, fighting:2, dragon:2 },
 };
@@ -6687,6 +6741,9 @@ const BattleEngine = {
       exhaustedPile: [],
       energy:      3,
       statusEffects: { player: [], opp: [] },
+      statusTurns: {},
+      _stallTurns: 0,
+      _lastHpSnapshot: null,
       shield: GameState.cookingShield || 0,
       oppAtkDebuff: 0,
       oppDefDebuff: 0,
@@ -6883,7 +6940,8 @@ const BattleEngine = {
       (st.statusEffects?.opp || []).forEach(s => {
         const b = document.createElement('span');
         b.className = `status-badge status-${s}`;
-        b.textContent = STATUS_LABELS[s] || s;
+        const turns = statusTurnsLeft(st, 'opp', s);
+        b.textContent = (STATUS_LABELS[s] || s) + (turns > 0 ? ` (${turns})` : '');
         statusWrap.appendChild(b);
       });
       // ATK debuff badge
@@ -6936,7 +6994,8 @@ const BattleEngine = {
       (st.statusEffects?.player || []).forEach(s => {
         const b = document.createElement('span');
         b.className = `status-badge status-${s}`;
-        b.textContent = STATUS_LABELS[s] || s;
+        const turns = statusTurnsLeft(st, 'player', s);
+        b.textContent = (STATUS_LABELS[s] || s) + (turns > 0 ? ` (${turns})` : '');
         playerStatusWrap.appendChild(b);
       });
     }
@@ -7312,8 +7371,8 @@ const BattleEngine = {
       case 'slow_opp':      st.oppSkipped = true; this._logPlayer(`${st.opp.name} is slowed!`); break;
       case 'burn_chance':   if (Math.random()<.15){ addStatus(st,'opp','burn'); this._logPlayer(`${st.opp.name} is burned!`); } break;
       case 'burn':          addStatus(st,'opp','burn'); this._logPlayer(`${st.opp.name} is burning!`); break;
-      case 'paralyse':      addStatus(st,'opp','para'); this._logPlayer(`${st.opp.name} is paralysed!`); break;
-      case 'para_chance':   if(Math.random()<.2){ addStatus(st,'opp','para'); this._logPlayer(`${st.opp.name} is paralysed!`); } break;
+      case 'paralyse':      addStatus(st,'opp','para',4); this._logPlayer(`${st.opp.name} is paralysed!`); break;
+      case 'para_chance':   if(Math.random()<.2){ addStatus(st,'opp','para',4); this._logPlayer(`${st.opp.name} is paralysed!`); } break;
       case 'poison':        addStatus(st,'opp','poison'); this._logPlayer(`${st.opp.name} is poisoned!`); break;
       case 'leech':         st.leechStacks++; st.leechTurns = 3; this._logPlayer(`Leech Seed latched!`); break;
       case 'flinch':        if(Math.random()<.25){ st.oppSkipped = true; this._logPlayer(`${st.opp.name} flinched!`); } break;
@@ -7491,11 +7550,29 @@ const BattleEngine = {
     if ((st.oppDefDebuff||0) > 0) st.oppDefDebuff = Math.max(0, st.oppDefDebuff - 3);
     if ((st.oppAccDebuff||0) > 0) st.oppAccDebuff = Math.max(0, st.oppAccDebuff - 4);
 
+    // ── Stalemate breaker ─────────────────────────────────────────────────────
+    // Guarantees no battle can ever run forever (e.g. a resisted attacker vs a
+    // paralysed target, or any future type/status lock). If a full turn cycle
+    // passes with NO change to either side's HP, count it as a stalled turn; after
+    // a few, apply small TYPELESS chip damage to both sides (ignores resistance)
+    // that escalates until the deadlock resolves.
+    const snap = st.player.hp + ':' + st.opp.hp;
+    if (st._lastHpSnapshot === snap) {
+      st._stallTurns = (st._stallTurns || 0) + 1;
+    } else {
+      st._stallTurns = 0;
+      st._lastHpSnapshot = snap;
+    }
+    if (st._stallTurns >= 3) {
+      const chip = 5 + (st._stallTurns - 3) * 5;   // 5, 10, 15… escalating
+      st.opp.hp    = Math.max(0, st.opp.hp - chip);
+      st.player.hp = Math.max(0, st.player.hp - chip);
+      this._logPlayer(`The standoff can't last — both fighters tire and take ${logDmgDealt(chip)} damage!`);
+      st._lastHpSnapshot = st.player.hp + ':' + st.opp.hp;
+    }
+
     // Check defeats
     if (this._checkDefeated()) return;
-
-    // New turn — restore energy + reset item use
-    st.energy = 3 + (st.bonusEnergy || 0);
     st.bonusEnergy = 0;
     if (st.energy > 3) st.energy = Math.min(5, st.energy);
     st.shield = 0;
@@ -7503,6 +7580,11 @@ const BattleEngine = {
     this._itemUsedThisTurn = false;
 
     // ── Player status enforcement ─────────────────────────────────────────────
+    // Tick timed statuses (e.g. paralysis) so they always expire and can never
+    // stalemate the battle.
+    const wornPlayer = tickStatuses(st, 'player');
+    if (wornPlayer.includes('para')) this._logEnemy(`${st.player.name} shook off the paralysis!`);
+
     // Sleep — skip turn entirely (0 energy, auto-end)
     if (hasStatus(st, 'player', 'sleep')) {
       st.energy = 0;
@@ -7515,10 +7597,10 @@ const BattleEngine = {
       return;
     }
 
-    // Paralysis — 40% chance to skip turn
-    if (hasStatus(st, 'player', 'para') && Math.random() < 0.4) {
+    // Paralysis — 25% chance to skip turn (wears off via the tick above)
+    if (hasStatus(st, 'player', 'para') && Math.random() < 0.25) {
       st.energy = 0;
-      this._logEnemy(`${st.player.name} is paralysed and can't move!`);
+      this._logEnemy(`${st.player.name} is paralysed and can't move! (${statusTurnsLeft(st,'player','para')} turns left)`);
       this._dealHand(5);
       this._render();
       setTimeout(() => this.endTurn(), 1200);
@@ -7535,8 +7617,14 @@ const BattleEngine = {
 
   _oppAttack() {
     const st = this.state;
-    if (hasStatus(st, 'opp', 'para') && Math.random() < .4) {
-      this._logEnemy(`${st.opp.name} is paralysed and can't move!`);
+    // Paralysis wears off over time — tick it down at the start of the enemy turn
+    // so it can never lock the battle forever. It clears after its duration even
+    // on turns where the enemy is skipped.
+    const wornOpp = tickStatuses(st, 'opp');
+    if (wornOpp.includes('para')) this._logEnemy(`${st.opp.name} shook off the paralysis!`);
+
+    if (hasStatus(st, 'opp', 'para') && Math.random() < .25) {
+      this._logEnemy(`${st.opp.name} is paralysed and can't move! (${statusTurnsLeft(st,'opp','para')} turns left)`);
       return;
     }
 
@@ -7972,6 +8060,8 @@ const BossEngine = {
       hand: [], discardPile: [], exhaustedPile: [],
       energy: 3,
       statusEffects: { player: [], opp: [] },
+      statusTurns: {},
+      _stallTurns: 0, _lastHpSnapshot: null,
       shield: 0, oppAtkDebuff: 0, oppDefDebuff: 0, oppAccDebuff: 0, rainTurns: 0,
       leechTurns: 0, leechStacks: 0, oppSkipped: false,
       bonusEnergy: 0,
@@ -8205,6 +8295,19 @@ const BossEngine = {
     if (st.oppAtkDebuff > 0) st.oppAtkDebuff = Math.max(0, st.oppAtkDebuff - 5);
     if ((st.oppDefDebuff||0) > 0) st.oppDefDebuff = Math.max(0, st.oppDefDebuff - 3);
     if ((st.oppAccDebuff||0) > 0) st.oppAccDebuff = Math.max(0, st.oppAccDebuff - 4);
+
+    // Stalemate breaker — same safety net as regular battles (typeless chip if no
+    // HP change for several turns) so a boss/Rocket fight can never lock forever.
+    const snap = st.player.hp + ':' + st.opp.hp;
+    if (st._lastHpSnapshot === snap) { st._stallTurns = (st._stallTurns || 0) + 1; }
+    else { st._stallTurns = 0; st._lastHpSnapshot = snap; }
+    if (st._stallTurns >= 3) {
+      const chip = 5 + (st._stallTurns - 3) * 5;
+      st.opp.hp    = Math.max(0, st.opp.hp - chip);
+      st.player.hp = Math.max(0, st.player.hp - chip);
+      this._logPlayer(`The standoff can't last — both tire and take ${logDmgDealt(chip)} damage!`);
+      st._lastHpSnapshot = st.player.hp + ':' + st.opp.hp;
+    }
 
     if (this._checkDefeated()) return;
 
@@ -15897,7 +16000,7 @@ const ItemEngine = {
       return def?.category === 'ball' && i.count > 0;
     });
     if (balls.length > 0) {
-      html += `<div class="bag-section-label">🔵 Poké Balls</div><div class="bag-slot-grid">`;
+      html += `<div class="bag-section-label">🔵 ${T.ballPlural}</div><div class="bag-slot-grid">`;
       balls.forEach(item => {
         const def  = SHOP_ITEMS.find(s => s.id === item.id);
         const tint = TINT[item.id] || 'rgba(255,255,255,.08)';
@@ -20000,16 +20103,44 @@ function shakeSprite(id) {
   setTimeout(() => el.classList.remove('hit-shake'), 500);
 }
 
-function addStatus(st, who, status) {
+function addStatus(st, who, status, turns) {
   if (!hasStatus(st, who, status)) st.statusEffects[who].push(status);
+  // Track a remaining-turns counter for timed statuses (e.g. paralysis) so they
+  // can never last forever. Stored in a parallel map keyed by who+status.
+  if (turns) {
+    if (!st.statusTurns) st.statusTurns = {};
+    st.statusTurns[who + ':' + status] = turns;
+  }
 }
 function hasStatus(st, who, status) {
   return st.statusEffects[who]?.includes(status);
+}
+function removeStatus(st, who, status) {
+  if (st.statusEffects[who]) st.statusEffects[who] = st.statusEffects[who].filter(s => s !== status);
+  if (st.statusTurns) delete st.statusTurns[who + ':' + status];
+}
+function statusTurnsLeft(st, who, status) {
+  return st.statusTurns?.[who + ':' + status] ?? 0;
+}
+// Decrement timed statuses for one side at the start/!end of their turn; clears
+// any that reach zero. Returns a list of statuses that just wore off (for logging).
+function tickStatuses(st, who) {
+  if (!st.statusTurns) return [];
+  const worn = [];
+  (st.statusEffects[who] || []).slice().forEach(status => {
+    const key = who + ':' + status;
+    if (st.statusTurns[key] != null) {
+      st.statusTurns[key]--;
+      if (st.statusTurns[key] <= 0) { removeStatus(st, who, status); worn.push(status); }
+    }
+  });
+  return worn;
 }
 
 // ─── INIT — wire all buttons here, zero inline onclick in HTML ────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+  _applyTheme();   // Phase 1: stamp THEME vocabulary onto static [data-theme] labels
   // ── Save integrity migration — repair damage from the old null-save bug ──
   // Any save that parses to null/non-object, or lacks a party, is corrupt.
   // Purge it and sync each profile's hasActiveSave flag to the real save state.
