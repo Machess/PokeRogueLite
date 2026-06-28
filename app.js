@@ -5272,6 +5272,7 @@ const Game = {
 
   async confirmStarter(s) {
     showLoading();
+    try {
     if (s.id === 25)  SoundEngine.playPikachu2();
     if (s.id === 133) SoundEngine.playStarterCry(133);
     if (s.id === 151) SoundEngine.playStarterCry(151);
@@ -5308,7 +5309,14 @@ const Game = {
 
     GameState.starterId           = s.id;
     GameState.starterType         = s.type;
-    GameState.region              = s.region || 'kanto';
+    // Region is determined by RUN INTENT, not by which creature was picked.
+    // A Johto-unlocked profile starts a Johto run even if they bring a Kanto
+    // partner (e.g. Pikachu); otherwise the run state and the profile's
+    // progression flags disagree and the map setup can wedge. A Johto starter
+    // forces Johto; otherwise we honour the profile's Johto status.
+    const _meta = loadProfiles().find(p => p.key === getActiveProfile());
+    const _johtoRun = !!(_meta?.leagueUnlocked && _meta?.johtoUnlocked);
+    GameState.region              = (s.region === 'johto' || _johtoRun) ? 'johto' : 'kanto';
     GameState.party               = [pokemon];
     GameState.activePokemonIndex  = 0;
     GameState.deck                = starterDeck;
@@ -5322,6 +5330,15 @@ const Game = {
     hideLoading();
     saveGame(true);   // first save — immediate so the run is instantly persisted
     MapEngine.show();
+    } catch (err) {
+      // Never leave the loading overlay stuck — surface the error and recover to
+      // the start screen instead of presenting as a frozen game.
+      console.error('confirmStarter failed:', err);
+      hideLoading();
+      showModal('Something went wrong', 'Could not start the adventure. Please try again.', () => {
+        showScreen('start');
+      });
+    }
   },
 
   returnToStart() {
