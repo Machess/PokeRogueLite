@@ -1,135 +1,83 @@
-# PokéTrials 🎴⚡
+# PokéTrials — updated build v2
 
-### *A Roguelite Card Adventure for Young Trainers*
+## Play
 
----
+1. Extract the entire ZIP into a folder; do not run it inside the ZIP viewer.
+2. Open `PokeRogueLite/index.html` in Chrome or Edge.
+3. Create a profile or continue your adventure.
 
-## What Is This?
+No installation, account, API key, server or build step is required. Keep the files and folders together. Pokémon data, artwork, sprites, descriptions, fonts, backgrounds, music and the verified card-match catalog are included. The core game works offline. The first click enables browser audio.
 
-PokéTrials is a browser-based card game where you become a Pokémon Trainer on an exciting adventure! Pick your starter Pokémon, explore a mystery map full of surprises, battle wild Pokémon with a growing card deck, catch new friends, and take on three powerful boss trainers to become Champion.
+## What's new
 
-The game is designed for players aged 6 to 12. Younger trainers get easier challenges, while older trainers get trickier ones — so everyone plays at just the right level.
+- Card descriptions, previews and resolution share the same rules. Recover, Barrier, defence reductions, charge, delayed attacks and status effects work in regular and boss fights.
+- Enemies announce their next action. Gym leaders have recurring tactics: Brock braces before heavy attacks, Misty sets rain, and Sabrina confuses your active Pokémon. The planned move survives reloads; miss and paralysis chances remain random.
+- Decks use exact **species + attack-name** matches from Pokémon card records: **935 matches across 234 of the first 251 Pokémon**, scanned from 20,635 records. Unmatched moves use labelled elemental Strikes. Guard and Focus are shared trainer commands.
+- The Card/Info button shows a move's matching original card record and its image when online. Printed card damage and energy do not replace the game's balance values. The optional online refresh uses TCGdex without an API key. Failed lookups never stop play.
+- Rewards display energy cost, exclude capped duplicates, and offer deck inspection or an upgrade instead. Power improves damage, healing or block; Flow draws one extra card. Each card receives at most one reward upgrade.
+- Routes branch into different future encounters. Arrows preview their next options. Choosing a direction moves the trainer and pans/zooms the existing background. Reduced-motion settings shorten travel.
+- Late-route legendary encounters retain their guaranteed rarity.
+- Stable battle checkpoints retain hands, piles, enemy intentions, statuses, temporary effects and trainer/boss teams. Rewards and post-boss transitions also resume. Switching retains each Pokémon's exhausted cards and status durations.
+- Versioned saves include validation, previous-write recovery, export/import and visible status. Non-battle activities restart from entry if interrupted before completion.
 
-No downloads needed. No install. Just open `index.html` in a browser and your adventure begins!
+## Saves and moving the game
 
----
+Saves belong to the browser and its site/file location. Clearing browser data, switching browsers or moving the folder can change which saves are available.
 
-## How To Play
+Use **Export saves** on the title screen before moving or updating. Use **Import saves** at the destination and confirm the restore. The JSON contains profiles, adventures, Pokédex entries, unlocks and scores; it excludes the grown-up PIN. Imports are validated before writing. Old saves opened in place migrate automatically: unmatched moves become elemental fallbacks and upgrades are retained.
 
-**Start Screen** → New Game → enter your name and age → watch the intro → pick your starter → explore the map!
+During a fight use **Save & exit**. If saving fails, the error stays visible and that button does not leave the fight. Export a backup before closing.
 
-### The Map
+## Development
 
-- Nodes start as **❓** — you won't know what each stop holds until you arrive. That's part of the adventure!
-- After completing a node, the next choices are revealed ahead of you.
-- **Choose carefully!** Once you move forward, earlier nodes are locked. Every path is different.
-- The map is about 20 nodes deep, ending with a boss battle. Defeat three bosses to become Champion!
+Ordered classic JavaScript components preserve direct `file://` launching. `data/script-order.json` records their order. Existing engine components still share application state; the combat rules are isolated and independently testable. There is no monolithic `app.js` to edit.
 
-### Node Types
+| Component | Responsibility |
+| --- | --- |
+| `js/combat-rules.js` | Effect definitions, descriptions, damage and resolution |
+| `js/combat-flow.js` | Shared turns, enemy intentions and switching |
+| `js/species-cards.js` | Species/attack matching, decks, fallbacks and live lookup |
+| `js/card-rewards.js` | Rewards, upgrades and source-card inspection |
+| `js/save-manager.js` | Validation, recovery, checkpoints, export/import |
+| `js/travel.js` | Directional movement and route previews |
+| `js/state-map.js`, `js/map.js` | Map generation and navigation |
+| `js/battle.js`, `js/boss-battles.js` | Encounter presentation and progression hooks |
+| `js/boot.js` | Startup and interface event bindings |
+| `enhancements.css` | New interface and motion styles |
 
-| Icon | Type | What Happens |
-|------|------|--------------|
-| ⚔️ | Battle | Fight a wild Pokémon, earn gold, and choose a new card |
-| 💚 | Heal | Your whole team gets fully healed |
-| 🔵 | Catch | Try to catch a wild Pokémon to join your team |
-| ⚡ | Training | Upgrade cards to make them stronger, or remove ones you don't need |
-| 🛒 | Shop | Spend your gold on helpful items |
-| 💀 | Boss | Face a Trainer with a full team of Pokémon |
+Other named components retain the profiles, minigames, progression, inventory, audio and visual effects.
 
-### Battle System
+### Tests
 
-- Each turn you get **3 cards** but only **2 actions** — so you always have to think about which cards to play!
-- **Type matchups matter.** Fire beats Grass, Water beats Fire, and so on. Cards show their power against the opponent so you can plan ahead.
-- Status effects like Burn 🔥, Poison ☠️, and Paralysis ⚡ are shown as badges on the screen so you always know what's happening.
-- Switching Pokémon costs 2 actions and swaps your whole deck to that Pokémon's moves.
+Dependency-free checks:
 
-### Gold and Items
-
-You earn gold from battles. The further into the game you get, the more gold battles reward!
-
-| Item | What It Does |
-|------|--------------|
-| 🍊 Oran Berry | Heals 10 HP automatically when a Pokémon drops below half health |
-| 🧪 Revive Potion | Saves a Pokémon from fainting once, restoring some HP |
-| 🟡 Ultra Ball | Better chance to catch Uncommon and Rare Pokémon |
-| 🟣 Master Ball | 100% catch chance — one per adventure! |
-| 🚫 Repel | Your next Catch node will only show Uncommon or Rare Pokémon |
-| 🎣 Lure | Makes Rare encounters much more likely for the whole map |
-
-### Starters and Evolution
-
-- **Bulbasaur** → Ivysaur → Venusaur (Grass — draining and strategic)
-- **Charmander** → Charmeleon → Charizard (Fire — powerful attacks)
-- **Squirtle** → Wartortle → Blastoise (Water — defensive and steady)
-- **Pikachu** (Electric — speedy and fun) — unlocked after completing the game once!
-
-Defeat a boss and your starter evolves. Defeat all three bosses and you win!
-
-### Pokédex
-
-Every Pokémon you battle or catch gets added to your Pokédex, which saves across all your adventures. Battled Pokémon show as silhouettes. Caught Pokémon show their full colour. Try to fill it up!
-
----
-
-## Team Rocket Challenges
-
-After battles, Team Rocket might pop up with a learning challenge!
-
-- 😾 **Meowth** asks **maths questions** — counting coins, addition, multiplication, and more depending on your age.
-- 💄 **Jessie** asks **vocabulary questions** — can you match a word to its meaning?
-- 🌹 **James** asks **spelling questions** — pick the correctly spelled word!
-
-Answer correctly to earn bonus gold. Every challenge is age-appropriate based on the age you entered at the start. If you get one wrong, the correct answer is always explained so you can learn from it.
-
----
-
-## Deck Building
-
-Your starter begins with a 10-card deck themed around their type. After every battle victory, choose one of three new cards to add to your deck.
-
-At **Training nodes** you can:
-- **Upgrade** two cards to make them +25% more powerful
-- **Remove** one card you no longer want
-
----
-
-## Adding Your Own Art
-
-The game has clearly marked asset slots throughout the code. Drop your images into the `assets/` folder and they load automatically.
-
-```
-assets/
-  battleRefrence.jpg       ← battle screen background
-  trainer_stand.png        ← start screen trainer
-  brock.png                ← Boss 1 trainer
-  misty.png                ← Boss 2 trainer
-  giovanni.png             ← Boss 3 trainer
-  meowth.png               ← Meowth challenge screen
-  jessi.png                ← Jessie challenge screen
-  james.png                ← James challenge screen
-  prof_oak.png             ← Professor Oak (registration + intro)
-  sounds/                  ← all audio files go here
+```sh
+node tests/regression.cjs
 ```
 
----
+Optional browser checks:
 
-## Tech Details
+```sh
+npm install --no-save playwright
+npx playwright install chromium
+node tests/browser.cjs
+node tests/browser-edge.cjs
+```
 
-| | |
-|---|---|
-| **Frontend** | Vanilla HTML5, CSS3, JavaScript |
-| **Pokémon Data** | PokéAPI (sprites, names, types) |
-| **Save Data** | Browser localStorage — three separate saves: run progress, unlocks, Pokédex |
-| **Map** | HTML5 Canvas |
-| **Fonts** | Press Start 2P + Nunito via Google Fonts |
-| **Build Tools** | None — open the file and play |
+### Refresh the bundled catalog
 
----
+```sh
+python tools/build_catalog.py
+```
 
-## A Note for Parents and Teachers
+This scans the open dataset using attack names from `data/card-templates.json`. Update that template file when adding attacks. The tool refreshes basic Pokémon data and downloads missing artwork/sprites; existing images are reused. `data/species.js` is a separate bundled description snapshot.
 
-PokéTrials is designed to be educational as well as fun. The difficulty of maths problems, vocabulary words, and spelling challenges automatically adjusts based on the age entered at the start of each adventure. All educational content is child-friendly and age-appropriate. No accounts, no ads, no in-app purchases — just a game kids can enjoy.
+## Data sources
 
----
+- Card dataset: https://github.com/PokemonTCG/pokemon-tcg-data
+- Optional live lookup: https://tcgdex.dev/ and https://api.tcgdex.net/v2/en/cards
+- Pokémon data: https://github.com/PokeAPI/pokeapi/tree/master/data/v2/csv
+- Artwork and sprites: https://github.com/PokeAPI/sprites
+- Google Fonts Press Start 2P and Nunito; OFL licences accompany the fonts.
 
-*Pokémon and all related names are the property of Nintendo and Game Freak. PokéTrials is a fan-made educational project and is not affiliated with or endorsed by Nintendo.*
+Pokémon names and artwork belong to their respective rights holders. This remains a fan-made educational project. Existing project artwork and audio have been retained.
