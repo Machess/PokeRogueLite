@@ -55,5 +55,12 @@
   "js/league.js",
   "js/victory.js",
   "js/effects.js",
+  "js/attack-fx.js",
+  "data/sprite-bounds.js",
+  "js/pixel-ui.js",
+  "data/asset-manifest.js",
+  "js/asset-preloader.js",
+  "js/region-map.js",
+  "js/capture-cinematic.js",
   "js/boot.js"
 ]

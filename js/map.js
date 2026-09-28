@@ -98,6 +98,7 @@ const MapEngine = {
     showScreen('map');
     this.renderParty();
     this.renderNav();
+    RegionMap.update();
     ItemEngine.renderBagBar();
     saveGame();
   },

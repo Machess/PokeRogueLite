@@ -1,6 +1,7 @@
 const Game = {
 
   async startNew(isNewProfile = false) {
+    await AssetPreloader.ensure();
     // If no active profile yet (new profile creation), just go to register.
     // The profile is created inside confirmStarter after the name is known.
     if (isNewProfile || !getActiveProfile()) {
@@ -85,7 +86,7 @@ const Game = {
     this.showStarterSelect();
   },
 
-  continueGame() {
+  async continueGame() {
     const saved = loadGame();
     if (!saved || !saved.party) {
       // Self-heal: the meta flag was stale (save lost or never written). Clear it
@@ -100,6 +101,7 @@ const Game = {
       showModal('No Save Found', 'That run could not be loaded.\nStart a New Game to play!');
       return;
     }
+    await AssetPreloader.ensure((saved.party || []).flatMap(p => (p.deck || []).map(c => c.source).filter(Boolean)));
     GameState = saved;
     if(SaveManager.resume()) return;
 

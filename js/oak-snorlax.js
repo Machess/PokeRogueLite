@@ -73,7 +73,7 @@ const OakSortEngine = {
     const poke = this._queue[this._round];
 
     const cv = setupChallengeScreen({
-      portrait: 'prof_oak.png', badge: `🔬 Sort by ${this._rule.label}!`,
+      portrait: 'prof_oak.png', badge: `Sort by ${this._rule.label}!`,
       intro: `${this._round + 1}/${this._queue.length} — ${this._hits} sorted right`,
       wrapClass: 'oak-wrap', screenClass: 'oak-active',
     });
@@ -86,7 +86,12 @@ const OakSortEngine = {
       <img src="${this._sprites[poke.id]}" class="oak-poke pixel-sprite" id="oak-poke"
            style="animation-duration:${slideMs}ms" alt="${poke.name}">
       <div class="oak-poke-name">${poke.name}</div>`;
-    cv.appendChild(belt);
+    const dashboard=document.createElement('div');dashboard.className='oak-lab-dashboard';
+    dashboard.innerHTML='<span>FIELD RESEARCH · SORTING STATION</span><span>'+String(this._round+1).padStart(2,'0')+' / '+this._queue.length+'</span>';
+    cv.appendChild(dashboard);cv.appendChild(belt);
+    const clock=document.createElement('div');clock.className='oak-clock';clock.setAttribute('role','progressbar');clock.setAttribute('aria-label','Time to sort');
+    clock.innerHTML='<span style="animation-duration:'+slideMs+'ms"></span>';cv.appendChild(clock);
+    const feedback=document.createElement('p');feedback.className='oak-feedback';feedback.setAttribute('aria-live','polite');feedback.textContent='Tap the matching research bay before the Pokémon passes.';cv.appendChild(feedback);
 
     // Baskets
     const row = document.createElement('div');
@@ -95,7 +100,7 @@ const OakSortEngine = {
     this._rule.buckets.forEach(([val, label]) => {
       const b = document.createElement('button');
       b.className = 'oak-basket';
-      b.innerHTML = `<span class="oak-basket-label">${label}</span>`;
+      b.innerHTML = `<span class="oak-basket-symbol">${PixelType.patterns[val]?PixelType.icon(val):''}</span><span class="oak-basket-label">${label.replace(/^[^A-Za-z]+/,'')}</span>`;
       b.addEventListener('click', () => {
         if (answered) return;
         answered = true;
@@ -103,13 +108,15 @@ const OakSortEngine = {
         document.getElementById('oak-poke')?.style.setProperty('animation-play-state','paused');
         const correct = poke[this._rule.key] === val;
         b.classList.add(correct ? 'oak-correct' : 'oak-wrong');
+        clock.firstChild.style.animationPlayState='paused';
+        feedback.textContent=correct?'Correct! Pokémon safely sorted.':'Look for the highlighted bay.';
         if (correct) this._hits++;
         else {
           row.querySelectorAll('.oak-basket').forEach((bb, i) => {
             if (this._rule.buckets[i][0] === poke[this._rule.key]) bb.classList.add('oak-correct');
           });
         }
-        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 950));
+        this._timeouts.push(setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 950));
       });
       row.appendChild(b);
     });
@@ -119,11 +126,12 @@ const OakSortEngine = {
     this._timeouts.push(setTimeout(() => {
       if (!answered) {
         answered = true;
+        feedback.textContent='It passed! The matching bay is highlighted.';
         row.querySelectorAll('.oak-basket').forEach((bb, i) => {
           bb.disabled = true;
           if (this._rule.buckets[i][0] === poke[this._rule.key]) bb.classList.add('oak-correct');
         });
-        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 950));
+        this._timeouts.push(setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 950));
       }
     }, slideMs));
   },
@@ -218,8 +226,10 @@ const SnorlaxEngine = {
             x.insertAdjacentHTML('beforeend', `<span class="snx-kg">${pk.kg} kg</span>`);
             if (pk.id === heavier.id) x.classList.add('snx-correct');
           });
-          if (correct) this._hits++;
-          setTimeout(() => { this._round++; this._showRound(); }, 1600);
+          clock.firstChild.style.animationPlayState='paused';
+        feedback.textContent=correct?'Correct! Pokémon safely sorted.':'Look for the highlighted bay.';
+        if (correct) this._hits++;
+          setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 1600);
         });
         row.appendChild(btn);
       });
@@ -295,8 +305,10 @@ const SnorlaxEngine = {
             ? `Balanced! ${pickedKg} kg vs ${targetKg} kg ✓`
             : `${pickedKg} kg vs ${targetKg} kg — off by ${Math.abs(pickedKg - targetKg)} kg`;
           cv.appendChild(verdict);
-          if (correct) this._hits++;
-          setTimeout(() => { this._round++; this._showRound(); }, 1800);
+          clock.firstChild.style.animationPlayState='paused';
+        feedback.textContent=correct?'Correct! Pokémon safely sorted.':'Look for the highlighted bay.';
+        if (correct) this._hits++;
+          setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 1800);
         }
       });
       row.appendChild(btn);

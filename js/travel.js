@@ -17,9 +17,8 @@ const Travel={
   setup(){
     const screen=document.getElementById('screen-map');
     const trail=document.createElement('div');trail.className='travel-trail';trail.setAttribute('aria-hidden','true');
-    const player=document.createElement('img');player.src='assets/trainer_stand.png';player.className='travel-player';player.alt='Your trainer';
     const caption=document.createElement('div');caption.id='travel-caption';caption.setAttribute('aria-live','polite');
-    screen.append(trail,player,caption);
+    screen.append(trail,caption);
   },
   preview(node){
     const next=(node.links||[]).map(i=>GameState.map[i]).filter(Boolean);

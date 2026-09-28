@@ -489,9 +489,9 @@ const TeamRocketChallenge = {
     if (this._challenge.coins && tier === 1) {
       const { a, b, op } = this._challenge.coins;
       cv.innerHTML =
-        `<div class="coin-group">${'🪙'.repeat(a)}</div>` +
+        `<div class="coin-group">${'<i class="rocket-coin" aria-hidden="true"></i>'.repeat(a)}</div>` +
         `<div class="coin-op">${op === '+' ? '➕' : '➖'}</div>` +
-        `<div class="coin-group">${'🪙'.repeat(b)}</div>`;
+        `<div class="coin-group">${'<i class="rocket-coin" aria-hidden="true"></i>'.repeat(b)}</div>`;
       cv.style.display = 'flex';
     }
 

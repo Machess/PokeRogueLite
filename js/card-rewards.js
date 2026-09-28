@@ -1,19 +1,3 @@
-const CardInspector={
-  open(card){
-    let modal=document.getElementById('card-inspector');if(!modal){modal=document.createElement('dialog');modal.id='card-inspector';document.body.appendChild(modal);}
-    modal.replaceChildren();
-    const title=document.createElement('h2');title.textContent=card.name;modal.appendChild(title);
-    const stats=document.createElement('p');stats.textContent=`${card.cost||0} energy · ${card.power||0} power · ${CombatRules.describe(card)}`;modal.appendChild(stats);
-    if(card.source){
-      const img=document.createElement('img');img.src=card.source.localImage||card.source.image;img.alt=`${card.source.pokemon} — ${card.source.id}`;img.onerror=()=>{const note=document.createElement('p');note.textContent='Card image unavailable. The verified attack match is shown below.';img.replaceWith(note);};modal.appendChild(img);
-      const text=document.createElement('p');text.textContent=`Matched attack: ${card.source.attack} · ${card.source.pokemon} · ${card.source.id}. PokéTrials uses the energy, damage and effects shown above.`;modal.appendChild(text);
-    }else{const text=document.createElement('p');text.textContent=card.trainerCommand?'Trainer command.': 'Elemental fallback: no verified species/attack card match in the bundled catalog.';modal.appendChild(text);}
-    if(card.speciesId){const refresh=document.createElement('button');refresh.textContent='Check online card matches';refresh.onclick=async()=>{refresh.disabled=true;refresh.textContent='Checking…';const d=OFFLINE_POKEMON[card.speciesId];const ok=await SpeciesCards.refresh({id:card.speciesId,name:capitalize(d.name)});refresh.textContent=ok?'Card matches updated':'Offline — bundled matches are ready';};modal.appendChild(refresh);}
-    const close=document.createElement('button');close.textContent='Close';close.onclick=()=>modal.close();modal.appendChild(close);modal.showModal();
-  },
-  button(card){const b=document.createElement('button');b.className='inspect-card';b.textContent=card.source?'▣ Card':'ⓘ';b.title='Inspect attack and source card';b.onclick=e=>{e.stopPropagation();this.open(card);};return b;}
-};
-
 const CardReward={
   _pool:[],_chosen:false,_mode:'add',
   deck(){return GameState.party[GameState.activePokemonIndex].deck;},
@@ -30,7 +14,7 @@ const CardReward={
     const deck=this.deck(),cap=deck.length>=31;
     document.getElementById('cr-gold-earned').textContent=`+${this._gold}g · ${getActivePokemon().name}'s deck: ${deck.length}/31`;
     document.getElementById('cr-battle-comment').textContent=cap?'Deck full — improve a card or skip.':'Choose an attack, improve your deck, or keep it lean.';
-    const summary=document.getElementById('cr-battle-summary');summary.textContent='Matched attacks belong to your active Pokémon. Card numbers use PokéTrials rules.';summary.style.display='';
+    const summary=document.getElementById('cr-battle-summary');summary.textContent='Flip a matched attack to see its Pokémon card.';summary.style.display='';
     const grid=document.getElementById('cr-cards-grid');grid.replaceChildren();
     if(this._mode==='add'&&!cap){
       for(const [i,card] of this._pool.entries()){
@@ -57,7 +41,7 @@ const CardReward={
     const cost=document.createElement('div');cost.className='reward-cost';cost.textContent=`${card.cost||0} ENERGY · ${card.power||0} POWER`;
     const description=document.createElement('p');description.textContent=CombatRules.describe(card);
     const source=document.createElement('small');source.textContent=card.source?`✓ ${card.source.pokemon} · ${card.source.id}`:card.trainerCommand?'Trainer command':'Elemental fallback';
-    el.append(name,cost,description,source,CardInspector.button(card));return el;
+    el.append(name,cost,description);if(card.source)el.appendChild(CardFlip.button(card,el));return el;
   },
   pickCard(i){if(this._chosen)return;const card=this._pool[i],deck=this.deck();if(!card||deck.length>=31||deck.filter(c=>c.id===card.id).length>=2)return;
     deck.push({...card});this._chosen=true;GameState.deck=deck;SoundEngine.playFanfare();this.close();},

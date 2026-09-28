@@ -360,6 +360,7 @@ function spawnBeam(attackerSpriteId, defenderSpriteId, moveType, cost) {
 }
 
 function applyHitAnimation(attackerSpriteId, defenderSpriteId, moveType, cost = 1, cardName = '', cardIcon = '') {
+  if (typeof AttackFX !== 'undefined' && AttackFX.play(attackerSpriteId, defenderSpriteId, moveType, cost, cardName)) return;
   const atk = document.getElementById(attackerSpriteId);
   const def = document.getElementById(defenderSpriteId);
 

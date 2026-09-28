@@ -6,6 +6,10 @@ const CatchEngine = {
   _speciesData:  null,  // cached from species endpoint
 
   async start(node, forceRarity) {
+    CaptureCinematic.cancel();
+    this._throwing = false;
+    const oldSprite = document.getElementById('catch-sprite');
+    if(oldSprite) oldSprite.style.visibility = '';
     showLoading();
     const hasRepel = ItemEngine.hasItem('repel');
     const hasLure  = ItemEngine.hasItem('lure');
@@ -201,8 +205,9 @@ const CatchEngine = {
     if (bot) bot.style.background = '';
   },
 
-  throwBall() {
-    if (!this.current) return;
+  async throwBall() {
+    if (!this.current || this._throwing) return;
+    this._throwing = true;
     document.getElementById('catch-controls').style.display = 'none';
     const { rarity, data } = this.current;
     let catchRate;
@@ -238,20 +243,12 @@ const CatchEngine = {
     // Reset selection back to pokeball immediately after throwing
     this._selectedBall = 'pokeball';
 
+    ballWrap.style.display = 'none';
+    const finished = await CaptureCinematic.play({ caught, wiggles, ball, sprite: spriteEl, status: statusEl });
+    if (!finished) return;
     ballWrap.style.display = 'flex';
-    ball.className = 'catch-ball ball-throw';
-    setTimeout(() => {
-      if (spriteEl) spriteEl.className = 'catch-sprite catch-absorbed';
-      const ph = document.querySelector('.catch-placeholder');
-      if (ph) ph.style.animation = 'absorb .5s ease-in forwards';
-    }, 550);
-    setTimeout(() => {
-      ball.className = 'catch-ball ball-landed';
-      if (spriteEl) spriteEl.style.display = 'none';
-      const ph = document.querySelector('.catch-placeholder');
-      if (ph) ph.style.display = 'none';
-      this._runWiggles(ball, statusEl, wiggles, caught, data);
-    }, 900);
+    if (spriteEl) spriteEl.style.display = 'none';
+    this._showResult(ball, statusEl, caught, data);
   },
 
   _runWiggles(ball, statusEl, total, caught, data) {
@@ -417,6 +414,8 @@ const CatchEngine = {
     MapEngine.show();
   },
   flee() {
+    if(this._throwing) return;
+    CaptureCinematic.cancel();
     this._pendingCatch = null;
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();

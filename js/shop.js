@@ -58,36 +58,69 @@ async function stoneEvolve(stoneId) {
 
 
 
+const ShopArt = {
+ icon(item) {
+  const id=item.id, color=id==='master_ball'?'#a169d6':id==='super_potion'?'#f09656':id==='revive_potion'?'#80dba3':'#74b9e6';
+  let art='';
+  if(id.includes('ball'))art=`<path d="M8 4h16v4h4v16h-4v4H8v-4H4V8h4z" fill="#f0ead4"/><path d="M8 4h16v4h4v8H4V8h4z" fill="${id==='master_ball'?color:'#e9bb43'}"/><path d="M4 16h24" stroke="#172e3e" stroke-width="4"/><path d="M12 12h8v8h-8z" fill="#fff6d8"/>`;
+  else if(id.includes('potion')||id==='repel')art=`<path d="M11 3h10v8l5 5v13H6V16l5-5z" fill="${color}"/><path d="M10 3h12v5H10z" fill="#e2e6d3"/><path d="M10 18h12v7H10z" fill="#f8ebcf"/><path d="M16 18v7m-4-3h8" stroke="#b04469" stroke-width="2"/>`;
+  else if(id.includes('stone'))art=`<path d="M10 3h12l7 13-7 13H9L3 17z" fill="${id==='fire_stone'?'#e87a48':id==='water_stone'?'#56bfdf':'#eed25b'}"/><path d="M10 5l3 9-6 9m7-9h12" fill="none" stroke="#fff2b4" stroke-width="3"/>`;
+  else {const shapes={
+   oran_berry:'<path d="M6 11h18v5h4v10h-5v3H8v-3H4V16h2z" fill="#739de1"/><path d="M15 12V5h10l-6 7z" fill="#9ed78e"/>',
+   lucky_egg:'<path d="M12 3h8l6 9 3 12-6 6H8l-5-6 3-12z" fill="#fff2cd"/><path d="M8 16h5v5H8zm12 7h5v4h-5z" fill="#e6bf91"/>',
+   amulet_coin:'<path d="M8 4h16l5 6v14l-5 5H8l-5-5V10z" fill="#eac35a"/><path d="M13 9h8v7h-8v8m0-8h9" stroke="#946126" stroke-width="3" fill="none"/>',
+   magnet:'<path d="M5 4h8v16h6V4h8v19l-6 6H11l-6-6z" fill="#cf6470"/><path d="M5 4h8v8H5zm14 0h8v8h-8z" fill="#b7dde3"/>',
+   focus_sash:'<path d="M4 5h24v9H16l10 14h-9L6 14z" fill="#e77a94"/>',
+   charcoal:'<path d="M4 22L20 4l9 8-16 18z" fill="#6a5661"/><path d="M8 21L22 7m-8 20l11-14" stroke="#a18b8b" stroke-width="2"/>',
+   shell_bell:'<path d="M12 3h8v5l5 5v10l4 3H3l4-3V13l5-5z" fill="#dfc991"/><path d="M13 27h6v4h-6z" fill="#e5a949"/>',
+   mystic_water:'<path d="M16 2L4 19v7l6 4h12l6-4v-7z" fill="#62c8e1"/><path d="M12 15l-4 7v4" stroke="#dbfcff" stroke-width="3" fill="none"/>',
+   miracle_seed:'<path d="M15 29V15M15 19L5 8h8l4 8 4-11h7l-7 14" stroke="#91cb72" stroke-width="5" fill="none"/>',
+   leftovers:'<path d="M5 10h22v17H5z" fill="#c48d65"/><path d="M4 6h24v8H4z" fill="#efcaa0"/><path d="M7 17h18" stroke="#9bd585" stroke-width="4"/>',
+   lure:'<path d="M16 2v20q0 8 9 4v-5" fill="none" stroke="#c9e6e3" stroke-width="3"/><path d="M10 7h12v12H10z" fill="#ed8977"/>'
+  };art=shapes[id]||shapes.amulet_coin;}
+  return `<svg viewBox="0 0 32 32" aria-hidden="true" shape-rendering="crispEdges">${art}</svg>`;
+ }
+};
+
 const ShopEngine = {
   start(node) {
+    this._filter = 'all';
     this._render();
     showScreen('shop');
   },
 
   _render() {
-    document.getElementById('shop-gold').textContent = `💰 ${GameState.gold || 0}g`;
+    document.getElementById('shop-gold').textContent = `${GameState.gold || 0} gold`;
     const grid = document.getElementById('shop-items-grid');
     grid.innerHTML = '';
+    let tabs=document.getElementById('shop-tabs');
+    if(!tabs){tabs=document.createElement('nav');tabs.id='shop-tabs';tabs.setAttribute('aria-label','Shop categories');grid.before(tabs);}
+    tabs.replaceChildren();
+    for(const [id,label] of [['all','All items'],['supplies','Supplies'],['held','Held items'],['stone','Evolution']]){
+      if(id==='stone'&&(GameState.starterId!==133||GameState.eeveeEvolution))continue;
+      const button=document.createElement('button');button.textContent=label;button.type='button';button.setAttribute('aria-pressed',String((this._filter||'all')===id));
+      button.onclick=()=>{this._filter=id;this._render();grid.scrollTop=0;};tabs.appendChild(button);
+    }
 
     const isEevee   = GameState.starterId === 133;
     const hasEvolved = !!GameState.eeveeEvolution;
 
     // Split into sections
     const sections = [
-      { label: '🎒 Consumables & Balls', items: SHOP_ITEMS.filter(i => i.category !== 'held' && i.category !== 'stone') },
-      { label: '🏅 Held Items',          items: SHOP_ITEMS.filter(i => i.category === 'held') },
+      { category:'supplies', label: 'Consumables & Balls', items: SHOP_ITEMS.filter(i => i.category !== 'held' && i.category !== 'stone') },
+      { category:'held', label: 'Held Items',          items: SHOP_ITEMS.filter(i => i.category === 'held') },
     ];
 
     // Stone section — only when Eevee is starter and not yet evolved
     if (isEevee && !hasEvolved) {
       sections.push({
-        label: '💎 Evolution Stones',
+        category:'stone', label: 'Evolution Stones',
         items: SHOP_ITEMS.filter(i => i.category === 'stone'),
         isStone: true,
       });
     }
 
-    sections.forEach(section => {
+    sections.filter(s=>!this._filter||this._filter==='all'||s.category===this._filter).forEach(section => {
       const header = document.createElement('div');
       header.className = 'shop-section-header';
       header.textContent = section.label;
@@ -111,7 +144,7 @@ const ShopEngine = {
         if (section.isStone && item.stoneTarget) {
           stonePreviewHtml = `
             <div class="stone-preview">
-              <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${item.stoneTarget.id}.png"
+              <img src="assets/sprites/${item.stoneTarget.id}.png"
                    class="stone-preview-sprite" alt="${item.stoneTarget.name}"
                    onerror="this.style.display='none'" />
               <span class="stone-preview-name">→ ${item.stoneTarget.name}</span>
@@ -120,12 +153,12 @@ const ShopEngine = {
         }
 
         div.innerHTML = `
-          <div class="shop-item-icon">${item.icon}</div>
+          <div class="shop-item-icon">${ShopArt.icon(item)}</div>
           <div class="shop-item-name">${item.name}</div>
           <div class="shop-item-desc">${item.description}</div>
           ${stonePreviewHtml}
           <div class="shop-item-footer">
-            <span class="shop-item-price">💰${scaledPrice}g</span>
+            <span class="shop-item-price">${scaledPrice}g</span>
             ${count > 0 ? `<span class="shop-item-owned">bag ×${count}</span>` : ''}
             ${equipped > 0 ? `<span class="shop-item-owned">held ×${equipped}</span>` : ''}
             <button class="btn-pixel btn-small btn-primary shop-buy-btn"
@@ -146,7 +179,7 @@ const ShopEngine = {
       .filter(p => p.heldItem && HELD_ITEM_TIERS[p.heldItem.id] && (p.heldItem.tier || 1) < 3)
       .map(p => ({ poke: p, pokeIdx: GameState.party.indexOf(p), item: p.heldItem }));
 
-    if (upgradeable.length > 0) {
+    if (upgradeable.length > 0 && (!this._filter || ['all','held'].includes(this._filter))) {
       const upHeader = document.createElement('div');
       upHeader.className = 'shop-section-header';
       upHeader.textContent = '⬆ Upgrades';
@@ -162,7 +195,7 @@ const ShopEngine = {
         const div = document.createElement('div');
         div.className = 'shop-item shop-upgrade-item' + (canAfford ? ' shop-upgrade-can-afford' : '');
         div.innerHTML = `
-          <div class="shop-item-icon">${item.icon}</div>
+          <div class="shop-item-icon">${ShopArt.icon(item)}</div>
           <div class="shop-upgrade-header">
             <span class="shop-item-name">${item.name}</span>
             <span class="shop-upgrade-holder">on ${poke.name}</span>
@@ -174,7 +207,7 @@ const ShopEngine = {
           </div>
           <div class="shop-upgrade-stars">${stars(tier)} → ${stars(tier + 1)}</div>
           <div class="shop-item-footer">
-            <span class="shop-item-price ${canAfford ? '' : 'shop-price-unafford'}">💰 ${cost}g</span>
+            <span class="shop-item-price ${canAfford ? '' : 'shop-price-unafford'}">${cost}g</span>
             <button class="btn-pixel btn-primary shop-buy-btn" ${canAfford ? '' : 'disabled'}
                     data-pokeidx="${pokeIdx}">
               ${canAfford ? '⬆ Upgrade' : 'Need gold'}

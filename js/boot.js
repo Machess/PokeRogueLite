@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   SaveManager.setup();Travel.setup();
+  AssetPreloader.installRetry();
+  RegionMap.install();
   for(const family of [CARD_TEMPLATES,TYPE_SIGNATURE_CARDS,LEAGUE_DECKS])for(const cards of Object.values(family))for(const c of cards)c.effect=CombatRules.describe(c);
   for(const c of STANDARD_CARDS)c.effect=CombatRules.describe(c);
   _applyTheme();   // Phase 1: stamp THEME vocabulary onto static [data-theme] labels

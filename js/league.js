@@ -339,7 +339,8 @@ const LeagueEngine = {
   },
 
   // ── Start the League run ───────────────────────────────────────────────────
-  startLeague(selectedIds) {
+  async startLeague(selectedIds) {
+    await AssetPreloader.ensure();
     showLoading();
     const dex   = loadPokedex();
     const wins  = (loadProfiles().find(p => p.key === getActiveProfile())?.totalWins || 3);

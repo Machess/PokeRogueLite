@@ -1,6 +1,6 @@
 const _apiCache = {};
 async function fetchPoke(id) {
-  const local=globalThis.OFFLINE_POKEMON?.[Number(id)];
+  const local=globalThis.OFFLINE_POKEMON?.[Number(id)] || Object.values(globalThis.OFFLINE_POKEMON || {}).find(p => p.name === String(id).toLowerCase());
   if(local)return structuredClone(local);
   if(_apiCache[id])return _apiCache[id];
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),5000);

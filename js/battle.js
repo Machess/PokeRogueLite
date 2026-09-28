@@ -402,7 +402,7 @@ const BattleEngine = {
 
     el.innerHTML = `
       <div class="card-cost-row">${costPips}</div>
-      <div class="card-icon">${card.icon}</div>
+      <div class="card-icon" aria-label="${card.type}">${PixelType.icon(card.type, card.trainerCommand ? card.name : null)}</div>
       <div class="card-name">${card.name}</div>
       <div class="card-power">⚔ ${powerDisplay}</div>
       <div class="card-effect">${card.effect}</div>
@@ -411,7 +411,7 @@ const BattleEngine = {
       ${card.exhaust ? `<div class="card-exhaust-badge">🔥 Once</div>` : ''}
       ${card.improved ? `<div class="card-improved-badge">+${card.improved}</div>` : ''}
     `;
-    el.appendChild(CardInspector.button(card));
+    if (card.source) el.appendChild(CardFlip.button(card, el));
     if (!disabled) el.onclick = () => this.playCard(idx);
     return el;
   },

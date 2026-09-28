@@ -38,7 +38,7 @@ const EnemyAI = {
     const n=this.incoming(st);st.enemyCharge=false;
     st.player.hp=Math.max(0,st.player.hp-n);st.totalDamageTaken=(st.totalDamageTaken||0)+n;
     log(`${st.opp.name}: ${i.move.name} — ${n} damage${st.shield?' after block':''}.`);
-    applyHitAnimation(engine.isBoss?'boss-opp-sprite':'opp-sprite',engine.isBoss?'boss-player-sprite':'player-sprite',st.opp.type);
+    applyHitAnimation(engine.isBoss?'boss-opp-sprite':'opp-sprite',engine.isBoss?'boss-player-sprite':'player-sprite',i.move.type||st.opp.type,i.move.cost||1,i.move.name);
     if(i.move.effect&&Math.random()<.15&&!st.effects?.statusResist){const status={burn_chance:'burn',para_chance:'para',poison_chance:'poison'}[i.move.effect];if(status)addStatus(st,'player',status,status==='para'?4:undefined);}
     const berry=ItemEngine.checkBerryMidBattle(st,'player',engine.isBoss);if(berry)engine._logPlayer(berry);
   }

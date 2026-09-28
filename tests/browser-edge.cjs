@@ -23,7 +23,7 @@ assert.equal(await page.evaluate(()=>loadGame()?.party.length),2);
 // Restoring old saves fixes deck aliasing and fallback provenance without resetting upgrades.
 assert.equal(await page.evaluate(()=>{const s=loadGame();delete s.resume;delete s.party[0].cardCatalogVersion;s.party[0].deck=[{id:'old',name:'Imaginary Fire Attack',type:'fire',power:99,cost:1,improved:2}];const m=SaveManager.migrate(s);return m.party[0].deck[0].fallback&&m.party[0].deck[0].improved===2&&m.deck===m.party[m.activePokemonIndex].deck;}),true);
 // Clearing a run on defeat cannot be reversed by the pagehide autosave.
-await page.evaluate(()=>{Game.continueGame();GameOver.show('test enemy');SaveManager.write();});assert.equal(await page.evaluate(()=>localStorage.getItem(saveKey(getActiveProfile()))),null);
+await page.evaluate(async()=>{await Game.continueGame();GameOver.show('test enemy');SaveManager.write();});assert.equal(await page.evaluate(()=>localStorage.getItem(saveKey(getActiveProfile()))),null);
 // New run then complete an actual one-Pokémon boss. Refresh during its victory modal.
 await page.evaluate(async()=>{Game._doStartNew();await Game.confirmStarter(STARTERS[1]);const node=GameState.map.find(n=>n.type==='boss');GameState.currentNodeIndex=node.idx;await BossEngine.start(node);BossEngine.oppTeam=BossEngine.oppTeam.slice(0,1);BossEngine.startBattle();BossEngine.bState.opp.hp=0;BossEngine._checkDefeated();});await page.waitForTimeout(1100);
 assert.equal(await page.evaluate(()=>GameState.resume?.kind),'boss-victory');await page.reload();await page.evaluate(()=>Game.continueGame());await page.waitForTimeout(800);

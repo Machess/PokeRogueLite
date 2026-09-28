@@ -235,81 +235,7 @@ const FishingEngine = {
   // A marker sweeps a bar with a sweet-spot zone; tap to hook. No fail-out —
   // accuracy maps to a clue bonus. Tier 3 has a smaller/faster zone than tier 2.
   _playAngling(onDone) {
-    const tier = getSkillTier('fishing');
-    // Switch to the challenge screen — the angling renders into #challenge-coin-visual
-    // which lives there, not on #screen-boss.
-    showScreen('challenge');
-    const sc = document.getElementById('screen-challenge');
-    sc.classList.remove(...CHALLENGE_CLASSES);
-    sc.classList.add('fishing-active');
-    SoundEngine.playBGM('pallet_town_theme.mp3');
-
-    const cv = document.getElementById('challenge-coin-visual');
-    const img = document.getElementById('challenge-character-img');
-    if (img) { img.src = 'assets/misty.png'; img.style.display = ''; }
-    document.getElementById('challenge-badge').textContent = '🎣 Cast & Reel!';
-    document.getElementById('challenge-intro').textContent = 'Tap when the marker hits the green zone to hook it!';
-    document.getElementById('challenge-result').style.display       = 'none';
-    document.getElementById('challenge-continue-btn').style.display = 'none';
-    document.getElementById('challenge-question').style.display     = 'none';
-    document.getElementById('challenge-answer-btns').innerHTML      = '';
-
-    // Tier-scaled difficulty
-    const zoneW   = tier >= 3 ? 22 : 40;     // sweet-spot width (% of bar)
-    const bullW   = tier >= 3 ? 8  : 14;     // bullseye width (% of bar)
-    const speed   = tier >= 3 ? 1.7 : 1.15;  // sweeps per second
-    const zoneL   = 50 - zoneW / 2;          // centered zone
-    const bullL   = 50 - bullW / 2;
-
-    cv.style.display = 'block';
-    cv.className = 'angling-area';
-    cv.innerHTML = `
-      <div class="angling-water"></div>
-      <div class="angling-bar">
-        <div class="angling-zone" style="left:${zoneL}%;width:${zoneW}%"></div>
-        <div class="angling-bull" style="left:${bullL}%;width:${bullW}%"></div>
-        <div class="angling-marker" id="angling-marker"></div>
-      </div>
-      <button class="btn-pixel btn-primary angling-hook-btn" id="angling-hook-btn">HOOK! 🎣</button>
-      <div class="angling-feedback" id="angling-feedback"></div>`;
-
-    const marker = document.getElementById('angling-marker');
-    const btn    = document.getElementById('angling-hook-btn');
-    let pos = 0, dir = 1, raf = null, last = performance.now(), done = false;
-
-    const step = (now) => {
-      const dt = (now - last) / 1000; last = now;
-      pos += dir * speed * 100 * dt;
-      if (pos >= 100) { pos = 100; dir = -1; }
-      if (pos <= 0)   { pos = 0;   dir =  1; }
-      if (marker) marker.style.left = pos + '%';
-      if (!done) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-
-    const hook = () => {
-      if (done) return;
-      done = true;
-      cancelAnimationFrame(raf);
-      btn.disabled = true;
-      // Score by where the marker landed
-      let bonus, msg, cls;
-      if (pos >= bullL && pos <= bullL + bullW) {
-        bonus = 1; msg = 'PERFECT CATCH! ⭐'; cls = 'angling-perfect';
-        SoundEngine.playCorrect();
-      } else if (pos >= zoneL && pos <= zoneL + zoneW) {
-        bonus = 0; msg = 'Nice hook!'; cls = 'angling-good';
-        SoundEngine.playCorrect();
-      } else {
-        bonus = -1; msg = 'It thrashed free a bit... murky clues!'; cls = 'angling-sloppy';
-      }
-      const fb = document.getElementById('angling-feedback');
-      if (fb) { fb.textContent = msg; fb.className = `angling-feedback ${cls}`; }
-      if (marker) marker.classList.add('angling-marker-stop');
-      setTimeout(() => onDone(bonus), 1100);
-    };
-
-    btn.addEventListener('click', hook);
+    FishingTiming.start(getSkillTier('fishing'), onDone);
   },
 
   _showClueStage() {
@@ -336,13 +262,13 @@ const FishingEngine = {
     cv.innerHTML     = `
       <div class="fishing-rod-area">
         <div class="fishing-water"></div>
-        <div class="fishing-bobber" id="fishing-bobber">🎣</div>
+        <div class="fishing-bobber pixel-float" id="fishing-bobber" aria-hidden="true"></div>
       </div>
       <div class="fishing-bubbles-wrap" id="fishing-bubbles-wrap"></div>`;
 
     showScreen('challenge');
     document.getElementById('screen-challenge').classList.remove(...CHALLENGE_CLASSES);
-    document.getElementById('screen-challenge').classList.add('fishing-active');
+    document.getElementById('screen-challenge').classList.add('fishing-active', 'fishing-clues');
     SoundEngine.playBGM('pallet_town_theme.mp3');
 
     this._renderCurrentClue();
@@ -427,7 +353,8 @@ const FishingEngine = {
     cardGrid.id        = 'fishing-card-grid';
 
     const cardEls = p.choices.map((name, i) => {
-      const card = document.createElement('div');
+      const card = document.createElement('button');
+      card.type = 'button';
       card.className   = 'fishing-choice-card';
       card.dataset.name = name;
       card.innerHTML   = `
@@ -546,9 +473,10 @@ const FishingEngine = {
   },
 
   finish() {
+    FishingTiming.stop();
     this._isActive = false;
     ActiveEngine.clear();
-    document.getElementById('screen-challenge').classList.remove('fishing-active');
+    document.getElementById('screen-challenge').classList.remove('fishing-active', 'fishing-clues');
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },

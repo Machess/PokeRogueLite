@@ -1,4 +1,4 @@
-# PokéTrials — updated build v2
+# PokéTrials — visual polish build v2.3
 
 ## Play
 
@@ -13,12 +13,36 @@ No installation, account, API key, server or build step is required. Keep the fi
 - Card descriptions, previews and resolution share the same rules. Recover, Barrier, defence reductions, charge, delayed attacks and status effects work in regular and boss fights.
 - Enemies announce their next action. Gym leaders have recurring tactics: Brock braces before heavy attacks, Misty sets rain, and Sabrina confuses your active Pokémon. The planned move survives reloads; miss and paralysis chances remain random.
 - Decks use exact **species + attack-name** matches from Pokémon card records: **935 matches across 234 of the first 251 Pokémon**, scanned from 20,635 records. Unmatched moves use labelled elemental Strikes. Guard and Focus are shared trainer commands.
-- The Card/Info button shows a move's matching original card record and its image when online. Printed card damage and energy do not replace the game's balance values. The optional online refresh uses TCGdex without an API key. Failed lookups never stop play.
+- In battles and all victory reward tabs, **Flip** appears only on matched attacks. Tap it to turn the attack into its large original Pokémon card; tap the card again (or press Escape) to turn it back. This never plays an attack or spends energy. Original card images download before gameplay and are cached for later visits. The old reward inspection dialog and refresh controls have been removed.
 - Rewards display energy cost, exclude capped duplicates, and offer deck inspection or an upgrade instead. Power improves damage, healing or block; Flow draws one extra card. Each card receives at most one reward upgrade.
-- Routes branch into different future encounters. Arrows preview their next options. Choosing a direction moves the trainer and pans/zooms the existing background. Reduced-motion settings shorten travel.
+- Routes branch into different future encounters. Arrows preview their next options. Choosing a direction pans/zooms the existing background; the map has no trainer sprite. Reduced-motion settings shorten travel.
 - Late-route legendary encounters retain their guaranteed rarity.
 - Stable battle checkpoints retain hands, piles, enemy intentions, statuses, temporary effects and trainer/boss teams. Rewards and post-boss transitions also resume. Switching retains each Pokémon's exhausted cards and status durations.
 - Versioned saves include validation, previous-write recovery, export/import and visible status. Non-battle activities restart from entry if interrupted before completion.
+
+## Attack, shop and challenge polish
+
+Move names now select dedicated canvas effects, including continuous beams even on one-energy cards, bubble streams, a broad Flamethrower jet, vine whips, punch/kick silhouettes, claw slashes, heavy tackle impacts, dark-purple ghost wisps and pink psychic rings. Bubble Beam uses bubbles. Ember retains its previous effect. Enemy attacks also pass their move names to the animation system. Effects clean up after playback or when leaving battle, and reduced-motion settings shorten them and suppress sprite recoil. Damage and energy rules are unchanged.
+
+The shop has category filters, a persistent wallet and exit, larger stock cards, readable disabled states and built-in SVG pixel item icons. Oak has a larger sorting conveyor, research bays, a timing bar and explicit answer feedback. Rocket vocabulary, spelling and maths challenges have larger character panels, word displays and touch choices; Meowth's counting coins use built-in graphics. Short landscape layouts place the character beside the activity, with scrolling available for long content.
+
+## Loading, regional maps and catches
+
+Before a new, continued or League run, the animated Poké Ball loader warms bundled images, sounds and fonts, and downloads the full matched-card artwork catalog. Downloaded card blobs are saved in IndexedDB when available; subsequent launches reuse them. If storage or CORS restrictions prevent persistent blob caching, the browser cache is used where possible. Browsers may evict cached data.
+
+The first printed-card download requires internet access to the image hosts. Missing art is reported before play, and flipping unavailable art shows a prompt immediately instead of starting another long download. **Play with loaded assets** skips the remaining preload; **Reload card artwork** on the title screen retries it. Core gameplay remains available offline. The full catalog contains 868 distinct image URLs and the first download can take time and storage.
+
+Tap the regional map thumbnail to open generated pixel-art Kanto and Johto overviews. The active region shows your position along the current gym route, cleared gyms and the next gym. Position advances with completed encounter rows. These are stylized geographical overviews, not exact canonical walking maps; branching encounter choices still use the existing navigation view.
+
+Catches now use a curved throw, impact rings, Pokémon absorption, landing bounce, timed shakes and a golden success burst. Ball inventory, catch odds and rewards retain their existing rules. Repeated taps cannot spend extra balls while a throw is running; leaving the screen cancels its presentation. Reduced-motion preferences shorten the sequence.
+
+## Pixel UI and tablet play
+
+The interface uses pixel frames, SVG type symbols, solid high-contrast HUDs and larger touch controls. Battle sprites use their visible image bounds so their feet land on the platforms; the foreground Pokémon is larger than the distant opponent. Cards scroll sideways when the hand exceeds the available space. Long effects can scroll inside a card.
+
+Designed around the Lenovo TB-X606F family's 1920×1200, 16:10 screen, with responsive portrait and landscape layouts. Browser CSS viewport size varies with display scaling and the address bar. Touch-browser checks cover 960×540, 960×600, 1280×800, 600×960, 800×1280 and the taller screenshot layout. Tested in Chromium emulation, not on a physical Lenovo tablet.
+
+Misty's tier 2–3 fishing uses three circular timing casts. Tap **Cast line**, then **Reel** when the white marker enters the striped arc; the gold centre scores best. Tap **Cast again** between attempts and **Reveal catch** after three. Five or six points earn an extra clue; two to four retain normal clues; zero or one produces fewer clues (always at least one). Tier 1 keeps its generous clue-only mode. The animation pauses in background tabs and stops when leaving. Reduced-motion mode slows the timing and disables decorative bobbing.
 
 ## Saves and moving the game
 
@@ -37,13 +61,19 @@ Ordered classic JavaScript components preserve direct `file://` launching. `data
 | `js/combat-rules.js` | Effect definitions, descriptions, damage and resolution |
 | `js/combat-flow.js` | Shared turns, enemy intentions and switching |
 | `js/species-cards.js` | Species/attack matching, decks, fallbacks and live lookup |
-| `js/card-rewards.js` | Rewards, upgrades and source-card inspection |
+| `js/card-rewards.js` | Rewards, upgrades and shared card flips |
 | `js/save-manager.js` | Validation, recovery, checkpoints, export/import |
 | `js/travel.js` | Directional movement and route previews |
 | `js/state-map.js`, `js/map.js` | Map generation and navigation |
 | `js/battle.js`, `js/boss-battles.js` | Encounter presentation and progression hooks |
 | `js/boot.js` | Startup and interface event bindings |
-| `enhancements.css` | New interface and motion styles |
+| `enhancements.css` | Base interface and travel styles |
+| `pixel-ui.css`, `js/pixel-ui.js` | Tablet layout, sprite alignment, card flips, type glyphs and fishing timing |
+| `js/attack-fx.js`, `polish.css` | Move-specific canvas effects, shop and challenge presentation |
+| `js/asset-preloader.js`, `data/asset-manifest.js` | Preflight assets and persistent card-image cache |
+| `js/region-map.js`, `assets/regions/` | Regional overview and current-route marker |
+| `js/capture-cinematic.js`, `journey.css` | Catch presentation and journey UI |
+| `data/sprite-bounds.js` | Original sprite alpha bounds for platform placement |
 
 Other named components retain the profiles, minigames, progression, inventory, audio and visual effects.
 
@@ -62,6 +92,7 @@ npm install --no-save playwright
 npx playwright install chromium
 node tests/browser.cjs
 node tests/browser-edge.cjs
+node tests/tablet-ui.cjs
 ```
 
 ### Refresh the bundled catalog
