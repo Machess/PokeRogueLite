@@ -1,0 +1,143 @@
+/* Illustrated minigame stages, sized for portrait touch play. */
+#screen-challenge[data-scene]{align-items:center;justify-content:flex-start;padding:64px 16px 28px;overflow-y:auto}
+#screen-challenge[data-scene] .challenge-bg{background-image:linear-gradient(#071d29aa,#071d29dd),var(--activity-bg)!important;background-position:center;background-size:cover}
+#screen-challenge[data-scene] .challenge-panel{display:flex;flex-direction:column;width:100%;max-width:940px;gap:14px;padding:18px;margin:0 auto;background:#123440f2;border:3px solid #a5c1b6;box-shadow:0 5px #071c28, inset 0 0 0 3px #234e59;border-radius:5px;min-width:0}
+#screen-challenge[data-scene] .challenge-panel>*{min-width:0;max-width:100%}
+#screen-challenge[data-scene] .challenge-header{display:flex;flex-direction:row;align-items:center;justify-content:center;gap:20px;width:100%;padding:8px 12px;text-align:left;background:#0d2936;border-bottom:3px solid #56817e}
+#screen-challenge[data-scene] .challenge-header .trainer-frame{width:125px!important;height:150px!important;flex:0 0 125px}
+#screen-challenge[data-scene] .challenge-title{font-size:clamp(16px,3vw,24px);line-height:1.55;color:#fff0be}
+#screen-challenge[data-scene] .challenge-intro{font:700 18px/1.5 Nunito,sans-serif;color:#f0f6e6!important}
+#screen-challenge[data-scene] .challenge-badge{font-size:12px;line-height:1.6;color:#ffe3a0!important}
+#screen-challenge[data-scene] :is(#challenge-coin-visual,#challenge-answer-btns){width:100%;max-width:100%;box-sizing:border-box}
+#screen-challenge[data-scene] button{touch-action:manipulation;min-height:48px}
+#screen-challenge[data-scene] button:focus-visible{outline:4px solid #ffe280;outline-offset:3px}
+#screen-challenge:is([data-scene=surge],[data-scene=oak],[data-scene=erika],[data-scene=snorlax]) .challenge-header .trainer-frame{display:none!important}
+#screen-challenge:is([data-scene=surge],[data-scene=oak],[data-scene=erika],[data-scene=snorlax]) .challenge-header{text-align:center;padding:10px}
+.mg-scene,.mg-scale-stage{position:relative;isolation:isolate;width:100%;height:300px;box-sizing:border-box;overflow:hidden;border:4px solid #9bbba6;border-radius:3px;background-image:linear-gradient(0deg,#102b3966,transparent 70%),var(--activity-bg);background-size:cover;background-position:center;box-shadow:inset 0 0 0 3px #142e3b}
+.mg-scene-plaque{position:absolute;z-index:4;left:12px;top:12px;background:#0d2936ef;border:2px solid #c8b977;padding:8px 12px;color:#fff0bd;font:900 12px/1.4 Nunito,sans-serif;letter-spacing:1px}
+.mg-scene-teacher{position:absolute;z-index:2;left:4%;bottom:18px;width:20%;height:195px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 #0b203580)}
+.mg-scene-surge{background-position:center 65%}
+.mg-raichu{position:absolute;z-index:3;left:28%;bottom:24px;width:30%;height:166px;image-rendering:pixelated;filter:drop-shadow(3px 4px 0 #17273480)}
+.mg-circuit{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.mg-wire{fill:none;stroke:#eab857;stroke-width:8;stroke-linejoin:round;filter:drop-shadow(0 3px #423921)}
+.mg-spark{fill:none;stroke:#ffe66b;stroke-width:6;opacity:0}
+.mg-lamp{position:absolute;z-index:2;right:7%;bottom:43px;width:24%;max-width:155px;text-align:center}
+.mg-lamp>svg{position:relative;width:100%;height:185px;overflow:visible}
+.mg-bulb-glass{fill:#60787a;stroke:#b9d2c7;stroke-width:5;transition:fill .5s,filter .5s}
+.mg-filament{stroke:#96aaa1;stroke-width:5;fill:none;transition:stroke .5s}
+.mg-lamp-glow{position:absolute;inset:-20% -45%;background:radial-gradient(ellipse,#fff6a699,transparent 65%);opacity:0;transition:opacity .7s;pointer-events:none}
+.mg-power-label{display:block;position:absolute;top:100%;left:-40%;width:180%;font:900 16px/1.4 Nunito,sans-serif;color:#fff5c3;background:#102f3bea;border:2px solid #98b69b;padding:5px;box-sizing:border-box}
+.mg-power-meter{position:absolute;top:18px;right:15px;display:flex;gap:5px;background:#133642;padding:5px;border:2px solid #98b69b}
+.mg-power-meter i{display:block;width:23px;height:12px;background:#3e5759}
+.mg-power-meter i.charged{background:#ffe073;box-shadow:0 0 7px #ffd34b88}
+[data-power="1"] .mg-bulb-glass{fill:#bba665;filter:drop-shadow(0 0 5px #ffd979)}
+[data-power="2"] .mg-bulb-glass{fill:#ffe18d;filter:drop-shadow(0 0 12px #ffd979)}
+[data-power="3"] .mg-bulb-glass{fill:#fffbd6;filter:drop-shadow(0 0 20px #ffe883)}
+[data-power="1"] .mg-lamp-glow{opacity:.25}[data-power="2"] .mg-lamp-glow{opacity:.6}[data-power="3"] .mg-lamp-glow{opacity:1}
+.mg-scene-surge:not([data-power="0"]) .mg-filament{stroke:#fff8b8}
+.mg-scene-surge:not([data-power="0"]) .mg-spark{opacity:1}
+#screen-challenge[data-scene=oak] .oak-belt{position:absolute;left:26%;right:3%;bottom:25px;width:auto;max-width:none;height:164px;margin:0;box-sizing:border-box;border:5px solid #9fb6b9;border-bottom:20px solid #426876;background:repeating-linear-gradient(90deg,#294955 0 24px,#183340 24px 28px);border-radius:3px;overflow:hidden}
+#screen-challenge[data-scene=oak] .oak-poke{width:112px;height:112px;object-fit:contain;image-rendering:pixelated}
+#screen-challenge[data-scene=oak] .oak-poke-name{background:#0d2837ec;color:#fff0bb;font:900 17px Nunito,sans-serif;bottom:0;padding:4px}
+.mg-scanner{position:absolute;right:12%;bottom:33px;height:173px;width:80px;border:9px solid #d1e3d1;border-bottom:0;background:#92f3d020;box-shadow:inset 3px 0 #5fa698}
+#screen-challenge[data-scene=erika] .erika-lab{display:flex!important;flex-direction:column;gap:12px}
+.mg-scene-erika{height:330px;background-position:center 57%}
+.mg-scene-erika .mg-scene-teacher{bottom:32px;left:5%;height:205px;width:22%}
+.mg-garden-pokemon{position:absolute;left:27%;bottom:34px;width:21%;height:94px;z-index:3;image-rendering:pixelated}
+.mg-potting-bench{position:absolute;bottom:22px;left:42%;right:4%;height:25px;background:#b78956;border:4px solid #573d35;box-shadow:0 9px #795334}
+#screen-challenge[data-scene=erika] .erika-target-area{position:absolute;right:3%;bottom:60px;width:52%;display:flex;align-items:center;flex-direction:column;gap:6px}
+#screen-challenge[data-scene=erika] .erika-target-label{font:900 16px/1.4 Nunito,sans-serif;color:#fff1c9;background:#193e38ed;padding:8px;border:2px solid #a6c89a;max-width:100%}
+#screen-challenge[data-scene=erika] .erika-flask{width:116px;height:155px;background-color:#e5f7ed22;box-shadow:inset 5px 0 #efffec66}
+#screen-challenge[data-scene=erika] .erika-fill-bar-wrap{margin-top:23px;width:116px;background:#193831}
+.mg-recipe-guide{width:100%;background:#1c4148;border:2px solid #6f9890;box-sizing:border-box}
+.mg-recipe-guide summary{cursor:pointer;padding:13px;color:#f7ebc3;font:800 17px Nunito,sans-serif;min-height:48px;box-sizing:border-box}
+#screen-challenge[data-scene=erika] .erika-comment{font:800 17px/1.5 Nunito,sans-serif}
+#screen-challenge[data-scene=erika] .erika-bottle-btn{min-width:86px;min-height:122px}
+#screen-challenge[data-scene=erika] .erika-bottle-body{height:76px;width:55px}
+#screen-challenge[data-scene=snorlax] .mg-scale-stage{width:100%;height:310px;margin:6px auto 12px;background-position:center 75%;--scale-tilt:0deg}
+.mg-sleepy-snorlax{position:absolute;top:57px;left:3%;width:22%;height:90px;image-rendering:pixelated}
+#screen-challenge[data-scene=snorlax] .snx-beam{position:absolute;left:22%;top:103px;width:72%;height:110px;display:flex;justify-content:space-between;border-top:10px solid #edc36d;transform-origin:50% 5px;transition:transform .55s;z-index:2;box-shadow:0 -3px #876344}
+#screen-challenge[data-scene=snorlax] .snx-pan{position:relative;width:38%;height:98px;min-width:0;display:flex;justify-content:center;align-items:flex-end;gap:0;border:0;border-bottom:9px solid #edc36d;background:linear-gradient(0deg,#fff2bc22,transparent 32%);border-radius:0 0 28% 28%;transform:rotate(calc(-1 * var(--scale-tilt)));transform-origin:50% 0;transition:transform .55s;padding:0 3px 3px;box-sizing:border-box}
+#screen-challenge[data-scene=snorlax] .snx-pan:before{content:'';position:absolute;inset:0 5px;border-left:3px solid #dcb771;border-right:3px solid #dcb771;pointer-events:none}
+#screen-challenge[data-scene=snorlax] .snx-pan-sprite{width:72px;height:72px;max-width:50%;object-fit:contain;image-rendering:pixelated}
+#screen-challenge[data-scene=snorlax] .snx-pan-sprite:only-child{max-width:90%}
+#screen-challenge[data-scene=snorlax] .snx-pan-kg{font:900 20px Nunito,sans-serif;color:#fff3c7;background:#143543dd;padding:7px;z-index:1}
+#screen-challenge[data-scene=snorlax] .snx-base{position:absolute;top:106px;left:calc(58% - 12px);width:24px;height:145px;clip-path:none;background:#c69c58;border:4px solid #674e36;border-top:0;box-sizing:border-box;z-index:1}
+#screen-challenge[data-scene=snorlax] .snx-base:before{content:'';position:absolute;left:-7px;top:-10px;width:24px;height:24px;border:4px solid #f5d98c;background:#735739;border-radius:50%;box-sizing:border-box}
+#screen-challenge[data-scene=snorlax] .snx-base:after{content:'';position:absolute;left:-36px;bottom:-5px;width:90px;height:16px;background:#c69c58;border:4px solid #674e36}
+.mg-scale-reading{position:absolute;left:3%;right:3%;bottom:8px;background:#102e3eef;border:2px solid #9cbaa0;padding:8px;color:#fff1c1;font:900 17px/1.4 Nunito,sans-serif;z-index:4}
+/* Existing playfields get scenery and larger, consistent props. */
+#screen-challenge[data-scene] :is(.bugsy-field,.falkner-dh-field,.pryce-field){background-image:linear-gradient(#13394522,#13394566),var(--activity-bg);background-size:cover;background-position:center;min-height:300px;box-shadow:inset 0 0 0 4px #163d49}
+#screen-challenge[data-scene] .morty-procession{padding:20px;background:linear-gradient(#170e3488,#170e34bb),var(--activity-bg) center/cover;border:4px solid #947ba5;box-sizing:border-box}
+#screen-challenge[data-scene] .morty-procession button{background:#241c46e8;border-color:#a292be}
+#screen-challenge[data-scene] .morty-procession .ghost-lit{background:#825aaa;box-shadow:0 0 22px #e6aaff}
+#screen-challenge[data-scene] .jasmine-btn{background:linear-gradient(#525d64,#273b46);border:4px solid #bca986!important;box-shadow:0 6px #152b35}
+#screen-challenge[data-scene] .jasmine-flash{background:#bd6736;box-shadow:0 0 24px #ffb33a}
+#screen-challenge[data-scene] .jenny-report{box-shadow:6px 6px #071c2888;border-top:8px solid #b58b58}
+#screen-challenge[data-scene] .jenny-suspect{background:repeating-linear-gradient(#244554 0 35px,#93adab55 35px 37px);border:3px solid #789da5}
+#screen-challenge[data-scene] .chuck-clock-btn{background:#dcc89b;box-shadow:0 5px #806340;border:4px solid #a38556}
+#screen-challenge[data-scene] .wh-main-row{padding:18px 10px;background:linear-gradient(#254a46cc,#203e45ee),var(--activity-bg) center/cover;border-bottom:10px solid #9b7757;box-sizing:border-box;width:100%}
+#screen-challenge[data-scene] .ninja-grid{padding:14px;background:#102f37aa;border:3px solid #739c8b;box-sizing:border-box}
+#screen-challenge[data-scene] .sabrina-grid{box-shadow:0 0 0 5px #9d83b6,0 0 25px #cb97d633}
+#screen-challenge[data-scene] .rk-tray{box-shadow:inset 0 0 0 4px #4b342a,0 5px #132a34}
+@media(max-width:480px){
+ #screen-challenge[data-scene]{padding:60px 8px 20px}
+ #screen-challenge[data-scene] .challenge-panel{padding:10px;gap:10px}
+ #screen-challenge[data-scene] .challenge-header{padding:7px;gap:8px}
+ #screen-challenge[data-scene] .challenge-header .trainer-frame{width:88px!important;height:120px!important;flex-basis:88px}
+ #screen-challenge[data-scene] .challenge-intro{font-size:16px}
+ .mg-scene{height:270px}.mg-scene-plaque{font-size:10px;padding:6px;left:7px;top:7px;letter-spacing:0}
+ .mg-scene-teacher{height:160px;bottom:20px}.mg-raichu{height:130px;width:32%;left:26%}
+ .mg-lamp{bottom:51px;right:7%;width:25%}.mg-lamp>svg{height:145px}.mg-power-label{font-size:12px}
+ .mg-power-meter{top:41px;right:10px}.mg-power-meter i{width:16px;height:9px}
+ #screen-challenge[data-scene=oak] .oak-belt{left:27%;height:145px}
+ #screen-challenge[data-scene=oak] .oak-poke{width:90px;height:90px}
+ .mg-scene-erika{height:315px}.mg-scene-erika .mg-scene-teacher{height:170px}
+ #screen-challenge[data-scene=erika] .erika-target-label{font-size:14px;padding:5px}
+ #screen-challenge[data-scene=snorlax] .snx-pan-sprite{width:56px;height:65px}
+ .mg-scale-reading{font-size:14px}.mg-sleepy-snorlax{height:65px}
+ #screen-challenge[data-scene] .morty-procession{gap:9px;padding:10px}
+ #screen-challenge[data-scene] .erika-action-btn{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){.mg-scene *,#screen-challenge[data-scene=snorlax] :is(.snx-beam,.snx-pan){transition:none!important}}
+
+/* Keep potion labels and actions in separate full-width rows. */
+#screen-challenge[data-scene=erika] #challenge-answer-btns{display:flex;flex-direction:column;align-items:stretch;gap:14px}
+#screen-challenge[data-scene=erika] .erika-bottle-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+#screen-challenge[data-scene=erika] .erika-bottle-btn{width:100%;min-width:0;padding:10px 5px;background:#214b4d;border:2px solid #729c87;border-radius:3px}
+#screen-challenge[data-scene=erika] .erika-bottle{width:55px;align-items:center}
+#screen-challenge[data-scene=erika] .erika-bottle-label{max-width:100%;word-break:normal;overflow-wrap:normal;color:#fff0c4;font:800 16px/1.3 Nunito,sans-serif}
+#screen-challenge[data-scene=erika] .erika-action-row{width:100%;display:flex;flex-wrap:wrap;gap:8px}
+#screen-challenge[data-scene=erika] .mg-scene-plaque{max-width:42%;box-sizing:border-box}
+#screen-challenge[data-scene] button:disabled.answer-correct{opacity:1;color:#ddffcb;background:#24614c;border-color:#91d6a2}
+@media(max-width:480px){#screen-challenge[data-scene=erika] .erika-bottle-label{font-size:14px}.mg-scene-erika .mg-scene-plaque{font-size:9px}}
+@media(max-width:480px){#screen-challenge[data-scene=erika] .erika-flask{height:130px}}
+#screen-challenge[data-scene=erika] .erika-target-area{top:12px;justify-content:flex-end}
+#screen-challenge[data-scene=erika] .erika-flask{flex:1 1 auto;min-height:80px;max-height:155px}
+#screen-challenge[data-scene=erika] :is(.erika-target-label,.erika-fill-bar-wrap){flex-shrink:0}
+
+/* Garden: keep controls on screen; the chart replaces scenery temporarily. */
+#screen-challenge[data-scene=erika] .erika-lab{position:relative}
+#screen-challenge[data-scene=erika] .mg-recipe-guide{position:static;flex-shrink:0;z-index:5}
+#screen-challenge[data-scene=erika] .mg-recipe-guide[open] .erika-recipe-card{position:absolute;inset:58px 0 58px;box-sizing:border-box;z-index:5;margin:0;background:#163e49;border:3px solid #8eb89a;display:flex;flex-direction:column;justify-content:center;gap:5px;padding:14px}
+#screen-challenge[data-scene=erika] .erika-recipe-row{line-height:1.3;font-size:14px;margin:2px 0}
+#screen-challenge[data-scene=erika] .erika-recipe-label{font-size:14px}
+#screen-challenge[data-scene=erika] .erika-lab[data-complete] :is(.mg-recipe-guide,.erika-comment){display:none}
+#screen-challenge[data-scene=erika] .erika-lab[data-complete]~#challenge-answer-btns{display:none!important}
+@media(min-width:600px) and (min-height:760px){
+ #screen-challenge[data-scene=erika]{padding:64px 16px 14px;overflow:hidden}
+ #screen-challenge[data-scene=erika] .challenge-panel{height:100%;max-height:100%;box-sizing:border-box;padding:12px;gap:10px;overflow:visible}
+ #screen-challenge[data-scene=erika] .challenge-header{flex-shrink:0;padding:8px}
+ #screen-challenge[data-scene=erika] .erika-lab{flex:1;min-height:0;align-items:stretch!important;gap:8px!important}
+ #screen-challenge[data-scene=erika] .mg-scene-erika{height:auto;flex:1;min-height:200px}
+ #screen-challenge[data-scene=erika] .erika-comment{flex-shrink:0;font-size:16px;line-height:1.4;margin:0;padding:3px 0}
+ #screen-challenge[data-scene=erika] #challenge-answer-btns{flex-shrink:0;gap:8px;margin:0}
+ #screen-challenge[data-scene=erika] .erika-bottle-btn{min-height:110px;padding:7px}
+ #screen-challenge[data-scene=erika] .erika-bottle-body{height:62px}
+ #screen-challenge[data-scene=erika] .erika-action-btn{min-height:48px;padding:10px}
+ #screen-challenge[data-scene=erika] .challenge-result{flex-shrink:0;margin:0;padding:12px;font-size:16px}
+ #screen-challenge[data-scene=erika] .erika-result-title{font-size:16px;margin-bottom:6px}
+ #screen-challenge[data-scene=erika] .erika-result-row{font:800 15px/1.4 Nunito,sans-serif}
+ #screen-challenge[data-scene=erika] .erika-result-quote{font:700 14px/1.4 Nunito,sans-serif;margin-top:6px}
+ #screen-challenge[data-scene=erika] .challenge-continue-btn{flex-shrink:0;min-height:48px;margin:0 auto}
+}

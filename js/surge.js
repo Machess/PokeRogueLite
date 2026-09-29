@@ -178,6 +178,7 @@ const SurgeEngine = {
   },
 
   _showRound() {
+    this._sceneAnswered=false;
     const sc = this._scenarios[this._round];
     const img = document.getElementById('challenge-character-img');
     if (img) { img.src = 'assets/ltsurge.png'; img.style.display = ''; }
@@ -209,6 +210,7 @@ const SurgeEngine = {
   },
 
   _answer(chosen) {
+    if(this._sceneAnswered)return;this._sceneAnswered=true;
     const sc       = this._scenarios[this._round];
     const isRight  = chosen === sc.correct;
     if (isRight) this._score++;

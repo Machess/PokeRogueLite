@@ -57,7 +57,8 @@ const JennyEngine = {
 
     // The report — number of clue lines scales with tier (more help for little ones)
     const clueCount = tier === 1 ? 3 : tier === 2 ? 2 : 2;
-    const report = shuffle([...target.clues]).slice(0, clueCount);
+    const report = [...target.clues];
+    report.push('Recorded type: '+target.type+'.');
 
     const cv = setupChallengeScreen({
       portrait: 'officer_jenny.png', badge: '🚓 Lost & Found Patrol',
@@ -97,7 +98,7 @@ const JennyEngine = {
             });
           }
           if (correct) this._hits++;
-          setTimeout(() => { this._round++; this._showRound(); }, 1500);
+          MiniGameSession.next(() => { this._round++; this._showRound(); });
         });
         grid.appendChild(btn);
       });
@@ -120,7 +121,7 @@ const JennyEngine = {
         btn.addEventListener('click', () => {
           if (s.type === target.type) {
             btn.classList.add('jenny-shake');
-            setTimeout(() => btn.classList.remove('jenny-shake'), 300);
+            MiniGameSession.later(() => btn.classList.remove('jenny-shake'), 300);
             return; // can't eliminate a matching-type one
           }
           btn.classList.add('jenny-eliminated');

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="400" viewBox="0 0 800 400" shape-rendering="crispEdges">
+<defs><pattern id="tiles" width="80" height="50" patternUnits="userSpaceOnUse"><path fill="#467274" stroke="#35565f" stroke-width="3" d="M0 0h80v50H0z"/></pattern><pattern id="floor" width="100" height="50" patternUnits="userSpaceOnUse"><path fill="#648382" d="M0 0h100v50H0z"/><path fill="#789590" d="M0 0h50v25H0zM50 25h50v25H50z"/></pattern></defs>
+<path fill="url(#tiles)" d="M0 0h800v400H0z"/><path fill="url(#floor)" d="M0 310h800v90H0z"/>
+<path fill="#173743" d="M230 28h340v192H230z"/><path fill="#a5d6d1" d="M240 38h320v170H240z"/><path fill="#79afaa" d="m240 162 55-43 57 30 69-62 57 53 82-40v108H240z"/><path fill="#dae6cc" d="M390 38h12v170h-12zM240 115h320v10H240z"/>
+<path fill="#192f3c" d="M25 52h160v205H25zM610 58h163v190H610z"/><path fill="#acbcaa" d="M30 130h150v8H30zM30 211h150v8H30zM615 139h153v8H615zM615 225h153v8H615z"/>
+<g stroke="#173b44" stroke-width="5"><path fill="#9ec0b9" d="M52 74h20v26l14 24H38l14-24z"/><path fill="#81d4be" d="M40 111h42v13H40z"/><path fill="#e6c876" d="M105 85h32v39h-32z"/><path fill="#dc878b" d="M139 82h20v42h-20z"/><path fill="#82bad1" d="M45 162h50v43H45z"/><path fill="#ddad62" d="M110 154h45v51h-45z"/></g>
+<g stroke="#254a54" stroke-width="4"><path fill="#f4edce" d="M634 87h30v30h-30zM683 87h30v30h-30zM731 87h27v30h-27z"/><path fill="#cf6563" d="M634 87h30v14h-30zM683 87h30v14h-30zM731 87h27v14h-27z"/><path fill="#58b3ad" d="M633 171h113v36H633z"/></g>
+<path fill="#162f3b" d="M187 244h432v28H187z"/><path fill="#b9cec1" d="M194 238h418v12H194z"/><path fill="#32535b" d="M204 270h399v105H204z"/><path fill="#829e94" d="M213 279h181v86H213zM411 279h181v86H411z"/><path fill="#294953" d="M222 296h161v5H222zM421 296h161v5H421zM285 308h42v7h-42zM480 308h42v7h-42z"/>
+<path fill="#183039" d="M298 162h106v75H298zM430 194h86v43h-86z"/><path fill="#68d7c5" d="M306 170h90v53h-90z"/><path fill="#255b65" d="M315 193h12v16h-12zM334 182h12v27h-12zM353 187h12v22h-12zM372 176h12v33h-12z"/><path fill="#d4d8b7" d="M439 201h68v27h-68z"/>
+<path fill="#becfbd" d="M0 0h800v14H0z"/><path fill="#eff2c8" d="M245 9h310v8H245z"/>
+</svg>

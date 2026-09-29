@@ -56,11 +56,9 @@ const NinjaMemoryEngine = {
     else                 { this._pairCount = 8; this._budget = 8;  this._peekMs = 800;  }
 
     // Build shuffled grid now so it's ready when startGame fires
-    const pairs = shuffle([...NINJA_CARDS]).slice(0, this._pairCount);
-    this._grid = shuffle([...pairs, ...pairs].map(c => ({
-      id: c.id, icon: c.icon, label: c.label,
-      flipped: false, matched: false, el: null,
-    })));
+    const families=[[1,2,'Bulbasaur','Ivysaur'],[4,5,'Charmander','Charmeleon'],[7,8,'Squirtle','Wartortle'],[10,11,'Caterpie','Metapod'],[13,14,'Weedle','Kakuna'],[16,17,'Pidgey','Pidgeotto'],[19,20,'Rattata','Raticate'],[23,24,'Ekans','Arbok']];
+    const pairs=shuffle(families).slice(0,this._pairCount);
+    this._grid=shuffle(pairs.flatMap((f,k)=>[0,1].map(i=>{const advanced=tier>=3&&i===1,id=f[advanced?1:0],label=f[advanced?3:2];return{id:k,label,icon:`<img src="assets/sprites/${id}.png" alt="${label}"><small>${label}</small>`,flipped:false,matched:false,el:null};})));
 
     // Boss-screen intro
     showScreen('boss');
@@ -164,6 +162,7 @@ const NinjaMemoryEngine = {
           <div class="ninja-card-back">✦</div>
           <div class="ninja-card-front">${card.icon}</div>
         </div>`;
+      outer.setAttribute('role','button');outer.tabIndex=0;outer.setAttribute('aria-label','Memory card '+(i+1));outer.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();this._tap(i);}};
       outer.addEventListener('click', () => this._tap(i));
       grid.appendChild(outer);
       card.el = outer;
@@ -195,13 +194,13 @@ const NinjaMemoryEngine = {
     this._locked = true;
     this._grid.forEach(c => { if (c.el) c.el.classList.add('ninja-card-flipped'); });
 
-    setTimeout(() => {
+    MiniGameSession.next(() => {
       this._grid.forEach(c => {
         if (c.el && !c.matched) c.el.classList.remove('ninja-card-flipped');
       });
       this._locked = false;
       this._setComment('🥷 Your turn. Find the pairs.');
-    }, this._peekMs);
+    }, 'Begin matching');
   },
 
   _tap(idx) {
@@ -224,7 +223,7 @@ const NinjaMemoryEngine = {
 
       if (firstCard.id === card.id) {
         // Match!
-        setTimeout(() => {
+        MiniGameSession.later(() => {
           firstCard.matched = true;
           card.matched      = true;
           firstCard.el.classList.add('ninja-card-matched');
@@ -233,7 +232,7 @@ const NinjaMemoryEngine = {
           this._setComment(KOGA_COMMENTS.match);
           this._locked = false;
           if (this._matched >= this._pairCount) {
-            setTimeout(() => this._complete(), 400);
+            MiniGameSession.later(() => this._complete(), 400);
           }
         }, 300);
       } else {
@@ -249,7 +248,7 @@ const NinjaMemoryEngine = {
 
         const overBudget = this._misses >= this._budget * 2;
 
-        setTimeout(() => {
+        MiniGameSession.later(() => {
           firstCard.el.classList.remove('ninja-card-wrong', 'ninja-card-flipped');
           card.el.classList.remove('ninja-card-wrong', 'ninja-card-flipped');
           firstCard.flipped = false;
@@ -272,7 +271,7 @@ const NinjaMemoryEngine = {
     this._locked = true;
     // Reveal all remaining cards
     this._grid.forEach(c => { if (c.el && !c.matched) c.el.classList.add('ninja-card-flipped'); });
-    setTimeout(() => this._finish(false), 2200);
+    MiniGameSession.later(() => this._finish(false), 2200);
   },
 
   _finish(won) {

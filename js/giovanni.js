@@ -95,7 +95,7 @@ const GiovanniEngine = {
       b.addEventListener('click', () => {
         this._paid += c.val;
         const tc = document.getElementById('rk-tray-coins');
-        if (tc) tc.insertAdjacentHTML('beforeend', `<span class="rk-coin-mini ${c.cls}">${c.label}</span>`);
+        if(tc){const coin=document.createElement('button');coin.className='rk-coin-mini '+c.cls;coin.textContent=c.label;coin.title='Remove this coin';coin.onclick=()=>{if(submit.disabled)return;this._paid-=c.val;coin.remove();document.getElementById('rk-tray-total').textContent=this._paid+'g';};tc.appendChild(coin);}
         const tt = document.getElementById('rk-tray-total');
         if (tt) {
           tt.textContent = `${this._paid}g`;
@@ -134,7 +134,7 @@ const GiovanniEngine = {
           : `"${this._target - this._paid}g SHORT. Pathetic." (needed ${this._target}g)`;
       cv.appendChild(verdict);
       if (correct) this._hits++;
-      setTimeout(() => { this._round++; this._showRound(); }, correct ? 1100 : 2200);
+      MiniGameSession.next(() => { this._round++; this._showRound(); });
     });
     actions.appendChild(clear);
     actions.appendChild(submit);

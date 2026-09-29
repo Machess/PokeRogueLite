@@ -74,15 +74,15 @@ const BugsyEngine = {
 
   _showRound() {
     if (this._round >= 5) { this._finish(); return; }
-    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+    this._timeouts.forEach(t => MiniGameSession.clear(t)); this._timeouts = [];
 
     const tier = getSkillTier('bugsy');
 
     // Tier-based config
     const CFG = {
       1: { count: 5,  size: 64, showName: true,  ms: 7000 },
-      2: { count: 7,  size: 52, showName: true,  ms: 5000 },
-      3: { count: 9,  size: 44, showName: false, ms: 4000 },
+      2: { count: 7,  size: 64, showName: true,  ms: 6500 },
+      3: { count: 9,  size: 64, showName: false, ms: 6000 },
     };
     const { count, size, showName } = CFG[Math.min(tier, 3)];
     const timerMs = Math.max(
@@ -117,7 +117,7 @@ const BugsyEngine = {
     cv.appendChild(timerBar);
 
     // Field — the scatter canvas
-    const FIELD_W = 340, FIELD_H = 300;
+    const FIELD_W = Math.min(620, innerWidth-100), FIELD_H = 330;
     const field = document.createElement('div');
     field.className = 'bugsy-field';
     field.style.width  = `${FIELD_W}px`;
@@ -150,7 +150,7 @@ const BugsyEngine = {
       img.addEventListener('click', () => {
         if (tapped) return;
         tapped = true;
-        this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+        this._timeouts.forEach(t => MiniGameSession.clear(t)); this._timeouts = [];
         // Freeze all bugs
         field.querySelectorAll('.bugsy-scatter-sprite').forEach(el => {
           el.style.pointerEvents = 'none';
@@ -169,13 +169,13 @@ const BugsyEngine = {
             }
           });
         }
-        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 1000));
+        MiniGameSession.next(() => { this._round++; this._showRound(); });
       });
       field.appendChild(img);
     });
 
     // Start timer bar animation
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       const fill = document.getElementById('bugsy-timer-fill');
       if (fill) {
         fill.style.transition = `width ${timerMs}ms linear`;
@@ -184,7 +184,7 @@ const BugsyEngine = {
     }, 50);
 
     // Auto-timeout
-    this._timeouts.push(setTimeout(() => {
+    this._timeouts.push(MiniGameSession.later(() => {
       if (!tapped) {
         tapped = true;
         field.querySelectorAll('.bugsy-scatter-sprite').forEach((el, j) => {
@@ -192,7 +192,7 @@ const BugsyEngine = {
           el.style.animationPlayState = 'paused';
           if (bugs[j].id === target.id) el.classList.add('bugsy-scatter-correct');
         });
-        this._timeouts.push(setTimeout(() => { this._round++; this._showRound(); }, 1000));
+        MiniGameSession.next(() => { this._round++; this._showRound(); });
       }
     }, timerMs));
   },

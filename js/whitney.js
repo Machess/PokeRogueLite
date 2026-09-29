@@ -83,13 +83,14 @@ const WhitneyEngine = {
 
   _showRound() {
     if (this._round >= this._orders.length) { this._finish(); return; }
-    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+    this._timeouts.forEach(t => MiniGameSession.clear(t)); this._timeouts = [];
 
     const order     = this._orders[this._round];
     const tier      = Math.min(GameState.difficultyTier || 2, 3);
     this._targetMl  = order.ml;
     this._targetBerry = order.berry;
     this._currentMl = 0;
+    this._pourHistory = [];
     this._selectedBerry = null;
     this._phase     = 'fill';
     this._firstPour = true;  // for combo tracking
@@ -107,20 +108,12 @@ const WhitneyEngine = {
       <span class="wh-hint" id="wh-hint">${order.hint}</span>`;
     cv.appendChild(bubble);
 
-    // On Tier 2 hint fades after 3s; Tier 3 fades after 1.5s
-    if (tier >= 2) {
-      this._timeouts.push(setTimeout(() => {
-        const h = document.getElementById('wh-hint');
-        if (h) { h.style.transition = 'opacity 1s'; h.style.opacity = '0'; }
-      }, tier === 2 ? 3000 : 1500));
-    }
-
     // ── Target label ─────────────────────────────────────────────────────────
     const targetRow = document.createElement('div');
     targetRow.className = 'wh-target-row';
     targetRow.innerHTML = `<span class="wh-target-label">TARGET:</span>
       <span class="wh-target-val" id="wh-target-val">${order.ml}ml</span>
-      ${order.berry ? `<span class="wh-target-berry">${this._berryById(order.berry).emoji} ${tier === 1 ? this._berryById(order.berry).name : ''}</span>` : ''}`;
+      ${order.berry ? `<span class="wh-target-berry">${this._berryById(order.berry).emoji} ${this._berryById(order.berry).name}</span>` : ''}`;
     cv.appendChild(targetRow);
 
     // ── Main area — jug + jugs panel ─────────────────────────────────────────
@@ -157,7 +150,7 @@ const WhitneyEngine = {
       btn.className = 'wh-pour-btn';
       btn.id = `wh-pour-${j.ml}`;
       btn.innerHTML = `<div class="wh-pour-jug" style="height:${j.h}px;background:${j.color}"></div>
-        <span class="wh-pour-label">${tier <= 2 ? j.label : ''}</span>`;
+        <span class="wh-pour-label">${j.label}</span>`;
       btn.addEventListener('click', () => this._pour(j.ml));
       jugPanel.appendChild(btn);
     });
@@ -166,6 +159,7 @@ const WhitneyEngine = {
     // Reset button
     document.getElementById('wh-reset-btn').addEventListener('click', () => {
       this._currentMl = 0;
+      this._pourHistory=[];
       this._selectedBerry = null;
       this._phase = 'fill';
       this._firstPour = false;  // combo broken on reset
@@ -173,6 +167,7 @@ const WhitneyEngine = {
       this._hideBerryTray();
     });
 
+    const undo=document.createElement('button');undo.className='btn-pixel btn-secondary';undo.textContent='Undo last pour';undo.onclick=()=>{if(this._phase==='done'||!this._pourHistory.length)return;this._currentMl=this._pourHistory.pop();this._phase='fill';this._selectedBerry=null;this._firstPour=false;this._updateJug(false,null);this._hideBerryTray();};cv.appendChild(undo);
     // ── Berry tray (hidden until jug filled) ─────────────────────────────────
     const berryTray = document.createElement('div');
     berryTray.className = 'wh-berry-tray wh-berry-locked';
@@ -181,17 +176,17 @@ const WhitneyEngine = {
       🔒 Fill to ${order.ml}ml first</div>`;
     if (order.berry) cv.appendChild(berryTray);
 
-    // Timer (Tier 3 only)
-    if (tier >= 3) {
+    // Timing is optional; measurement remains the main challenge.
+    if (this._timedMode && tier >= 3) {
       const timerBar = document.createElement('div');
       timerBar.className = 'wh-timer-bar';
       timerBar.innerHTML = `<div class="wh-timer-fill" id="wh-timer-fill"></div>`;
       cv.appendChild(timerBar);
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         const f = document.getElementById('wh-timer-fill');
         if (f) { f.style.transition = 'width 12s linear'; f.style.width = '0%'; }
       }, 50);
-      this._timeouts.push(setTimeout(() => {
+      this._timeouts.push(MiniGameSession.later(() => {
         if (this._phase !== 'done') {
           this._roundResult(false, 'timeout');
         }
@@ -202,11 +197,12 @@ const WhitneyEngine = {
   _pour(ml) {
     if (this._phase !== 'fill') return;
     const order = this._orders[this._round];
+    this._pourHistory.push(this._currentMl);
     this._currentMl += ml;
 
     // Over-filled
     if (this._currentMl > order.ml) {
-      this._currentMl = 0;
+      this._currentMl = this._pourHistory.pop();
       this._firstPour = false;
       this._updateJug(true, null);  // flash red
       this._showWhitneyComment("overflow");
@@ -248,7 +244,7 @@ const WhitneyEngine = {
       btn.style.setProperty('--berry-color', b.color);
       btn.style.setProperty('--berry-light', b.light);
       btn.innerHTML = `<span class="wh-berry-emoji">${b.emoji}</span>
-        ${tier <= 2 ? `<span class="wh-berry-name">${b.name}</span>` : ''}`;
+        <span class="wh-berry-name">${b.name}</span>`;
       btn.addEventListener('click', () => this._pickBerry(b));
       tray.appendChild(btn);
     });
@@ -279,13 +275,13 @@ const WhitneyEngine = {
       // Flash the wrong button red
       const tray = document.getElementById('wh-berry-tray');
       tray?.querySelectorAll('.wh-berry-btn').forEach(b => { b.disabled = true; });
-      setTimeout(() => { this._showBerryTray(); }, 800);
+      MiniGameSession.later(() => { this._showBerryTray(); }, 800);
     }
   },
 
   _roundResult(won, type) {
     this._phase = 'done';
-    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+    this._timeouts.forEach(t => MiniGameSession.clear(t)); this._timeouts = [];
 
     const combo = won && this._firstPour;
     if (combo) this._combos++;
@@ -302,10 +298,7 @@ const WhitneyEngine = {
       if (this._combos >= 3) this._showWhitneyComment('streak');
     }
 
-    this._timeouts.push(setTimeout(() => {
-      this._round++;
-      this._showRound();
-    }, 1400));
+    MiniGameSession.next(() => {this._round++;this._showRound();});
   },
 
   _updateJug(overflow, berry) {
@@ -323,7 +316,7 @@ const WhitneyEngine = {
     if (readout) readout.textContent = `${this._currentMl} / ${order.ml}ml`;
     if (overflow && container) {
       container.classList.add('wh-overflow');
-      setTimeout(() => container.classList.remove('wh-overflow'), 600);
+      MiniGameSession.later(() => container.classList.remove('wh-overflow'), 600);
     }
   },
 
@@ -355,7 +348,7 @@ const WhitneyEngine = {
     const cv = document.getElementById('challenge-coin-visual');
     if (cv) {
       cv.appendChild(comment);
-      setTimeout(() => comment.remove(), 1200);
+      MiniGameSession.later(() => comment.remove(), 1200);
     }
   },
 

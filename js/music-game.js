@@ -294,6 +294,8 @@ const JigglypuffEngine = {
   _phraseIdx:     0,         // current phrase being played/reproduced
 
   start(node) {
+    MiniGameSession.begin("jigglypuff-active");
+    this._slowPlayback = false;
     this._node        = node;
     this._playerPos   = 0;
     this._phraseMode  = false;
@@ -307,11 +309,11 @@ const JigglypuffEngine = {
 
     // ── Doubled sequence lengths ──────────────────────────────────────────────
     const seqLen = tier <= 1
-      ? Math.min(6 + Math.floor(beaten / 2), 8)       // 6-8
+      ? 4       // 6-8
       : tier === 2
-      ? Math.min(8 + Math.floor(beaten / 3), 10)      // 8-10
-      : Math.min(10 + Math.floor(beaten / 2), 14);    // 10-14
-    this._replayPenalty = tier >= 3;
+      ? 6      // 8-10
+      : 8;    // 10-14
+    this._replayPenalty = false;
 
     // ── Song vs random ────────────────────────────────────────────────────────
     const songPool = JIGGLYPUFF_SONGS.filter(s => s.tier <= tier);
@@ -381,7 +383,7 @@ const JigglypuffEngine = {
     SoundEngine.stopBGM();
 
     // Play sequence after brief intro delay — no picker
-    setTimeout(() => this._playSequence(() => this._showInstrument()), 900);
+    MiniGameSession.later(() => this._playSequence(() => this._showInstrument()), 900);
   },
 
   // ── Phrase bar (shows song structure) ────────────────────────────────────
@@ -413,14 +415,16 @@ const JigglypuffEngine = {
   },
 
   _playSequence(onDone) {
+    this._listening=true;
     const msgEl = document.getElementById('jiggly-msg');
-    if (msgEl) msgEl.textContent = '🎵 Listen…';
+    if (msgEl) msgEl.textContent = this._slowPlayback?'Listen slowly…':'Listen…';
     const jiggly = document.getElementById('jiggly-img');
 
     let i = 0;
     const playNext = () => {
       if (i >= this._sequence.length) {
-        if (onDone) setTimeout(onDone, 400);
+        this._listening=false;
+        if (onDone) MiniGameSession.later(onDone, 400);
         return;
       }
       const noteIdx = this._sequence[i];
@@ -431,13 +435,13 @@ const JigglypuffEngine = {
 
       const dur = (this._songDurations && this._songDurations[i]) ? this._songDurations[i] : 0.45;
       playNoteForInstrument(note.freq, dur);
-      const holdMs = Math.round(dur * 1000) + 35;
+      const holdMs = Math.round(dur * 1000 * (this._slowPlayback?1.6:1)) + 35;
 
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         if (dot) dot.classList.remove('jiggly-dot-playing');
         if (jiggly) jiggly.classList.remove('jiggly-puff');
         i++;
-        setTimeout(playNext, 150);
+        MiniGameSession.later(playNext, 150);
       }, holdMs);
     };
     playNext();
@@ -529,7 +533,7 @@ const JigglypuffEngine = {
     pianoWrap.appendChild(pianoEl);
     pianoWrap.appendChild(blackEl);
     btnArea.appendChild(pianoWrap);
-    if (jiggly) setTimeout(() => jiggly.classList.remove('jiggly-bounce'), 600);
+    if (jiggly) MiniGameSession.later(() => jiggly.classList.remove('jiggly-bounce'), 600);
   },
 
   _showGuitar() {
@@ -557,7 +561,7 @@ const JigglypuffEngine = {
       string.addEventListener('click', () => {
         _getAudioCtx();
         string.classList.add('jiggly-string-pluck');
-        setTimeout(() => string.classList.remove('jiggly-string-pluck'), 500);
+        MiniGameSession.later(() => string.classList.remove('jiggly-string-pluck'), 500);
         this._playerTap(idx);
       });
       guitarEl.appendChild(string);
@@ -591,7 +595,7 @@ const JigglypuffEngine = {
       string.addEventListener('click', () => {
         _getAudioCtx();
         string.classList.add('jiggly-cello-bowing');
-        setTimeout(() => string.classList.remove('jiggly-cello-bowing'), 700);
+        MiniGameSession.later(() => string.classList.remove('jiggly-cello-bowing'), 700);
         this._playerTap(idx);
       });
       celloEl.appendChild(string);
@@ -605,16 +609,19 @@ const JigglypuffEngine = {
     replayBtn.className   = 'jiggly-replay-btn';
     replayBtn.textContent = `🎵 Hear again${penaltyMsg}`;
     replayBtn.addEventListener('click', () => {
+      if(this._listening)return;this._slowPlayback=false;
       _getAudioCtx();
       if (this._replayPenalty && (GameState.gold || 0) >= 5) GameState.gold -= 5;
       this._playerPos = 0;
       this._buildSeqBar();
       this._playSequence(() => this._showInstrument());
     });
+    const slow=document.createElement('button');slow.className='jiggly-replay-btn';slow.textContent='Listen slowly';slow.onclick=()=>{if(this._listening)return;this._slowPlayback=true;this._playerPos=0;this._buildSeqBar();this._playSequence(()=>this._showInstrument());};btnArea.appendChild(slow);
     btnArea.appendChild(replayBtn);
   },
 
   _playerTap(noteIdx) {
+    if(this._listening||MiniGameSession.reasons.size)return;
     const expected = this._sequence[this._playerPos];
     const note     = JIGGLYPUFF_NOTES[noteIdx];
     playNoteForInstrument(note.freq, 0.35);
@@ -624,17 +631,17 @@ const JigglypuffEngine = {
 
     if (noteIdx === expected) {
       if (dot) { dot.classList.remove('jiggly-dot-pending'); dot.classList.add('jiggly-dot-correct'); }
-      if (jiggly) { jiggly.classList.add('jiggly-nod'); setTimeout(() => jiggly.classList.remove('jiggly-nod'), 400); }
+      if (jiggly) { jiggly.classList.add('jiggly-nod'); MiniGameSession.later(() => jiggly.classList.remove('jiggly-nod'), 400); }
       this._playerPos++;
       if (this._playerPos >= this._sequence.length) {
-        setTimeout(() => this._complete(), 400);
+        MiniGameSession.later(() => this._complete(), 400);
       }
     } else {
       playWrongBuzz();
-      if (dot) { dot.classList.add('jiggly-dot-wrong'); setTimeout(() => dot.classList.remove('jiggly-dot-wrong'), 500); }
-      if (jiggly) { jiggly.classList.add('jiggly-ears'); setTimeout(() => jiggly.classList.remove('jiggly-ears'), 600); }
+      if (dot) { dot.classList.add('jiggly-dot-wrong'); MiniGameSession.later(() => dot.classList.remove('jiggly-dot-wrong'), 500); }
+      if (jiggly) { jiggly.classList.add('jiggly-ears'); MiniGameSession.later(() => jiggly.classList.remove('jiggly-ears'), 600); }
       const msgEl = document.getElementById('jiggly-msg');
-      if (msgEl) { msgEl.textContent = '😣 Try again!'; setTimeout(() => { if (msgEl) msgEl.textContent = '🎵 Your turn!'; }, 700); }
+      if (msgEl) { msgEl.textContent = '😣 Try again!'; MiniGameSession.later(() => { if (msgEl) msgEl.textContent = '🎵 Your turn!'; }, 700); }
     }
   },
 
@@ -651,7 +658,7 @@ const JigglypuffEngine = {
       this._songDurations = nextPhrase.durations || null;
       this._playerPos     = 0;
 
-      if (jiggly) setTimeout(() => jiggly.classList.remove('jiggly-spin'), 600);
+      if (jiggly) MiniGameSession.later(() => jiggly.classList.remove('jiggly-spin'), 600);
       if (msgEl) msgEl.textContent = `✓ Phrase ${this._phraseIdx}! Next one…`;
 
       this._buildSeqBar();
@@ -661,19 +668,19 @@ const JigglypuffEngine = {
       let ci = 0;
       const celebPhrase = () => {
         if (ci >= this._sequence.length) {
-          setTimeout(() => this._playSequence(() => this._showInstrument()), 500);
+          MiniGameSession.later(() => this._playSequence(() => this._showInstrument()), 500);
           return;
         }
         playNoteForInstrument(JIGGLYPUFF_NOTES[this._sequence[ci]].freq, 0.28);
-        ci++; setTimeout(celebPhrase, 260);
+        ci++; MiniGameSession.later(celebPhrase, 260);
       };
-      setTimeout(celebPhrase, 300);
+      MiniGameSession.later(celebPhrase, 300);
       return;
     }
 
     // ── All done — play FULL SONG then show victory ───────────────────────────
     if (msgEl) msgEl.textContent = '🎵 ★ Complete! ★';
-    if (jiggly) { jiggly.classList.add('jiggly-spin'); setTimeout(() => jiggly.classList.remove('jiggly-spin'), 800); }
+    if (jiggly) { jiggly.classList.add('jiggly-spin'); MiniGameSession.later(() => jiggly.classList.remove('jiggly-spin'), 800); }
 
     // Mark all current dots as complete
     this._sequence.forEach((_, i) => {
@@ -689,7 +696,7 @@ const JigglypuffEngine = {
         fullNotes = fullNotes.concat(p.notes);
         fullDurs  = fullDurs.concat(p.durations || p.notes.map(() => 0.38));
       });
-      if (msgEl) setTimeout(() => { if (msgEl) msgEl.textContent = '🎵 Full song…'; }, 400);
+      if (msgEl) MiniGameSession.later(() => { if (msgEl) msgEl.textContent = '🎵 Full song…'; }, 400);
     } else {
       fullNotes = [...this._sequence];
       fullDurs  = this._songDurations || fullNotes.map(() => 0.38);
@@ -699,16 +706,16 @@ const JigglypuffEngine = {
     let fi = 0;
     const playFull = () => {
       if (fi >= fullNotes.length) {
-        setTimeout(() => this._finish(), 500);
+        MiniGameSession.later(() => this._finish(), 500);
         return;
       }
       const note = JIGGLYPUFF_NOTES[fullNotes[fi]];
       if (note) playNoteForInstrument(note.freq, fullDurs[fi] || 0.38);
       const holdMs = Math.round((fullDurs[fi] || 0.38) * 1000) + 60;
       fi++;
-      setTimeout(playFull, holdMs);
+      MiniGameSession.later(playFull, holdMs);
     };
-    setTimeout(playFull, 600);
+    MiniGameSession.later(playFull, 600);
   },
 
   _finish() {

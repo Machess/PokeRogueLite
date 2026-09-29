@@ -73,6 +73,7 @@ const FalknerEngine = {
     this._ballCooldown = false;
     this._gameRunning  = true;
     this._spawnTimer   = 0;
+    this._lastFrame = 0;
 
     // Tier config
     const CFG = { 1:{balls:18,pass:50}, 2:{balls:15,pass:80}, 3:{balls:12,pass:100} };
@@ -147,7 +148,9 @@ const FalknerEngine = {
 
   _loop() {
     if (!this._gameRunning) return;
-    this._spawnTimer++;
+    const now=performance.now();
+    const frameStep=this._lastFrame?Math.min(3,(now-this._lastFrame)/(1000/60)):1;this._lastFrame=now;
+    this._spawnTimer+=frameStep;
 
     // Spawn next bird every ~90 frames if queue has entries and < 3 on screen
     if (this._waveQueue.length > 0 && this._birds.length < 3 && this._spawnTimer > 60) {
@@ -163,13 +166,13 @@ const FalknerEngine = {
 
     this._birds.forEach(b => {
       if (b.caught || b.escaped) return;
-      const spd = b.def.speed * (this._tier <= 1 ? 0.6 : this._tier === 2 ? 0.85 : 1.1) * 1.8;
+      const spd = b.def.speed * (this._tier <= 1 ? 0.6 : this._tier === 2 ? 0.85 : 1.1) * 1.8 * frameStep;
 
       if (b.dir > 0) { b.x += spd; }
       else           { b.x -= spd; }
 
       // Path logic
-      b.t += 0.04;
+      b.t += 0.04 * frameStep;
       if (b.def.path === 'sine') {
         b.y = b.baseY + Math.sin(b.t * 2) * 30;
       } else if (b.def.path === 'swoop') {
@@ -177,12 +180,12 @@ const FalknerEngine = {
         const progress = b.x / FW;
         b.y = b.baseY - Math.sin(progress * Math.PI) * 60;
       } else if (b.def.path === 'erratic') {
-        b.erraticTimer = (b.erraticTimer || 0) + 1;
+        b.erraticTimer = (b.erraticTimer || 0) + frameStep;
         if (b.erraticTimer > 40 + Math.random() * 30) {
           b.erraticTimer = 0;
           b.erraticDy = (Math.random() - 0.5) * 3;
         }
-        b.y = Math.max(20, Math.min(FH - b.def.size - 40, b.y + (b.erraticDy || 0)));
+        b.y = Math.max(20, Math.min(FH - b.def.size - 40, b.y + (b.erraticDy || 0) * frameStep));
       }
 
       // Flip sprite based on direction
@@ -209,7 +212,7 @@ const FalknerEngine = {
       if (this._wave < FALKNER_WAVES.length - 1) {
         // Short pause then next wave
         this._gameRunning = false;
-        setTimeout(() => {
+        MiniGameSession.later(() => {
           this._gameRunning = true;
           this._loadWave(this._wave + 1);
           this._loop();
@@ -218,7 +221,7 @@ const FalknerEngine = {
       } else {
         // All waves done
         this._gameRunning = false;
-        setTimeout(() => this._finish(), 800);
+        MiniGameSession.later(() => this._finish(), 800);
         return;
       }
     }
@@ -226,11 +229,11 @@ const FalknerEngine = {
     // Out of balls
     if (this._balls <= 0 && this._birds.length === 0 && this._waveQueue.length === 0) {
       this._gameRunning = false;
-      setTimeout(() => this._finish(), 600);
+      MiniGameSession.later(() => this._finish(), 600);
       return;
     }
 
-    this._animFrame = requestAnimationFrame(() => this._loop());
+    this._animFrame = MiniGameSession.frame(() => this._loop());
   },
 
   _spawnBird(def) {
@@ -274,7 +277,7 @@ const FalknerEngine = {
 
     // Cooldown
     this._ballCooldown = true;
-    setTimeout(() => { this._ballCooldown = false; }, 400);
+    MiniGameSession.later(() => { this._ballCooldown = false; }, 400);
 
     // Animate Pokéball throw
     this._animateBall(tapX, tapY, () => {
@@ -322,13 +325,13 @@ const FalknerEngine = {
       ball.style.top       = `${y}px`;
       ball.style.transform = `translate(-50%,-50%) rotate(${rot}deg)`;
       if (t < 1) {
-        requestAnimationFrame(animate);
+        MiniGameSession.frame(animate);
       } else {
         ball.remove();
         onLand();
       }
     };
-    requestAnimationFrame(animate);
+    MiniGameSession.frame(animate);
   },
 
   _catchBird(bird, tx, ty) {
@@ -351,7 +354,7 @@ const FalknerEngine = {
     pop.textContent = `+${bird.def.pts} ⭐`;
     pop.style.cssText = `left:${tx}px;top:${ty - 20}px;`;
     this._field.appendChild(pop);
-    setTimeout(() => pop.remove(), 900);
+    MiniGameSession.later(() => pop.remove(), 900);
 
     // Shake ball effect
     const shakeBall = document.createElement('img');
@@ -359,9 +362,9 @@ const FalknerEngine = {
     shakeBall.className = 'fdh-catch-ball';
     shakeBall.style.cssText = `left:${tx}px;top:${ty}px;`;
     this._field.appendChild(shakeBall);
-    setTimeout(() => shakeBall.remove(), 900);
+    MiniGameSession.later(() => shakeBall.remove(), 900);
 
-    setTimeout(() => el.remove(), 500);
+    MiniGameSession.later(() => el.remove(), 500);
 
     // Update score
     this._score += bird.def.pts;
@@ -377,11 +380,11 @@ const FalknerEngine = {
     miss.innerHTML = `<img src="assets/falkner.png" class="fdh-miss-portrait">
       <span>${name} escaped!</span>`;
     this._field.appendChild(miss);
-    setTimeout(() => miss.remove(), 1200);
+    MiniGameSession.later(() => miss.remove(), 1200);
   },
 
   _finish() {
-    if (this._animFrame) { cancelAnimationFrame(this._animFrame); this._animFrame = null; }
+    if (this._animFrame) { MiniGameSession.cancelFrame(this._animFrame); this._animFrame = null; }
     const won     = this._score >= this._passScore;
     const perfect = this._missCount === 0;
     const gold    = won ? (perfect ? 30 : 20) : Math.max(5, Math.floor(this._score / 5));

@@ -18,7 +18,7 @@ const ClairEngine = {
     showBossIntro({
       gymIndex: 7, portrait: 'clair.png',
       name: 'Clair', btnLabel: 'Face the Dragons 🐉',
-      introText: "Dragons do not wait for you to think. Read the charge and pick the right counter — fast! One wrong move and you are finished.",
+      introText: "Dragons do not wait for you to think. Read the charge and pick the right counter — fast! Study each opponent, then stop its charge with a super-effective counter.",
     });
   },
 
@@ -31,66 +31,22 @@ const ClairEngine = {
   },
 
   _showRound() {
-    if (this._round >= 5) { this._finish(); return; }
-    const tier   = GameState.difficultyTier || 2;
-    const dragon = this._seq[this._round];
-    const cv     = setupChallengeScreen({ portrait:'clair.png', badge:'🐉 Dragon Tamer',
-      intro: `Round ${this._round + 1}/5`,
-      wrapClass: 'clair-wrap', screenClass: 'clair-active' });
-
-    // Dragon charge display
-    const chargeEl = document.createElement('div');
-    chargeEl.className = 'clair-charge';
-    chargeEl.style.setProperty('--dragon-color', dragon.color);
-    chargeEl.innerHTML = `
-      <div class="clair-dragon-icon">${dragon.icon}</div>
-      ${tier <= 1 ? `<div class="clair-dragon-name">${dragon.name} — ${dragon.type} type</div>` : `<div class="clair-dragon-type-bar" style="background:${dragon.color}"></div>`}
-      <div class="clair-dragon-label">Incoming charge!</div>`;
-    cv.appendChild(chargeEl);
-
-    // 3 choices — correct weakness + 2 wrong
-    const allWeaknesses = ['ice','electric','water','fire','fighting','rock'];
-    const wrong = shuffle(allWeaknesses.filter(w => w !== dragon.weakness)).slice(0, 2);
-    const choices = shuffle([dragon.weakness, ...wrong]);
-
-    const btnRow = document.createElement('div');
-    btnRow.className = 'clair-choices';
-    choices.forEach(c => {
-      const btn = document.createElement('button');
-      btn.className = `clair-choice type-badge-btn type-${c}`;
-      btn.textContent = c;
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.clair-choice').forEach(b => {
-          b.disabled = true;
-          if (b.textContent === dragon.weakness) b.classList.add('clair-correct');
-        });
-        if (c === dragon.weakness) {
-          this._hits++;
-          chargeEl.classList.add('clair-stopped');
-        } else {
-          btn.classList.add('clair-wrong');
-          chargeEl.classList.add('clair-hit');
-        }
-        setTimeout(() => { this._round++; this._showRound(); }, 800);
-      });
-      btnRow.appendChild(btn);
-    });
-    cv.appendChild(btnRow);
-
-    // Auto-fail timer for tier 2+
-    if (tier >= 2) {
-      const ms = Math.max(2500, 5500 - this._round * 300);
-      setTimeout(() => {
-        if (!document.querySelector('.clair-stopped, .clair-hit')) {
-          document.querySelectorAll('.clair-choice').forEach(b => {
-            b.disabled = true;
-            if (b.textContent === dragon.weakness) b.classList.add('clair-correct');
-          });
-          chargeEl.classList.add('clair-hit');
-          setTimeout(() => { this._round++; this._showRound(); }, 800);
-        }
-      }, ms);
-    }
+    if(this._round>=5){this._finish();return;}
+    const dragon=this._seq[this._round],tier=GameState.difficultyTier||2;
+    const ids={Dratini:147,Dragonair:148,Seadra:117,Gyarados:130,Aerodactyl:142,Charizard:6};
+    const cv=setupChallengeScreen({portrait:'clair.png',badge:'Dragon Tamer',intro:`Round ${this._round+1}/5 · ${this._hits} counters`,wrapClass:'clair-wrap',screenClass:'clair-active'});
+    const charge=document.createElement('div');charge.className='clair-charge';charge.innerHTML=`<img class="mg-hero-pokemon" src="assets/sprites/${ids[dragon.name]}.png" alt="${dragon.name}"><strong>${dragon.name} · ${dragon.type}</strong><p>Choose a type that is super effective against ${dragon.type}.</p>`;cv.appendChild(charge);
+    // Uses the same single-type rules as combat; every displayed effective answer is accepted.
+    const pool=['ice','electric','water','fire','fighting','rock','dragon','grass'];
+    const valid=pool.filter(t=>getTypeMultiplier(t,dragon.type)>1);
+    const choices=shuffle([valid[0],...shuffle(pool.filter(t=>t!==valid[0])).slice(0,2)]);
+    let answered=false,timer=null;const row=document.createElement('div');row.className='clair-choices';
+    const resolve=choice=>{if(answered)return;answered=true;MiniGameSession.clear(timer);const good=valid.includes(choice);if(good)this._hits++;
+      row.querySelectorAll('button').forEach(b=>{b.disabled=true;if(valid.includes(b.dataset.type))b.classList.add('clair-correct');});
+      charge.classList.add(good?'clair-stopped':'clair-hit');const p=document.createElement('p');p.className='mg-feedback';p.textContent=good?`${choice} deals ×${getTypeMultiplier(choice,dragon.type)} damage. Charge stopped!`:`${choice?choice+' is not super effective.':'Time ran out.'} Try ${valid.join(' or ')} against ${dragon.type}.`;cv.appendChild(p);
+      MiniGameSession.next(()=>{this._round++;this._showRound();});};
+    choices.forEach(type=>{const b=document.createElement('button');b.className='clair-choice';b.dataset.type=type;b.innerHTML=PixelType.icon(type)+type;b.disabled=true;b.onclick=()=>resolve(type);row.appendChild(b);});cv.appendChild(row);
+    const ready=document.createElement('button');ready.className='btn-pixel btn-primary';ready.textContent='Ready — start charge';ready.onclick=()=>{ready.remove();row.querySelectorAll('button').forEach(b=>b.disabled=false);if(tier>1){const bar=document.createElement('progress');bar.className='mg-charge-meter';bar.max=100;bar.value=100;cv.appendChild(bar);const duration=tier===2?6500:5000;let left=duration;const tick=MiniGameSession.every(()=>{left-=100;bar.value=Math.max(0,left/duration*100);},100);timer=MiniGameSession.later(()=>{MiniGameSession.clearEvery(tick);resolve(null);},duration);}};cv.appendChild(ready);
   },
 
   _finish() {

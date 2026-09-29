@@ -25,10 +25,12 @@ const out=process.env.UI_SCREENSHOTS||fs.mkdtempSync('/tmp/poketrials-journey-')
  // Capture must run once even if the throw is triggered twice. Master Ball use and party update remain real.
  await page.setViewportSize({width:960,height:600});await page.evaluate(async()=>{GameState.items=[{id:'master_ball',count:2}];await CatchEngine.start(GameState.map[0],'common');});await page.waitForTimeout(3300);
  const before=await page.evaluate(()=>GameState.party.length);
+ await page.evaluate(()=>{window.catchSfx=[];const sfx=SoundEngine.playSFX;SoundEngine.playSFX=function(file,...args){catchSfx.push(file);return sfx.call(this,file,...args);};});
  await page.evaluate(()=>{CatchEngine._selectedBall='masterball';window.captureCalls=[];const original=CatchEngine._showResult;CatchEngine._showResult=function(...args){window.captureCalls.push(args[2]);return original.apply(this,args);};CatchEngine.throwBall();CatchEngine.throwBall();});
  await page.waitForFunction(()=>document.querySelector('.capture-cinematic')?.dataset.phase==='landing');await page.screenshot({path:out+'/capture-impact.png'});
  await page.waitForFunction(()=>document.querySelector('.capture-cinematic')?.dataset.phase==='locked');await page.waitForTimeout(220);await page.screenshot({path:out+'/capture-lock.png'});
  await page.waitForFunction(()=>window.captureCalls.length===1);await page.waitForTimeout(750);assert.deepEqual(await page.evaluate(()=>window.captureCalls),[true]);assert.equal(await page.evaluate(()=>GameState.party.length),before+1);assert.equal(await page.evaluate(()=>GameState.items.find(x=>x.id==='master_ball')?.count),1);
+ assert.equal(await page.evaluate(()=>catchSfx.includes('catch.mp3')),false,'Throw never replays the catch music as an effect');assert.equal(await page.evaluate(()=>!SoundEngine._bgm||SoundEngine._bgm.paused),true,'Catch music stops at result');
  await page.locator('#pdx-close-btn').click();
  // Reduced-motion breakout preserves failure and cleans up presentation.
  await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(async()=>{await CatchEngine.start(GameState.map[0],'common');});await page.waitForTimeout(3300);await page.evaluate(()=>{const random=Math.random;Math.random=()=>.99;CatchEngine.throwBall();Math.random=random;});await page.waitForFunction(()=>window.captureCalls.length===2);assert.deepEqual(await page.evaluate(()=>window.captureCalls),[true,false]);assert.equal(await page.locator('.capture-cinematic').count(),0);

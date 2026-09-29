@@ -271,10 +271,10 @@ const CookingEngine = {
     if (nextBtn)  nextBtn.style.display  = 'none';
     if (startBtn) startBtn.style.display = 'none';
     let ci = 0;
-    const interval = setInterval(() => {
+    const interval = MiniGameSession.every(() => {
       textEl.textContent += text[ci++];
       if (ci >= text.length) {
-        clearInterval(interval);
+        MiniGameSession.clearEvery(interval);
         if (isLast) { if (startBtn) startBtn.style.display = ''; }
         else        { if (nextBtn)  nextBtn.style.display  = ''; }
       }
@@ -294,6 +294,7 @@ const CookingEngine = {
     if (startBtn) startBtn.textContent = 'Battle! ▶';
     document.getElementById('trainer-intro').style.display = 'none';
     showScreen('cooking');
+    MiniGameSession.begin('cooking','cooking');
     // First: choose the cookware (all tiers; tier 1 highlights the correct one)
     this._renderVesselChoice();
   },
@@ -331,7 +332,7 @@ const CookingEngine = {
           btn.classList.add('cook-vessel-wrong');
           SoundEngine.playSFX && SoundEngine.playSFX('teamrocket_show.mp3', 0.2);
           this._brockSay(`Not the ${meta.label.toLowerCase()} — you ${this._recipe.vessel === 'bowl' ? 'mix' : this._recipe.vessel === 'pot' ? 'boil' : 'fry'} this dish! Try the ${VESSEL_META[this._vessel].label.toLowerCase()}.`);
-          setTimeout(() => btn.classList.remove('cook-vessel-wrong'), 600);
+          MiniGameSession.later(() => btn.classList.remove('cook-vessel-wrong'), 600);
         }
       });
       choices.appendChild(btn);
@@ -417,7 +418,7 @@ const CookingEngine = {
     const expectedIdx = this._placed.length;
     const expected = this._slots[expectedIdx];
     const ing = COOKING_INGREDIENTS.find(i => i.id === id);
-    if (!ing) return;
+    if (!ing || !expected) return;
 
     if (id !== expected.id) {
       // Wrong ingredient OR wrong order — gentle corrective feedback
@@ -427,7 +428,7 @@ const CookingEngine = {
         ? `Good ingredient — but not yet! Add the ${expected.name} ${expected.icon} first.`
         : `Hmm, ${ing.name.toLowerCase()} doesn't go in ${this._recipe.name}! Try the ${expected.name} ${expected.icon}.`);
       const el = document.querySelector(`.pantry-item[data-ing="${id}"]`);
-      if (el) { el.classList.add('pantry-wrong'); setTimeout(() => el.classList.remove('pantry-wrong'), 500); }
+      if (el) { el.classList.add('pantry-wrong'); MiniGameSession.later(() => el.classList.remove('pantry-wrong'), 500); }
       return;
     }
     // Correct ingredient & order — solve the serving-size math
@@ -439,7 +440,7 @@ const CookingEngine = {
     if (hintEl) {
       hintEl.textContent = msg;
       hintEl.classList.add('cook-hint-flash');
-      setTimeout(() => hintEl.classList.remove('cook-hint-flash'), 600);
+      MiniGameSession.later(() => hintEl.classList.remove('cook-hint-flash'), 600);
     }
   },
 
@@ -464,10 +465,11 @@ const CookingEngine = {
       btn.textContent = val;
       btn.onclick = () => {
         const correct = val === ch.correct;
-        if (!correct) { this._mistakes++; btn.classList.add('math-wrong'); }
+        if (!correct) { this._mistakes++; btn.classList.add('math-wrong');btn.disabled=true;document.getElementById('cooking-math-qty-hint').textContent=ch.question+' — Try again. The recipe needs '+ch.correct+'.';return; }
+        btnArea.querySelectorAll('button').forEach(b=>b.disabled=true);
         this._placed.push({ ...slot, qty: val });
         SoundEngine.playCorrect && correct && SoundEngine.playCorrect();
-        setTimeout(() => { overlay.style.display = 'none'; this._renderCooking(); }, correct ? 250 : 650);
+        MiniGameSession.later(() => { overlay.style.display = 'none'; this._renderCooking(); }, correct ? 250 : 650);
       };
       btnArea.appendChild(btn);
     });
@@ -533,7 +535,7 @@ const CookingEngine = {
                           : _cookingQuote('wrong');
     const body = `${this._recipe.name} — ${correctSlots}/${total} steps right.\n${healMsg}${buffMsg}\n\n"${quote}" — Brock`;
 
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       showModal(headline, body, () => {
         MapEngine.completeNode(GameState.currentNodeIndex);
         MapEngine.show();

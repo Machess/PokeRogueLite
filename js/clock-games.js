@@ -100,7 +100,7 @@ const ChuckEngine = {
               row.children[i].classList.add('chuck-correct');
           });
         } else this._hits++;
-        setTimeout(() => { this._round++; this._showRound(); }, 1000);
+        MiniGameSession.next(() => { this._round++; this._showRound(); });
       });
       row.appendChild(btn);
     });
@@ -171,7 +171,7 @@ const ChuckEngine = {
         ans.innerHTML = `Correct: ${target.h}:${String(target.m).padStart(2,'0')} ${_clockSVG(target.h, target.m, 70)}`;
         cv.appendChild(ans);
       }
-      setTimeout(() => { this._round++; this._showRound(); }, correct ? 900 : 2200);
+      MiniGameSession.next(() => { this._round++; this._showRound(); });
     });
     cv.appendChild(submit);
   },
@@ -311,6 +311,7 @@ const TogepiEngine = {
     if (tier <= 2) this._animateHands('togepi-clock-b', start, end);
     else document.getElementById('togepi-clock-b').innerHTML = _clockSVG(end.h, end.m, 120);
 
+    MiniGameUpgrades.timeline(start,dur,cv);
     // Build duration options
     const opts = new Set([dur]);
     const pool = tier === 1 ? [15,30,45,60] : tier === 2 ? [15,30,45,60,75,90] : [25,40,45,50,65,70,80,95,100];
@@ -334,7 +335,7 @@ const TogepiEngine = {
             if (b.textContent === this._durWords(dur)) b.classList.add('togepi-correct');
           });
         } else { this._hits++; this._unfreeze(); }
-        setTimeout(() => { this._round++; this._showRound(); }, correct ? 1100 : 1800);
+        MiniGameSession.next(() => { this._round++; this._showRound(); });
       });
       row.appendChild(btn);
     });
@@ -368,6 +369,7 @@ const TogepiEngine = {
       </div>`;
     cv.appendChild(clocks);
 
+    MiniGameUpgrades.timeline(start,dur,cv);
     // Options are end-times
     const opts = new Set([`${end.h}:${String(end.m).padStart(2,'0')}`]);
     while (opts.size < 4) {
@@ -393,7 +395,7 @@ const TogepiEngine = {
             if (b.textContent === answer) b.classList.add('togepi-correct');
           });
         } else { this._hits++; this._unfreeze(); }
-        setTimeout(() => { this._round++; this._showRound(); }, correct ? 1100 : 1800);
+        MiniGameSession.next(() => { this._round++; this._showRound(); });
       });
       row.appendChild(btn);
     });
@@ -414,7 +416,7 @@ const TogepiEngine = {
       const cur = fromTotal + (toTotal - fromTotal) * frac;
       const h = Math.floor(cur / 60) % 12, m = Math.round(cur % 60);
       el.innerHTML = _clockSVG(h === 0 ? 12 : h, m, 120);
-      if (i++ < steps) setTimeout(tick, dur / steps);
+      if (i++ < steps) MiniGameSession.later(tick, dur / steps);
       else el.innerHTML = _clockSVG(to.h, to.m, 120);
     };
     tick();
@@ -425,7 +427,7 @@ const TogepiEngine = {
     const sc = document.getElementById('screen-challenge');
     if (sc) {
       sc.classList.add('togepi-unfreeze');
-      setTimeout(() => sc.classList.remove('togepi-unfreeze'), 1000);
+      MiniGameSession.later(() => sc.classList.remove('togepi-unfreeze'), 1000);
     }
     SoundEngine.playCorrect && SoundEngine.playCorrect();
   },

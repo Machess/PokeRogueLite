@@ -62,5 +62,11 @@
   "js/asset-preloader.js",
   "js/region-map.js",
   "js/capture-cinematic.js",
+  "js/minigame-session.js",
+  "js/minigame-upgrades.js",
+  "js/exploration.js",
+  "data/trainer-bounds.js",
+  "js/trainer-sizing.js",
+  "js/minigame-scenes.js",
   "js/boot.js"
 ]

@@ -323,7 +323,7 @@ const BlaineEngine = {
     const loserSide   = winnerSide === 'left' ? 'right' : 'left';
     const loserEl     = document.getElementById(`blaine-${loserSide}`);
 
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       if (winnerEl) winnerEl.classList.add('blaine-winner');
       if (loserEl)  loserEl.classList.add('blaine-loser');
     }, 200);
@@ -335,7 +335,7 @@ const BlaineEngine = {
                 : m.mult >= 2  ? '⚡ 2× Super Effective!'
                 : '🛡️ 0.5× Resisted';
       const col = m.mult === 0 ? '#888' : m.mult >= 2 ? '#FFD700' : '#aaa';
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         vsEl.innerHTML = `<span class="blaine-eff-badge" style="color:${col}">${eff}</span>`;
       }, 500);
     }
@@ -373,7 +373,7 @@ const BlaineEngine = {
       </div>
       <div class="blaine-result-hook">💡 ${hook}</div>
       <div class="blaine-result-quote"><em>"${teachLine}" — Blaine</em></div>`;
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       resultEl.style.display = 'block';
       document.getElementById('challenge-continue-btn').style.display = 'block';
       document.getElementById('challenge-continue-btn').textContent   = 'Continue ▶';

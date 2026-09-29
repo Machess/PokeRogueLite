@@ -60,7 +60,7 @@ function _buildErikaPuzzle(tier) {
       hint:'Mix Blue + Yellow = Green. Then use Pour Out 🫗 to reach the halfway line.' },
     { tier:2, targetColor:'orange', targetLevel:0.5,  recipe:['red','yellow'],
       bottles:['red','yellow','white'],
-      hint:'Mix Red + Yellow = Orange. Then Pour Out 🫗 once to reach half.' },
+      hint:'Mix Red + Yellow = Orange. Then Pour Out 🫗 twice to reach half.' },
     { tier:2, targetColor:'purple', targetLevel:1,    recipe:['red','blue'],
       bottles:['red','blue','green'],
       hint:'Red + Blue = Purple. Pour both fully — no pour-out needed.' },
@@ -194,17 +194,18 @@ const ErikaEngine = {
     const cv = document.getElementById('challenge-coin-visual');
     cv.style.display = 'block';
     cv.className     = 'erika-lab';
+    delete cv.dataset.complete;
     cv.innerHTML     = `
       <!-- Recipe hint card — hidden on tier 3 -->
-      <div class="erika-recipe-card" id="erika-recipe-card" style="${tier >= 3 ? 'display:none' : ''}">
+      <div class="erika-recipe-card" id="erika-recipe-card" style="${''}">
         <div class="erika-recipe-title">Mix Rules</div>
         ${Object.entries(POTION_MIX_RULES).map(([k, v]) => {
           const [a, b] = k.split('-');
           const ca = POTION_COLORS[a], cb = POTION_COLORS[b], cv2 = POTION_COLORS[v];
           const highlight = tier === 1 && p.recipe.sort().join('-') === k ? 'erika-recipe-highlight' : '';
           return `<div class="erika-recipe-row ${highlight}">
-            <span class="erika-swatch" style="background:${ca?.hex}"></span>+
-            <span class="erika-swatch" style="background:${cb?.hex}"></span>=
+            <span class="erika-swatch" style="background:${ca?.hex}"></span><span>${ca?.label}</span> +
+            <span class="erika-swatch" style="background:${cb?.hex}"></span><span>${cb?.label}</span> =
             <span class="erika-swatch" style="background:${cv2?.hex}"></span>
             <span class="erika-recipe-label">${cv2?.label || v}</span></div>`;
         }).join('')}
@@ -212,7 +213,7 @@ const ErikaEngine = {
 
       <!-- Target flask -->
       <div class="erika-target-area">
-        <div class="erika-target-label">Target: <strong>${levelLabel}-full ${targetC.label}</strong></div>
+        <div class="erika-target-label">Target: <strong>${targetC.label} · ${p.targetLevel * 100}% full</strong></div>
         <div class="erika-flask" id="erika-target-flask">
           <div class="erika-flask-liquid" id="erika-flask-liquid" style="height:0%;background:#888"></div>
           <div class="erika-flask-line" style="bottom:${levelPct}%"></div>
@@ -226,7 +227,7 @@ const ErikaEngine = {
       </div>
 
       <!-- Erika comment -->
-      <div class="erika-comment" id="erika-comment">${tier >= 3 ? '🌸 No hints today.' : `💡 ${p.hint}`}</div>
+      <div class="erika-comment" id="erika-comment">${tier >= 3 ? 'Use the mixing chart and measure the target level.' : `💡 ${p.hint}`}</div>
 
       <!-- Pour stream (hidden by default) -->
       <div class="erika-pour-stream" id="erika-pour-stream" style="display:none"></div>`;
@@ -271,7 +272,7 @@ const ErikaEngine = {
     const pourOutBtn = document.createElement('button');
     pourOutBtn.className   = 'erika-action-btn erika-pourout-btn';
     pourOutBtn.id          = 'erika-pourout-btn';
-    pourOutBtn.textContent = '🫗 Pour Out';
+    pourOutBtn.textContent = 'Pour out ¼ flask';
     pourOutBtn.disabled    = true;
     pourOutBtn.addEventListener('click', () => this._pourOut());
 
@@ -299,12 +300,13 @@ const ErikaEngine = {
       return;
     }
 
+    if(btn.disabled)return;btn.disabled=true;
     this._poured.push(colorKey);
     this._totalPoured = Math.min(1, this._totalPoured + pourUnit);
 
     // Animate bottle tilt
     btn.classList.add('erika-bottle-tilt');
-    setTimeout(() => btn.classList.remove('erika-bottle-tilt'), 500);
+    MiniGameSession.later(() => btn.classList.remove('erika-bottle-tilt'), 500);
 
     // Shrink bottle liquid
     const liqEl = document.getElementById(`bottle-liq-${colorKey}`);
@@ -317,14 +319,14 @@ const ErikaEngine = {
       stream.style.cssText = `display:block;background:${c.hex};`;
       stream.classList.remove('erika-stream-out');
       stream.classList.add('erika-stream-flow');
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         stream.style.display = 'none';
         stream.classList.remove('erika-stream-flow');
       }, 550);
     }
 
     // Update flask fill after stream
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       this._updateFlask();
       document.getElementById('erika-submit-btn').disabled  = false;
       document.getElementById('erika-pourout-btn').disabled = false;
@@ -336,7 +338,7 @@ const ErikaEngine = {
     if (this._answered) return;
     if (this._totalPoured <= 0) return;
 
-    this._totalPoured = Math.max(0, this._totalPoured - 0.5);
+    this._totalPoured = Math.max(0, this._totalPoured - 0.25);
 
     // Animate downward stream from flask
     const stream = document.getElementById('erika-pour-stream');
@@ -346,13 +348,13 @@ const ErikaEngine = {
       stream.style.cssText = `display:block;background:${c.hex};`;
       stream.classList.remove('erika-stream-flow');
       stream.classList.add('erika-stream-out');
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         stream.style.display = 'none';
         stream.classList.remove('erika-stream-out');
       }, 500);
     }
 
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       this._updateFlask();
 
       // Erika pour-out comment (once only)
@@ -415,13 +417,16 @@ const ErikaEngine = {
 
   _evaluate() {
     if (this._answered) return;
-    this._answered = true;
-
     const p = this._puzzle;
     const resultColor = mixColors(this._poured);
     const colorOk = resultColor === p.targetColor;
     const levelOk = Math.abs(this._totalPoured - p.targetLevel) < 0.01;
     const isRight = colorOk && levelOk;
+    if(!isRight){this._resetUsed=true;document.getElementById('erika-comment').textContent=(!colorOk?'Colour needs correcting: reset and mix '+p.recipe.join(' + ')+'. ':'Colour is correct. ')+(!levelOk?'Aim for '+(p.targetLevel*100)+'% full.':'Volume is correct.');return;}
+    this._answered=true;
+    document.getElementById('challenge-coin-visual').dataset.complete='true';
+    const guide=document.querySelector('.mg-recipe-guide');
+    if(guide)guide.open=false;
 
     // Flask celebration or shake
     const flask = document.getElementById('erika-target-flask');

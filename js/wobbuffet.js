@@ -76,20 +76,20 @@ const WobbuffetEngine = {
     wrap.appendChild(flash);
 
     // Sequence: drop+wobble (900ms) → cry + burst → reveal Wobbuffet
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       // Cry plays right as the ball opens
       SoundEngine.playSFX('wobbuffet.mp3', 0.9);
       ball.classList.add('wob-reveal-ball-burst');
       flash.classList.add('wob-reveal-flash-go');
       // Reveal Wobbuffet popping out
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         trainerImg.style.visibility = 'visible';
         trainerImg.classList.remove('wob-pop-in');
         void trainerImg.offsetWidth;        // restart animation
         trainerImg.classList.add('wob-pop-in');
       }, 120);
       // Clean up ball + flash, then continue to dialogue
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         ball.remove();
         flash.remove();
         if (onDone) onDone();
@@ -122,12 +122,13 @@ const WobbuffetEngine = {
     if (p >= this._sequence.length) { this._finish(); return; }
 
     const attack = this._sequence[p];
+    attack._resolved = false;
     const tier   = this._tier;
 
     // Build 3 or 4 answer choices depending on tier
     const numChoices = tier <= 1 ? 3 : 4;
     const wrong = shuffle(
-      WOBBU_WRONG_POOL.filter(t => t !== attack.counter && t !== attack.type)
+      WOBBU_WRONG_POOL.filter(t => t !== attack.counter && t !== attack.type && getTypeMultiplier(t,attack.type)<=1)
     ).slice(0, numChoices - 1);
     const choices = shuffle([attack.counter, ...wrong]);
 
@@ -142,7 +143,7 @@ const WobbuffetEngine = {
     });
 
     // Speed increases each round
-    const timeLimit = tier <= 1 ? 0 : Math.max(1500, 3500 - p * 400);
+    const timeLimit = tier <= 1 ? 0 : Math.max(4000, 6500 - p * 300);
 
     // Attack card slides in from right
     const attackCard = document.createElement('div');
@@ -165,22 +166,11 @@ const WobbuffetEngine = {
     // Timer bar (Tier 2+)
     let timerEl = null;
     let timerTimeout = null;
-    if (timeLimit > 0) {
-      timerEl = document.createElement('div');
-      timerEl.className = 'wobbu-timer-bar';
-      timerEl.innerHTML = `<div class="wobbu-timer-fill" id="wobbu-timer-fill"></div>`;
-      cv.appendChild(timerEl);
-      // Animate fill shrinking
-      setTimeout(() => {
-        const fill = document.getElementById('wobbu-timer-fill');
-        if (fill) {
-          fill.style.transition = `width ${timeLimit}ms linear`;
-          fill.style.width = '0%';
-        }
-      }, 50);
-      // Auto-miss on timeout
-      timerTimeout = setTimeout(() => this._answer(false, attack, null), timeLimit);
-    }
+    let meterTick = null;
+    let readyToCounter=false;
+    const ready=document.createElement('button');ready.className='btn-pixel btn-primary';ready.textContent='Ready — incoming attack';ready.onclick=()=>{ready.remove();readyToCounter=true;
+      if(timeLimit>0){timerEl=document.createElement('progress');timerEl.className='mg-charge-meter';timerEl.max=timeLimit;timerEl.value=timeLimit;cv.appendChild(timerEl);let left=timeLimit;meterTick=MiniGameSession.every(()=>{left-=100;timerEl.value=left;},100);timerTimeout=MiniGameSession.later(()=>{MiniGameSession.clearEvery(meterTick);this._answer(false,attack,null);},timeLimit);}
+    };cv.appendChild(ready);
 
     // Choice hint (Tier 1 only: show "super effective against X")
     if (tier <= 1) {
@@ -198,7 +188,9 @@ const WobbuffetEngine = {
       btn.className = `wobbu-choice-btn type-badge-btn type-${choice}`;
       btn.innerHTML = `<span class="wobbu-choice-type">${choice}</span>`;
       btn.addEventListener('click', () => {
-        if (timerTimeout) clearTimeout(timerTimeout);
+        if(!readyToCounter)return;
+        if (timerTimeout) MiniGameSession.clear(timerTimeout);
+        if (meterTick) MiniGameSession.clearEvery(meterTick);
         this._answer(choice === attack.counter, attack, btn);
       });
       btnRow.appendChild(btn);
@@ -217,6 +209,7 @@ const WobbuffetEngine = {
   },
 
   _answer(correct, attack, clickedBtn) {
+    if(attack._resolved)return;attack._resolved=true;
     attack._hit = correct;
     if (correct) this._hits++;
 
@@ -244,11 +237,11 @@ const WobbuffetEngine = {
     // Disable all buttons
     document.querySelectorAll('.wobbu-choice-btn').forEach(b => b.disabled = true);
 
-    // Advance after brief pause
-    setTimeout(() => {
+    const explanation=document.createElement('p');explanation.className='mg-feedback';explanation.textContent=`${attack.counter} is super effective against ${attack.type}.`;document.getElementById('challenge-coin-visual').appendChild(explanation);
+    MiniGameSession.next(() => {
       this._round++;
       this._showRound();
-    }, correct ? 700 : 1000);
+    });
   },
 
   _finish() {

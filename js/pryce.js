@@ -163,7 +163,7 @@ const PryceEngine = {
     cv.appendChild(prompt);
 
     // The ice field
-    const FIELD_W = 320, FIELD_H = 220, SIZE = tier === 3 ? 38 : 46;
+    const FIELD_W = Math.min(620,innerWidth-100), FIELD_H = 330, SIZE = 48;
     const field = document.createElement('div');
     field.className = 'pryce-field';
     field.id = 'pryce-field';
@@ -190,6 +190,7 @@ const PryceEngine = {
       el.dataset.type = sh.type;
       el.dataset.id   = sh.id;
       el.innerHTML = `<svg viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}">${_pryceShapeSVG(sh.type, SIZE, sh.color)}</svg>`;
+      if(tier>1){el.setAttribute('role','button');el.tabIndex=0;el.setAttribute('aria-label',sh.type+' shard, tap to mark counted');el.onclick=()=>el.classList.toggle('mg-counted');el.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();el.click();}};}
       field.appendChild(el);
     });
 
@@ -240,13 +241,11 @@ const PryceEngine = {
     const tier = Math.min(getSkillTier('pryce'), 3);
     const maxOpt = tier === 2 ? 8 : 10;
     // Build number options around the true count
-    const opts = new Set([target]);
-    while (opts.size < Math.min(5, maxOpt)) {
-      const delta = (Math.floor(Math.random() * 5) - 2);
-      const v = target + delta;
-      if (v >= 1 && v <= maxOpt) opts.add(v);
-    }
-    const optArr = shuffle([...opts]);
+    // A bounded window also works at counts 1 and 2; random ±2 could
+    // never produce five distinct valid answers there and locked the game.
+    const count = Math.min(5, maxOpt);
+    const first = Math.max(1, Math.min(target - 2, maxOpt - count + 1));
+    const optArr = shuffle(Array.from({length: count}, (_, i) => first + i));
 
     const row = document.createElement('div');
     row.className = 'pryce-num-row';
@@ -263,7 +262,7 @@ const PryceEngine = {
             if (+b.textContent === target) b.classList.add('pryce-num-correct');
           });
         }
-        setTimeout(() => this._resolveType(correct, target, n, field, curType), correct ? 500 : 1300);
+        MiniGameSession.later(() => this._resolveType(correct, target, n, field, curType), correct ? 500 : 1300);
       });
       row.appendChild(btn);
     });
@@ -275,13 +274,13 @@ const PryceEngine = {
     if (correct) this._hits++;
     // Shatter animation on the active shapes
     field.querySelectorAll('.pryce-shape-active').forEach((el, i) => {
-      setTimeout(() => el.classList.add('pryce-shatter'), i * 40);
+      MiniGameSession.later(() => el.classList.add('pryce-shatter'), i * 40);
     });
     if (correct) SoundEngine.playCorrect();
-    setTimeout(() => {
-      this._typeIdx++;
-      this._renderField();
-    }, 700);
+    const feedback=document.createElement('p');feedback.className='mg-feedback';
+    feedback.textContent=correct ? `Correct — ${target} ${curType} shards.` : `You counted ${picked}; there were ${target} ${curType} shards (${Math.abs(target-picked)} ${picked<target?'more':'fewer'}).`;
+    field.after(feedback);
+    MiniGameSession.next(() => {this._typeIdx++;this._renderField();},'Next ice layer');
   },
 
   // All shapes cleared — reveal the Pokémon frozen inside.

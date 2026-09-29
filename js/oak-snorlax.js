@@ -67,7 +67,7 @@ const OakSortEngine = {
 
   _showRound() {
     if (this._round >= this._queue.length) { this._finish(); return; }
-    this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+    this._timeouts.forEach(t => MiniGameSession.clear(t)); this._timeouts = [];
 
     const tier = Math.min(getSkillTier('oak'), 3);
     const poke = this._queue[this._round];
@@ -104,7 +104,7 @@ const OakSortEngine = {
       b.addEventListener('click', () => {
         if (answered) return;
         answered = true;
-        this._timeouts.forEach(t => clearTimeout(t)); this._timeouts = [];
+        this._timeouts.forEach(t => MiniGameSession.clear(t)); this._timeouts = [];
         document.getElementById('oak-poke')?.style.setProperty('animation-play-state','paused');
         const correct = poke[this._rule.key] === val;
         b.classList.add(correct ? 'oak-correct' : 'oak-wrong');
@@ -116,14 +116,14 @@ const OakSortEngine = {
             if (this._rule.buckets[i][0] === poke[this._rule.key]) bb.classList.add('oak-correct');
           });
         }
-        this._timeouts.push(setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 950));
+        this._timeouts.push(MiniGameSession.later(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 950));
       });
       row.appendChild(b);
     });
     cv.appendChild(row);
 
     // Escaped — slid past without sorting
-    this._timeouts.push(setTimeout(() => {
+    this._timeouts.push(MiniGameSession.later(() => {
       if (!answered) {
         answered = true;
         feedback.textContent='It passed! The matching bay is highlighted.';
@@ -131,7 +131,7 @@ const OakSortEngine = {
           bb.disabled = true;
           if (this._rule.buckets[i][0] === poke[this._rule.key]) bb.classList.add('oak-correct');
         });
-        this._timeouts.push(setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 950));
+        this._timeouts.push(MiniGameSession.later(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 950));
       }
     }, slideMs));
   },
@@ -173,7 +173,7 @@ const SnorlaxEngine = {
     hideLoading();
 
     showBossIntro({
-      gymIndex: 0, portrait: 'snorlax_block.png', gameKey: 'snorlax',
+      gymIndex: 0, portrait: 'sprites/143.png', gameKey: 'snorlax',
       name: 'Snorlax', btnLabel: '⚖️ Wake it up!',
       introText: "Zzz... A wild Snorlax is blocking the road! It will only move for someone who understands WEIGHT. Balance the scale to prove it... zzz...",
     });
@@ -194,7 +194,7 @@ const SnorlaxEngine = {
     const tier = Math.min(getSkillTier('snorlax'), 3);
 
     const cv = setupChallengeScreen({
-      portrait: 'snorlax_block.png', badge: '⚖️ Weigh Station',
+      portrait: 'sprites/143.png', badge: '⚖️ Weigh Station',
       intro: `Round ${this._round + 1}/5 — ${this._hits} balanced`,
       wrapClass: 'snorlax-wrap', screenClass: 'snorlax-active',
     });
@@ -209,6 +209,8 @@ const SnorlaxEngine = {
       q.textContent = 'Which Pokémon is HEAVIER?';
       cv.appendChild(q);
 
+      const comparison=document.createElement('div');comparison.className='snx-scale';comparison.id='snx-scale';
+      comparison.innerHTML=`<div class="snx-beam" id="snx-beam"><div class="snx-pan snx-pan-left"><img src="${a.sprite}" class="snx-pan-sprite" alt="${a.name}"></div><div class="snx-pan snx-pan-right"><img src="${b.sprite}" class="snx-pan-sprite" alt="${b.name}"></div></div><div class="snx-base"></div><div class="mg-scale-reading">Choose first to reveal the weights</div>`;cv.appendChild(comparison);
       const row = document.createElement('div');
       row.className = 'snx-pick-row';
       [a, b].forEach(p => {
@@ -218,6 +220,9 @@ const SnorlaxEngine = {
         btn.addEventListener('click', () => {
           row.querySelectorAll('.snx-pick').forEach(x => x.disabled = true);
           const heavier = a.kg >= b.kg ? a : b;
+          const tilt=Math.max(-12,Math.min(12,(b.kg-a.kg)/Math.max(1,a.kg,b.kg)*14));
+          comparison.style.setProperty('--scale-tilt',tilt+'deg');comparison.querySelector('.snx-beam').style.transform=`rotate(${tilt}deg)`;
+          comparison.querySelector('.mg-scale-reading').textContent=`${a.name}: ${a.kg} kg · ${b.name}: ${b.kg} kg`;
           const correct = p.id === heavier.id;
           btn.classList.add(correct ? 'snx-correct' : 'snx-wrong');
           // Reveal weights — the teaching moment
@@ -226,10 +231,8 @@ const SnorlaxEngine = {
             x.insertAdjacentHTML('beforeend', `<span class="snx-kg">${pk.kg} kg</span>`);
             if (pk.id === heavier.id) x.classList.add('snx-correct');
           });
-          clock.firstChild.style.animationPlayState='paused';
-        feedback.textContent=correct?'Correct! Pokémon safely sorted.':'Look for the highlighted bay.';
         if (correct) this._hits++;
-          setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 1600);
+          MiniGameSession.next(() => {this._round++; this._showRound();});
         });
         row.appendChild(btn);
       });
@@ -259,7 +262,7 @@ const SnorlaxEngine = {
         </div>
         <div class="snx-pan snx-pan-right" id="snx-pan-right"></div>
       </div>
-      <div class="snx-base">⚖️</div>`;
+      <div class="snx-base"></div><div class="mg-scale-reading" id="mg-scale-reading">Target: ${tier === 2 ? left.kg : left.kg * 2} kg · Selected: 0 kg</div>`;
     cv.appendChild(scale);
 
     const targetKg = tier === 2 ? left.kg : left.kg * 2;
@@ -270,49 +273,18 @@ const SnorlaxEngine = {
     const row = document.createElement('div');
     row.className = 'snx-shelf';
     shelf.forEach(p => {
-      const btn = document.createElement('button');
-      btn.className = 'snx-pick snx-shelf-item';
-      btn.innerHTML = `<img src="${p.sprite}" class="snx-sprite pixel-sprite"><span class="snx-name">${p.name}</span><span class="snx-kg">${p.kg} kg</span>`;
-      btn.addEventListener('click', () => {
-        if (pickedIds.includes(p.id)) return;
-        pickedIds.push(p.id); pickedKg += p.kg;
-        btn.classList.add('snx-picked');
-        document.getElementById('snx-pan-right')?.insertAdjacentHTML('beforeend',
-          `<img src="${p.sprite}" class="snx-pan-sprite pixel-sprite">`);
-        // Tilt beam toward heavier side
-        const beam = document.getElementById('snx-beam');
-        if (beam) {
-          const diff = Math.max(-12, Math.min(12, (targetKg - pickedKg) / Math.max(targetKg, 1) * 18));
-          beam.style.transform = `rotate(${(-diff).toFixed(1)}deg)`;
-        }
-        if (pickedIds.length >= need) {
-          row.querySelectorAll('button').forEach(b => b.disabled = true);
-          // Best possible pick(s) for scoring
-          let bestDiff = Infinity;
-          if (need === 1) {
-            shelf.forEach(s => bestDiff = Math.min(bestDiff, Math.abs(s.kg - targetKg)));
-          } else {
-            for (let i = 0; i < shelf.length; i++)
-              for (let k = i + 1; k < shelf.length; k++)
-                bestDiff = Math.min(bestDiff, Math.abs(shelf[i].kg + shelf[k].kg - targetKg));
-          }
-          const myDiff  = Math.abs(pickedKg - targetKg);
-          const correct = myDiff <= bestDiff + 0.01;
-          scale.classList.add(correct ? 'snx-balanced' : 'snx-tipped');
-          const verdict = document.createElement('div');
-          verdict.className = 'snx-verdict';
-          verdict.textContent = correct
-            ? `Balanced! ${pickedKg} kg vs ${targetKg} kg ✓`
-            : `${pickedKg} kg vs ${targetKg} kg — off by ${Math.abs(pickedKg - targetKg)} kg`;
-          cv.appendChild(verdict);
-          clock.firstChild.style.animationPlayState='paused';
-        feedback.textContent=correct?'Correct! Pokémon safely sorted.':'Look for the highlighted bay.';
-        if (correct) this._hits++;
-          setTimeout(() => { if(document.querySelector('#screen-challenge.oak-active.active')){this._round++; this._showRound();} }, 1800);
-        }
-      });
-      row.appendChild(btn);
+      const btn=document.createElement('button');btn.className='snx-pick snx-shelf-item';btn.dataset.id=p.id;
+      btn.innerHTML=`<img src="${p.sprite}" class="snx-sprite pixel-sprite"><span class="snx-name">${p.name}</span><span class="snx-kg">${p.kg} kg</span>`;
+      btn.onclick=()=>{if(pickedIds.includes(p.id)){pickedIds=pickedIds.filter(id=>id!==p.id);pickedKg-=p.kg;}else{if(pickedIds.length>=need)return;pickedIds.push(p.id);pickedKg+=p.kg;}
+        btn.classList.toggle('snx-picked',pickedIds.includes(p.id));btn.setAttribute('aria-pressed',String(pickedIds.includes(p.id)));
+        document.getElementById('snx-pan-right').innerHTML=shelf.filter(x=>pickedIds.includes(x.id)).map(x=>`<img src="${x.sprite}" class="snx-pan-sprite pixel-sprite" alt="${x.name}">`).join('');
+        document.getElementById('snx-beam').style.transform=`rotate(${Math.max(-12,Math.min(12,(pickedKg-targetKg)/Math.max(1,targetKg)*18))}deg)`;document.getElementById('snx-scale').style.setProperty('--scale-tilt',`${Math.max(-12,Math.min(12,(pickedKg-targetKg)/Math.max(1,targetKg)*18))}deg`);document.getElementById('mg-scale-reading').textContent=`Target: ${targetKg} kg · Selected: ${pickedKg} kg`;submit.disabled=pickedIds.length!==need;};row.appendChild(btn);
     });
+    const submit=document.createElement('button');submit.className='btn-pixel btn-primary';submit.textContent='Check the scale';submit.disabled=true;submit.onclick=()=>{
+      submit.disabled=true;row.querySelectorAll('button').forEach(b=>b.disabled=true);
+      let best=Infinity;for(let i=0;i<shelf.length;i++){if(need===1)best=Math.min(best,Math.abs(shelf[i].kg-targetKg));else for(let j=i+1;j<shelf.length;j++)best=Math.min(best,Math.abs(shelf[i].kg+shelf[j].kg-targetKg));}
+      const diff=Math.abs(pickedKg-targetKg),correct=diff<=best+.01;if(correct)this._hits++;
+      const verdict=document.createElement('p');verdict.className='snx-verdict';verdict.textContent=`${correct?(diff<.01?'Exactly balanced!':'Closest possible!'):'Try a closer combination next time.'} ${pickedKg} kg / target ${targetKg} kg. Difference: ${diff} kg; best available: ${best} kg.`;cv.appendChild(verdict);MiniGameSession.next(()=>{this._round++;this._showRound();});};cv.appendChild(submit);
     cv.appendChild(row);
   },
 

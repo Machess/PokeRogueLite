@@ -30,7 +30,7 @@ const MortyEngine = {
     showBossIntro({
       gymIndex: 3, portrait: 'morty.png',
       name: 'Morty', btnLabel: 'Enter the Séance 👻',
-      introText: "The spirits speak to those who remember. Match the ghost symbols before the fog hides them. I have already seen your future here…",
+      introText: "The spirits speak to those who remember. Watch the ghosts appear, then repeat their order. I have already seen your future here…",
     });
   },
 
@@ -60,12 +60,12 @@ const MortyEngine = {
     cv.appendChild(grid);
 
     // Peek phase — briefly show all cards
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       this._grid.forEach(c => {
         c.el.className = 'morty-card morty-face-up';
         c.el.innerHTML = `<span class="morty-card-front">${c.icon}</span>`;
       });
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         this._grid.forEach(c => {
           if (!c.matched) {
             c.el.className = 'morty-card morty-face-down';
@@ -103,7 +103,7 @@ const MortyEngine = {
     } else {
       this._misses++;
       card.el.classList.add('morty-wrong'); first.el.classList.add('morty-wrong');
-      setTimeout(() => {
+      MiniGameSession.later(() => {
         card.el.className = 'morty-card morty-face-down';
         card.el.innerHTML = '<span class="morty-card-back">👁</span>';
         first.el.className = 'morty-card morty-face-down';
@@ -147,12 +147,12 @@ const JasmineEngine = {
   _btns:[], _locked:false, _failed:false,
 
   start(node) {
-    this._node = node; this._isActive = true; this._round = 0; this._failed = false;
+    this._node = node; this._isActive = true; this._round = 0; this._failed = false; this._mistakes=0;
     ActiveEngine.set(this);
     showBossIntro({
       gymIndex: 5, portrait: 'jasmine.png',
       name: 'Jasmine', btnLabel: 'Begin Forging ⚙️',
-      introText: "Oh… to forge steel you must listen carefully. I will tap the anvils in order — you repeat the pattern exactly. One mistake and the steel cracks.",
+      introText: "Oh… to forge steel you must listen carefully. I will tap the anvils in order — you repeat the pattern exactly. You can repair two cracks; the third ends the attempt.",
     });
   },
 
@@ -187,7 +187,7 @@ const JasmineEngine = {
     FORGE.forEach(f => {
       const btn = document.createElement('button');
       btn.className = 'jasmine-btn';
-      btn.innerHTML = f.label;
+      btn.innerHTML = `<span class="forge-anvil"></span><strong>${f.id+1}</strong>`;
       btn.style.background   = `rgba(${hexToRgb(f.color) || '128,144,160'},.25)`;
       btn.style.borderColor  = f.color;
       btn.style.boxShadow    = `0 0 10px ${f.glow}`;
@@ -207,13 +207,14 @@ const JasmineEngine = {
     indicator.className = 'jasmine-indicator';
     indicator.id = 'jasmine-indicator';
     cv.appendChild(indicator);
+    const replay=document.createElement('button');replay.className='btn-pixel btn-secondary';replay.textContent='Replay pattern';replay.onclick=()=>{if(this._locked)return;this._locked=true;this._playerSeq=[];this._playSequence();};cv.appendChild(replay);
     this._indicator = indicator;  // store ref — don't rely on getElementById across re-renders
 
     // Extend sequence by 1
     this._seq.push(Math.floor(Math.random() * 4));
 
     // Play sequence after short delay
-    setTimeout(() => this._playSequence(), 600);
+    MiniGameSession.later(() => this._playSequence(), 600);
   },
 
   _playSequence() {
@@ -223,12 +224,12 @@ const JasmineEngine = {
     const tier    = GameState.difficultyTier || 2;
     const delayMs = Math.max(700, 1200 - this._round * 50 - (tier - 1) * 60);
     let   i       = 0;
-    const iv = setInterval(() => {
+    const iv = MiniGameSession.every(() => {
       this._flash(this._seq[i], false);
       i++;
       if (i >= this._seq.length) {
-        clearInterval(iv);
-        setTimeout(() => {
+        MiniGameSession.clearEvery(iv);
+        MiniGameSession.later(() => {
           this._locked = false;
           if (this._indicator) this._indicator.textContent = 'Your turn!';
         }, delayMs + 100);
@@ -238,10 +239,11 @@ const JasmineEngine = {
 
   _flash(id, isPlayer) {
     const btn = this._btns[id];
+    if(typeof playNoteForInstrument==='function')playNoteForInstrument([262,330,392,523][id],.15);
     if (!btn) return;
     btn.classList.add('jasmine-flash');
     if (!isPlayer) btn.classList.add('jasmine-demo');
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       btn.classList.remove('jasmine-flash', 'jasmine-demo');
     }, 250);
   },
@@ -251,19 +253,20 @@ const JasmineEngine = {
     if (this._playerSeq[pos] !== this._seq[pos]) {
       this._locked = true;
       this._btns.forEach(b => b.classList.add('jasmine-error'));
-      if (this._indicator) this._indicator.textContent = 'Steel cracked!';
-      setTimeout(() => this._finish(false), 1000);
+      this._mistakes++;
+      if (this._indicator) this._indicator.textContent = `A crack! ${Math.max(0,3-this._mistakes)} repairs remaining.`;
+      MiniGameSession.next(()=>{if(this._mistakes>=3){this._finish(false);return;}this._btns.forEach(b=>b.classList.remove('jasmine-error'));this._playerSeq=[];this._playSequence();},this._mistakes>=3?'See results':'Repair and replay');
       return;
     }
     if (this._playerSeq.length === this._seq.length) {
       this._locked = true;
       if (this._indicator) this._indicator.textContent = '✓ Perfect!';
       this._btns.forEach(b => b.classList.add('jasmine-success'));
-      setTimeout(() => {
+      MiniGameSession.next(() => {
         this._btns.forEach(b => b.classList.remove('jasmine-success'));
         this._round++;
         this._showRound();
-      }, 700);
+      });
     }
   },
 

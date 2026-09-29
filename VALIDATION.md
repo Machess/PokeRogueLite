@@ -1,3 +1,43 @@
+# Illustrated minigames validation — 29 September 2026
+
+Passed `tests/regression.cjs` (14 rule checks), `tests/minigame-scenes.cjs`, `tests/minigames.cjs`, `tests/minigame-flows.cjs` and `tests/runner.cjs`.
+
+New coverage verifies bulb progression, wrong answers and duplicate taps; Oak's conveyor and sorting progression; Snorlax's scale and weight feedback; scene bounds at 600×960, 800×1280, 360×640 and 960×600; reduced-motion transitions; and valid Pryce choices across boundary counts at tiers 2 and 3. Existing checks complete every Snorlax tier, exercise the remaining minigames, and protect the runner's jumps, collisions, rewards and cleanup.
+
+Screenshots were inspected for the new scenes. Erika's narrow bottle labels and clipped phone-sized target were corrected. Tests run in headless Chromium with external requests blocked. Physical Lenovo TB-X606F performance and touch/audio behavior remain unverified; this is not an exhaustive playthrough of every random encounter.
+
+---
+
+# Dig Dash validation — 29 September 2026
+
+`tests/runner.cjs` covers locally loaded artwork, 600×960 / 800×1280 / 360×640 portrait layouts and 960×600 landscape, short versus held jump height, pointer release, pause/resume, simulated obstacle courses at all three tiers, collision results, duplicate-reward protection, exit cleanup and reduced-motion effects. Screenshots were inspected and the foreground density and terrain joins adjusted for hazard readability.
+
+The 14 existing rule regression checks passed. Exploration regression checks were rerun to protect v2.5 features. Testing uses headless Chromium with blocked external requests; this is not a physical Lenovo TB-X606F performance test. The original Rocket portraits are animated through positioning rather than new running-frame artwork: the image generator rejected those sprite-sheet requests.
+
+---
+
+# Exploration validation — 29 September 2026
+
+Passed `tests/regression.cjs` (14 checks), `tests/exploration.cjs`, `tests/minigames.cjs`, `tests/tablet-ui.cjs` and `tests/browser-edge.cjs` after this update.
+
+Exploration coverage checks all 16 gym schedules, party ability eligibility, alternatives, reward-once behavior, reload at a resolved result, lost-item owner timing and return rewards. It also checks larger Surge portraits and route layouts at 600×960, 800×1280, 360×640 and 960×600. No page errors were recorded. Screenshots were inspected for the bottom navigation, bush, backpack, owner, water parcel, electric machine, campfire and Surge screens.
+
+Tests use desktop Chromium and offline fixtures, not a physical Lenovo TB-X606F. On-device performance and audio remain unverified. Existing minigame, battle/card layout and save/import regressions passed; this is not an exhaustive playthrough of every random encounter.
+
+---
+
+# Minigame validation — 28 September 2026
+
+Rules: all 14 regression checks passed. The existing browser, browser-edge, tablet-ui, polish-ui and journey-ui suites passed with no page errors. Catch coverage verifies one result on duplicate throws, no catch.mp3 sound-effect replay and stopped background music at the result, alongside exit cancellation and both outcomes.
+
+`tests/minigames.cjs` completes all five Snorlax rounds at all three difficulties, including selection removal and explicit submission; checks Clair answer validity and manual progression; checks timer pause/resume/cancellation; verifies milk undo, quarter-volume reductions, coin removal, cooking correction and exclusive Misty cast/reel stages. It captures landscape and portrait layouts across the activities.
+
+`tests/minigame-flows.cjs` checks correct ghost recall, Jasmine's mistake/repair/replay/next flow, Wobbuffet readiness and scoring, Sabrina placement/reference, and cleanup of old Next buttons. Screenshots were inspected for clocks, cooking, scales, liquid mixing, fishing and the puzzle workspace.
+
+Touch testing uses desktop Chromium at tablet viewport sizes, including 960×600 and 600×960. No physical Lenovo TB-X606F test was possible; Android rendering, sustained frame rate and device audio behavior still need an on-device check. Network requests were blocked for offline core tests. These are focused tests, not an exhaustive playthrough of every recipe or random challenge.
+
+---
+
 # Visual polish validation — 28 September 2026
 
 Passed `tests/regression.cjs` (14 checks), `tests/browser.cjs`, `tests/tablet-ui.cjs` and the new `tests/polish-ui.cjs` with no recorded page errors. The new suite verifies category filtering, gold deduction on purchases, Oak answer scoring, three Rocket challenge layouts at 960×600 and 600×960, ten move-specific effect routes at one-energy cost, automatic canvas cleanup and reduced-motion cleanup. Screenshots were reviewed for the shop, Oak, Rocket and attack effects; item glyph failures were replaced with built-in SVG artwork.

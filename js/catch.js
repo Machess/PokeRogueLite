@@ -264,6 +264,7 @@ const CatchEngine = {
   },
 
   _showResult(ball, statusEl, caught, data) {
+    SoundEngine.stopBGM(); SoundEngine.stopSFX();
     const pokeName    = capitalize(data.name);
     const spriteEl    = document.getElementById('catch-sprite');
     const resultEl    = document.getElementById('catch-result');
@@ -405,6 +406,7 @@ const CatchEngine = {
   },
 
   finish() {
+    SoundEngine.stopBGM();SoundEngine.stopSFX();CaptureCinematic.cancel();
     this._pendingCatch = null;
     const continueBtn = document.getElementById('btn-catch-continue');
     if (continueBtn) continueBtn.textContent = 'Continue ▶';

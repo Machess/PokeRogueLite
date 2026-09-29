@@ -1,4 +1,8 @@
-# PokéTrials — visual polish build v2.3
+# PokéTrials — Illustrated minigames v2.7
+
+## Updating from v2.6
+
+This small patch contains only changed/new files. Close the game, back up your current folder, and copy the contents of this patch's `PokeRogueLite` folder into your existing `PokeRogueLite` folder, accepting replacements. Keep all existing files and assets. Reopen `index.html`; if hosted, refresh without cache. No save format changes.
 
 ## Play
 
@@ -19,6 +23,30 @@ No installation, account, API key, server or build step is required. Keep the fi
 - Late-route legendary encounters retain their guaranteed rarity.
 - Stable battle checkpoints retain hands, piles, enemy intentions, statuses, temporary effects and trainer/boss teams. Rewards and post-boss transitions also resume. Switching retains each Pokémon's exhausted cards and status durations.
 - Versioned saves include validation, previous-write recovery, export/import and visible status. Non-battle activities restart from entry if interrupted before completion.
+
+## Dig Dash update
+
+Team Rocket's jumping game now fills the portrait screen, with layered forest scenery, animated trainer frames, larger obstacles, an escape progress bar and a large bottom Jump button. Tap the button or playfield for a short jump; hold briefly for a higher jump. Space and Up also work. Follow the coin arcs, leave room to land, and reach Officer Jenny. Pause / Help stops the run; leaving cancels pending input and results.
+
+New scenery and trainer artwork are bundled and preloaded. Rocket pursuers and Pokémon obstacles reuse existing artwork. Reduced motion suppresses decorative scrolling and particles. This release is delivered as an update ZIP for v2.5: merge the included PokeRogueLite folder into your existing folder and replace matching files, retaining all other assets. Export saves before updating.
+
+## Exploration update
+
+Portrait navigation now uses a bottom dock with large illustrated choices, short labels and next-encounter previews. Existing backgrounds and directional travel are retained.
+
+Each gym route adds one or two saved discoveries alongside its ten normal encounter choices. Cut bushes, move rocks, retrieve parcels with Water or Flying Pokémon, power machines and lamps with Electric Pokémon, or use Fire Pokémon to warm up and melt ice. Actions use the existing element symbols. Eligible conscious party members perform the action; Cut and Strength use species eligibility, while elemental actions use Pokémon types. Attack cards are not required. Every obstacle offers an alternative or a way past.
+
+Lost backpacks, scarves and charms can lead to an owner two or three normal encounters later, regardless of the chosen branch. Discovery outcomes and rewards survive reloads without duplicate payouts. Existing runs receive discoveries where route space remains; League runs are unchanged.
+
+Trainer portraits now scale to their visible artwork, including a larger Lt. Surge introduction and challenge portrait. The overworld remains free of a player sprite.
+
+## Minigame update
+
+Activities now share first-use instructions and Pause / Help. Timers pause when the tab is hidden or a confirmation is open, and pending callbacks are cancelled when leaving. Feedback in many round-based games stays until you press Next.
+
+Snorlax supports reversible scale selections and completes all five rounds without relying on animation events. Misty displays the rod before casting and the reel dial afterward. Catch music plays once and stops at the result.
+
+Cooking, Whitney, Erika and Giovanni allow corrections to quantities or payments. Clocks have larger controls, hand dragging and optional time-step explanations. Jenny has cross-out mode; Koga uses Pokémon and evolution pairs; Morty has ghost sequences; Jasmine offers pattern replay and repairs; Sabrina adds a reference image and piece coordinates. Action activities have larger playfields, and music practice includes free slow replay. See CHANGELOG.md for the complete update.
 
 ## Attack, shop and challenge polish
 

@@ -132,18 +132,18 @@ const SabrinaEngine = {
         <div class="sabrina-phase1-text">Sabrina's psychic power shatters the image!</div>
       </div>`;
 
-    setTimeout(() => this._buildGrid(), 3000);
+    MiniGameSession.later(() => this._buildGrid(), 3000);
   },
 
   _buildGrid() {
     const G        = this._gridSize;
-    const PIECE    = 76;  // px per piece — 4×76 = 304px grid fits on 360px screen
+    const PIECE    = this._pieceSize=Math.floor(Math.min(innerWidth>=850&&innerHeight<=850?360:440,innerWidth-80)/G);  // px per piece — 4×76 = 304px grid fits on 360px screen
     const SPRITE   = G * PIECE;
     const url      = this._spriteUrl;
     const missing  = new Set(this._missingSlots.map(s => `${s.row},${s.col}`));
 
     const cv = document.getElementById('challenge-coin-visual');
-    cv.innerHTML = '';
+    cv.innerHTML = '';cv.classList.add('sabrina-workspace');
 
     // ── Grid ────────────────────────────────────────────────────────────────
     const gridEl = document.createElement('div');
@@ -157,7 +157,7 @@ const SabrinaEngine = {
         if (missing.has(key)) {
           cell.className       = 'sabrina-slot sabrina-slot-empty';
           cell.dataset.row     = r;
-          cell.dataset.col     = c;
+          cell.dataset.col     = c;cell.textContent=`${r+1}:${c+1}`;
           cell.style.width     = PIECE + 'px';
           cell.style.height    = PIECE + 'px';
           cell.addEventListener('click', () => this._slotClicked(cell, r, c));
@@ -173,6 +173,7 @@ const SabrinaEngine = {
       }
     }
     cv.appendChild(gridEl);
+    const reference=document.createElement('button');reference.className='btn-pixel btn-secondary';reference.textContent='Show reference';const preview=document.createElement('img');preview.src=url;preview.alt=this._pokeName;preview.className='sabrina-reference';preview.hidden=true;reference.onclick=()=>{preview.hidden=!preview.hidden;reference.textContent=preview.hidden?'Show reference':'Hide reference';};cv.append(reference,preview);
 
     // ── Tray ────────────────────────────────────────────────────────────────
     const trayEl = document.createElement('div');
@@ -196,7 +197,7 @@ const SabrinaEngine = {
 
     // Animate grid entrance
     cv.classList.add('sabrina-grid-entrance');
-    setTimeout(() => cv.classList.remove('sabrina-grid-entrance'), 600);
+    MiniGameSession.later(() => cv.classList.remove('sabrina-grid-entrance'), 600);
   },
 
   _trayClicked(pieceEl, trayIdx) {
@@ -222,11 +223,12 @@ const SabrinaEngine = {
     if (isCorrect) {
       // ── Correct placement ────────────────────────────────────────────────
       const G      = this._gridSize;
-      const PIECE  = 76;
+      const PIECE  = this._pieceSize;
       const SPRITE = G * PIECE;
       const url    = this._spriteUrl;
 
       // Replace slot with filled piece
+      slotEl.textContent = '';
       slotEl.className   = 'sabrina-piece sabrina-piece-placed';
       slotEl.style.cssText = `
         width:${PIECE}px; height:${PIECE}px;
@@ -243,7 +245,7 @@ const SabrinaEngine = {
 
       // Flash the slot green briefly
       slotEl.classList.add('sabrina-piece-correct-flash');
-      setTimeout(() => slotEl.classList.remove('sabrina-piece-correct-flash'), 600);
+      MiniGameSession.later(() => slotEl.classList.remove('sabrina-piece-correct-flash'), 600);
 
       if (this._placed >= this._missingCount) {
         this._complete();
@@ -251,7 +253,7 @@ const SabrinaEngine = {
     } else {
       // ── Wrong placement — shake and reject ──────────────────────────────
       slotEl.classList.add('sabrina-slot-wrong');
-      setTimeout(() => slotEl.classList.remove('sabrina-slot-wrong'), 500);
+      MiniGameSession.later(() => slotEl.classList.remove('sabrina-slot-wrong'), 500);
       // Deselect piece
       document.querySelectorAll('.sabrina-piece-selected')
         .forEach(el => el.classList.remove('sabrina-piece-selected'));
@@ -264,7 +266,7 @@ const SabrinaEngine = {
 
     // Flash whole grid white
     cv.classList.add('sabrina-complete-flash');
-    setTimeout(() => {
+    MiniGameSession.later(() => {
       cv.classList.remove('sabrina-complete-flash');
 
       // Replace grid with full Pokémon reveal + sparkles
@@ -276,7 +278,7 @@ const SabrinaEngine = {
 
       SoundEngine.playFanfare();
 
-      setTimeout(() => this._finish(true), 2200);
+      MiniGameSession.later(() => this._finish(true), 2200);
     }, 400);
   },
 

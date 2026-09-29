@@ -1,0 +1,37 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const out=process.env.UI_SCREENSHOTS||'/tmp/poketrials-minigames';fs.mkdirSync(out,{recursive:true});
+(async()=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE,args:['--no-sandbox','--disable-gpu']});
+ const page=await browser.newPage({viewport:{width:960,height:600},hasTouch:true});const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error('PAGE',e.message);});await page.route(/^https?:/,r=>r.abort());await page.goto(require('node:url').pathToFileURL(path.join(__dirname,'../index.html')).href);
+ await page.evaluate(async()=>{AssetPreloader.ready=true;await Game.startNew(true);GameState.trainerName='Mini';GameState.difficultyTier=2;await Game.confirmStarter(STARTERS[0]);window.realTier=getSkillTier;getSkillTier=()=>GameState.difficultyTier;});await page.waitForTimeout(700);
+ const help=async()=>{if(await page.locator('.minigame-guide').count())await page.locator('.minigame-guide button').click();};
+ const start=async(name,tier=2)=>{await page.evaluate(async({name,tier})=>{GameState.difficultyTier=tier;const e=eval(name);await e.start({idx:0,type:'test'});if(e.startGame)e.startGame();},{name,tier});await page.waitForTimeout(450);await help();};
+ const shot=async name=>{await page.waitForTimeout(500);await page.evaluate(()=>{const s=document.querySelector('.screen.active');if(s)s.scrollTop=0;});await page.screenshot({path:out+'/'+name+'.png'});assert.deepEqual(errors,[],name);};
+ // Every Snorlax tier must finish all five rounds; no animation event is needed.
+ for(const tier of [1,2,3]){await start('SnorlaxEngine',tier);await shot('snorlax-'+tier);for(let round=0;round<5;round++){
+  if(tier===1){await page.locator('.snx-pick').first().click();}else{
+   await page.locator('.snx-shelf-item').first().click();await page.locator('.snx-shelf-item').first().click();assert.equal(await page.locator('.snx-picked').count(),0);
+   for(let i=0;i<(tier===2?1:2);i++)await page.locator('.snx-shelf-item').nth(i).click();await page.getByRole('button',{name:'Check the scale',exact:true}).click();
+  }
+  assert.equal(await page.locator('.minigame-next').count(),1);await page.locator('.minigame-next').click();await page.waitForTimeout(30);
+ }assert.equal(await page.evaluate(()=>SnorlaxEngine._round),5);await page.evaluate(()=>{document.getElementById('overlay').classList.add('hidden');document.getElementById('results-card-overlay')?.remove();});}
+ console.log('Snorlax all tiers finish');
+ // Clair accepts displayed effective alternatives and never advances before Next.
+ await start('ClairEngine');await shot('clair');await page.getByRole('button',{name:'Ready — start charge'}).click();await page.evaluate(()=>{const t=ClairEngine._seq[ClairEngine._round].type;[...document.querySelectorAll('.clair-choice')].find(b=>getTypeMultiplier(b.dataset.type,t)>1).click();});assert.equal(await page.evaluate(()=>ClairEngine._hits),1);await page.waitForTimeout(800);assert.equal(await page.evaluate(()=>ClairEngine._round),0);await page.locator('.minigame-next').click();assert.equal(await page.evaluate(()=>ClairEngine._round),1);
+ // Scoped timer pause and cancellation.
+ await page.evaluate(()=>{window.clockCheck=0;MiniGameSession.later(()=>clockCheck++,120);MiniGameSession.pause('test');});await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>clockCheck),0);await page.evaluate(()=>MiniGameSession.resume('test'));await page.waitForTimeout(180);assert.equal(await page.evaluate(()=>clockCheck),1);await page.evaluate(()=>{MiniGameSession.later(()=>clockCheck++,150);showScreen('map');});await page.waitForTimeout(220);assert.equal(await page.evaluate(()=>clockCheck),1);
+ // Measurement controls.
+ await start('WhitneyEngine');await shot('whitney');await page.evaluate(()=>WhitneyEngine._pour(100));assert.equal(await page.evaluate(()=>WhitneyEngine._currentMl),100);await page.getByRole('button',{name:'Undo last pour'}).click();assert.equal(await page.evaluate(()=>WhitneyEngine._currentMl),0);
+ await start('ErikaEngine',3);await shot('erika');await page.evaluate(()=>{ErikaEngine._puzzle={targetColor:'green',targetLevel:.25,recipe:['blue','yellow']};ErikaEngine._poured=['blue','yellow'];ErikaEngine._totalPoured=1;ErikaEngine._pourOut();});await page.waitForTimeout(240);assert.equal(await page.evaluate(()=>ErikaEngine._totalPoured),.75);
+ await start('GiovanniEngine');await shot('giovanni');await page.locator('.rk-coin').first().click();assert.ok(await page.evaluate(()=>GiovanniEngine._paid>0));await page.locator('.rk-coin-mini').click();assert.equal(await page.evaluate(()=>GiovanniEngine._paid),0);
+ for(const engine of ['ChuckEngine','TogepiEngine','BugsyEngine','PryceEngine','JennyEngine','JasmineEngine','MortyEngine','NinjaMemoryEngine','SabrinaEngine','FalknerEngine']){await start(engine,2);await shot(engine);await page.evaluate(()=>MiniGameSession.stop());}
+ // Cooking correction does not place wrong quantity or duplicate correct selections.
+ await start('CookingEngine');await page.evaluate(()=>CookingEngine._renderCooking());await shot('cooking');await page.evaluate(()=>CookingEngine._showMathModal(CookingEngine._slots[0],0));await page.evaluate(()=>{const correct=CookingEngine._slots[0].math.correct;[...document.querySelectorAll('.cooking-math-btn')].find(b=>Number(b.textContent)!==correct).click();});assert.equal(await page.evaluate(()=>CookingEngine._placed.length),0);await page.evaluate(()=>{const correct=CookingEngine._slots[0].math.correct;[...document.querySelectorAll('.cooking-math-btn')].find(b=>Number(b.textContent)===correct).click();});await page.waitForTimeout(350);assert.equal(await page.evaluate(()=>CookingEngine._placed.length),1);
+ await page.evaluate(()=>JigglypuffEngine.start({}));await page.waitForTimeout(450);await help();await page.waitForTimeout(4500);await shot('jiggly');
+ await start('RocketRunnerEngine');await shot('runner');await page.evaluate(()=>MiniGameSession.stop());
+ await page.evaluate(()=>FishingTiming.start(2,()=>{}));await page.waitForTimeout(450);await help();assert.equal(await page.locator('.reel-dial').isVisible(),false);await shot('misty-cast');await page.locator('#angling-hook-btn').click();assert.equal(await page.locator('.reel-dial').isVisible(),true);assert.equal(await page.locator('.pixel-rod').isVisible(),false);await shot('misty-reel');
+ await page.evaluate(()=>{FishingTiming.stop();MiniGameSession.stop();});
+ await page.setViewportSize({width:600,height:960});for(const name of ['SnorlaxEngine','WhitneyEngine','ChuckEngine','BugsyEngine','MortyEngine']){await start(name);await shot(name+'-portrait');}
+ assert.deepEqual(errors,[]);await browser.close();console.log('Minigame interaction and layout checks passed. '+out);
+})().catch(e=>{console.error(e);process.exit(1)});

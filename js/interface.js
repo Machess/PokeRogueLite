@@ -156,6 +156,7 @@ function showBossIntro(opts) {
 // start of their main game view instead of repeating 15 identical DOM lines.
 // opts: { portrait, badge, intro, wrapClass, screenClass, bgm, coinVisualEl? }
 function setupChallengeScreen(opts) {
+  MiniGameSession.begin(opts.screenClass);
   const charImg = document.getElementById('challenge-character-img');
   if (charImg && opts.portrait) {
     // Support both bare filenames ('falkner.png') and full paths ('assets/falkner.png')
@@ -243,7 +244,7 @@ const MG_RULES = {
   'falkner-active':  'Tap a flying Pokémon to throw a Pokéball at it!',
   'bugsy-active':    'Find and tap the Pokémon shown at the top!',
   'whitney-active':  'Pour jugs to hit the exact target line — then pick the berry!',
-  'morty-active':    'Flip cards and match the ghost pairs!',
+  'morty-active':    'Watch the ghosts, then repeat their order!',
   'jasmine-active':  'Watch the anvils flash, then repeat the pattern!',
   'pryce-active':    'Count how many of each shape there are to reveal the sculpture!',
   'clair-active':    'Tap the type that beats the incoming dragon!',
@@ -447,6 +448,7 @@ const FADE_EXIT_MS  = 180; // fade-out duration
 const FADE_ENTER_MS = 220; // fade-in duration (map return uses 300ms)
 
 function showScreen(id, _direction) {
+  if(typeof MiniGameSession!=='undefined'&&MiniGameSession.key&&MiniGameSession.screen!==id)MiniGameSession.stop();
   const incoming=document.getElementById('screen-'+id);if(!incoming)return;
   clearTimeout(showScreen._exitTimer);clearTimeout(showScreen._enterTimer);
   const outgoing=document.querySelector('.screen.active');
@@ -555,6 +557,7 @@ const SoundEngine = {
   },
 
   onScreenChange(screenId) {
+    if(this._screen!==screenId)this.stopSFX();this._screen=screenId;
     if (screenId === 'gameover') {
       this._hardStop();
       setTimeout(() => this.playSFX('teamrocket_show.mp3', 0.6), 150);

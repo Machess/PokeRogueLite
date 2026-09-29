@@ -30,7 +30,7 @@ const CaptureCinematic = {
     document.getElementById('catch-title').textContent='Make the catch!';status.textContent='Here we go!';layer.dataset.phase='throw';
     await animate(orb,[{transform:pose(innerWidth*.5,innerHeight*.91,1.5,-40),opacity:1},{transform:pose(cx-100,cy-120,.85,150),offset:.48},{transform:pose(cx,cy,.58,330)}],720);
     if(!alive())return false;
-    layer.dataset.phase='impact';burst(cx,cy);animate(flash,[{opacity:0},{opacity:.45,offset:.3},{opacity:0}],230);SoundEngine.playSFX('catch.mp3',.45);
+    layer.dataset.phase='impact';burst(cx,cy);animate(flash,[{opacity:0},{opacity:.45,offset:.3},{opacity:0}],230);SoundEngine.playTap();
     await animate(sprite,[{transform:'scale(1)',filter:'brightness(1)',opacity:1},{transform:'scale(.08)',filter:'brightness(5)',opacity:0}],360);
     if(!alive())return false;sprite.style.visibility='hidden';status.textContent='Hold on…';layer.dataset.phase='landing';
     await animate(orb,[{transform:pose(cx,cy,.58,330)},{transform:pose(landX,landY-55,.85,360),offset:.5},{transform:pose(landX,landY,1,360),offset:.8},{transform:pose(landX,landY-18,1,360),offset:.9},{transform:pose(landX,landY,1,360)}],540);
