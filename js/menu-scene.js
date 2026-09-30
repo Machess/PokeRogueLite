@@ -4,7 +4,9 @@ const MenuScene={
   const root=document.getElementById('screen-start'),layout=document.createElement('div');layout.className='adventure-home';
   const logo=root.querySelector('.start-logo');layout.appendChild(logo);
   const hero=document.createElement('div');hero.className='menu-hero';hero.setAttribute('aria-hidden','true');
-  const pose=(rect,cls)=>`<svg class="menu-trainer ${cls}" viewBox="${rect.join(' ')}"><image href="assets/runner/trainer-atlas.png" width="1774" height="887"/></svg>`;
+  // Clip the atlas in source coordinates: a viewBox alone exposes adjacent frames
+  // in the letterboxed space when the menu changes aspect ratio.
+  const pose=([x,y,w,h],cls)=>`<svg class="menu-trainer ${cls}" viewBox="${x} ${y} ${w} ${h}"><defs><clipPath id="${cls}-crop" clipPathUnits="userSpaceOnUse"><rect x="${x}" y="${y}" width="${w}" height="${h}"/></clipPath></defs><image href="assets/runner/trainer-atlas.png" width="1774" height="887" clip-path="url(#${cls}-crop)"/></svg>`;
   hero.innerHTML=pose(RUNNER_ART.trainer.rects[7],'menu-wave')+pose(RUNNER_ART.trainer.rects[4],'menu-toss')+'<span class="menu-pokeball"></span><span class="menu-welcome">Your next adventure awaits.</span>';layout.appendChild(hero);
   const panel=document.createElement('section');panel.className='menu-panel';
   for(const sel of ['#active-profile-banner','#no-profile-nudge','#start-menu'])panel.appendChild(root.querySelector(sel));
