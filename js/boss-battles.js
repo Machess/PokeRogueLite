@@ -31,6 +31,7 @@ const JOHTO_BOSS_INTRO_BACKGROUNDS = [
 ];
 
 function setBossIntroBg(bossIdx) {
+  if (typeof GymScene !== 'undefined') document.getElementById('screen-boss')?.style.setProperty('--gym-accent', GymScene.accent(bossIdx));
   const bgArray   = (GameState?.region === 'johto')
     ? JOHTO_BOSS_INTRO_BACKGROUNDS
     : BOSS_INTRO_BACKGROUNDS;

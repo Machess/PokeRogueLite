@@ -4,13 +4,22 @@ const BadgeCeremony = {
     const data   = getGymData()[gymIdx];
 
     const bgEl = document.getElementById('badge-bg');
-    if (bgEl) bgEl.style.background = data.bgFallback;
+    if (typeof GymScene !== 'undefined') GymScene.background(bgEl, gymIdx);
+    else if (bgEl) bgEl.style.background = data.bgFallback;
+    const scr = document.getElementById('screen-badge');
+    if (scr && typeof GymScene !== 'undefined') scr.style.setProperty('--gym-accent', GymScene.accent(gymIdx));
 
     const portrait = document.getElementById('badge-leader-portrait');
     if (portrait) { portrait.src = `assets/${boss.image}`; portrait.alt = boss.name; }
 
+    const total = typeof GymScene !== 'undefined' ? GymScene.gyms().length : getGymData().length;
     document.getElementById('badge-title-text').textContent = boss.title;
     document.getElementById('badge-medallion').textContent  = data.badge;
+    const earnedLine = document.getElementById('badge-earned-line');
+    if (earnedLine) earnedLine.textContent = `Badge ${defeatedCount} of ${total} · from ${boss.name}`;
+    const step = document.getElementById('badge-step');
+    if (step) step.textContent = defeatedCount >= total ? 'All badges earned!' : 'New badge!';
+    if (typeof GymScene !== 'undefined') GymScene.pips(document.getElementById('badge-pips'), defeatedCount, defeatedCount - 1);
 
     const farewellEl = document.getElementById('badge-farewell');
     const watchingEl = document.getElementById('badge-watching');
@@ -61,7 +70,20 @@ const MapTitleCard = {
     const data   = getGymData()[gymIdx];
 
     const bgEl = document.getElementById('maptitle-bg');
-    if (bgEl) bgEl.style.background = data.bgFallback;
+    if (typeof GymScene !== 'undefined') GymScene.background(bgEl, gymIdx);
+    else if (bgEl) bgEl.style.background = data.bgFallback;
+    const scr = document.getElementById('screen-maptitle');
+    if (scr && typeof GymScene !== 'undefined') scr.style.setProperty('--gym-accent', GymScene.accent(gymIdx));
+
+    const portrait = document.getElementById('maptitle-leader-portrait');
+    if (portrait) {
+      portrait.style.visibility = nextBoss?.image ? '' : 'hidden';
+      if (nextBoss?.image) { portrait.src = `assets/${nextBoss.image}`; portrait.alt = nextBoss.name; }
+    }
+    const total = typeof GymScene !== 'undefined' ? GymScene.gyms().length : getGymData().length;
+    const step = document.getElementById('maptitle-step');
+    if (step) step.textContent = nextBoss ? `Gym ${Math.min(defeatedCount + 1, total)} of ${total}` : 'The League';
+    if (typeof GymScene !== 'undefined') GymScene.pips(document.getElementById('maptitle-pips'), defeatedCount, -1);
 
     document.getElementById('maptitle-location').textContent = data.city;
     document.getElementById('maptitle-leader').textContent   =
@@ -70,15 +92,22 @@ const MapTitleCard = {
 
     showScreen('maptitle');
 
-    setTimeout(() => {
+    // Continue after a short pause, or straight away on tap — whichever comes first.
+    let done = false;
+    const flavourTimer = setTimeout(() => {
       document.getElementById('maptitle-flavour').textContent = data.flavour;
       document.getElementById('maptitle-flavour').classList.add('maptitle-flavour-in');
     }, 600);
-
-    setTimeout(() => {
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(flavourTimer); clearTimeout(autoTimer);
+      if (scr) scr.onclick = null;
       document.getElementById('maptitle-flavour').classList.remove('maptitle-flavour-in');
       MapEngine.show();
-    }, 2800);
+    };
+    const autoTimer = setTimeout(finish, 4200);
+    if (scr) scr.onclick = () => { if (document.getElementById('maptitle-flavour').textContent) finish(); };
   },
 };
 

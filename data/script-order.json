@@ -73,5 +73,6 @@
   "js/feed-snorlax.js",
   "js/menu-scene.js",
   "js/fossil-dig.js",
+  "js/game-shell.js",
   "js/boot.js"
 ]

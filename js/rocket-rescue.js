@@ -39,11 +39,12 @@ const RocketRescue={
  },
  show(){
   const a=GameState.rocketAftermath;if(!a)return;
-  const cv=setupChallengeScreen({portrait:a.phase==='escaped'?'officer_jenny.png':'meowth.png',badge:'Rocket Balloon Rescue',intro:'',wrapClass:'rocket-rescue-wrap',screenClass:'rocket-rescue-active',bgm:false});
+  const cv=setupChallengeScreen({portrait:a.phase==='escaped'?'officer_jenny.png':'meowth.png',badge:'Rocket Balloon Rescue',intro:'',wrapClass:'rocket-rescue-wrap',screenClass:'rocket-rescue-active',bgm:a.phase==='escaped'?'pallet_town_theme.mp3':'teamrocket_battle.mp3'});
   document.getElementById('mg-quit-btn').style.display='none';
   MiniGameSession.guides['rocket-rescue-active']=['Bring your Pokémon home','Read the measurements. Tap Pokémon in the requested order. Tap again to undo a choice.','There is no timer. You can retry until your Pokémon is safe.'];
   const p=this.captive();
   cv.innerHTML='<header class="rescue-heading"><span>TEAM ROCKET</span><h2></h2></header><div class="balloon-scene"></div><section class="rescue-body" aria-live="polite"></section><footer class="rescue-actions"></footer>';
+  cv.dataset.phase=a.phase;
   const title=cv.querySelector('h2'),scene=cv.querySelector('.balloon-scene'),body=cv.querySelector('.rescue-body'),actions=cv.querySelector('.rescue-actions');
   if(a.phase==='escaped'){
    title.textContent='You escaped!';scene.classList.add('rescue-safe');scene.innerHTML=MiniGameScenes.sprite('assets/officer_jenny.png','rescue-jenny','Officer Jenny');
@@ -51,7 +52,7 @@ const RocketRescue={
    this.button(actions,a.step===0?'See rewards':'Continue adventure',()=>{if(a.step===0){a.step=1;saveGame(true);this.show();}else this.finish();});
    return;
   }
-  scene.innerHTML=MiniGameScenes.sprite('assets/jessi.png','balloon-jessie','Jessie')+MiniGameScenes.sprite('assets/james.png','balloon-james','James')+`<div class="balloon-cage ${a.phase==='rescued'?'cage-open':''}">${MiniGameScenes.sprite('assets/sprites/'+p.id+'.png','captive-pokemon',p.name)}<span>${a.phase==='rescued'?'SAFE!':p.name}</span></div>`;
+  scene.innerHTML='<img class="rescue-balloon-art" src="assets/rocket/balloon-pixel.png" alt="Jessie, James and Meowth in their hot-air balloon">'+`<div class="balloon-cage ${a.phase==='rescued'?'cage-open':''}">${MiniGameScenes.sprite('assets/sprites/'+p.id+'.png','captive-pokemon',p.name)}<span>${a.phase==='rescued'?'SAFE!':p.name}</span></div>`;
   if(a.phase==='caught'){
    title.textContent='Team Rocket caught up!';body.innerHTML='<h3>Meowth</h3><p></p><p>“Beat our balloon challenge and we’ll let your partner go!”</p>';body.querySelector('p').textContent=`${p.name} was caught in Team Rocket’s net when you hit the obstacle. Let’s bring them home!`;
    this.button(actions,'Rescue '+p.name,()=>{this.makePuzzle();this.show();});return;

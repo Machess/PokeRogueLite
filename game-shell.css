@@ -1,0 +1,381 @@
+/* Shared mini-game shell + gym scenes (loaded last).
+   Selectors start with `html body` so they sit above the older layered rules. */
+:root {
+  --sh-ink: #0B1422; --sh-bar: #13233A; --sh-btn: #243A5A; --sh-cream: #FFF6E0;
+  --sh-text: #1A2233; --sh-muted: #4A5468; --sh-good: #2E9E5B; --sh-good-bg: #DDF3E4;
+  --sh-almost: #B45F12; --sh-almost-bg: #FDEBD3;
+}
+
+/* ── Top bar ─────────────────────────────────────────────────────────────── */
+#mg-topbar { display: none; }
+html body #screen-challenge.mg-shell #mg-topbar:not([hidden]) {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 90; height: 76px; box-sizing: border-box;
+  display: flex; align-items: center; gap: 14px; padding: 0 16px;
+  background: var(--sh-bar); border-bottom: 3px solid var(--sh-ink); box-shadow: 0 4px 0 rgba(11,20,34,.35);
+}
+html body #screen-challenge.mg-shell .mgtb-btn {
+  flex-shrink: 0; width: 56px; height: 56px; padding: 0; border-radius: 14px; border: 3px solid var(--sh-ink);
+  background: var(--sh-btn); color: #F4F1E8; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 0 var(--sh-ink); cursor: pointer;
+}
+html body #screen-challenge.mg-shell .mgtb-btn[hidden] { display: none; }
+html body #screen-challenge.mg-shell .mgtb-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--sh-ink); }
+html body #screen-challenge.mg-shell .mgtb-who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
+html body #screen-challenge.mg-shell .mgtb-face {
+  flex-shrink: 0; width: 52px; height: 52px; border-radius: 50%; overflow: hidden; box-sizing: border-box;
+  background: var(--mg-accent); border: 3px solid var(--sh-ink); display: flex; align-items: flex-start; justify-content: center;
+}
+html body #screen-challenge.mg-shell .mgtb-face img { width: 170%; max-width: none; margin-top: -4%; image-rendering: pixelated; }
+html body #screen-challenge.mg-shell .mgtb-titles { min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+html body #screen-challenge.mg-shell .mgtb-name { font: 400 13px/1.2 'Press Start 2P', monospace; color: #FFF4D6; text-transform: uppercase; }
+html body #screen-challenge.mg-shell .mgtb-game { font: 800 17px/1.2 Nunito, sans-serif; color: #C9D6E8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+html body #screen-challenge.mg-shell .mgtb-pips { display: flex; gap: 7px; flex-shrink: 0; }
+html body #screen-challenge.mg-shell .mgtb-pip { width: 20px; height: 20px; border-radius: 6px; border: 3px solid var(--sh-ink); background: #2A3E5C; box-sizing: border-box; }
+html body #screen-challenge.mg-shell .mgtb-pip.done { background: var(--mg-accent); }
+html body #screen-challenge.mg-shell .mgtb-pip.now { border-color: #FFF4D6; background: var(--sh-bar); }
+/* The top bar replaces the scattered corner controls. */
+html body #screen-challenge.mg-shell :is(#mg-quit-btn, #mg-rules-chip, .minigame-help) { display: none !important; }
+
+/* ── Screen + panel ──────────────────────────────────────────────────────── */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) { justify-content: flex-start !important; padding-top: 84px !important; box-sizing: border-box; }
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel {
+  background: transparent !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  width: min(1000px, 100%) !important; max-width: 100% !important; margin: 0 auto !important;
+  padding: 8px 18px 28px !important; gap: 16px !important; box-sizing: border-box;
+}
+
+/* ── Hero: trainer standing large + cream speech bubble ──────────────────── */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header {
+  background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important;
+  padding: 0 !important; margin: 0 !important; width: 100% !important;
+  display: flex !important; flex-direction: row !important; align-items: flex-end !important; gap: 10px !important; text-align: left !important;
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header .trainer-frame {
+  width: clamp(170px, 30vw, 260px) !important; height: clamp(230px, 31vh, 360px) !important; flex: 0 0 auto !important;
+  filter: drop-shadow(0 8px 0 rgba(11,20,34,.45));
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text {
+  position: relative; flex: 1 !important; min-width: 0; margin-bottom: 22px;
+  background: var(--sh-cream); color: var(--sh-text); border: 3px solid var(--sh-ink); border-radius: 22px;
+  box-shadow: 0 6px 0 var(--sh-ink); padding: 16px 18px 16px 86px; box-sizing: border-box; min-height: 100px;
+  display: flex; flex-direction: column; justify-content: center; gap: 8px;
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text::before {
+  content: ''; position: absolute; left: -16px; bottom: 26px; width: 26px; height: 26px; background: var(--sh-cream);
+  border-left: 3px solid var(--sh-ink); border-bottom: 3px solid var(--sh-ink); transform: rotate(45deg);
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-badge {
+  align-self: flex-start; margin: 0 !important; padding: 7px 11px; border-radius: 9px; border: 2px solid var(--sh-ink);
+  background: var(--mg-accent); color: var(--mg-on-accent) !important; font: 400 12px/1.5 'Press Start 2P', monospace !important;
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-intro { font: 800 21px/1.35 Nunito, sans-serif !important; color: var(--sh-text) !important; }
+html body .mg-speak {
+  width: 58px; height: 58px; padding: 0; border-radius: 50%; border: 3px solid var(--sh-ink); cursor: pointer;
+  background: var(--mg-accent, var(--gym-accent, #2A9D8F)); color: var(--mg-on-accent, #FFFFFF);
+  display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 0 var(--sh-ink); flex-shrink: 0;
+}
+html body .mg-speak:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--sh-ink); }
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text .mg-speak { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); }
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text .mg-speak:active { transform: translateY(calc(-50% + 3px)); }
+/* Illustrated scenes already show their host (Surge, Oak, Erika, Snorlax): bubble spans the width. */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"])[data-scene] .challenge-header-text::before { display: none; }
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"])[data-scene] .challenge-header-text { margin-bottom: 0; }
+
+/* ── Content cards ───────────────────────────────────────────────────────── */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]):not([data-scene]) #challenge-coin-visual[style*="block"],
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]):not([data-scene]) #challenge-coin-visual[style*="flex"],
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) #jessie-word-display[style*="flex"] {
+  background: rgba(16,30,48,.9) !important; border: 3px solid var(--sh-ink) !important; border-radius: 22px !important;
+  box-shadow: 0 6px 0 var(--sh-ink) !important; padding: 18px !important; box-sizing: border-box;
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) #challenge-question:not(:empty) {
+  font: 900 24px/1.3 Nunito, sans-serif !important; color: #FFF4D6 !important; text-align: center; text-shadow: 0 2px 0 var(--sh-ink);
+}
+
+/* ── Answer tiles: cream, big, in the thumb zone ─────────────────────────── */
+html body #screen-challenge.mg-shell :is(.challenge-answer-btn, .blaine-choice-btn, .togepi-opt-btn, .pryce-num-btn,
+  .james-letter-btn, .wh-berry-btn, .oak-basket, .jenny-suspect, .chuck-clock-btn, .fishing-choice-card, .clair-choice, .wobbu-choice-btn) {
+  min-height: 68px !important; border: 3px solid var(--sh-ink) !important; border-radius: 18px !important;
+  box-shadow: 0 5px 0 var(--sh-ink) !important; font-family: Nunito, sans-serif !important; font-weight: 800 !important;
+  cursor: pointer; transition: transform .08s ease, box-shadow .08s ease;
+}
+html body #screen-challenge.mg-shell :is(.challenge-answer-btn, .blaine-choice-btn, .togepi-opt-btn, .pryce-num-btn,
+  .james-letter-btn, .wh-berry-btn, .oak-basket, .jenny-suspect, .chuck-clock-btn, .fishing-choice-card) {
+  background: var(--sh-cream) !important; color: var(--sh-text) !important;
+}
+html body #screen-challenge.mg-shell :is(.challenge-answer-btn, .blaine-choice-btn, .togepi-opt-btn, .clair-choice, .wobbu-choice-btn) {
+  font-size: 20px !important; padding: 12px 16px !important; line-height: 1.3 !important;
+}
+html body #screen-challenge.mg-shell .challenge-answer-btns { gap: 14px !important; }
+html body #screen-challenge.mg-shell :is(.pryce-num-btn, .james-letter-btn) { min-width: 76px !important; font-size: 26px !important; }
+html body #screen-challenge.mg-shell .james-letter-btn { font-family: 'Press Start 2P', monospace !important; font-weight: 400 !important; font-size: 20px !important; }
+html body #screen-challenge.mg-shell .blaine-choice-btn { min-width: 180px !important; }
+html body #screen-challenge.mg-shell :is(.challenge-answer-btn, .blaine-choice-btn, .togepi-opt-btn, .pryce-num-btn, .james-letter-btn,
+  .wh-berry-btn, .oak-basket, .jenny-suspect, .chuck-clock-btn, .fishing-choice-card, .clair-choice, .wobbu-choice-btn):not(:disabled):active {
+  transform: translateY(3px); box-shadow: 0 2px 0 var(--sh-ink) !important;
+}
+/* Shared answer states: green tick for right, warm orange (never red) for "try again". */
+html body #screen-challenge.mg-shell :is(.challenge-answer-btn, .blaine-choice-btn, .togepi-opt-btn, .pryce-num-btn, .james-letter-btn,
+  .wh-berry-btn, .oak-basket, .jenny-suspect, .chuck-clock-btn, .fishing-choice-card):is([class*="correct"], .correct, .right) {
+  background: var(--sh-good-bg) !important; color: #123A22 !important; box-shadow: 0 0 0 4px var(--sh-good), 0 5px 0 var(--sh-ink) !important;
+}
+html body #screen-challenge.mg-shell :is(.challenge-answer-btn, .blaine-choice-btn, .togepi-opt-btn, .pryce-num-btn, .james-letter-btn,
+  .wh-berry-btn, .oak-basket, .jenny-suspect, .chuck-clock-btn, .fishing-choice-card):is([class*="wrong"], .wrong, .incorrect) {
+  background: var(--sh-almost-bg) !important; color: #4A2A08 !important; box-shadow: 0 0 0 4px var(--sh-almost), 0 5px 0 var(--sh-ink) !important;
+}
+html body #screen-challenge.mg-shell :is(.jenny-suspect, .oak-basket, .wh-berry-btn):is(.selected, [aria-pressed="true"]) {
+  box-shadow: 0 0 0 5px var(--mg-accent), 0 5px 0 var(--sh-ink) !important;
+}
+
+/* ── Buttons: one primary style, one secondary style ─────────────────────── */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel .btn-pixel {
+  font: 900 19px/1.2 Nunito, sans-serif !important; text-transform: none !important; letter-spacing: 0 !important;
+  min-height: 56px; padding: 10px 20px !important; border: 3px solid var(--sh-ink) !important; border-radius: 16px !important;
+  box-shadow: 0 5px 0 var(--sh-ink) !important;
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel .btn-pixel.btn-primary {
+  background: var(--mg-accent) !important; color: var(--mg-on-accent) !important; min-height: 64px; font-size: 22px !important;
+}
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel .btn-pixel.btn-secondary { background: var(--sh-btn) !important; color: #F4F1E8 !important; }
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel .btn-pixel:disabled { opacity: .55; }
+/* "Next" sits in the thumb zone as the action bar. */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .minigame-next {
+  position: sticky; bottom: 14px; z-index: 6; width: min(560px, 100%) !important; min-height: 72px !important;
+  margin: 18px auto 0 !important; font-size: 24px !important;
+}
+
+/* ── Help dialog in the same style ───────────────────────────────────────── */
+html body dialog.minigame-guide {
+  background: var(--sh-cream); color: var(--sh-text); border: 3px solid var(--sh-ink); border-radius: 24px;
+  box-shadow: 0 8px 0 var(--sh-ink); padding: 26px 28px; max-width: min(560px, 92vw); font: 700 19px/1.5 Nunito, sans-serif;
+}
+html body dialog.minigame-guide h2 { font: 400 16px/1.6 'Press Start 2P', monospace; color: var(--sh-text); margin: 0 0 12px; }
+html body dialog.minigame-guide button {
+  margin-top: 14px; width: 100%; min-height: 64px; border-radius: 16px; border: 3px solid var(--sh-ink);
+  background: var(--mg-accent, #2A9D8F); color: var(--mg-on-accent, #FFF); font: 900 21px Nunito, sans-serif; box-shadow: 0 5px 0 var(--sh-ink); cursor: pointer;
+}
+
+/* ── Landscape: hero column on the left, activity on the right ───────────── */
+@media (orientation: landscape) {
+  html body #screen-challenge.mg-shell #mg-topbar:not([hidden]) { height: 64px; }
+  html body #screen-challenge.mg-shell .mgtb-btn { width: 48px; height: 48px; }
+  html body #screen-challenge.mg-shell .mgtb-face { width: 44px; height: 44px; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) { padding-top: 70px !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel {
+    display: grid !important; grid-template-columns: clamp(250px, 30vw, 360px) minmax(0, 1fr) !important;
+    column-gap: 20px !important; align-items: start; width: min(1260px, 100%) !important;
+  }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header {
+    grid-column: 1 !important; grid-row: 1 / 30 !important; position: sticky; top: 0;
+    flex-direction: column !important; align-items: stretch !important;
+  }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header .trainer-frame { width: 100% !important; height: clamp(170px, 34vh, 300px) !important; order: 2; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text { order: 1; margin: 0 0 14px; padding: 14px 14px 14px 80px; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text::before { left: 46px; bottom: -16px; transform: rotate(-45deg); }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel > :not(.challenge-header) { grid-column: 2 !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-intro { font-size: 19px !important; }
+}
+@media (orientation: portrait) {
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel { display: flex !important; flex-direction: column !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel > * { grid-column: auto !important; }
+}
+@media (max-width: 520px) {
+  html body #screen-challenge.mg-shell .mgtb-pips { display: none; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header .trainer-frame { width: 130px !important; height: 180px !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-intro { font-size: 18px !important; }
+}
+
+/* ═════════════════════════════════════════════════════════════════════════
+   GYM SCENES — city card, leader intro and badge share one layout.
+   ═════════════════════════════════════════════════════════════════════════ */
+html body .gym-scene-top {
+  position: absolute; left: 0; right: 0; top: 0; z-index: 5; padding: 16px 18px; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+html body .gym-scene-chip {
+  padding: 9px 14px; border-radius: 12px; border: 3px solid var(--sh-ink); background: var(--sh-bar); color: #FFF4D6;
+  font: 400 12px/1.5 'Press Start 2P', monospace; box-shadow: 0 4px 0 var(--sh-ink);
+}
+html body .gym-pips { display: flex; gap: 6px; padding: 7px 9px; border-radius: 14px; background: rgba(11,20,34,.78); border: 3px solid var(--sh-ink); }
+html body .gym-pip {
+  width: 30px; height: 30px; border-radius: 50%; border: 2px solid #3A4E6C; background: #1B2E48; box-sizing: border-box;
+  display: flex; align-items: center; justify-content: center; font-size: 15px; line-height: 1;
+}
+html body .gym-pip.earned { background: #2A3E5C; border-color: #FFD166; }
+html body .gym-pip.new { animation: gym-pip-pop .7s cubic-bezier(.3,1.6,.5,1) .6s both; box-shadow: 0 0 0 3px var(--gym-accent, #FFD166); }
+@keyframes gym-pip-pop { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+html body .gym-scene-leader { position: relative; display: flex; justify-content: center; align-items: flex-end; }
+html body .gym-scene-leader .trainer-frame { width: min(78vw, 420px); height: clamp(300px, 50vh, 620px); filter: drop-shadow(0 10px 0 rgba(11,20,34,.45)); }
+html body .gym-scene-card {
+  position: relative; background: var(--sh-cream); color: var(--sh-text); border: 3px solid var(--sh-ink); border-radius: 24px;
+  box-shadow: 0 7px 0 var(--sh-ink); padding: 20px 22px; box-sizing: border-box; width: min(720px, calc(100% - 32px)); margin: 0 auto;
+}
+
+/* City title card */
+html body #screen-maptitle.gym-scene { justify-content: flex-end; align-items: stretch; cursor: pointer; }
+html body #screen-maptitle .maptitle-bg::after { display: none; }
+html body #screen-maptitle .gym-scene-body {
+  position: relative; z-index: 2; height: 100%; box-sizing: border-box; padding: 86px 0 22px;
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 0;
+}
+html body #screen-maptitle .gym-scene-leader { flex: 1; min-height: 0; }
+html body #screen-maptitle .maptitle-centre.gym-scene-card { animation: gym-card-in .5s ease both; text-align: left; display: flex; flex-direction: column; gap: 10px; }
+html body #screen-maptitle .maptitle-location { font: 400 clamp(22px, 4vw, 34px)/1.3 'Press Start 2P', monospace; color: var(--sh-text); text-shadow: none; margin: 0; }
+html body #screen-maptitle .maptitle-leader {
+  align-self: flex-start; padding: 7px 12px; border-radius: 10px; border: 2px solid var(--sh-ink); background: var(--gym-accent, #2A9D8F);
+  color: #FFFFFF; font: 900 18px/1.3 Nunito, sans-serif; text-shadow: none; margin: 0;
+}
+html body #screen-maptitle .maptitle-flavour { font: 700 20px/1.45 Nunito, sans-serif; color: var(--sh-muted); opacity: 1; min-height: 1.45em; margin: 0; text-shadow: none; }
+html body .gym-scene-hint { font: 800 16px/1.2 Nunito, sans-serif; color: var(--sh-muted); text-align: right; }
+@keyframes gym-card-in { from { transform: translateY(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* Badge ceremony */
+html body #screen-badge.gym-scene .badge-ceremony {
+  position: relative; z-index: 2; height: 100%; width: 100%; max-width: none; box-sizing: border-box; padding: 86px 0 22px;
+  display: flex; flex-direction: column; justify-content: flex-end; align-items: stretch; gap: 0; background: none; border: 0;
+}
+html body #screen-badge .gym-scene-leader { flex: 1; min-height: 0; }
+html body #screen-badge .badge-centre.gym-scene-card { display: flex; flex-direction: column; align-items: stretch; gap: 12px; text-align: left; animation: gym-card-in .5s ease both; }
+html body #screen-badge .badge-award { display: flex; align-items: center; gap: 18px; }
+html body #screen-badge .badge-medallion {
+  flex-shrink: 0; width: 104px; height: 104px; border-radius: 50%; border: 4px solid var(--sh-ink); box-sizing: border-box;
+  background: radial-gradient(circle at 35% 30%, #FFF4C2, #F2C94C 55%, #C9922A); display: flex; align-items: center; justify-content: center;
+  font-size: 58px; line-height: 1; box-shadow: 0 0 0 6px var(--gym-accent, #FFD166), 0 6px 0 6px var(--sh-ink);
+  animation: badge-medal-in .8s cubic-bezier(.3,1.6,.5,1) both; margin: 6px;
+}
+@keyframes badge-medal-in { 0% { transform: scale(0) rotate(-40deg); } 100% { transform: scale(1) rotate(0); } }
+html body #screen-badge .badge-award-text { display: flex; flex-direction: column; gap: 6px; }
+html body #screen-badge .badge-title-text { font: 400 clamp(18px, 3.4vw, 26px)/1.35 'Press Start 2P', monospace; color: var(--sh-text); text-shadow: none; margin: 0; }
+html body #screen-badge .badge-earned-line { font: 800 18px/1.3 Nunito, sans-serif; color: var(--sh-muted); }
+html body #screen-badge .badge-quote { display: flex; align-items: flex-start; gap: 12px; min-height: 60px; }
+html body #screen-badge .badge-farewell { font: 800 21px/1.4 Nunito, sans-serif; color: var(--sh-text); font-style: normal; text-shadow: none; margin: 0; }
+html body #screen-badge .badge-watching { font: 700 18px/1.4 Nunito, sans-serif; color: var(--sh-muted); font-style: italic; text-shadow: none; margin: 0; }
+html body #screen-badge .badge-centre > .mg-speak { display: none; }
+html body :is(#screen-badge .badge-continue-btn, #trainer-intro #btn-start-boss-battle) {
+  min-height: 72px; width: 100%; border: 3px solid var(--sh-ink) !important; border-radius: 18px !important;
+  background: var(--gym-accent, #2A9D8F) !important; color: #FFFFFF !important; box-shadow: 0 6px 0 var(--sh-ink) !important;
+  font: 900 24px/1.2 Nunito, sans-serif !important; text-transform: none !important; letter-spacing: 0 !important;
+}
+
+/* Leader / host intro (shared by gym leaders and activity hosts) */
+html body #screen-boss #trainer-intro {
+  position: absolute; inset: 0; z-index: 5; box-sizing: border-box; padding: 24px 0 22px !important; max-height: none !important;
+  flex-direction: column !important; justify-content: flex-end !important; align-items: stretch !important; gap: 0 !important;
+  overflow: hidden !important;
+}
+html body #screen-boss #trainer-intro[style*="none"] { display: none !important; }
+html body #screen-boss #trainer-sprite-wrap { flex: 1; min-height: 0; display: flex; justify-content: center; align-items: flex-end; }
+html body #screen-boss #trainer-sprite-wrap .trainer-frame { width: min(80vw, 440px) !important; height: clamp(300px, 54vh, 640px) !important; filter: drop-shadow(0 10px 0 rgba(11,20,34,.45)); }
+html body #screen-boss #trainer-intro .trainer-dialogue-box {
+  position: relative; width: min(720px, calc(100% - 32px)) !important; max-width: none !important; margin: 0 auto;
+  background: var(--sh-cream) !important; color: var(--sh-text) !important; border: 3px solid var(--sh-ink) !important;
+  border-radius: 24px !important; box-shadow: 0 7px 0 var(--sh-ink) !important; padding: 20px 22px 20px 92px !important;
+  display: flex; flex-direction: column; gap: 10px;
+}
+html body #screen-boss #trainer-intro .trainer-dialogue-box::before {
+  content: ''; position: absolute; left: 50%; top: -17px; width: 28px; height: 28px; background: var(--sh-cream);
+  border-left: 3px solid var(--sh-ink); border-top: 3px solid var(--sh-ink); transform: translateX(-50%) rotate(45deg);
+}
+html body #screen-boss #trainer-intro .trainer-dialogue-box > .mg-speak { position: absolute; left: 18px; top: 20px; }
+html body #screen-boss #trainer-intro .dialogue-name {
+  align-self: flex-start; padding: 7px 12px; border-radius: 10px; border: 2px solid var(--sh-ink);
+  background: var(--gym-accent, #2A9D8F); color: #FFFFFF !important; font: 400 12px/1.5 'Press Start 2P', monospace !important;
+}
+html body #screen-boss #trainer-intro .dialogue-text { font: 800 21px/1.45 Nunito, sans-serif !important; color: var(--sh-text) !important; min-height: 3em; }
+html body #screen-boss #trainer-intro .dialogue-btn-row { display: flex; gap: 12px; margin-left: -70px; }
+html body #screen-boss #trainer-intro #btn-dialogue-next {
+  min-height: 64px; border: 3px solid var(--sh-ink) !important; border-radius: 16px !important; background: var(--sh-btn) !important;
+  color: #F4F1E8 !important; font: 900 20px Nunito, sans-serif !important; text-transform: none !important; box-shadow: 0 5px 0 var(--sh-ink) !important;
+}
+
+@media (orientation: landscape) {
+  html body :is(#screen-maptitle .gym-scene-body, #screen-badge.gym-scene .badge-ceremony) {
+    flex-direction: row; align-items: flex-end; justify-content: center; gap: 24px; padding: 76px 28px 22px;
+  }
+  html body :is(#screen-maptitle, #screen-badge) .gym-scene-leader { flex: 0 0 auto; height: 100%; }
+  html body :is(#screen-maptitle, #screen-badge) .gym-scene-leader .trainer-frame { width: clamp(220px, 28vw, 380px); height: min(100%, 560px); }
+  html body :is(#screen-maptitle, #screen-badge) .gym-scene-card { width: min(640px, 56vw); margin: 0 0 12px; }
+  html body #screen-boss #trainer-intro { flex-direction: row !important; align-items: flex-end !important; justify-content: center !important; gap: 24px !important; padding: 24px 28px 22px !important; }
+  html body #screen-boss #trainer-sprite-wrap { flex: 0 0 auto; height: 100%; }
+  html body #screen-boss #trainer-sprite-wrap .trainer-frame { width: clamp(220px, 28vw, 400px) !important; height: min(100%, 600px) !important; }
+  html body #screen-boss #trainer-intro .trainer-dialogue-box { width: min(640px, 56vw) !important; margin: 0 0 12px; }
+  html body #screen-boss #trainer-intro .trainer-dialogue-box::before { left: -17px; top: 44px; transform: rotate(-45deg); border-top: 0; border-bottom: 3px solid var(--sh-ink); }
+}
+@media (prefers-reduced-motion: reduce) {
+  html body :is(.gym-pip.new, #screen-badge .badge-medallion, .gym-scene-card) { animation: none !important; }
+}
+
+/* ── Help dialog steps readable on cream ─────────────────────────────────── */
+html body dialog.minigame-guide p {
+  background: #FFFFFF !important; color: var(--sh-text) !important; border-left: 5px solid var(--mg-accent, #2A9D8F) !important;
+  border-radius: 10px; padding: 12px 14px !important; margin: 0 0 10px; font: 800 19px/1.5 Nunito, sans-serif !important;
+}
+html body dialog.minigame-guide::backdrop { background: rgba(7,21,35,.8); }
+
+/* ── Characters and Pokémon big enough to matter ─────────────────────────── */
+html body #screen-challenge.mg-shell .blaine-arena { gap: 18px !important; align-items: center; }
+html body #screen-challenge.mg-shell .blaine-sprite-wrap {
+  width: clamp(150px, 27vw, 230px) !important; height: clamp(150px, 27vw, 230px) !important; border-radius: 26px !important;
+  background: rgba(255,244,214,.12) !important; border: 3px solid rgba(255,244,214,.35) !important; box-shadow: 0 6px 0 var(--sh-ink) !important;
+}
+html body #screen-challenge.mg-shell .blaine-sprite { width: 88% !important; height: 88% !important; object-fit: contain; image-rendering: pixelated; }
+html body #screen-challenge.mg-shell :is(.blaine-poke-name, [class*="blaine-"][class$="-name"]) { font: 900 22px/1.2 Nunito, sans-serif !important; color: #FFF4D6 !important; }
+html body #screen-challenge.mg-shell .blaine-vs { font-size: 34px !important; }
+html body #screen-challenge.mg-shell .rk-coin:not(.rk-coin-mini) {
+  width: 84px !important; height: 84px !important; font-size: 20px !important; border: 3px solid var(--sh-ink) !important; box-shadow: 0 5px 0 var(--sh-ink) !important;
+}
+html body #screen-challenge.mg-shell .rk-coin-row { gap: 14px !important; }
+html body #screen-challenge.mg-shell .rk-prompt { font: 800 21px/1.4 Nunito, sans-serif !important; color: #FFF4D6 !important; }
+html body #screen-challenge.mg-shell .rk-tray { min-height: 120px !important; border-radius: 22px !important; border: 3px solid var(--sh-ink) !important; }
+html body #screen-challenge.mg-shell .jenny-suspect { min-width: 140px !important; padding: 10px !important; }
+html body #screen-challenge.mg-shell .jenny-suspect img { width: 110px !important; height: 110px !important; object-fit: contain; }
+
+/* ── Challenge picker: skill-coloured cards ──────────────────────────────── */
+html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]).challenge-select-active .challenge-header { display: none !important; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-wrap { width: 100%; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-grid {
+  display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 18px !important; width: 100%;
+}
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card {
+  position: relative; display: flex !important; flex-direction: column; align-items: flex-start !important; gap: 8px !important; text-align: left !important;
+  background: var(--sh-cream) !important; color: var(--sh-text) !important; border: 3px solid var(--sh-ink) !important; border-radius: 20px !important;
+  box-shadow: 0 6px 0 var(--sh-ink) !important; padding: 26px 18px 18px !important; overflow: hidden; box-sizing: border-box;
+}
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 0; height: 12px; background: var(--card-accent, #6C4AB6); border-bottom: 3px solid var(--sh-ink);
+}
+html body #screen-challenge.mg-shell.challenge-select-active .cs-skill {
+  align-self: flex-start; padding: 6px 10px; border-radius: 8px; border: 2px solid var(--sh-ink);
+  background: var(--card-accent, #6C4AB6); color: var(--card-on-accent, #FFF); font: 400 11px/1.5 'Press Start 2P', monospace;
+}
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card-emoji { font-size: 44px !important; line-height: 1; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card-name { font: 900 23px/1.2 Nunito, sans-serif !important; color: var(--sh-text) !important; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card-desc { font: 700 17px/1.35 Nunito, sans-serif !important; color: var(--sh-muted) !important; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card-reward { font: 800 16px/1.35 Nunito, sans-serif !important; color: #1F5A3C !important; background: #E3F3E8; padding: 6px 10px; border-radius: 10px; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-play-btn { width: 100%; margin-top: auto; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-card:not(.cs-skip-card) .cs-play-btn { background: var(--card-accent, #6C4AB6) !important; color: var(--card-on-accent, #FFF) !important; }
+html body #screen-challenge.mg-shell.challenge-select-active .cs-skip-card { grid-column: 1 / -1; background: #E9E2CF !important; }
+@media (orientation: landscape) {
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]).challenge-select-active .challenge-panel { display: block !important; }
+  html body #screen-challenge.mg-shell.challenge-select-active .cs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+html body #screen-challenge.mg-shell .mgtb-face[hidden] { display: none; }
+html body :is(#screen-maptitle, #screen-badge) .gym-scene-card * { max-width: none !important; text-align: left !important; }
+html body #screen-challenge.mg-shell .oak-basket .oak-basket-label { color: var(--sh-text) !important; text-shadow: none !important; font: 900 20px/1.3 Nunito, sans-serif !important; }
+
+/* Compact sizes for short screens and phones. */
+@media (max-height: 700px), (max-width: 420px) {
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel .btn-pixel { min-height: 48px; font-size: 17px !important; padding: 8px 14px !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-panel .btn-pixel.btn-primary { min-height: 52px; font-size: 19px !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .minigame-next { min-height: 60px !important; font-size: 20px !important; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text { min-height: 0; padding: 12px 14px 12px 76px; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-header-text .mg-speak { width: 50px; height: 50px; }
+  html body #screen-challenge.mg-shell:not([data-shell-mode="scene"]) .challenge-intro { font-size: 17px !important; }
+}
+
+/* Full-screen scenes keep their own layout under a compact 56px top bar. */
+html body #screen-challenge.mg-shell[data-shell-mode="scene"] #mg-topbar:not([hidden]) { height: 56px; padding: 0 10px; gap: 10px; }
+html body #screen-challenge.mg-shell[data-shell-mode="scene"] .mgtb-btn { width: 44px; height: 44px; border-radius: 12px; }
+html body #screen-challenge.mg-shell[data-shell-mode="scene"] .mgtb-face { width: 40px; height: 40px; }
+html body #screen-challenge.mg-shell[data-shell-mode="scene"] .mgtb-name { font-size: 11px; }
+html body #screen-challenge.mg-shell[data-shell-mode="scene"] .mgtb-game { font-size: 15px; }

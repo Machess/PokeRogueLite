@@ -25,6 +25,7 @@
 <link rel="stylesheet" href="feed-snorlax.css" />
 <link rel="stylesheet" href="adventure-menus.css" />
 <link rel="stylesheet" href="fossil-dig.css" />
+<link rel="stylesheet" href="game-shell.css" />
 </head>
 <body>
 
@@ -265,14 +266,25 @@
 <!-- ═══════════════════════════════════════════
      SCREEN: BADGE CEREMONY
 ═══════════════════════════════════════════ -->
-<div id="screen-badge" class="screen">
+<div id="screen-badge" class="screen gym-scene">
   <div class="badge-bg" id="badge-bg"></div>
+  <div class="gym-scene-top">
+    <div class="gym-scene-chip" id="badge-step">Badge earned</div>
+    <div class="gym-pips" id="badge-pips" role="img"></div>
+  </div>
   <div class="badge-ceremony">
-    <img class="badge-leader-portrait" id="badge-leader-portrait" src="" alt="">
-    <div class="badge-centre">
-      <div class="badge-title-text" id="badge-title-text">Boulder Badge</div>
-      <div class="badge-medallion" id="badge-medallion">🏅</div>
-      <div class="badge-farewell" id="badge-farewell"></div>
+    <div class="gym-scene-leader"><img class="badge-leader-portrait" id="badge-leader-portrait" src="" alt=""></div>
+    <div class="badge-centre gym-scene-card">
+      <div class="badge-award">
+        <div class="badge-medallion" id="badge-medallion">🏅</div>
+        <div class="badge-award-text">
+          <div class="badge-title-text" id="badge-title-text">Boulder Badge</div>
+          <div class="badge-earned-line" id="badge-earned-line"></div>
+        </div>
+      </div>
+      <div class="badge-quote" id="badge-quote">
+        <div class="badge-farewell" id="badge-farewell"></div>
+      </div>
       <div class="badge-watching" id="badge-watching"></div>
       <button class="btn-pixel btn-primary badge-continue-btn" id="btn-badge-continue">
         Continue ▶
@@ -284,12 +296,20 @@
 <!-- ═══════════════════════════════════════════
      SCREEN: MAP TITLE CARD
 ═══════════════════════════════════════════ -->
-<div id="screen-maptitle" class="screen">
+<div id="screen-maptitle" class="screen gym-scene">
   <div class="maptitle-bg" id="maptitle-bg"></div>
-  <div class="maptitle-centre">
-    <div class="maptitle-location" id="maptitle-location">Pewter City</div>
-    <div class="maptitle-leader" id="maptitle-leader">Brock · Boulder Badge</div>
-    <div class="maptitle-flavour" id="maptitle-flavour"></div>
+  <div class="gym-scene-top">
+    <div class="gym-scene-chip" id="maptitle-step">Next gym</div>
+    <div class="gym-pips" id="maptitle-pips" role="img"></div>
+  </div>
+  <div class="gym-scene-body">
+    <div class="gym-scene-leader"><img id="maptitle-leader-portrait" src="" alt=""></div>
+    <div class="maptitle-centre gym-scene-card">
+      <div class="maptitle-location" id="maptitle-location">Pewter City</div>
+      <div class="maptitle-leader" id="maptitle-leader">Brock · Boulder Badge</div>
+      <div class="maptitle-flavour" id="maptitle-flavour"></div>
+      <div class="gym-scene-hint">Tap to continue ▶</div>
+    </div>
   </div>
 </div>
 
@@ -1134,6 +1154,7 @@
 <script src="js/feed-snorlax.js"></script>
 <script src="js/menu-scene.js"></script>
 <script src="js/fossil-dig.js"></script>
+<script src="js/game-shell.js"></script>
 <script src="js/boot.js"></script>
 </body>
 </html>

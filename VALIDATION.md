@@ -1,3 +1,13 @@
+# Unified shell and gym scenes (v2.11) — 30 September 2026
+
+Passed `tests/regression.cjs` (14 checks), plus browser, browser-edge, tablet-ui, polish-ui, journey-ui, minigames, minigame-flows, minigame-scenes, runner, rocket-catch-update, feed-menus, fossil-dig and weather-fx.
+
+`tests/exploration.cjs` fails identically on unmodified v2.10. It is a stale assertion: it expects Lt. Surge's portrait to be at least 180px, but the illustrated power-station scene hides that portrait. It was not changed.
+
+Screenshots of all 25 mini-game screens were inspected at 800×1150 portrait and 1280×670 landscape. The gym title card, badge ceremony, leader intro and boss battle were also checked. These are Chromium touch-emulation checks, not tests on a physical Lenovo TB-X606F.
+
+---
+
 # Fossil Dig — 30 September 2026
 
 Passed `tests/fossil-dig.cjs`: alternating-route scheduling, preservation of linked discoveries, all three difficulty tiers, two-layer completion, wrong-hit retries, saved sequences and rewards, duplicate reward prevention, shop sale/checkpoint persistence, forced fossil encounters, reload during a throw, ball consumption, full-party replacement and escape handling.

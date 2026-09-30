@@ -1,3 +1,18 @@
+# v2.11 — Unified mini-game shell and gym scenes
+
+- Adds one shared shell for every mini-game (game-shell.css, js/game-shell.js). Each game gets a top bar with Leave, the host's face and name, the game title, round pips and Pause/Help. Below it, the host stands large beside a cream question bubble with a read-aloud button. Answers use large cream tiles, and there is one primary and one secondary button style. Next sits in a sticky thumb-zone bar.
+- Each game keeps its own flavour through an accent colour (for example Surge yellow, Erika green, Koga purple, Jessie magenta). Right answers turn green and "try again" turns warm orange; red is never used.
+- In landscape, the host and bubble take a left column and the activity fills the right. Full-scene activities (Feed Snorlax, Rocket rescue, Fossil dig, Runner, Cooking) keep their own layouts and get only a compact top bar.
+- Enlarged trainers and Pokémon, including Jessie, James, Meowth, the Blaine matchup sprites, Giovanni's coins and Jenny's suspects.
+- The Team Rocket quizzes (Jessie, James, Meowth) now use the shared session, so they get Pause/Help and first-use guides. The challenge picker shows skill-coloured cards, each with a skill label.
+- Unified the gym flow:
+  - The city title card and badge ceremony now share one scene layout: gym background art, a large leader, a cream card, the gym accent colour and 8 badge pips.
+  - The city title card continues on tap or after about 4 seconds.
+  - The badge ceremony shows "Badge N of 8" with a medallion pop.
+  - The leader intro before a battle uses the same large sprite frame and cream speech box, with read-aloud.
+- Fixes: the badge counter no longer counts Elite Four entries. Trainer sizing falls back to the natural image size for trainers without size data (Will, Karen). The shell attaches to fishing only after its screen is active, so the timing loop no longer stops.
+- No asset, save-format or gameplay-rule changes. game-shell.js is added to data/script-order.json.
+
 # v2.10 — Fossil Dig
 
 - Adds optional excavation discoveries on every second gym route, beginning with Brock, while preserving existing linked discovery stories and normal route nodes.

@@ -95,6 +95,7 @@ function showBossIntro(opts) {
     }
   }
 
+  if (typeof GymScene !== 'undefined') document.getElementById('screen-boss')?.style.setProperty('--gym-accent', GymScene.accent(idx));
   document.getElementById('trainer-intro').style.display    = 'flex';
   document.getElementById('boss-battle-area').style.display = 'none';
   document.getElementById('boss-party-bar').innerHTML       = '';
