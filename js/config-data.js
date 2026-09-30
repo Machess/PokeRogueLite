@@ -544,7 +544,7 @@ const CHALLENGE_CLASSES = [
   // Johto + Wobbuffet
   'falkner-active','bugsy-active','whitney-active','morty-active',
   'jasmine-active','pryce-active','clair-active','wobbu-active','chuck-active','togepi-active',
-  'oak-active','snorlax-active','rocketmoney-active','jenny-active','runner-active',
+  'oak-active','snorlax-active','rocketmoney-active','jenny-active','runner-active','rocket-rescue-active',
 ];
 
 const NODE_ICONS = {

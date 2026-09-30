@@ -1,0 +1,27 @@
+#screen-catch{padding:22px 16px 16px;gap:10px;box-sizing:border-box;justify-content:flex-start}
+#screen-catch #catch-title{font-size:clamp(15px,2.8vw,23px);line-height:1.5;margin:10px 0;flex-shrink:0;z-index:1;text-align:center}
+#screen-catch .catch-arena{flex:1;min-height:0;width:100%;justify-content:center;gap:12px}
+#screen-catch .catch-sprite-wrap{position:relative;display:grid;place-items:center}
+#screen-catch .catch-sprite{width:clamp(180px,30vh,330px);height:clamp(180px,30vh,330px);min-width:0;min-height:0;object-fit:contain;z-index:1}
+#screen-catch .catch-name-row{justify-content:center;flex-wrap:wrap;text-align:center}
+#screen-catch .catch-controls{width:min(650px,100%);flex-shrink:0;margin:0 auto;padding:12px 12px 8px;gap:10px;box-sizing:border-box;background:linear-gradient(#123847bb,#102d3bee);border:3px solid #93b8b1;border-radius:8px}
+#screen-catch .ball-selector{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%;margin:0}
+#screen-catch .ball-select-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 4px;border:2px solid #91b8bd;background:#214958;color:#eff5db;min-width:0;min-height:98px;font:800 15px Nunito,sans-serif;touch-action:manipulation}
+#screen-catch .ball-select-btn.ball-selected{border:3px solid #ffe28d;background:#456262;box-shadow:inset 0 0 0 2px #152f3d}
+#screen-catch .ball-select-btn:disabled{opacity:.5;filter:grayscale(.4)}
+.go-ball{display:block;position:relative;width:52px;height:52px;box-sizing:border-box;border:4px solid #152b3c;border-radius:50%;overflow:hidden;background:#f3f4db;box-shadow:inset -6px -4px #c1d0c9,0 3px #09212b77;flex-shrink:0}
+.go-ball-top{position:absolute;inset:0 0 48%;background:#e74e43;box-shadow:inset -6px 0 #0002}.go-ball-band{position:absolute;top:44%;left:0;right:0;height:14%;background:#172e3c}.go-ball-button{position:absolute;top:34%;left:34%;width:32%;height:32%;border:3px solid #152b3c;box-sizing:border-box;border-radius:50%;background:#f4f7e7}
+.go-ball[data-ball=ultraball] .go-ball-top{background:linear-gradient(90deg,#242f40 0 16%,#f6d260 16% 35%,#242f40 35% 65%,#f6d260 65% 84%,#242f40 84%)}
+.go-ball[data-ball=masterball] .go-ball-top{background:linear-gradient(90deg,#e380be 0 22%,#8045b8 22% 78%,#e380be 78%)}
+.go-ball b{position:absolute;top:1%;left:0;right:0;text-align:center;font:900 12px monospace;color:#fff}
+#screen-catch #btn-throw-ball{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;position:relative;background:none!important;border:0!important;box-shadow:none!important;padding:8px 20px;min-height:117px;min-width:190px;touch-action:none;user-select:none;overflow:visible;cursor:grab}
+#btn-throw-ball .go-ball{width:88px;height:88px;border-width:5px;overflow:hidden;will-change:transform}#btn-throw-ball .go-ball b{font-size:23px}#catch-throw-label{font:900 16px/1.3 Nunito,sans-serif;color:#fff1c2}
+#screen-catch .btn-flee{min-height:44px;font:800 15px Nunito,sans-serif;margin:0;padding:9px 18px}
+#screen-catch .catch-status{flex-shrink:0;font:900 18px Nunito,sans-serif;color:#fff1bf;z-index:3;margin:0}#screen-catch .catch-status:empty{display:none}
+.catch-aim-ring{position:absolute;width:75%;height:75%;border:4px solid #b3e297;border-radius:50%;box-shadow:0 0 0 3px #102d3b66;opacity:0}.catch-touch-ready .catch-aim-ring{opacity:.8;animation:catch-target-ring 1.8s ease-in-out infinite}.capture-in-progress .catch-aim-ring{display:none}
+@keyframes catch-target-ring{0%,100%{transform:scale(1)}60%{transform:scale(.55)}}
+#screen-catch .catch-result{width:min(680px,100%);box-sizing:border-box;max-height:48%;overflow:auto;flex-shrink:0}
+#screen-catch button:focus-visible{outline:4px solid #fff1a7;outline-offset:3px}
+@media(max-height:760px){#screen-catch{padding-top:8px;gap:5px}#screen-catch .catch-controls{padding:6px;gap:4px}#screen-catch .ball-select-btn{min-height:76px;font-size:13px}.ball-select-btn .go-ball{width:38px;height:38px}#screen-catch #btn-throw-ball{min-height:91px;padding:2px 12px}#btn-throw-ball .go-ball{width:66px;height:66px}#screen-catch .catch-sprite{width:170px;height:170px}#screen-catch .catch-name{font-size:15px}}
+@media(orientation:landscape) and (max-height:760px){#screen-catch .catch-arena{align-self:flex-start;width:55%}#screen-catch .catch-controls{position:absolute;right:18px;bottom:15px;width:40%}#screen-catch .catch-result{position:absolute;right:18px;bottom:15px;width:42%;max-height:65%}#screen-catch .catch-status{align-self:flex-start;width:55%;text-align:center}}
+@media(prefers-reduced-motion:reduce){.catch-touch-ready .catch-aim-ring{animation:none}}

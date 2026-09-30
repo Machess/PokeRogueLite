@@ -77,6 +77,7 @@ const MapEngine = {
   _lastBi: -1,
 
   show() {
+    if(GameState.rocketAftermath){RocketRescue.show();return;}
     // Check if a Rocket event should fire before returning to the nav screen.
     // Only trigger if we just completed a node (completedNodes has grown).
     const justCompleted = GameState._lastRocketCheckAt !== GameState.completedNodes.length;
@@ -309,7 +310,7 @@ const MapEngine = {
     // Shows when the "no Team Rocket in Mystery nodes" buff is active, with the
     // number of shielded nodes remaining.
     {
-      const shield = GameState.rocketShieldNodes || 0;
+      const shield = Math.max(GameState.rocketShieldNodes || 0,RocketProtection.remaining());
       let shieldEl = document.getElementById('nav-rocket-shield');
       if (shield > 0) {
         if (!shieldEl) {

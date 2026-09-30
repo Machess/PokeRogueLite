@@ -54,6 +54,7 @@ const SaveManager={
     this.write();
   },
   resume(){
+    if(GameState.rocketAftermath){this.nodeCheckpoint=null;RocketRescue.show();return true;}
     const r=GameState.resume;if(!r)return false;this.restoring=true;
     try{
       if(r.kind==='reward'){showScreen('map');CardReward.restore(r);return true;}

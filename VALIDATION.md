@@ -1,3 +1,15 @@
+# Rocket rescue and catching validation — 30 September 2026
+
+Passed `tests/regression.cjs` (14 checks), `tests/runner.cjs`, `tests/journey-ui.cjs`, `tests/rocket-catch-update.cjs` and `tests/weather-fx.cjs`.
+
+The new interaction suite starts a run with unlocked Pikachu, verifies distinct navigation icons, forces an actual runner collision, checks persistent capture dialogue, reloads a partly answered rescue, exercises all three difficulty tiers and all three metrics, retries incorrect orders, rescues the same party member, and verifies duplicate-safe win rewards and three-node protection. Catch checks cover ball selection/counts, rejected sideways gestures, upward pointer swipes and single-item consumption on repeated throw requests. Existing journey checks cover catch success/breakout, audio lifecycle, screen-exit cancellation and reduced motion.
+
+Portrait layouts at 600×960 and 800×1280, a 360×640 phone layout and 960×600 landscape were checked for visible controls and overflow. Rescue and catching screenshots were visually inspected. Lightning, Gust and Twister screenshots were reviewed; deterministic rendering verifies increasing effect size at energy costs 1, 2 and 3, reverse attack direction, existing attack styles, replacement/exit cleanup and reduced motion.
+
+Testing used desktop Chromium with touch emulation and blocked external requests, not a physical Lenovo TB-X606F. Device-specific performance, Android audio and live card-image hosts remain outside this validation. Speed uses bundled base-stat values, not real-world travel speed; height/weight use the existing offline Pokémon records. No capture odds or battle damage formulas changed.
+
+---
+
 # Illustrated minigames validation — 29 September 2026
 
 Passed `tests/regression.cjs` (14 rule checks), `tests/minigame-scenes.cjs`, `tests/minigames.cjs`, `tests/minigame-flows.cjs` and `tests/runner.cjs`.

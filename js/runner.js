@@ -62,7 +62,7 @@ const WOBBU_WRONG_POOL = ['fire','water','grass','electric','ice','psychic','roc
 // ─── ROCKET RUNNER ENGINE — "Dig Dash" (endless-runner escape mini-game) ─────
 // Team Rocket dug pit-traps across the route. The trainer auto-runs; tap/space
 // to jump the holes and grab floating coins. Reach the finish to escape with
-// prize money + a Courage buff. Fall in a hole → small penalty, run ends.
+// prize money + Courage and a patrol shield. Collision → balloon rescue.
 const ROCKET_RUNNER_FLUFF = {
   meowth: { name:'Meowth', img:'meowth.png',
     intro:"Meowth! We dug holes allll over this path! Let's see ya get past 'em, twerp!",
@@ -290,47 +290,9 @@ const RocketRunnerEngine = {
   },
   _finish(escaped) {
     if(this._finished)return;this._finished=true;this._running=false;MiniGameSession.cancelFrame(this._raf);this._cleanupInput();
-    const tier = Math.min(GameState.difficultyTier || 2, 3);
-    const distM = Math.floor(this._dist / 40);
-    const baseGold = { 1: 8, 2: 12, 3: 16 }[tier];
-
-    let gold, penaltyMsg = '';
-    if (escaped) {
-      // Prize money scales with distance + coins collected (coin bonus capped
-      // so the now-plentiful coins reward skill without ballooning the economy)
-      gold = baseGold + Math.min(this._coinsGot, 30) + Math.floor(distM / 25);
-      // Courage buff — +10% damage next battle (its own effect flag so the
-      // battle log credits Courage, not Surge's briefing)
-      GameState.pendingPlayerEffects = GameState.pendingPlayerEffects || {};
-      GameState.pendingPlayerEffects.courageBonus = 1.10;
-    } else {
-      // Small penalty: lose a little gold + HP, run ends
-      gold = Math.max(2, this._coinsGot * 2);
-      const lead = GameState.party[GameState.activePokemonIndex];
-      if (lead) lead.hp = Math.max(1, lead.hp - Math.ceil(lead.maxHp * 0.12));
-      const lostGold = Math.min(GameState.gold || 0, 5);
-      GameState.gold = (GameState.gold || 0) - lostGold;
-      penaltyMsg = `\n\nTeam Rocket caught up! −${lostGold}💰 and your lead Pokémon got a little hurt.`;
-    }
-    GameState.gold = (GameState.gold || 0) + gold;
-    saveGame();
-
-    // Clean up the screen
-    const sc = document.getElementById('screen-challenge');
-    if (sc) sc.classList.remove('runner-active');
-    const cv = document.getElementById('challenge-coin-visual');
-    if (cv) { cv.innerHTML = ''; cv.className = 'challenge-coin-visual'; }
-
-    const title = escaped ? '🏃 Escaped!' : '💢 Tripped Up!';
-    const body  = escaped
-      ? `You dashed ${distM}m and grabbed ${this._coinsGot} coins!\n+${gold}💰\n\n⭐ Courage! +10% damage in your next battle!\n\n"${this._fluff.win}"`
-      : `You made it ${distM}m before falling.\n+${gold}💰${penaltyMsg}\n\n"${this._fluff.lose}"`;
-
-    showModal(title, body, () => {
-      showScreen('map');
-      MapEngine.renderParty();
-      if (this._onComplete) { const cb = this._onComplete; this._onComplete = null; cb(); }
+    RocketRescue.begin(escaped,{
+      distM:Math.floor(this._dist/40),coins:this._coinsGot,
+      tier:this._cfg.tier,nodeIdx:this._node?.idx,fluff:this._fluff
     });
   },
 };
-

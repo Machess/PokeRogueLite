@@ -4,8 +4,9 @@ const MysteryEngine = {
 
     // Officer Jenny's patrol shield: no Team Rocket in Mystery nodes for a few
     // nodes after helping her. Decrement once per Mystery node visited.
-    const shielded = (GameState.rocketShieldNodes || 0) > 0;
-    if (shielded) GameState.rocketShieldNodes--;
+    const patrol = (GameState.rocketShieldNodes || 0) > 0;
+    const shielded = patrol || RocketProtection.active();
+    if (patrol) GameState.rocketShieldNodes--;
 
     const pool = [
       { weight: 3, fn: () => CatchEngine.start(node, 'rare') },

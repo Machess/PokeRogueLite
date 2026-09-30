@@ -367,6 +367,7 @@ const TeamRocketChallenge = {
   //   • 40% random chance between 2 and 4
   //   • Boss nodes never trigger a Rocket event
   shouldTrigger(nodeType) {
+    if(RocketProtection.active(true)){GameState.nodesSinceRocket=0;return false;}
     if (nodeType === 'boss') return false; // never interrupt the boss moment
 
     if (!GameState.nodesSinceRocket) GameState.nodesSinceRocket = 0;

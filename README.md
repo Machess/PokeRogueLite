@@ -1,6 +1,6 @@
-# PokéTrials — Illustrated minigames v2.7
+# PokéTrials — Rocket rescue and catching v2.8
 
-## Updating from v2.6
+## Updating from v2.7.1
 
 This small patch contains only changed/new files. Close the game, back up your current folder, and copy the contents of this patch's `PokeRogueLite` folder into your existing `PokeRogueLite` folder, accepting replacements. Keep all existing files and assets. Reopen `index.html`; if hosted, refresh without cache. No save format changes.
 
@@ -22,13 +22,23 @@ No installation, account, API key, server or build step is required. Keep the fi
 - Routes branch into different future encounters. Arrows preview their next options. Choosing a direction pans/zooms the existing background; the map has no trainer sprite. Reduced-motion settings shorten travel.
 - Late-route legendary encounters retain their guaranteed rarity.
 - Stable battle checkpoints retain hands, piles, enemy intentions, statuses, temporary effects and trainer/boss teams. Rewards and post-boss transitions also resume. Switching retains each Pokémon's exhausted cards and status durations.
-- Versioned saves include validation, previous-write recovery, export/import and visible status. Non-battle activities restart from entry if interrupted before completion.
+- Versioned saves include validation, previous-write recovery, export/import and visible status. Rocket rescue dialogues and partial sorting answers also resume. Other non-battle activities restart from entry if interrupted before completion.
+
+## Rocket rescue and catching
+
+Runner endings now wait for your input. Escape to receive coins, Courage and three nodes of protection from automatic Rocket encounters and Mystery Rocket battles. Hitting an obstacle sends your active Pokémon to Rocket’s balloon: solve a comparison challenge to rescue them. Your Pokémon is retained in the save, and the rescue continues after reopening the game.
+
+Rescue difficulty follows the existing profile tier: tier 1 selects the tallest, heaviest or fastest of three; tier 2 sorts four; tier 3 sorts five with closer measurements. The metric changes between encounters. Read the numbers, tap cards in descending order, tap again to undo, then Check and rescue. There is no timer or permanent loss; incorrect answers can be retried.
+
+Catching shows Poké, Ultra and Master Balls with availability. Select a ball, then swipe it upward by at least 55 pixels to throw. Short or sideways gestures cancel. Keyboard users can focus the throw control and press Enter. Catch odds and ball inventory rules are unchanged.
+
+Electric attacks now strike the target with lightning; Gust uses swirling airflow and Twister uses a funnel. Higher-cost attacks have larger effects. Train and Your Choice have distinct map icons, and the unlocked Pikachu startup error is fixed.
 
 ## Dig Dash update
 
 Team Rocket's jumping game now fills the portrait screen, with layered forest scenery, animated trainer frames, larger obstacles, an escape progress bar and a large bottom Jump button. Tap the button or playfield for a short jump; hold briefly for a higher jump. Space and Up also work. Follow the coin arcs, leave room to land, and reach Officer Jenny. Pause / Help stops the run; leaving cancels pending input and results.
 
-New scenery and trainer artwork are bundled and preloaded. Rocket pursuers and Pokémon obstacles reuse existing artwork. Reduced motion suppresses decorative scrolling and particles. This release is delivered as an update ZIP for v2.5: merge the included PokeRogueLite folder into your existing folder and replace matching files, retaining all other assets. Export saves before updating.
+New scenery and trainer artwork are bundled and preloaded. Rocket pursuers and Pokémon obstacles reuse existing artwork. Reduced motion suppresses decorative scrolling and particles. Merge the update into your existing project as described above; retain all other assets. Export saves before updating.
 
 ## Exploration update
 

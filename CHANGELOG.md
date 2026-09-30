@@ -1,3 +1,14 @@
+# Rocket rescue and catching — v2.8 (30 September 2026)
+
+- Replaced Train and Your Choice map artwork with distinct pixel dumbbell and controller icons, included in upfront loading.
+- Runner collisions now end in a readable capture dialogue and a Team Rocket balloon rescue. The captured party member stays safely in the saved party while map progression waits for rescue.
+- Rescue challenges compare height, weight or base Speed. Tier 1 chooses the largest of three with comparison bars; tiers 2 and 3 order four or five Pokémon. Measurements are visible, values have no ties, mistakes are retryable, and partial answers survive reloads.
+- Runner wins show Officer Jenny dialogue followed by a reward screen that waits for Continue. Rewards are granted once; protection blocks automatic Rocket challenges and Mystery Rocket battles for the next three completed nodes.
+- Fixed unlocked Pikachu startup calling a removed sound function.
+- Catching now has a bottom ball selector with available counts and a large draggable ball. Swipe upward to throw the selected Poké, Ultra or Master Ball; sideways/cancelled gestures spend nothing. Enter remains available for keyboard and assistive input. Existing odds, audio lifecycle and item rules are retained.
+- Added branching lightning strikes and sparks, a travelling Gust corkscrew and Twister/Hurricane funnels. Higher energy costs enlarge the effects. Electric contact/beam attacks retain their original style plus a lightning strike. Reduced-motion and exit cleanup are preserved.
+- Added focused interaction, save/reload, reward/inventory and responsive layout coverage. All new graphics are bundled SVG/CSS/canvas assets; no added runtime dependencies.
+
 # Illustrated minigames — v2.7 (29 September 2026)
 
 - Added a Raichu power station to Surge: three correct answers progressively illuminate the bulb and fill its charge meter. Wrong answers do not add power; duplicate taps cannot score twice.

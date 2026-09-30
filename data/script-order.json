@@ -68,5 +68,7 @@
   "data/trainer-bounds.js",
   "js/trainer-sizing.js",
   "js/minigame-scenes.js",
+  "js/rocket-rescue.js",
+  "js/catch-touch.js",
   "js/boot.js"
 ]

@@ -6,7 +6,7 @@ const CaptureCinematic = {
     this.token++;this.animations.forEach(a=>a.cancel());this.animations=[];this.layer?.remove();this.layer=null;this.observer?.disconnect();
     document.getElementById('screen-catch')?.classList.remove('capture-in-progress');
   },
-  async play({caught,wiggles,ball,sprite,status}) {
+  async play({caught,wiggles,ball,sprite,status,from}) {
     this.cancel();const token=this.token,screen=document.getElementById('screen-catch');
     const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
     screen.classList.add('capture-in-progress');
@@ -28,7 +28,7 @@ const CaptureCinematic = {
       }
     };
     document.getElementById('catch-title').textContent='Make the catch!';status.textContent='Here we go!';layer.dataset.phase='throw';
-    await animate(orb,[{transform:pose(innerWidth*.5,innerHeight*.91,1.5,-40),opacity:1},{transform:pose(cx-100,cy-120,.85,150),offset:.48},{transform:pose(cx,cy,.58,330)}],720);
+    await animate(orb,[{transform:pose(from?.x??innerWidth*.5,from?.y??innerHeight*.91,1.1,-40),opacity:1},{transform:pose(cx-100,cy-120,.85,150),offset:.48},{transform:pose(cx,cy,.58,330)}],720);
     if(!alive())return false;
     layer.dataset.phase='impact';burst(cx,cy);animate(flash,[{opacity:0},{opacity:.45,offset:.3},{opacity:0}],230);SoundEngine.playTap();
     await animate(sprite,[{transform:'scale(1)',filter:'brightness(1)',opacity:1},{transform:'scale(.08)',filter:'brightness(5)',opacity:0}],360);

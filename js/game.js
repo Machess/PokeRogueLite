@@ -258,7 +258,7 @@ const Game = {
   async confirmStarter(s) {
     showLoading();
     try {
-    if (s.id === 25)  SoundEngine.playPikachu2();
+    if (s.id === 25)  SoundEngine.playStarterCry(25);
     if (s.id === 133) SoundEngine.playStarterCry(133);
     if (s.id === 151) SoundEngine.playStarterCry(151);
     if (s.id === 152) SoundEngine.playStarterCry(152);

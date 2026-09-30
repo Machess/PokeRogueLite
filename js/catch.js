@@ -8,6 +8,9 @@ const CatchEngine = {
   async start(node, forceRarity) {
     CaptureCinematic.cancel();
     this._throwing = false;
+    this._throwOrigin=null;CatchTouch.reset();
+    document.getElementById('screen-catch').classList.remove('catch-touch-ready');
+    this._resetBallVisuals();
     const oldSprite = document.getElementById('catch-sprite');
     if(oldSprite) oldSprite.style.visibility = '';
     showLoading();
@@ -156,43 +159,7 @@ const CatchEngine = {
   },
 
   _renderBallSelector() {
-    const sel = document.getElementById('ball-selector');
-    if (!sel) return;
-    sel.innerHTML = '';
-    const balls = [
-      { id: 'pokeball',   label: 'Poké Ball',   pbi: true },
-      { id: 'ultraball',  label: 'Ultra Ball',  icon: '🟡', itemId: 'ultra_ball' },
-      { id: 'masterball', label: 'Master Ball', icon: '🟣', itemId: 'master_ball' },
-    ];
-    // Always default to pokeball if current selection is no longer available
-    if (this._selectedBall !== 'pokeball' && !ItemEngine.hasItem(
-      balls.find(b => b.id === this._selectedBall)?.itemId
-    )) {
-      this._selectedBall = 'pokeball';
-    }
-    balls.forEach(b => {
-      if (!b.pbi && !ItemEngine.hasItem(b.itemId)) return;
-      const count = b.itemId
-        ? ((GameState.items || []).find(i => i.id === b.itemId)?.count || 0)
-        : null;
-      const countTag = count !== null ? ` <span class="ball-count-tag">×${count}</span>` : '';
-      const btn = document.createElement('button');
-      btn.className = 'ball-select-btn' + (this._selectedBall === b.id ? ' ball-selected' : '');
-      btn.innerHTML = b.pbi
-        ? `<span class="pokeball-icon" style="width:20px;height:20px"><span class="pbi-top"></span><span class="pbi-mid"></span><span class="pbi-bot"></span><span class="pbi-btn"></span></span> ${b.label}`
-        : `${b.icon} ${b.label}${countTag}`;
-      btn.onclick = () => {
-        this._selectedBall = b.id;
-        this._renderBallSelector();
-        const lbl = document.getElementById('catch-throw-label');
-        if (lbl) lbl.textContent = `Throw ${b.label}!`;
-      };
-      sel.appendChild(btn);
-    });
-    // Sync throw button label to current selection
-    const currentBall = balls.find(b => b.id === this._selectedBall);
-    const lbl = document.getElementById('catch-throw-label');
-    if (lbl && currentBall) lbl.textContent = `Throw ${currentBall.label}!`;
+    CatchTouch.render();
   },
 
   _resetBallVisuals() {
@@ -207,7 +174,12 @@ const CatchEngine = {
 
   async throwBall() {
     if (!this.current || this._throwing) return;
+    const selected=CatchTouch.balls.find(b=>b.id===this._selectedBall);
+    if(!selected||(selected.item&&!ItemEngine.hasItem(selected.item))){this._selectedBall='pokeball';this._renderBallSelector();return;}
+    const from=this._throwOrigin||CatchTouch.origin();this._throwOrigin=null;
+    this._resetBallVisuals();
     this._throwing = true;
+    document.getElementById('screen-catch').classList.remove('catch-touch-ready');
     document.getElementById('catch-controls').style.display = 'none';
     const { rarity, data } = this.current;
     let catchRate;
@@ -244,7 +216,7 @@ const CatchEngine = {
     this._selectedBall = 'pokeball';
 
     ballWrap.style.display = 'none';
-    const finished = await CaptureCinematic.play({ caught, wiggles, ball, sprite: spriteEl, status: statusEl });
+    const finished = await CaptureCinematic.play({ caught, wiggles, ball, sprite: spriteEl, status: statusEl, from });
     if (!finished) return;
     ballWrap.style.display = 'flex';
     if (spriteEl) spriteEl.style.display = 'none';
