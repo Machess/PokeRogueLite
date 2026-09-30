@@ -251,7 +251,7 @@ const MG_RULES = {
   'chuck-active':    'Read the time and set the clock for Chuck!',
   'togepi-active':   'Work out how long Togepi froze time — the elapsed duration!',
   'oak-active':      'Tap the basket each Pokémon belongs in!',
-  'snorlax-active':  'Compare weights and balance the scale!',
+  'snorlax-active':  'Feed a serving. Follow the higher/lower arrow to find the exact amount!',
   'rocketmoney-active': 'Count the coins to pay the exact amount!',
   'jenny-active':    'Read the police report, then tap the matching Pokémon!',
   'runner-active':   'Tap or press Space to jump over the holes. Grab coins. Reach the goal!',

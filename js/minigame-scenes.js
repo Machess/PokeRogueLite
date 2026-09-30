@@ -1,7 +1,7 @@
 /* Illustrated activity stages. Reuses bundled backgrounds and sprites. */
 const MiniGameScenes={
  themes:{
-  'surge-active':['surge','assets/bg_2_boss.png'], 'snorlax-active':['snorlax','assets/runner/valley.png'],
+  'surge-active':['surge','assets/bg_2_boss.png'], 
   'oak-active':['oak','assets/minigames/oak-lab.svg'], 'erika-active':['erika','assets/bg_3_boss.png'],
   'whitney-active':['whitney','assets/backgrounds/bg_johto_2.jpg'], 'chuck-active':['chuck','assets/bg_training.png'],
   'togepi-active':['togepi','assets/runner/valley.png'], 'bugsy-active':['bugsy','assets/bg_catch_forest.png'],
@@ -40,9 +40,7 @@ const MiniGameScenes={
    details.innerHTML='<summary>Mixing chart — show recipes</summary>';recipe.before(details);details.appendChild(recipe);
    details.addEventListener('toggle',()=>{details.querySelector('summary').textContent=details.open?'Mixing chart — tap to close':'Mixing chart — show recipes';});
   }
-  if(kind==='snorlax'){
-   const scale=cv.querySelector('.snx-scale');if(scale&&!scale.dataset.illustrated){scale.dataset.illustrated='true';scale.classList.add('mg-scale-stage');scale.insertAdjacentHTML('afterbegin',this.sprite('assets/sprites/143.png','mg-sleepy-snorlax','Snorlax')+'<span class="mg-scene-plaque">SNORLAX’S WEIGH STATION</span>');}
-  }
+
  },
  surge(){
   const cv=document.getElementById('challenge-coin-visual');cv.style.display='block';cv.className='mg-surge-wrap';

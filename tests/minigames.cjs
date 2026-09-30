@@ -8,15 +8,9 @@ const out=process.env.UI_SCREENSHOTS||'/tmp/poketrials-minigames';fs.mkdirSync(o
  const help=async()=>{if(await page.locator('.minigame-guide').count())await page.locator('.minigame-guide button').click();};
  const start=async(name,tier=2)=>{await page.evaluate(async({name,tier})=>{GameState.difficultyTier=tier;const e=eval(name);await e.start({idx:0,type:'test'});if(e.startGame)e.startGame();},{name,tier});await page.waitForTimeout(450);await help();};
  const shot=async name=>{await page.waitForTimeout(500);await page.evaluate(()=>{const s=document.querySelector('.screen.active');if(s)s.scrollTop=0;});await page.screenshot({path:out+'/'+name+'.png'});assert.deepEqual(errors,[],name);};
- // Every Snorlax tier must finish all five rounds; no animation event is needed.
- for(const tier of [1,2,3]){await start('SnorlaxEngine',tier);await shot('snorlax-'+tier);for(let round=0;round<5;round++){
-  if(tier===1){await page.locator('.snx-pick').first().click();}else{
-   await page.locator('.snx-shelf-item').first().click();await page.locator('.snx-shelf-item').first().click();assert.equal(await page.locator('.snx-picked').count(),0);
-   for(let i=0;i<(tier===2?1:2);i++)await page.locator('.snx-shelf-item').nth(i).click();await page.getByRole('button',{name:'Check the scale',exact:true}).click();
-  }
-  assert.equal(await page.locator('.minigame-next').count(),1);await page.locator('.minigame-next').click();await page.waitForTimeout(30);
- }assert.equal(await page.evaluate(()=>SnorlaxEngine._round),5);await page.evaluate(()=>{document.getElementById('overlay').classList.add('hidden');document.getElementById('results-card-overlay')?.remove();});}
- console.log('Snorlax all tiers finish');
+ // Feed Snorlax replaces all scale rounds. Full flow is covered in feed-menus.cjs.
+ for(const tier of [1,2,3]){await page.evaluate(()=>delete GameState.snorlaxFeed);await start('SnorlaxEngine',tier);await shot('snorlax-'+tier);assert.equal(await page.locator('.feed-option').count(),5);await page.locator('.feed-snorlax').click();assert.match(await page.locator('#feed-clue').textContent(),/hungry/);}
+ await page.evaluate(()=>{delete GameState.snorlaxFeed;SaveManager.complete();});
  // Clair accepts displayed effective alternatives and never advances before Next.
  await start('ClairEngine');await shot('clair');await page.getByRole('button',{name:'Ready — start charge'}).click();await page.evaluate(()=>{const t=ClairEngine._seq[ClairEngine._round].type;[...document.querySelectorAll('.clair-choice')].find(b=>getTypeMultiplier(b.dataset.type,t)>1).click();});assert.equal(await page.evaluate(()=>ClairEngine._hits),1);await page.waitForTimeout(800);assert.equal(await page.evaluate(()=>ClairEngine._round),0);await page.locator('.minigame-next').click();assert.equal(await page.evaluate(()=>ClairEngine._round),1);
  // Scoped timer pause and cancellation.

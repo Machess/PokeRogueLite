@@ -1,6 +1,6 @@
-# PokéTrials — Rocket rescue and catching v2.8
+# PokéTrials — Feed Snorlax and adventure menus v2.9
 
-## Updating from v2.7.1
+## Updating from v2.8
 
 This small patch contains only changed/new files. Close the game, back up your current folder, and copy the contents of this patch's `PokeRogueLite` folder into your existing `PokeRogueLite` folder, accepting replacements. Keep all existing files and assets. Reopen `index.html`; if hosted, refresh without cache. No save format changes.
 
@@ -22,7 +22,15 @@ No installation, account, API key, server or build step is required. Keep the fi
 - Routes branch into different future encounters. Arrows preview their next options. Choosing a direction pans/zooms the existing background; the map has no trainer sprite. Reduced-motion settings shorten travel.
 - Late-route legendary encounters retain their guaranteed rarity.
 - Stable battle checkpoints retain hands, piles, enemy intentions, statuses, temporary effects and trainer/boss teams. Rewards and post-boss transitions also resume. Switching retains each Pokémon's exhausted cards and status durations.
-- Versioned saves include validation, previous-write recovery, export/import and visible status. Rocket rescue dialogues and partial sorting answers also resume. Other non-battle activities restart from entry if interrupted before completion.
+- Versioned saves include validation, previous-write recovery, export/import and visible status. Rocket rescue dialogues, partial sorting answers and Feed Snorlax progress also resume. Other non-battle activities restart from entry if interrupted before completion.
+
+## Feed Snorlax and adventure menus
+
+Feed Snorlax replaces the old scale activity everywhere. Tap the large Snorlax for its hunger clue, choose a fruit basket and swipe up or press Feed. The whole serving flies to its mouth. An up arrow means try more; a down arrow means try less. Each serving is an independent guess, not a cumulative total. The available amounts narrow after feedback until you find the exact number.
+
+The existing comparison difficulty chooses a range of 1–5, 1–15 or 1–30. There is no countdown or attempt limit. Progress, pending throws and the success screen survive reloads; a completed encounter awards coins only once. Continue stays visible until pressed. The old scale rounds are removed.
+
+The main menu now uses the runner valley and trainer atlas, with a wave and Poké Ball toss. Larger navigation controls include local vector icons. Save import/export, music, artwork reload and reset live in Settings & save tools. Profile cards have separate labelled Play, League (when unlocked), Difficulty and Delete controls, plus a keyboard-accessible New Profile button. Existing confirmation and unlock rules are retained.
 
 ## Rocket rescue and catching
 
@@ -54,7 +62,7 @@ Trainer portraits now scale to their visible artwork, including a larger Lt. Sur
 
 Activities now share first-use instructions and Pause / Help. Timers pause when the tab is hidden or a confirmation is open, and pending callbacks are cancelled when leaving. Feedback in many round-based games stays until you press Next.
 
-Snorlax supports reversible scale selections and completes all five rounds without relying on animation events. Misty displays the rod before casting and the reel dial afterward. Catch music plays once and stops at the result.
+The former Snorlax scale activity has been replaced by Feed Snorlax as described above. Misty displays the rod before casting and the reel dial afterward. Catch music plays once and stops at the result.
 
 Cooking, Whitney, Erika and Giovanni allow corrections to quantities or payments. Clocks have larger controls, hand dragging and optional time-step explanations. Jenny has cross-out mode; Koga uses Pokémon and evolution pairs; Morty has ghost sequences; Jasmine offers pattern replay and repairs; Sabrina adds a reference image and piece coordinates. Action activities have larger playfields, and music practice includes free slow replay. See CHANGELOG.md for the complete update.
 

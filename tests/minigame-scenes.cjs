@@ -18,13 +18,12 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
  await start('SurgeEngine');await page.evaluate(()=>SurgeEngine._answer('wrong'));assert.equal(await page.locator('.mg-scene-surge').getAttribute('data-power'),'0');
  await start('OakSortEngine');assert.equal(await page.locator('.mg-scene-oak .oak-belt').count(),1);await shot('oak');
  await page.evaluate(()=>{const e=OakSortEngine,p=e._queue[e._round],i=e._rule.buckets.findIndex(b=>b[0]===p[e._rule.key]);document.querySelectorAll('.oak-basket')[i].click();});assert.equal(await page.evaluate(()=>OakSortEngine._hits),1);await page.waitForTimeout(1000);assert.equal(await page.evaluate(()=>OakSortEngine._round),1);assert.equal(await page.locator('.mg-scene-oak .oak-belt').count(),1);
- await start('SnorlaxEngine',1);assert.equal(await page.locator('.mg-scale-stage').count(),1);await page.locator('.snx-pick').first().click();assert.match(await page.locator('.mg-scale-reading').textContent(),/kg/);await shot('snorlax-choice');
- await start('SnorlaxEngine',2);await page.locator('.snx-shelf-item').first().click();assert.match(await page.locator('.mg-scale-reading').textContent(),/Selected: [1-9]/);await shot('snorlax-scale');
+ await start('SnorlaxEngine',1);assert.equal(await page.locator('.feed-scene').count(),1);await page.locator('.feed-option').first().click();assert.equal(await page.locator('.feed-submit').isEnabled(),true);await shot('snorlax-feed');
  for(const size of [[600,960],[800,1280],[360,640],[960,600]]){
   await page.setViewportSize({width:size[0],height:size[1]});
   for(const engine of ['SurgeEngine','SnorlaxEngine','OakSortEngine','ErikaEngine']){
    await start(engine);await page.waitForTimeout(500);
-   const layout=await page.evaluate(()=>{const root=document.getElementById('screen-challenge'),stage=root.querySelector('.mg-scene,.mg-scale-stage'),r=stage.getBoundingClientRect();return {left:r.left,right:r.right,width:innerWidth,scroll:document.documentElement.scrollWidth};});
+   const layout=await page.evaluate(()=>{const root=document.getElementById('screen-challenge'),stage=root.querySelector('.mg-scene,.feed-scene'),r=stage.getBoundingClientRect();return {left:r.left,right:r.right,width:innerWidth,scroll:document.documentElement.scrollWidth};});
    assert(layout.left>=0&&layout.right<=size[0]+1,engine+JSON.stringify(layout));assert(layout.scroll<=size[0]+1,JSON.stringify(layout));
    await shot(engine+'-'+size[0]);
    if(engine==='ErikaEngine'){assert(await page.locator('.erika-target-label').evaluate(e=>e.getBoundingClientRect().top>=e.closest('.mg-scene').getBoundingClientRect().top),'potion target stays inside stage');assert.equal(await page.locator('.mg-scene-erika .erika-target-area').count(),1);await page.locator('.mg-recipe-guide summary').click();assert(await page.locator('.erika-recipe-card').isVisible());}
@@ -40,6 +39,6 @@ const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('n
    if(values.length!==5||new Set(values).size!==5||!values.includes(target))throw Error('Invalid ice count options');
   }
  });
- await page.emulateMedia({reducedMotion:'reduce'});await start('SnorlaxEngine');assert.equal(await page.locator('.snx-beam').evaluate(e=>getComputedStyle(e).transitionDuration),'0s');
- await page.evaluate(()=>showScreen('map'));assert.deepEqual(errors,[]);await browser.close();console.log('Illustrated scenes passed: bulb progression/wrong answer/double tap, Oak sorting, scale feedback, four viewport sizes, reduced motion. '+out);
+ await page.emulateMedia({reducedMotion:'reduce'});await start('SnorlaxEngine');assert.equal(await page.locator('.feed-snorlax img').evaluate(e=>getComputedStyle(e).animationName),'none');
+ await page.evaluate(()=>showScreen('map'));assert.deepEqual(errors,[]);await browser.close();console.log('Illustrated scenes passed: bulb progression/wrong answer/double tap, Oak sorting, feeding controls, four viewport sizes, reduced motion. '+out);
 })().catch(e=>{console.error(e);process.exit(1)});

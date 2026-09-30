@@ -70,5 +70,7 @@
   "js/minigame-scenes.js",
   "js/rocket-rescue.js",
   "js/catch-touch.js",
+  "js/feed-snorlax.js",
+  "js/menu-scene.js",
   "js/boot.js"
 ]

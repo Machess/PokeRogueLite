@@ -431,20 +431,20 @@ const ProfileEngine = {
                class="profile-starter-sprite type-bg-${typeClass}" />
           ${!meta.starterSprite ? `<div class="profile-sprite-placeholder">?</div>` : ''}
         </div>
-        <div class="profile-name">${meta.name}</div>
+        <div class="profile-info"><div class="profile-name">${meta.name}</div>
         <div class="profile-tier-row">${this._tierLabel(meta.difficultyTier, meta.trainerAge)}</div>
         ${badgeBar}
         <div class="profile-wins-row ${this._progressCls(meta)}">${this._progressLabel(meta)}</div>
-        <div class="profile-last-saved">${this._timeAgo(meta.lastSaved)}</div>
+        <div class="profile-last-saved">${this._timeAgo(meta.lastSaved)}</div></div>
         <div class="profile-actions">
           <button class="btn-pixel btn-primary profile-play-btn"
                   data-key="${meta.key}">▶ Play</button>
           ${meta.leagueUnlocked ? `<button class="btn-pixel btn-league profile-league-btn"
                   data-key="${meta.key}" title="Enter the Pokémon League">⚔️ League</button>` : ''}
           <button class="btn-pixel btn-secondary profile-age-btn"
-                  data-key="${meta.key}" title="Change difficulty">✏️</button>
+                  data-key="${meta.key}" title="Change difficulty">Difficulty</button>
           <button class="btn-pixel btn-danger profile-delete-btn"
-                  data-key="${meta.key}">🗑</button>
+                  data-key="${meta.key}">Delete</button>
         </div>
       `;
 
@@ -473,7 +473,7 @@ const ProfileEngine = {
 
     // Add "New Profile" slot if under limit
     if (profiles.length < MAX_PROFILES) {
-      const addCard = document.createElement('div');
+      const addCard = document.createElement('button');
       addCard.className = 'profile-card profile-card-add';
       addCard.innerHTML = `
         <div class="profile-add-icon">+</div>
@@ -577,7 +577,7 @@ const ProfileEngine = {
       if (contBtn)   { contBtn.disabled = true; contBtn.textContent = '◈ Continue'; }
       if (dexBtn)    { dexBtn.disabled  = true; }
       if (leagueBtn) { leagueBtn.style.display = 'none'; }
-      if (regionPill){ regionPill.textContent = '🗺️ Kanto Region'; regionPill.className = 'start-region-pill'; }
+      if (regionPill){ regionPill.textContent = 'Kanto Region'; regionPill.className = 'start-region-pill'; }
       if (logoSub)   { logoSub.textContent = 'A Roguelite Card Adventure'; }
       return;
     }
@@ -649,7 +649,7 @@ const ProfileEngine = {
     }
     // Region pill + logo sub
     if (regionPill) {
-      regionPill.textContent = johtoUnlocked ? '🌿 Johto Region' : '🗺️ Kanto Region';
+      regionPill.textContent = johtoUnlocked ? 'Johto Region' : 'Kanto Region';
       regionPill.className   = 'start-region-pill' + (johtoUnlocked ? ' johto' : '');
     }
     if (logoSub) {

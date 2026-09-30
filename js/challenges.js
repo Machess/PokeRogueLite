@@ -94,9 +94,9 @@ const CHALLENGE_SELECT_MENU = [
   {
     key:    'snorlax',
     type:   'snorlax_node',
-    emoji:  '⚖️',
-    name:   "Snorlax's Scale",
-    desc:   'Guess which is heavier',
+    emoji:  '🍌',
+    name:   'Feed Snorlax',
+    desc:   'Find the perfect serving: higher or lower',
     reward: '💰 Big gold reward',
     region: 'both',
     engine: () => SnorlaxEngine,

@@ -22,7 +22,7 @@ const MiniGameSession={
  },
  guides:{
   'fishing-active':['Cast, then reel','Press Cast line to send the float into the lake.','The timing dial appears after casting. Press Reel in the striped zone.'],
-  'snorlax-active':['Compare the weights','Try a Pokémon on the scale. Tap it again to remove it.','Choose the closest total, then confirm. Exact balance is a bonus!'],
+  'snorlax-active':['Feed Snorlax','Tap Snorlax for a hunger clue. Choose a basket, then swipe up or press Feed.','Up means try more; down means try less. Each serving is a new guess. Find the exact amount!'],
   'clair-active':['Read the named Pokémon type','Choose any super-effective counter. Ice beats Dragon; Electric beats Water.','Press Ready to start the charge. Read the explanation before Next.'],
   'whitney-active':['Read the order ticket','For 750 ml, pour 500 ml + 250 ml. Undo removes your last pour.','Choose the named berry after reaching the target.'],
   'erika-active':['Mix colours and measure','Blue + Yellow makes Green. Each bottle adds half a flask.','Pour out a quarter at a time. Check the colour and level before submitting.'],

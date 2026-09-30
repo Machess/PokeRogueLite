@@ -1,3 +1,13 @@
+# Feed Snorlax and adventure menus — 30 September 2026
+
+`tests/feed-menus.cjs` passes all-tier higher/lower solving, clue activation, real pointer swipes, duplicate input guards, reload after an incorrect serving, reload during food flight, saved success and reward-once behavior. It also checks menu and profile controls at 600×960, 800×1280, 360×640 and 960×600, including the difficulty dialog and delete confirmation. Small phone profile lists may scroll; controls stay reachable. Screenshots were inspected for the main menu, profile cards, food choices, chewing and results.
+
+`tests/minigame-scenes.cjs` passes with the scale assertions replaced by feeding controls; Oak, Surge and Erika retain their scene checks. `tests/regression.cjs` passes all 14 core checks. Existing minigame flow coverage has been updated for the replacement activity.
+
+These checks use desktop Chromium touch emulation, not physical Lenovo TB-X606F testing. The trainer wave/toss reuses the running-game atlas rather than generating a new character. All new UI/food/animation assets are SVG or CSS, with no new network dependency. Every serving is a fresh guess, not a cumulative hunger simulation.
+
+---
+
 # Rocket rescue and catching validation — 30 September 2026
 
 Passed `tests/regression.cjs` (14 checks), `tests/runner.cjs`, `tests/journey-ui.cjs`, `tests/rocket-catch-update.cjs` and `tests/weather-fx.cjs`.

@@ -1,3 +1,14 @@
+# Feed Snorlax and adventure menus — v2.9 (30 September 2026)
+
+- Replaced the entire Snorlax scale engine with Feed Snorlax; updated challenge selection, intro, rules and help text, and removed the old scale scene decorator.
+- Added hunger clues, independent serving guesses, fruit baskets, upward swipes and a tap/keyboard Feed button. Actual fruit quantities fly to a chewing mouth; up/down feedback narrows the remaining number range. One exact serving completes the encounter.
+- Added difficulty ranges 1–5, 1–15 and 1–30 using the existing comparison tier. No timer or attempt limit. Each success records a completed comparison puzzle; it does not score the first guess as right/wrong.
+- Saved target, bounds, guesses, pending throw and result. Reloading during a throw resolves that serving once; reopening a success screen cannot duplicate coins. Completion uses scoped timers rather than animation-end events. Reduced motion skips the food flight.
+- Rebuilt the main menu with the runner valley and local trainer atlas, alternating a wave and a Poké Ball toss. Menu animation pauses off screen and is disabled with reduced motion.
+- Enlarged main/profile actions, replaced unsupported main-menu glyphs with local vector icons, labelled profile Difficulty and Delete actions, and made New Profile a real button. Save tools, music, artwork reload and reset now occupy an expandable settings section.
+- Retained profile selection, save format, League unlocks and confirmation guards. Profile lists scroll on the smallest screens while tablet cards remain fully visible.
+- Added saved-flow, swipe, menu and layout tests; replaced outdated scale assertions in existing minigame suites. Reused all character/background artwork; no new external services or runtime dependencies.
+
 # Rocket rescue and catching — v2.8 (30 September 2026)
 
 - Replaced Train and Your Choice map artwork with distinct pixel dumbbell and controller icons, included in upfront loading.
