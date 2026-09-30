@@ -20,15 +20,15 @@ const Exploration={
  state(){
   if(GameState.isLeagueRun||GameState.bossesDefeated>=8)return null;
   const key=(GameState.region||'kanto')+':'+(GameState.bossesDefeated||0);
-  if(GameState.exploration?.key===key)return GameState.exploration;
+  if(GameState.exploration?.key===key){FossilDig.schedule(GameState.exploration);return GameState.exploration;}
   const now=this.progress(),events=[];
   if(now<10){
    const first=Math.min(9,Math.max(now+1,2+Math.floor(Math.random()*2)));
-   const story=Math.random()<.35&&first<=6;
+   const story=(GameState.bossesDefeated||0)%2===1&&Math.random()<.35&&first<=6;
    if(story){const item=GameState.region==='kanto'&&GameState.bossesDefeated===5?'charm':GameState.region==='johto'&&GameState.bossesDefeated===0?'scarf':'backpack';events.push({id:0,kind:item,at:first,status:'pending'},{id:1,kind:'owner',item,at:first+2+Math.floor(Math.random()*2),status:'pending'});}
    else{const pool=this.pools[GameState.region||'kanto'][GameState.bossesDefeated||0];const choices=shuffle([...pool]);events.push({id:0,kind:choices[0],at:first,status:'pending'});if(first<7&&Math.random()<.7)events.push({id:1,kind:choices[1]||choices[0],at:Math.min(9,first+3),status:'pending'});}
   }
-  GameState.exploration={key,events,carrying:false};return GameState.exploration;
+  GameState.exploration={key,events,carrying:false};FossilDig.schedule(GameState.exploration);return GameState.exploration;
  },
  eligible(ability){const rule=this.abilities[ability];return GameState.party.filter(p=>{if(p.hp<=0)return false;const types=[p.type,...(typeof OFFLINE_POKEMON!=='undefined'?OFFLINE_POKEMON[p.id]?.types||[]:[]).map(t=>t.type?.name)];return rule.ids?.includes(Number(p.id))||rule.types?.some(t=>types.includes(t));});},
  maybe(){const s=this.state();if(!s)return;const e=s.events.find(e=>e.status!=='done'&&e.at<=this.progress());if(e)this.show(e);},
@@ -37,6 +37,7 @@ const Exploration={
  prop(index){if(index===6)return '<svg class="field-prop" viewBox="0 0 100 100" aria-hidden="true"><path fill="#b94739" stroke="#512f32" stroke-width="4" d="M20 20h60v25H50v43H25V40h-5z"/><path stroke="#f5c781" stroke-width="7" d="M24 30h50M28 72h19"/></svg>';if(index===7)return '<svg class="field-prop" viewBox="0 0 100 100" aria-hidden="true"><path fill="none" stroke="#b45b6c" stroke-width="6" d="M50 49C5-5 95-5 50 49"/><path fill="#e4bf69" stroke="#76532f" stroke-width="4" d="M30 45h40v43H30z"/><path fill="#bd4c60" d="m50 51 13 15-13 15-13-15z"/></svg>';return `<span class="field-prop prop-${index}" aria-hidden="true"></span>`;},
  button(icon,label,fn,disabled=false){const b=document.createElement('button');b.className='field-action';b.innerHTML=icon+'<strong></strong>';b.querySelector('strong').textContent=label;b.disabled=disabled;b.onclick=fn;return b;},
  show(e){
+  if(e.kind==='fossil'){FossilDig.begin(e);return;}
   this.current=e;const d=this.specs[e.kind];let root=document.getElementById('screen-field');
   if(!root){root=document.createElement('section');root.id='screen-field';root.className='screen';root.innerHTML='<div class="field-background"></div><header class="field-header"><span>TRAIL DISCOVERY</span><button class="field-menu" aria-label="Save and return to menu">⌂</button></header><div class="field-scene" aria-hidden="true"></div><div class="field-panel"><h2></h2><p class="field-description"></p><p class="field-requirement"></p><div class="field-actions"></div></div>';document.body.appendChild(root);root.querySelector('.field-menu').onclick=()=>{saveGame();Game.goToMenu();};}
   root.dataset.kind=e.kind;root.classList.toggle('field-resolved',e.status==='resolved');root.classList.toggle('field-cleared',e.choice==='ability');root.classList.toggle('field-carried',e.choice==='carry');

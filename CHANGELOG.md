@@ -1,3 +1,12 @@
+# v2.10 — Fossil Dig
+
+- Adds optional excavation discoveries on every second gym route, beginning with Brock, while preserving existing linked discovery stories and normal route nodes.
+- Two rock layers with nine large strike areas, age-tier sequences, free replay, no timer and saved progress. Incorrect strikes do not reset completed hits.
+- Uses the supplied archaeologist, a new fossil boulder, pickaxe strikes and a short restoration animation.
+- Rewards: mineral (50%, sells for 12), crystal (30%, 25), nugget (10%, 40), or fossil encounter (10%). Fossil encounters also grant a mineral.
+- Fossil encounters: Omanyte 45%, Kabuto 45%, Aerodactyl 10%; use the existing swipe-to-catch screen. Full parties can choose a replacement or release the new catch.
+- Adds Sell treasures to shops. Saved rewards, sales and catches resist duplicate input and reloads.
+
 # Feed Snorlax and adventure menus — v2.9 (30 September 2026)
 
 - Replaced the entire Snorlax scale engine with Feed Snorlax; updated challenge selection, intro, rules and help text, and removed the old scale scene decorator.

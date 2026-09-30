@@ -21,6 +21,7 @@ const MiniGameSession={
   host.querySelector('.minigame-next')?.remove();const b=document.createElement('button');b.className='minigame-next btn-pixel btn-primary';b.textContent=label;let used=false;const epoch=this.epoch;b.onclick=()=>{if(used||epoch!==this.epoch)return;used=true;b.remove();fn();};host.appendChild(b);b.scrollIntoView({block:'nearest'});
  },
  guides:{
+  'fossil-active':['Excavate the fossil','Watch the marked spots and tap them in order. Replay is free.','Finish two layers. Wrong taps keep your progress; there is no timer.'],
   'fishing-active':['Cast, then reel','Press Cast line to send the float into the lake.','The timing dial appears after casting. Press Reel in the striped zone.'],
   'snorlax-active':['Feed Snorlax','Tap Snorlax for a hunger clue. Choose a basket, then swipe up or press Feed.','Up means try more; down means try less. Each serving is a new guess. Find the exact amount!'],
   'clair-active':['Read the named Pokémon type','Choose any super-effective counter. Ice beats Dragon; Electric beats Water.','Press Ready to start the charge. Read the explanation before Next.'],

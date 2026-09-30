@@ -17,3 +17,9 @@ Generated with the built-in image generator on 29 September 2026, new-image mode
 - `assets/runner/trainer-atlas.png`: transparent four-by-two animation sheet. Prompt: Transparent game animation asset: an original friendly pixel-art adventurer with red cap, blue jacket, dark blue trousers, red sneakers, small yellow backpack. Side view facing right. Eight frames in exactly 4 columns and 2 rows of equal cells. Top row four phases of a running cycle. Bottom row: jump rising, jump descending, landing crouch, standing waving. Whole body fits inside every cell, same consistent proportions and colors, equal baseline, generous transparent margins. Crisp 16-bit handheld game sprite style, dark outlines. No text, labels, grid, scenery or other objects. Wide 2:1 sheet.
 
 Existing Rocket and Pokémon artwork is reused. New Rocket animation-sheet generation was rejected; no replacement file was produced. Coins and small particles are drawn directly on the canvas.
+
+# Fossil Dig — v2.10
+
+`assets/fossil/archeologist.png` is the supplied archaeologist artwork, preserved unchanged. `assets/fossil/dig.svg` is a native vector pickaxe icon.
+
+`assets/fossil/rock.png` was generated with the built-in image generator on 30 September 2026, with a transparent background. Prompt summary: standalone large warm sandstone fossil boulder in detailed retro pixel art, visible spiral ammonite fossil, hairline cracks, clear nine-region tapping surface, no text, no UI, transparent background. The PNG is bundled locally and requires no generation service at runtime.

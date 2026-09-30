@@ -72,5 +72,6 @@
   "js/catch-touch.js",
   "js/feed-snorlax.js",
   "js/menu-scene.js",
+  "js/fossil-dig.js",
   "js/boot.js"
 ]

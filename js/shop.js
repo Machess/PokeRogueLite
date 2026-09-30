@@ -96,11 +96,13 @@ const ShopEngine = {
     let tabs=document.getElementById('shop-tabs');
     if(!tabs){tabs=document.createElement('nav');tabs.id='shop-tabs';tabs.setAttribute('aria-label','Shop categories');grid.before(tabs);}
     tabs.replaceChildren();
-    for(const [id,label] of [['all','All items'],['supplies','Supplies'],['held','Held items'],['stone','Evolution']]){
+    for(const [id,label] of [['all','All items'],['supplies','Supplies'],['held','Held items'],['stone','Evolution'],['treasures','Sell treasures']]){
       if(id==='stone'&&(GameState.starterId!==133||GameState.eeveeEvolution))continue;
       const button=document.createElement('button');button.textContent=label;button.type='button';button.setAttribute('aria-pressed',String((this._filter||'all')===id));
       button.onclick=()=>{this._filter=id;this._render();grid.scrollTop=0;};tabs.appendChild(button);
     }
+
+    if(this._filter==='treasures'){FossilDig.renderSales(grid);return;}
 
     const isEevee   = GameState.starterId === 133;
     const hasEvolved = !!GameState.eeveeEvolution;

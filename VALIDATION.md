@@ -1,3 +1,13 @@
+# Fossil Dig — 30 September 2026
+
+Passed `tests/fossil-dig.cjs`: alternating-route scheduling, preservation of linked discoveries, all three difficulty tiers, two-layer completion, wrong-hit retries, saved sequences and rewards, duplicate reward prevention, shop sale/checkpoint persistence, forced fossil encounters, reload during a throw, ball consumption, full-party replacement and escape handling.
+
+Checked touch layouts at 600×960, 800×1280, 360×640 and 960×600; visually inspected portrait rock/sequence screens and full-party results. These are Chromium emulation checks, not tests on physical Lenovo hardware.
+
+Passed all 14 `tests/regression.cjs` checks and `tests/journey-ui.cjs` (reward flips, preloading, maps, capture outcomes, cancellation).
+
+---
+
 # Feed Snorlax and adventure menus — 30 September 2026
 
 `tests/feed-menus.cjs` passes all-tier higher/lower solving, clue activation, real pointer swipes, duplicate input guards, reload after an incorrect serving, reload during food flight, saved success and reward-once behavior. It also checks menu and profile controls at 600×960, 800×1280, 360×640 and 960×600, including the difficulty dialog and delete confirmation. Small phone profile lists may scroll; controls stay reachable. Screenshots were inspected for the main menu, profile cards, food choices, chewing and results.

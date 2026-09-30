@@ -5,7 +5,8 @@ const CatchEngine = {
   _pendingCatch: null,
   _speciesData:  null,  // cached from species endpoint
 
-  async start(node, forceRarity) {
+  async start(node, forceRarity, forcedId = null) {
+    this._fossil=!!(forcedId&&GameState.fossilDig?.phase==='catch');
     CaptureCinematic.cancel();
     this._throwing = false;
     this._throwOrigin=null;CatchTouch.reset();
@@ -19,7 +20,8 @@ const CatchEngine = {
     let rarity, pool;
     const roll = Math.random();
     // forceRarity may be a node.catchRarity string ('common','uncommon','rare') or 'rare' from mystery
-    if (forceRarity === 'rare' || forceRarity === 'rare ✨') {
+    if(this._fossil){rarity='Rare ✨';pool=[forcedId];}
+    else if (forceRarity === 'rare' || forceRarity === 'rare ✨') {
       rarity = 'Rare ✨'; pool = getWildPool().rare;
     } else if (forceRarity === 'uncommon') {
       rarity = 'Uncommon'; pool = getWildPool().uncommon;
@@ -200,6 +202,7 @@ const CatchEngine = {
     }
     const caught   = Math.random() < catchRate;
     this._caught   = caught;
+    if(this._fossil)FossilDig.captureOutcome(caught,data);
     const wiggles  = caught ? 3 : Math.floor(Math.random() * 3) + 1;
     const ball     = document.getElementById('catch-ball');
     const ballWrap = document.getElementById('catch-ball-wrap');
@@ -236,6 +239,7 @@ const CatchEngine = {
   },
 
   _showResult(ball, statusEl, caught, data) {
+    if(this._fossil){SoundEngine.stopBGM();SoundEngine.stopSFX();FossilDig.show();return;}
     SoundEngine.stopBGM(); SoundEngine.stopSFX();
     const pokeName    = capitalize(data.name);
     const spriteEl    = document.getElementById('catch-sprite');
@@ -384,6 +388,7 @@ const CatchEngine = {
     if (continueBtn) continueBtn.textContent = 'Continue ▶';
     const releaseEl = document.getElementById('release-picker');
     if (releaseEl) releaseEl.style.display = 'none';
+    if(this._fossil){FossilDig.close();return;}
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },
@@ -391,6 +396,7 @@ const CatchEngine = {
     if(this._throwing) return;
     CaptureCinematic.cancel();
     this._pendingCatch = null;
+    if(this._fossil){FossilDig.close();return;}
     MapEngine.completeNode(GameState.currentNodeIndex);
     MapEngine.show();
   },

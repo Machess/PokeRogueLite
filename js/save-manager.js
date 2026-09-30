@@ -54,6 +54,7 @@ const SaveManager={
     this.write();
   },
   resume(){
+    if(GameState.fossilDig){this.nodeCheckpoint=null;FossilDig.show();return true;}
     if(GameState.resume?.kind==='feed-snorlax'&&GameState.snorlaxFeed){this.nodeCheckpoint=null;SnorlaxEngine.startGame();return true;}
     if(GameState.rocketAftermath){this.nodeCheckpoint=null;RocketRescue.show();return true;}
     const r=GameState.resume;if(!r)return false;this.restoring=true;

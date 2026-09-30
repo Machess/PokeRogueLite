@@ -77,6 +77,7 @@ const MapEngine = {
   _lastBi: -1,
 
   show() {
+    if(GameState.fossilDig){FossilDig.show();return;}
     if(GameState.rocketAftermath){RocketRescue.show();return;}
     // Check if a Rocket event should fire before returning to the nav screen.
     // Only trigger if we just completed a node (completedNodes has grown).

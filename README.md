@@ -1,6 +1,6 @@
-# PokéTrials — Feed Snorlax and adventure menus v2.9
+# PokéTrials — Fossil Dig v2.10
 
-## Updating from v2.8
+## Updating from v2.9
 
 This small patch contains only changed/new files. Close the game, back up your current folder, and copy the contents of this patch's `PokeRogueLite` folder into your existing `PokeRogueLite` folder, accepting replacements. Keep all existing files and assets. Reopen `index.html`; if hosted, refresh without cache. No save format changes.
 
